@@ -1,0 +1,7 @@
+matplotlib
+numpy
+pandas
+pymysql
+selenium
+tk #includes tkinter
+django
