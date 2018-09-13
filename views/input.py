@@ -31,7 +31,7 @@ def input_page(request, form_data=None):
 
     # function name example: 'sip_input_page'
     html += render_to_string('04uberinput_jquery.html', {'model': model})
-    html += render_to_string('04uberinput_start_drupal.html', {
+    html += render_to_string('nta_input_start_drupal.html', {
         'MODEL': model,
         'TITLE': header},
          request=request)

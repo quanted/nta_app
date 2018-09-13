@@ -18,3 +18,9 @@ class NtaInputs(forms.Form):
         widget=forms.Textarea(attrs={'cols': 30, 'rows': 1}),
         initial='Example nta',
         required=True)
+    pos_input = forms.FileField(
+        label = 'Positive MPP file (csv)'
+    )
+    neg_input = forms.FileField(
+        label='Negative MPP file (csv)'
+    )
