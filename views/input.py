@@ -1,26 +1,41 @@
 import importlib
 import os
+import string, random
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.encoding import iri_to_uri
 
-from . import links_left
+from . import links_left, output
+from ..tools import file_manager
 from .input_form import NtaInputs
+from ..app.nta_task import NtaRun
 
-def input_page(request, form_data=None):
+def input_page(request, form_data=None, form_files=None):
 
     model = 'nta'
     header = "Run NTA"
     page = 'run_model'
     if (request.method == "POST"):
-        form = NtaInputs(request.POST)
+        form = NtaInputs(request.POST, request.FILES)
         if (form.is_valid()):
             print("form is valid")
-            return HttpResponseTemporaryRedirect('output/')
+            parameters = request.POST
+            job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            print("job ID: " + job_id)
+            pos_input = request.FILES["pos_input"]
+            neg_input = request.FILES["neg_input"]
+            inputs = [pos_input, neg_input]
+            input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs)]
+            #print(input_dfs[0])
+            #print(str(request.FILES.keys()))
+            nta_run = NtaRun(parameters, input_dfs, job_id)
+            nta_run.execute()
+            #return HttpResponseTemporaryRedirect('/nta/output/')
         else:
             form_data = request.POST
+            form_files = request.FILES
 
     html = render_to_string('01epa_drupal_header.html', {
         'SITE_SKIN': os.environ['SITE_SKIN'],
@@ -36,7 +51,7 @@ def input_page(request, form_data=None):
         'TITLE': header},
          request=request)
 
-    html += str(NtaInputs(form_data))
+    html += str(NtaInputs(form_data, form_files))
     html += render_to_string('04uberinput_end_drupal.html', {})
     html += render_to_string('04ubertext_end_drupal.html', {})
 

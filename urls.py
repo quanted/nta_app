@@ -6,7 +6,7 @@ from django.conf.urls import url
 #from .views import batch
 #from .views import sam_watershed
 #from .views import proxy
-from .views import input
+from .views import input, output
 
 print('qed.nta_app.urls')
 
@@ -14,7 +14,7 @@ urlpatterns = [
     # django 2.X
     path('', input.input_page),
     path('input/', input.input_page),
-    #path('output/',  ),
+    path('output/', output.output_page),
 
 ]
 

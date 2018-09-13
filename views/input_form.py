@@ -1,11 +1,8 @@
 from django import forms
+from django.core.validators import MinValueValidator
 from django.utils.safestring import mark_safe
 
 from pram_app.models.forms import validation
-
-application_method_CHOICES = (('soil application', 'soil application'), ('tree trunk', 'tree trunk'),
-                              ('foliar spray', 'foliar spray'), ('seed treatment', 'seed treatment'))
-empirical_residue_CHOICES = (('yes', 'yes'), ('no', 'no'))
 
 
 class NtaInputs(forms.Form):
@@ -19,8 +16,18 @@ class NtaInputs(forms.Form):
         initial='Example nta',
         required=True)
     pos_input = forms.FileField(
-        label = 'Positive MPP file (csv)'
-    )
+        label = 'Positive MPP file (csv)')
     neg_input = forms.FileField(
-        label='Negative MPP file (csv)'
-    )
+        label='Negative MPP file (csv)')
+    mass_accuracy_units = forms.ChoiceField(
+        choices=(('ppm', 'ppm'), ('Da', 'Da'),),
+        label = 'Mass accuracy units',
+        initial = 'ppm')
+    mass_accuracy = forms.FloatField(
+        label='Mass accuracy',
+        initial=20,
+        validators=[MinValueValidator(0)])
+    rt_accuracy = forms.FloatField(
+        label='Retention time accuracy (min)',
+        initial=1,
+        validators=[MinValueValidator(0)])
