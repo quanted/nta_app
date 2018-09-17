@@ -10,7 +10,7 @@ from datetime import datetime
 from operator import itemgetter
 from itertools import groupby
 from difflib import SequenceMatcher
-
+from ..app.utilities import connect_to_mongoDB
 from flask import request, Response
 from flask_restful import Resource
 
@@ -33,25 +33,8 @@ def input_handler(file, index):
     return df
 
 
-
-# Use to connect to mongo
-def connect_to_mongoDB():
-    if IN_DOCKER == "False":
-        # Dev env mongoDB
-        mongo = pymongo.MongoClient(host='mongodb://localhost:27017/0')
-        print("MONGODB: mongodb://localhost:27017/0")
-    else:
-        # Production env mongoDB
-        #mongo = pymongo.MongoClient(host='mongodb://mongodb:27017/0')
-        mongo_url = rest_url+':27017/0'
-        mongo = pymongo.MongoClient(host=mongo_url)
-        print("MONGODB: "+ mongo_url)
-    mongo_db = mongo['nta_runs']
-    mongo.nta_runs.Collection.create_index([("date", pymongo.DESCENDING)], expireAfterSeconds=86400)
-    # ALL entries into mongo.flask_hms must have datetime.utcnow() timestamp, which is used to delete the record after 86400
-    # seconds, 24 hours.
-    return mongo_db
-
+def tracer_handler(file):
+    return pd.read_csv(file,comment='#',na_values= 1 | 0)
 
 
 ######## file reader utilities ##########

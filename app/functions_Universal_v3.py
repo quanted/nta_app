@@ -185,7 +185,7 @@ def Blank_Subtract(df,index):
  
 def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm): #a method to query and save the features with tracers criteria
         df1 = df
-        df2 = pd.read_csv(tracers_file,comment='#',na_values= 1 | 0)
+        df2 = tracers_file #pd.read_csv(tracers_file,comment='#',na_values= 1 | 0)
         #b_Statistics[index] = [B + '_x' for B in Statistics[index]]
         df2['Rounded_Mass'] = df2['Monoisotopic_Mass'].round(0)
         #df2['Rounded_RT'] = df2['Retention_Time'].round(0)
@@ -455,7 +455,7 @@ def adduct_identifier(df,index,Mass_Difference,Retention_Difference,ppm):
     columns.extend(lst)
     dft = dft[columns]
     
-    print(dft)
+    #print(dft)
     return dft    
 
 

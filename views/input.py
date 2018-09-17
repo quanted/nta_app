@@ -26,11 +26,16 @@ def input_page(request, form_data=None, form_files=None):
             print("job ID: " + job_id)
             pos_input = request.FILES["pos_input"]
             neg_input = request.FILES["neg_input"]
+            try:
+                tracer_file = request.FILES["tracer_input"]
+                tracer_df = file_manager.tracer_handler(tracer_file)
+            except:
+                tracer_df = None
             inputs = [pos_input, neg_input]
             input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs)]
             #print(input_dfs[0])
-            #print(str(request.FILES.keys()))
-            nta_run = NtaRun(parameters, input_dfs, job_id)
+            print(str(request.FILES.keys()))
+            nta_run = NtaRun(parameters, input_dfs, tracer_df, job_id)
             nta_run.execute()
             #return HttpResponseTemporaryRedirect('/nta/output/')
         else:
@@ -46,6 +51,8 @@ def input_page(request, form_data=None, form_files=None):
 
     # function name example: 'sip_input_page'
     html += render_to_string('04uberinput_jquery.html', {'model': model})
+    html += render_to_string('nta_input_scripts.html')
+    html += render_to_string('nta_input_css.html')
     html += render_to_string('nta_input_start_drupal.html', {
         'MODEL': model,
         'TITLE': header},
