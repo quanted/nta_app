@@ -21,6 +21,12 @@ class NtaRun:
         self.mass_accuracy_units_tr = parameters['mass_accuracy_units_tr']
         self.rt_accuracy_tr = float(parameters['rt_accuracy_tr'])
         self.entact = parameters['entact'] == "yes"
+        self.sample_to_blank = parameters['sample_to_blank']
+        self.min_replicate_hits = parameters['min_replicate_hits']
+        self.max_replicate_cv = parameters['max_replicate_cv']
+        self.parent_ion_mass_accuracy = parameters['parent_ion_mass_accuracy']
+        self.search_mode = parameters['search_mode']
+        self.top_result_only = parameters['top_result_only'] == 'yes'
         self.dfs = input_dfs
         self.jobid = jobid
         self.verbose = verbose
@@ -87,8 +93,9 @@ class NtaRun:
         return
 
     def clean_features(self):
-        #controls =
-        pass
+        controls = [self.sample_to_blank, self.min_replicate_hits, self.max_replicate_cv]
+        self.dfs = [clean_features(df, index, self.entact, controls) for index, df in enumerate(self.dfs)]
+        return
 
 
     def mongo_save(self, file, step=""):
