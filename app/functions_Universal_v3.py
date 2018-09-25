@@ -141,7 +141,7 @@ def statistics(df,index): # calculate Mean,Median,STD,CV for every feature in a 
         df = score(df) 
     # Do some statistical acrobatics
         headers[index] = ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + Abundance[index]
-        df = df[headers[index]]
+        df = df[headers[index]].copy()
         print((Headers[index])) #stopped here before my optometrist appointment
         for list in Headers[index]:
                 REP_NUM = len(list)

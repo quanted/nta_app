@@ -21,10 +21,10 @@ class NtaRun:
         self.mass_accuracy_units_tr = parameters['mass_accuracy_units_tr']
         self.rt_accuracy_tr = float(parameters['rt_accuracy_tr'])
         self.entact = parameters['entact'] == "yes"
-        self.sample_to_blank = parameters['sample_to_blank']
-        self.min_replicate_hits = parameters['min_replicate_hits']
-        self.max_replicate_cv = parameters['max_replicate_cv']
-        self.parent_ion_mass_accuracy = parameters['parent_ion_mass_accuracy']
+        self.sample_to_blank = float(parameters['sample_to_blank'])
+        self.min_replicate_hits = float(parameters['min_replicate_hits'])
+        self.max_replicate_cv = float(parameters['max_replicate_cv'])
+        self.parent_ion_mass_accuracy = float(parameters['parent_ion_mass_accuracy'])
         self.search_mode = parameters['search_mode']
         self.top_result_only = parameters['top_result_only'] == 'yes'
         self.dfs = input_dfs
@@ -55,10 +55,10 @@ class NtaRun:
             #print(self.tracer_dfs_out)
 
         # 4: clean features
-        #self.clean_features()
-        #if self.verbose:
-        #    print("Cleaned features.")
-        #    print(self.dfs[0])
+        self.clean_features()
+        if self.verbose:
+            print("Cleaned features.")
+            print(self.dfs[0])
 
 
     def drop_duplicates(self):
@@ -72,7 +72,6 @@ class NtaRun:
         self.dfs = [statistics(df, index) for index, df in enumerate(self.dfs)]
         print("Calculating statistics with units: " + self.mass_accuracy_units)
         self.dfs = [adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
-        print(self.dfs[0].shape)
         #self.save_df_to_mongo('stats_pos', self.dfs[0])
         #self.save_df_to_mongo('stats_neg', self.dfs[1])
         self.mongo_save(self.dfs[0], 'stats_pos')
@@ -95,6 +94,9 @@ class NtaRun:
     def clean_features(self):
         controls = [self.sample_to_blank, self.min_replicate_hits, self.max_replicate_cv]
         self.dfs = [clean_features(df, index, self.entact, controls) for index, df in enumerate(self.dfs)]
+        self.mongo_save(self.dfs[0], 'cleaned_pos')
+        self.mongo_save(self.dfs[1], 'cleaned_neg')
+        print(self.dfs[0])
         return
 
 
