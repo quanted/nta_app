@@ -44,7 +44,7 @@ def fix_names(df,index): # parse the Dataframe into a numpy array
 
 def read_data(file,index):  # read a csv file into a DataFrame
         ext = os.path.splitext(file)[1]
-        print(ext)
+        #print(ext)
         if ext == '.tsv':
             df = pd.read_csv(file,sep='\t',comment='#',na_values= 1 | 0)
         if ext == '.csv':
@@ -68,14 +68,14 @@ def differences(s1,s2): #find the number of different characters between two str
 def formulas(df):
         df.drop_duplicates(subset='Compound',keep='first',inplace=True)
         formulas = df.loc[df['For_Dashboard_Search'] == '1','Compound'].values #only features flagged for Dashboard search
-        print(formulas)
+        #print(formulas)
         return formulas
 
 
 def masses(df):
         #df.drop_duplicates(subset='Mass',keep='first',inplace=True)
         masses = df.loc[df['For_Dashboard_Search'] == '1','Mass'].values #only features flagged for Dashboard search
-        print(masses)
+        #print(masses)
         return masses
 
 
@@ -112,7 +112,7 @@ def parse_headers(df,index): #group headers into a group of samples
             groups[index] = groupby(new_headers[index], itemgetter(1))
             New_Headers[index] = [[item[0] for item in data] for (key, data) in groups[index]] 
         Headers[index] = New_Headers[index]
-        print((Headers[1]))
+        #print((Headers[1]))
         return Headers[index]
 
 
@@ -142,7 +142,7 @@ def statistics(df,index): # calculate Mean,Median,STD,CV for every feature in a 
     # Do some statistical acrobatics
         headers[index] = ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + Abundance[index]
         df = df[headers[index]].copy()
-        print((Headers[index])) #stopped here before my optometrist appointment
+        #print((Headers[index])) #stopped here before my optometrist appointment
         for list in Headers[index]:
                 REP_NUM = len(list)
                 if REP_NUM > 1:
@@ -255,16 +255,16 @@ def clean_features(df,index,ENTACT,controls): # a method that drops rows based o
         Median_Mid[index] = [md for md in Median[index] if 'B' in md]
         Median_Low[index] = [md for md in Median[index] if 'A' in md]
         Median_MB[index] = [md for md in Median[index] if any(x in md for x in blanks)]
-        print("***********")
-        print((Median_MB[index]))
+        #print("***********")
+        #print((Median_MB[index]))
         N_Abun_High[index] = [N for N in Abundance[index] if 'C' in N]
         N_Abun_MB[index] = [N for N in Abundance[index] if 'MB' in N]
         N_Abun_Samples[index] = [N for N in Abundance[index] if not any(x in N for x in blanks)]    
         N_Abun_MB[index] = [N for N in Abundance[index] if 'MB' in N]
         CV[index] =  df.columns[df.columns.str.contains(pat ='CV_')].tolist()        
         CV_Samples[index] = [C for C in CV[index] if not any(x in C for x in blanks)]        
-        print("***********")
-        print((N_Abun_Samples[index]))   
+        #print("***********")
+        #print((N_Abun_Samples[index]))
         
         if ENTACT: # ENTACT data cleaning
             for median in Median_High[index]:
@@ -278,7 +278,7 @@ def clean_features(df,index,ENTACT,controls): # a method that drops rows based o
         else: # Regular NTA data
             #set medians where feature abundance is less than some cutoff to nan
             for median,N in zip(Median_Samples[index],N_Abun_Samples[index]):
-                print((str(median) + " , " +str(N)))       
+                #print((str(median) + " , " +str(N)))
                 df.loc[df[N]<controls[1],median]= np.nan
           #find the median of all samples and select features where median_samples/ median_blanks >= cutoff
             df['Median_ALLSamples'] = df[Median_Samples[index]].median(axis=1,skipna=True).round(0)
@@ -311,11 +311,11 @@ def flags(df): # a method to develop required flags
 
 def match_headers(list1=None,list2=None):
         string_match = list()
-        print((len(list1), len(list2)))
+        #print((len(list1), len(list2)))
         for i in range(len(list2)):
-            print((list1[i] + "  ,  " + list2[i])) 
+            #print((list1[i] + "  ,  " + list2[i]))
             string_match.append("".join([list2[i][j] for j, (a,b) in enumerate(zip(list1[i],list2[i])) if a == b]))    
-        print((len(string_match)))
+        #print((len(string_match)))
         return string_match    
 
 def append_headers(list1,list2):
@@ -331,14 +331,14 @@ def append_headers(list1,list2):
             list_new = list1 + diff
         else:
             list_new = list1
-        print(list_new)
+        #print(list_new)
         return diff            
         
 
 def common_substrings(ls=[]):
         match  = SequenceMatcher(None,ls[0],ls[len(ls)-1]).find_longest_match(0,len(ls[0]),0,len(ls[len(ls)-1]))
         common = ls[0][match.a: match.a + match.size]
-        print((" ********* " + common))
+        #print((" ********* " + common))
         lsnew = list()
         for i in range(len(ls)):
             if len(common) > 3:
@@ -354,7 +354,7 @@ def combine(df1,df2):
     #Headers = [[],[]]
         #Headers[0] = parse_headers(df1,0)
         #Headers[1] = parse_headers(df2,1)
-    print("##############")
+    #print("##############")
     Abundance=[[],[]]
     Abundance[0] = df1.columns.values.tolist()
     Abundance[1] = df2.columns.values.tolist()         
@@ -365,14 +365,14 @@ def combine(df1,df2):
     #    df1.rename(columns = {Abundance[0][i]:new_headers[i]},inplace=True)
     #    df2.rename(columns = {Abundance[1][i]:new_headers[i]},inplace=True)
     #print df1.columns.values.tolist()
-    print(" ||||___|||| - - - - - - ")
+    #print(" ||||___|||| - - - - - - ")
     #print df2.columns.values.tolist()
     #df1[list(set(Abundance[0])-set(diff))]    = np.nan
     #df2[list(set(Abundance[1])-set(diff))]    = np.nan
     dfc = pd.concat([df1,df2])
     dfc = dfc.reindex_axis(df1.columns, axis=1)
     columns = dfc.columns.values.tolist()
-    print((str(len(columns)) + " ##### " + str(len(df1.columns.values.tolist())) + " #### " + str(len(df2.columns.values.tolist()))))
+    #print((str(len(columns)) + " ##### " + str(len(df1.columns.values.tolist())) + " #### " + str(len(df2.columns.values.tolist()))))
     dfc = pd.merge(dfc,df2,suffixes=['','_x'],on='Compound',how='left')
     dfc = pd.merge(dfc,df1,suffixes=['','_y'],on='Compound',how='left')
 
@@ -382,7 +382,7 @@ def combine(df1,df2):
     dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
     Median_list =  dfc.columns[(dfc.columns.str.contains(pat ='Median_')==True)\
                  & (dfc.columns.str.contains(pat ='MB|blank|blanks|BlankSub|_x|_y')==False)].tolist()
-    print(Median_list)     
+    #print(Median_list)
     dfc['N_Abun_Samples'] = dfc[Median_list].count(axis=1,numeric_only=True)
     dfc['Median_Abun_Samples'] = dfc[Median_list].median(axis=1,skipna=True).round(0)
     dfc['One_Mode_No_Isomers'] = np.where(((dfc.Both_Modes == '0') & (dfc.N_Compound_Hits == 1)),'1','0')
@@ -415,7 +415,7 @@ def reduce(df,index):
 
 def adduct_identifier(df,index,Mass_Difference,Retention_Difference,ppm):
     columns = df.columns.values.tolist()
-    print(("type is " + str(type(Mass_Difference))))
+    #print(("type is " + str(type(Mass_Difference))))
 
     df['rt_rounded'] = df['Retention_Time'].round(2)
     dft = pd.merge(df,df,how='left',suffixes = ('','_y'), on='rt_rounded')
@@ -425,13 +425,13 @@ def adduct_identifier(df,index,Mass_Difference,Retention_Difference,ppm):
     for key in d:    
         is_name = 'is_' + str(key) + '_Adduct'
         has_name = 'has_' + str(key) + '_Adduct'
-        print((d[key][1]))
+        #print((d[key][1]))
         if ppm: # PPM cut
-            print("PPM selected")            
+            #print("PPM selected")
             dft[is_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
                      & (((abs(dft.Mass-(dft.Mass_y+d[key][1]))/dft.Mass)*10**6)<=Mass_Difference),'1','')
         else: # Da Cut
-            print("Da selected")            
+            #print("Da selected")
             dft[is_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
                      & ((abs(dft.Mass-(dft.Mass_y+d[key][1])))<=Mass_Difference),'1','')
 
@@ -468,7 +468,7 @@ def duplicates(df,index):
        #b_Abundance[index] = [ A + "_x" for A in Abundance[index] if 'MB' not in A]
         a_Abundance[index] = [ A for A in Abundance[index]]
         b_Abundance[index] = [ A + "_x" for A in Abundance[index]]
-        print((a_Abundance[1]))
+        #print((a_Abundance[1]))
 
         df['Feature_Number'] = df.index
         df['Mass_Rounded'] = df['Mass'].round(2)
@@ -515,7 +515,7 @@ def MPP_Ready(dft, directory='',file=''):
         #print dft
         #dft.to_csv(directory+'/'+file+'_MPP_Ready.csv', index=False)
         dft = dft[['Formula','Compound Name','CAS ID','Mass','RT'] + NewSamples]    
-        dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)    
+        #dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)
         return dft
 
 

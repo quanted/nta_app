@@ -484,9 +484,9 @@ class Control(object):
                 tophit=False
             T.insert(tk.END, OUTPUT)  
             if by_formula:  
-                contra.Batch_Search(by_formula=True,by_mass=False)
+                contra.Batch_Search(by_mass=False)
             if by_mass:
-                contra.Batch_Search(by_mass=True,by_formula=False, ppm=wdb.get())                
+                contra.Batch_Search(by_mass=True, ppm=wdb.get())
             directory = os.getcwd()+"/"+DIRECTORY
             #contra.Fname[0] = contra.Files[0].rsplit('/',1)[-1]
             #contra.Sname[0] = "Data_Both_Modes_toxpi.xlsx"
@@ -590,19 +590,19 @@ class Control(object):
 
 
 
-    def Batch_Search(self,by_mass=True,by_formula=False,ppm=10):
+    def Batch_Search(self,by_mass=True,ppm=10):
         dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), DIRECTORY)
         compounds = list()
         mono_masses = list()
-        if by_formula:
-            compounds = fn.formulas(contra.dft)
-            self.search = BatchSearch()
-            self.search.batch_search(masses=None,formulas=compounds,directory=dir)
         if by_mass:
             mono_masses = fn.masses(contra.dft)
             mono_masses_str = [str(i) for i in mono_masses]
             self.search = BatchSearch()
             self.search.batch_search(masses=mono_masses_str,formulas=None,directory=dir,by_formula=False,ppm=ppm)
+        else:
+            compounds = fn.formulas(contra.dft)
+            self.search = BatchSearch()
+            self.search.batch_search(masses=None, formulas=compounds, directory=dir)
 
     #bs.batch_search(compounds,directory)
 

@@ -3,9 +3,13 @@ import numpy as np
 import json
 import gridfs
 import sys
+import os
+import time
 from datetime import datetime
-from .functions_Universal_v3 import parse_headers, duplicates, statistics,\
-    adduct_identifier, check_feature_tracers, clean_features, flags
+from . import functions_Universal_v3 as fn
+from .batch_search_v3 import BatchSearch
+#from .functions_Universal_v3 import parse_headers, duplicates, statistics,\
+#    adduct_identifier, check_feature_tracers, clean_features, flags, combine
 from .utilities import connect_to_mongoDB
 
 
@@ -28,9 +32,15 @@ class NtaRun:
         self.search_mode = parameters['search_mode']
         self.top_result_only = parameters['top_result_only'] == 'yes'
         self.dfs = input_dfs
+        self.df_combined = None
+        self.mpp_ready = None
+        self.search_results = None
+        self.download_filename = None
         self.jobid = jobid
         self.verbose = verbose
         self.mongo = connect_to_mongoDB()
+        self.base_dir = os.path.abspath(path.join(os.path.abspath(__file__),"../.."))
+        self.data_dir = os.path.join(self.base_dir, 'data')
 
 
     def execute(self):
@@ -64,20 +74,32 @@ class NtaRun:
         self.create_flags()
         if self.verbose:
             print("Created flags.")
-            print(self.dfs[0])
+            #print(self.dfs[0])
+
+        # 6: combine modes
+        self.combine_modes()
+        if self.verbose:
+            print("Combined modes.")
+            #print(self.df_combined)
+
+        # 7: search dashboard
+        self.search_dashboard()
+        if self.verbose:
+            print("Searching Dashboard.")
+            print()
 
 
     def drop_duplicates(self):
-        self.dfs = [duplicates(df, index) for index, df in enumerate(self.dfs)]
+        self.dfs = [fn.duplicates(df, index) for index, df in enumerate(self.dfs)]
         #self.mongo_save(self.dfs[0], 'input_no_duplicates_pos')
         #self.mongo_save( self.dfs[1], 'input_no_duplicates_neg')
         return
 
     def calc_statistics(self):
         ppm = self.mass_accuracy_units == 'ppm'
-        self.dfs = [statistics(df, index) for index, df in enumerate(self.dfs)]
+        self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
         print("Calculating statistics with units: " + self.mass_accuracy_units)
-        self.dfs = [adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
+        self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
         #self.save_df_to_mongo('stats_pos', self.dfs[0])
         #self.save_df_to_mongo('stats_neg', self.dfs[1])
         self.mongo_save(self.dfs[0], 'stats_pos')
@@ -92,22 +114,66 @@ class NtaRun:
         if self.verbose:
             print("Tracer file found, checking tracers.")
         ppm = self.mass_accuracy_units_tr == 'ppm'
-        self.tracer_dfs_out = [check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
+        self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.tracer_dfs_out[0], 'tracers_pos')
         self.mongo_save(self.tracer_dfs_out[1], 'tracers_neg')
         return
 
     def clean_features(self):
         controls = [self.sample_to_blank, self.min_replicate_hits, self.max_replicate_cv]
-        self.dfs = [clean_features(df, index, self.entact, controls) for index, df in enumerate(self.dfs)]
+        self.dfs = [fn.clean_features(df, index, self.entact, controls) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], 'cleaned_pos')
         self.mongo_save(self.dfs[1], 'cleaned_neg')
         return
 
     def create_flags(self):
-        self.dfs = [flags(df) for df in self.dfs]
+        self.dfs = [fn.flags(df) for df in self.dfs]
         self.mongo_save(self.dfs[0], 'flags_pos')
         self.mongo_save(self.dfs[1], 'flags_neg')
+
+    def combine_modes(self):
+        self.df_combined = fn.combine(self.dfs[0], self.dfs[1])
+        self.mongo_save(self.df_combined, 'combined')
+        self.mpp_ready = fn.MPP_Ready(self.df_combined)
+        self.mongo_save(self.mpp_ready, 'mpp_ready')
+
+    def search_dashboard(self):
+        if self.search_mode == 'mass':
+            mono_masses = fn.masses(self.df_combined)
+            mono_masses_str = [str(i) for i in mono_masses]
+            self.search = BatchSearch()
+            self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.data_dir, by_formula=False, ppm=self.parent_ion_mass_accuracy)
+        else:
+            compounds = fn.formulas(self.df_combined)
+            self.search = BatchSearch()
+            self.search.batch_search(masses=None, formulas=compounds, directory=self.data_dir)
+
+    def download_finished(self):
+        finished = False
+        file_list = []
+        for i in range(100):
+            for filename in os.listdir(self.data_dir):
+                if filename.startswith('ChemistryDashboard-Batch-Search'):
+                    # print("in loop filename: "+filename)
+                    if filename not in file_list and not filename.endswith("part"):
+                        file_list.append(filename)
+                        finished = True
+            if finished and i > 10:  # if there are multiple, wait 10 secs to see if a new one is downloaded
+                break
+            time.sleep(1)
+        if not finished:
+            raise Exception("Download from the CompTox Chemistry Dashboard failed!")
+        if len(file_list) > 1:
+            print("Multiple downloads found: " + str(file_list))
+            print("Using the last one.")
+        self.download_filename = file_list[len(file_list) - 1]
+        print("This is what was downloaded: " + self.download_filename)
+        self.search.close_driver()
+        results_path = os.path.join(self.data_dir,self.download_filename)
+        self.search_results = pd.read_csv(results_path)
+        self.mongo_save(self.search_results, 'dashboard_search')
+        return self.download_filename
+
 
 
     def mongo_save(self, file, step=""):
