@@ -283,7 +283,7 @@ def clean_features(df,index,ENTACT,controls): # a method that drops rows based o
           #find the median of all samples and select features where median_samples/ median_blanks >= cutoff
             df['Median_ALLSamples'] = df[Median_Samples[index]].median(axis=1,skipna=True).round(0)
             df['SampletoBlanks_ratio']=df['Median_ALLSamples'].astype('float')/df[Median_MB[index][0]].astype('float')
-            df = df[(df[N_Abun_MB[index][0]] == 0) | (df['SampletoBlanks_ratio'] >= controls[0])] 
+            df = df[(df[N_Abun_MB[index][0]] == 0) | (df['SampletoBlanks_ratio'] >= controls[0])].copy()
           # remove all features where the abundance is less than some cutoff in all samples  
             df.drop(df[(df[N_Abun_Samples[index]] < controls[1]).all(axis=1)].index,inplace=True)
             df.drop(df[(df[CV_Samples[index]] >= controls[2]).all(axis=1)].index,inplace=True)

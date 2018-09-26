@@ -5,7 +5,7 @@ import gridfs
 import sys
 from datetime import datetime
 from .functions_Universal_v3 import parse_headers, duplicates, statistics,\
-    adduct_identifier, check_feature_tracers, clean_features
+    adduct_identifier, check_feature_tracers, clean_features, flags
 from .utilities import connect_to_mongoDB
 
 
@@ -58,6 +58,12 @@ class NtaRun:
         self.clean_features()
         if self.verbose:
             print("Cleaned features.")
+            #print(self.dfs[0])
+
+        # 5: create flags
+        self.create_flags()
+        if self.verbose:
+            print("Created flags.")
             print(self.dfs[0])
 
 
@@ -96,8 +102,12 @@ class NtaRun:
         self.dfs = [clean_features(df, index, self.entact, controls) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], 'cleaned_pos')
         self.mongo_save(self.dfs[1], 'cleaned_neg')
-        print(self.dfs[0])
         return
+
+    def create_flags(self):
+        self.dfs = [flags(df) for df in self.dfs]
+        self.mongo_save(self.dfs[0], 'flags_pos')
+        self.mongo_save(self.dfs[1], 'flags_neg')
 
 
     def mongo_save(self, file, step=""):
