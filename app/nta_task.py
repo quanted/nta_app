@@ -7,6 +7,7 @@ import os
 import time
 from datetime import datetime
 from . import functions_Universal_v3 as fn
+from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
 #from .functions_Universal_v3 import parse_headers, duplicates, statistics,\
 #    adduct_identifier, check_feature_tracers, clean_features, flags, combine
@@ -39,7 +40,7 @@ class NtaRun:
         self.jobid = jobid
         self.verbose = verbose
         self.mongo = connect_to_mongoDB()
-        self.base_dir = os.path.abspath(path.join(os.path.abspath(__file__),"../.."))
+        self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
         self.data_dir = os.path.join(self.base_dir, 'data')
 
 
@@ -87,6 +88,15 @@ class NtaRun:
         if self.verbose:
             print("Searching Dashboard.")
             print()
+        self.download_finished()
+        if self.verbose:
+            print("Download finished.")
+        self.process_toxpi()
+        if self.verbose:
+            print("Final result processed.")
+        self.clean_files()
+        if self.verbose:
+            print("Download files removed, processing complete.")
 
 
     def drop_duplicates(self):
@@ -162,6 +172,7 @@ class NtaRun:
                 break
             time.sleep(1)
         if not finished:
+            self.search.close_driver()
             raise Exception("Download from the CompTox Chemistry Dashboard failed!")
         if len(file_list) > 1:
             print("Multiple downloads found: " + str(file_list))
@@ -170,9 +181,21 @@ class NtaRun:
         print("This is what was downloaded: " + self.download_filename)
         self.search.close_driver()
         results_path = os.path.join(self.data_dir,self.download_filename)
-        self.search_results = pd.read_csv(results_path)
+        self.search_results = pd.read_csv(results_path, sep='\t')
         self.mongo_save(self.search_results, 'dashboard_search')
         return self.download_filename
+
+    def process_toxpi(self):
+        by_mass = self.search_mode == "mass"
+        self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filename,
+                                               tophit=self.top_result_only, by_mass = by_mass)
+        self.mongo_save(self.search_results, 'combined_toxpi')
+
+    def clean_files(self):
+        path_to_remove = os.path.join(self.data_dir, self.download_filename)
+        os.remove(path_to_remove)
+        if self.verbose:
+            print("Cleaned up download file.")
 
 
 

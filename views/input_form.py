@@ -27,14 +27,14 @@ class NtaInputs(forms.Form):
         initial = 'no')
     mass_accuracy_units = forms.ChoiceField(
         choices=(('ppm', 'ppm'), ('Da', 'Da'),),
-        label = 'Mass accuracy units',
+        label = 'Adduct mass accuracy units',
         initial = 'ppm')
     mass_accuracy = forms.FloatField(
-        label='Mass accuracy',
+        label='Adduct mass accuracy',
         initial=20,
         validators=[MinValueValidator(0)])
     rt_accuracy = forms.FloatField(
-        label='Retention time accuracy (min)',
+        label='Adduct retention time accuracy (min)',
         initial=1,
         validators=[MinValueValidator(0)])
     tracer_input = forms.FileField(

@@ -25,7 +25,7 @@ class BatchSearch:
         #chrome_profile.add_experimental_option("prefs", profile)
 
         options = webdriver.firefox.options.Options()
-        options.set_headless(headless=True)  # change this to false to see the browser in action (slower)
+        options.set_headless(headless=False)  # change this to false to see the browser in action (slower)
         firefox_profile = webdriver.FirefoxProfile()
         firefox_profile.set_preference("browser.download.dir",directory)
         firefox_profile.set_preference("browser.download.folderList",2)
@@ -40,10 +40,11 @@ class BatchSearch:
         #chrome_profile.add_argument("--disable-extensions")
         #self.driver = webdriver.Chrome(executable_path=os.getcwd()+"\chromedriver.exe",
         #chrome_options=chrome_profile)
+        gecko_dir = os.path.dirname(os.path.abspath(__file__))
         if self.bit_64:
-            gecko_path = os.getcwd()+"\geckodriver_64.exe"
+            gecko_path = os.path.join(gecko_dir,"geckodriver_64.exe")
         else:
-            gecko_path = os.getcwd() + "\geckodriver.exe"
+            gecko_path = os.path.join(gecko_dir,"geckodriver.exe")
         print(gecko_path)
         self.driver = webdriver.Firefox(executable_path=gecko_path, firefox_profile=firefox_profile, firefox_options=options)
         self.driver.set_window_position(0,0)
@@ -64,7 +65,7 @@ class BatchSearch:
             inputElement.send_keys(list_formulas)
         else:
             self.driver.find_element_by_xpath('//*[@'+value+'="ms_ready_monoisotopic_mass"]').click()
-            self.driver.find_element_by_xpath('//*[@id="mass-select"]/option[@value="'+str(ppm)+'"]').click()
+            self.driver.find_element_by_xpath('//*[@id="mass-select"]/option['+str(ppm)+']').click()
             inputElement = self.driver.find_element_by_id("identifiers")
             list_masses = "\n".join(masses)
             print(list_masses)
