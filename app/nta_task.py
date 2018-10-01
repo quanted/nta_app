@@ -4,6 +4,7 @@ import json
 import gridfs
 import sys
 import os
+import csv
 import time
 from datetime import datetime
 from . import functions_Universal_v3 as fn
@@ -17,6 +18,7 @@ from .utilities import connect_to_mongoDB
 class NtaRun:
 
     def __init__(self, parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
+        self.project_name = parameters['project_name']
         self.mass_accuracy = float(parameters['mass_accuracy'])
         self.mass_accuracy_units = parameters['mass_accuracy_units']
         self.rt_accuracy = float(parameters['rt_accuracy'])
@@ -41,11 +43,11 @@ class NtaRun:
         self.verbose = verbose
         self.mongo = connect_to_mongoDB()
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
-        self.data_dir = os.path.join(self.base_dir, 'data')
+        self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
+        os.mkdir(self.data_dir)
 
 
     def execute(self):
-        print(self.entact)
         # 1: drop duplicates
         self.drop_duplicates()
         if self.verbose:
@@ -91,6 +93,7 @@ class NtaRun:
         self.download_finished()
         if self.verbose:
             print("Download finished.")
+        self.fix_overflows()
         self.process_toxpi()
         if self.verbose:
             print("Final result processed.")
@@ -108,7 +111,7 @@ class NtaRun:
     def calc_statistics(self):
         ppm = self.mass_accuracy_units == 'ppm'
         self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
-        print("Calculating statistics with units: " + self.mass_accuracy_units)
+        #print("Calculating statistics with units: " + self.mass_accuracy_units)
         self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
         #self.save_df_to_mongo('stats_pos', self.dfs[0])
         #self.save_df_to_mongo('stats_neg', self.dfs[1])
@@ -160,31 +163,56 @@ class NtaRun:
 
     def download_finished(self):
         finished = False
-        file_list = []
         for i in range(100):
             for filename in os.listdir(self.data_dir):
-                if filename.startswith('ChemistryDashboard-Batch-Search'):
-                    # print("in loop filename: "+filename)
-                    if filename not in file_list and not filename.endswith("part"):
-                        file_list.append(filename)
+                if filename.startswith('ChemistryDashboard-Batch-Search') and not filename.endswith("part"):
+                        self.download_filename = filename
                         finished = True
-            if finished and i > 10:  # if there are multiple, wait 10 secs to see if a new one is downloaded
-                break
+                        break
             time.sleep(1)
         if not finished:
             self.search.close_driver()
             raise Exception("Download from the CompTox Chemistry Dashboard failed!")
-        if len(file_list) > 1:
-            print("Multiple downloads found: " + str(file_list))
-            print("Using the last one.")
-        self.download_filename = file_list[len(file_list) - 1]
         print("This is what was downloaded: " + self.download_filename)
         self.search.close_driver()
         results_path = os.path.join(self.data_dir,self.download_filename)
-        time.sleep(5)
+        time.sleep(5) #waiting a second to make sure data is copied from the partial dl file
         self.search_results = pd.read_csv(results_path, sep='\t')
         self.mongo_save(self.search_results, 'dashboard_search')
         return self.download_filename
+
+    def fix_overflows(self):
+        """
+        This function fixes an error seen in some comptox dashboard results, where a newline character is inserted into
+        the middle of the chemical names, messing up the tsv file.
+        :return:
+        """
+        if self.download_filename is not None:
+            results_path = os.path.join(self.data_dir, self.download_filename)
+            new_file = []
+            problems = []
+            row_len = []
+            correct_len = 19
+            with open(results_path, 'r') as file:
+                reader = csv.reader(file, delimiter = '\t')
+                for index, row in enumerate(reader):
+                    row_len.append(len(row))
+                    new_file.append(row)
+                    last_line = row_len[index - 1]
+                    if row_len[index] < correct_len and last_line < correct_len and row_len[index] + last_line == correct_len + 1:
+                        new_file[index - 1][len(new_file[index - 1]) - 1] = new_file[index - 1][
+                                                                                len(new_file[index - 1]) - 1] + \
+                                                                            new_file[index][0]
+                        new_file[index - 1] = new_file[index - 1] + new_file[index][1:]
+                        problems.append(index)
+            if problems: #check if list of problems is not empty
+                [new_file.pop(i) for i in reversed(problems)]
+
+            with open(results_path, 'w', newline = '') as file:
+                writer = csv.writer(file, delimiter = '\t')
+                writer.writerows(new_file)
+
+
 
     def process_toxpi(self):
         by_mass = self.search_mode == "mass"
@@ -195,6 +223,7 @@ class NtaRun:
     def clean_files(self):
         path_to_remove = os.path.join(self.data_dir, self.download_filename)
         os.remove(path_to_remove)
+        os.rmdir(self.data_dir)
         if self.verbose:
             print("Cleaned up download file.")
 

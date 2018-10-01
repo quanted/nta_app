@@ -34,7 +34,6 @@ def input_page(request, form_data=None, form_files=None):
             inputs = [pos_input, neg_input]
             input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs)]
             #print(input_dfs[0])
-            print(str(request.FILES.keys()))
             nta_run = NtaRun(parameters, input_dfs, tracer_df, job_id)
             nta_run.execute()
             #return HttpResponseTemporaryRedirect('/nta/output/')

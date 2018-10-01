@@ -94,14 +94,14 @@ def parse_headers(df,index): #group headers into a group of samples
             groups[index] = groupby(new_headers[index], itemgetter(1))
             New_Headers[index] = [[item[0] for item in data] for (key, data) in groups[index]]
         Headers[index] = New_Headers[index]
-        print((Headers[1]))
+        #print((Headers[1]))
         return Headers[index]
 
 
 def common_substrings(ls=[]):
         match  = SequenceMatcher(None,ls[0],ls[len(ls)-1]).find_longest_match(0,len(ls[0]),0,len(ls[len(ls)-1]))
         common = ls[0][match.a: match.a + match.size]
-        print((" ********* " + common))
+        #print((" ********* " + common))
         lsnew = list()
         for i in range(len(ls)):
             if len(common) > 3:

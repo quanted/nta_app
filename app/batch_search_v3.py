@@ -25,7 +25,7 @@ class BatchSearch:
         #chrome_profile.add_experimental_option("prefs", profile)
 
         options = webdriver.firefox.options.Options()
-        options.set_headless(headless=False)  # change this to false to see the browser in action (slower)
+        options.set_headless(headless=True)  # change this to false to see the browser in action (slower)
         firefox_profile = webdriver.FirefoxProfile()
         firefox_profile.set_preference("browser.download.dir",directory)
         firefox_profile.set_preference("browser.download.folderList",2)
@@ -61,14 +61,14 @@ class BatchSearch:
             self.driver.find_element_by_xpath('//*[@'+value+'="exact_formula"]').click()
             inputElement = self.driver.find_element_by_id("identifiers")
             list_formulas = "\n".join(formulas)
-            print(list_formulas)
+            #print(list_formulas)
             inputElement.send_keys(list_formulas)
         else:
             self.driver.find_element_by_xpath('//*[@'+value+'="ms_ready_monoisotopic_mass"]').click()
             self.driver.find_element_by_xpath('//*[@id="mass-select"]/option['+str(ppm)+']').click()
             inputElement = self.driver.find_element_by_id("identifiers")
             list_masses = "\n".join(masses)
-            print(list_masses)
+            #print(list_masses)
             inputElement.send_keys(list_masses)
         #self.driver.find_element_by_id("display-batch-chemicals-btn").click()
     
@@ -128,7 +128,7 @@ class BatchSearch:
     
         time.sleep(2)
         if submit.is_enabled():
-            print("enabled")
+            #print("enabled")
             submit.send_keys(Keys.ENTER)
         return self.driver
     
