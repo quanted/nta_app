@@ -181,6 +181,7 @@ class NtaRun:
         print("This is what was downloaded: " + self.download_filename)
         self.search.close_driver()
         results_path = os.path.join(self.data_dir,self.download_filename)
+        time.sleep(5)
         self.search_results = pd.read_csv(results_path, sep='\t')
         self.mongo_save(self.search_results, 'dashboard_search')
         return self.download_filename
