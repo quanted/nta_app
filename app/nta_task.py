@@ -230,11 +230,11 @@ class NtaRun:
 
 
     def mongo_save(self, file, step=""):
-        to_save = json.loads(file.to_json(orient='index'))
+        to_save = json.loads(file.to_json(orient='split'))
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
         id = self.jobid + "_" + step
-        data = {'_id': id, 'date': time_stamp, 'data': to_save}
+        data = {'_id': id, 'date': time_stamp, 'project_name': self.project_name,'data': to_save}
         posts.insert_one(data)
 
 

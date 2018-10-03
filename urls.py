@@ -14,7 +14,8 @@ urlpatterns = [
     # django 2.X
     path('', input.input_page),
     path('input/', input.input_page),
-    path('output/', output.output_page),
+    path('output/<slug:jobid>', output.output_page),
+    path('toxpi_data/<slug:jobid>', output.download_toxpi)
 
 ]
 

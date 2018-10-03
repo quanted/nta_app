@@ -9,16 +9,13 @@ from django.views.decorators.http import require_POST
 
 from . import links_left
 from .input_form import NtaInputs
-from ..tools.output_access import OutputServer
 
 
 #@require_POST
-def output_page(request, model='nta', header='NTA', jobid = '00000000'):
+def output_page(request, model='nta', header='NTA', jobid='00000000'):
     header = "NTA"
     model = "nta"
-    model_output_html = "<h3> Job ID: " + jobid + "</h3>"
-    #this is where the func to generate output html will be called
-    model_output_html += file_download_buttons(jobid)
+    model_output_html = "Processing... (3-5 minutes)" #this is where the func to generate output html will be called
     html = output_page_html(header, model, model_output_html)
     response = HttpResponse()
     response.write(html)
@@ -52,19 +49,3 @@ def output_page_html(header, model, tables_html):
     #epa template footer
     html += render_to_string('10epa_drupal_footer.html', {})
     return html
-
-
-def file_download_buttons(jobid):
-    html = """
-    <H3 id="section1"><span></span>Download results:</H3>
-        <div class="buttons">
-            <input type="button" value="Final results" onclick="window.open('/nta/toxpi_data/{jobid}')">
-        </div>
-    """
-    return html.format(jobid = jobid)
-
-
-def download_toxpi(request, jobid = '00000000'):
-    server = OutputServer(jobid)
-    response = server.final_result()
-    return response

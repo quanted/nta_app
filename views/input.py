@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.encoding import iri_to_uri
 
-from . import links_left, output
+from . import links_left, processing
 from ..tools import file_manager
 from .input_form import NtaInputs
 from ..app.nta_task import NtaRun
@@ -36,7 +36,8 @@ def input_page(request, form_data=None, form_files=None):
             #print(input_dfs[0])
             nta_run = NtaRun(parameters, input_dfs, tracer_df, job_id)
             nta_run.execute()
-            #return HttpResponseTemporaryRedirect('/nta/output/')
+            return redirect('/nta/output/'+job_id, permanent=True)
+            #return HttpResponseTemporaryRedirect('/nta/output/'+job_id)
         else:
             form_data = request.POST
             form_files = request.FILES

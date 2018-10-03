@@ -16,10 +16,6 @@ from flask_restful import Resource
 
 import pymongo as pymongo
 
-IN_DOCKER = os.environ.get("IN_DOCKER")
-rest_url = os.environ['UBERTOOL_REST_SERVER'] #get address of flask backend for monggodb
-
-
 #convert the user-supplied input file into dataframe
 def input_handler(file, index):
     #ext = os.path.splitext(file)[1]
