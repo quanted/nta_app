@@ -12,18 +12,20 @@ from .input_form import NtaInputs
 
 
 #@require_POST
-def output_page(request, model='nta', header='NTA', jobid='00000000'):
+def processing_page(request, model='nta', header='NTA', jobid='00000000'):
     header = "NTA"
     model = "nta"
-    model_output_html = "Processing... (3-5 minutes)" #this is where the func to generate output html will be called
-    html = output_page_html(header, model, model_output_html)
+    model_output_html = '<div id="wait_gif"><img src="/static_qed/nta/loading1.gif" alt="Loading..."></div>'
+    model_output_html += '<div id="status"> Processing... please wait. </div>' #this is where the func to generate output html will be called
+
+    html = processing_page_html(header, model, model_output_html)
     response = HttpResponse()
     response.write(html)
     #print(html)
     return response
 
 
-def output_page_html(header, model, tables_html):
+def processing_page_html(header, model, tables_html):
     """Generates HTML to fill '.articles_output' div on output page"""
 
     #epa template header
@@ -44,6 +46,8 @@ def output_page_html(header, model, tables_html):
 
     #css and scripts
     html += render_to_string('09epa_drupal_pram_css.html', {})
+    html += render_to_string('09epa_drupal_pram_scripts.html', {})
+    html += render_to_string('nta_processing_scripts.html')
     #html += render_to_string('09epa_drupal_pram_scripts.html', {})
 
     #epa template footer

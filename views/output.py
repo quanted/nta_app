@@ -9,7 +9,6 @@ from django.views.decorators.http import require_POST
 
 from . import links_left
 from .input_form import NtaInputs
-from ..tools.output_access import OutputServer
 
 
 #@require_POST
@@ -56,15 +55,16 @@ def output_page_html(header, model, tables_html):
 
 def file_download_buttons(jobid):
     html = """
-    <H3 id="section1"><span></span>Download results:</H3>
+    <H3 id="section1">Download results:</H3>
         <div class="buttons">
-            <input type="button" value="Final results" onclick="window.open('/nta/toxpi_data/{jobid}')">
+            <input type="button" value="Final results" onclick="window.open('/nta/results/toxpi/{jobid}')">
+        </div>
+    """
+    html +=  """
+        <div class="buttons">
+            <input type="button" value="All files" onclick="window.open('/nta/results/all/{jobid}')">
         </div>
     """
     return html.format(jobid = jobid)
 
 
-def download_toxpi(request, jobid = '00000000'):
-    server = OutputServer(jobid)
-    response = server.final_result()
-    return response

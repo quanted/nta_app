@@ -7,6 +7,8 @@ import os
 import csv
 import time
 from datetime import datetime
+from dask.distributed import Client
+
 from . import functions_Universal_v3 as fn
 from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
@@ -14,6 +16,26 @@ from .batch_search_v3 import BatchSearch
 #    adduct_identifier, check_feature_tracers, clean_features, flags, combine
 from .utilities import connect_to_mongoDB
 
+
+def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
+    dask_client = Client(processes=False)
+    return dask_client.submit(run_nta, parameters, input_dfs, tracer_df, jobid, verbose)
+
+
+def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
+    nta_run = NtaRun(parameters, input_dfs, tracer_df, jobid, verbose)
+    nta_run.execute()
+    return True
+
+
+FILENAMES = {'stats': ['stats_pos', 'stats_neg'],
+             'tracers': ['tracers_pos', 'tracers_neg'],
+             'cleaned': ['cleaned_pos', 'cleaned_neg'],
+             'flags': ['flags_pos', 'flags_neg'],
+             'combined': 'combined',
+             'mpp_ready': 'combined_mpp_ready',
+             'dashboard': 'dashboard_search',
+             'toxpi': 'combined_toxpi'}
 
 class NtaRun:
 
@@ -48,6 +70,10 @@ class NtaRun:
 
 
     def execute(self):
+
+        # 0: create a status in mongo
+        self.set_status('Processing')
+
         # 1: drop duplicates
         self.drop_duplicates()
         if self.verbose:
@@ -101,6 +127,22 @@ class NtaRun:
         if self.verbose:
             print("Download files removed, processing complete.")
 
+        # 8: set status to completed
+        self.set_status('Completed')
+
+
+
+    def set_status(self, status):
+        posts = self.mongo.posts
+        time_stamp = datetime.utcnow()
+        id = self.jobid + "_" + "status"
+        data = {'_id': id, 'date': time_stamp, 'status': status}
+        posts.update_one({'_id': id},{'$set': {'_id': id,
+                                              'date': time_stamp,
+                                              'status': status}},
+                         upsert=True)
+        posts.replace_one(data, data, upsert=True)
+
 
     def drop_duplicates(self):
         self.dfs = [fn.duplicates(df, index) for index, df in enumerate(self.dfs)]
@@ -115,8 +157,8 @@ class NtaRun:
         self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
         #self.save_df_to_mongo('stats_pos', self.dfs[0])
         #self.save_df_to_mongo('stats_neg', self.dfs[1])
-        self.mongo_save(self.dfs[0], 'stats_pos')
-        self.mongo_save(self.dfs[1], 'stats_neg')
+        self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
+        self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
 
 
@@ -128,27 +170,27 @@ class NtaRun:
             print("Tracer file found, checking tracers.")
         ppm = self.mass_accuracy_units_tr == 'ppm'
         self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
-        self.mongo_save(self.tracer_dfs_out[0], 'tracers_pos')
-        self.mongo_save(self.tracer_dfs_out[1], 'tracers_neg')
+        self.mongo_save(self.tracer_dfs_out[0], FILENAMES['tracers'][0])
+        self.mongo_save(self.tracer_dfs_out[1], FILENAMES['tracers'][1])
         return
 
     def clean_features(self):
         controls = [self.sample_to_blank, self.min_replicate_hits, self.max_replicate_cv]
         self.dfs = [fn.clean_features(df, index, self.entact, controls) for index, df in enumerate(self.dfs)]
-        self.mongo_save(self.dfs[0], 'cleaned_pos')
-        self.mongo_save(self.dfs[1], 'cleaned_neg')
+        self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
+        self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
         return
 
     def create_flags(self):
         self.dfs = [fn.flags(df) for df in self.dfs]
-        self.mongo_save(self.dfs[0], 'flags_pos')
-        self.mongo_save(self.dfs[1], 'flags_neg')
+        self.mongo_save(self.dfs[0], FILENAMES['flags'][0])
+        self.mongo_save(self.dfs[1], FILENAMES['flags'][1])
 
     def combine_modes(self):
         self.df_combined = fn.combine(self.dfs[0], self.dfs[1])
-        self.mongo_save(self.df_combined, 'combined')
+        self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
-        self.mongo_save(self.mpp_ready, 'mpp_ready')
+        self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'])
 
     def search_dashboard(self):
         if self.search_mode == 'mass':
@@ -163,12 +205,12 @@ class NtaRun:
 
     def download_finished(self):
         finished = False
-        for i in range(100):
+        tries = 0
+        while not finished and tries < 100:
             for filename in os.listdir(self.data_dir):
                 if filename.startswith('ChemistryDashboard-Batch-Search') and not filename.endswith("part"):
                         self.download_filename = filename
                         finished = True
-                        break
             time.sleep(1)
         if not finished:
             self.search.close_driver()
@@ -178,7 +220,7 @@ class NtaRun:
         results_path = os.path.join(self.data_dir,self.download_filename)
         time.sleep(5) #waiting a second to make sure data is copied from the partial dl file
         self.search_results = pd.read_csv(results_path, sep='\t')
-        self.mongo_save(self.search_results, 'dashboard_search')
+        self.mongo_save(self.search_results, FILENAMES['dashboard'])
         return self.download_filename
 
     def fix_overflows(self):
@@ -218,7 +260,7 @@ class NtaRun:
         by_mass = self.search_mode == "mass"
         self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filename,
                                                tophit=self.top_result_only, by_mass = by_mass)
-        self.mongo_save(self.search_results, 'combined_toxpi')
+        self.mongo_save(self.search_results, FILENAMES['toxpi'])
 
     def clean_files(self):
         path_to_remove = os.path.join(self.data_dir, self.download_filename)
@@ -238,8 +280,4 @@ class NtaRun:
         posts.insert_one(data)
 
 
-    # def save_df_to_mongo(self, label, df): #TODO: save each csv as a new item, save raw csv as binary not json
-    #     posts = self.mongo.posts
-    #     time_stamp = datetime.utcnow()
-    #     data = df.to_json(orient='index')
-    #     posts.update_one({'_id': self.jobid}, {'$set': {label: data}})
+
