@@ -53,7 +53,6 @@ def input_page(request, form_data=None, form_files=None):
     html += render_to_string('epa_drupal_section_title_nta.html', {})
 
     # function name example: 'sip_input_page'
-    html += render_to_string('04uberinput_jquery.html', {'model': model})
     html += render_to_string('nta_input_scripts.html')
     html += render_to_string('nta_input_css.html')
     html += render_to_string('nta_input_start_drupal.html', {

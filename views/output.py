@@ -15,7 +15,7 @@ from .input_form import NtaInputs
 def output_page(request, model='nta', header='NTA', jobid = '00000000'):
     header = "NTA"
     model = "nta"
-    model_output_html = "<h3> Job ID: " + jobid + "</h3>"
+    model_output_html = "<h3> Job ID: " + jobid + "</h3> <br>"
     #this is where the func to generate output html will be called
     model_output_html += file_download_buttons(jobid)
     html = output_page_html(header, model, model_output_html)
@@ -46,7 +46,7 @@ def output_page_html(header, model, tables_html):
 
     #css and scripts
     html += render_to_string('09epa_drupal_pram_css.html', {})
-    #html += render_to_string('09epa_drupal_pram_scripts.html', {})
+    html += render_to_string('nta_output_scripts.html', {})
 
     #epa template footer
     html += render_to_string('10epa_drupal_footer.html', {})
@@ -55,7 +55,8 @@ def output_page_html(header, model, tables_html):
 
 def file_download_buttons(jobid):
     html = """
-    <H3 id="section1">Download results:</H3>
+    <div id="download_area">
+        <H3 id="section1">Download results:</H3>
         <div class="buttons">
             <input type="button" value="Final results" onclick="window.open('/nta/results/toxpi/{jobid}')">
         </div>
@@ -64,6 +65,7 @@ def file_download_buttons(jobid):
         <div class="buttons">
             <input type="button" value="All files" onclick="window.open('/nta/results/all/{jobid}')">
         </div>
+    </div>
     """
     return html.format(jobid = jobid)
 
