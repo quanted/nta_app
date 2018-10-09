@@ -27,14 +27,14 @@ class NtaInputs(forms.Form):
         initial = 'no')
     mass_accuracy_units = forms.ChoiceField(
         choices=(('ppm', 'ppm'), ('Da', 'Da'),),
-        label = 'Mass accuracy units',
+        label = 'Adduct mass accuracy units',
         initial = 'ppm')
     mass_accuracy = forms.FloatField(
-        label='Mass accuracy',
-        initial=20,
+        label='Adduct mass accuracy',
+        initial=10,
         validators=[MinValueValidator(0)])
     rt_accuracy = forms.FloatField(
-        label='Retention time accuracy (min)',
+        label='Adduct retention time accuracy (min)',
         initial=1,
         validators=[MinValueValidator(0)])
     tracer_input = forms.FileField(
@@ -47,7 +47,7 @@ class NtaInputs(forms.Form):
         initial='ppm')
     mass_accuracy_tr = forms.FloatField(
         label='Tracer mass accuracy',
-        initial=20,
+        initial=10,
         validators=[MinValueValidator(0)])
     rt_accuracy_tr = forms.FloatField(
         label='Tracer retention time accuracy (min)',
@@ -60,7 +60,7 @@ class NtaInputs(forms.Form):
     min_replicate_hits = forms.IntegerField(
         widget = RangeInput(attrs={'max': '3', 'min':'1', 'class': 'slider_bar'}),
         label='Min replicate hits',
-        initial=2,
+        initial=1,
         validators=[MinValueValidator(0)])
     max_replicate_cv = forms.FloatField(
         label='Max replicate CV',
@@ -69,7 +69,7 @@ class NtaInputs(forms.Form):
     parent_ion_mass_accuracy = forms.IntegerField(
         widget = RangeInput(attrs={'max': '10', 'min':'1', 'class': 'slider_bar'}),
         label='Parent ion mass accuracy (ppm)',
-        initial=1,
+        initial=5,
         validators=[MinValueValidator(0)])
     search_mode = forms.ChoiceField(
         label='Search dashboard by',

@@ -6,11 +6,13 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.encoding import iri_to_uri
+from dask.distributed import Client
 
-from . import links_left, output
+
+from . import links_left, processing
 from ..tools import file_manager
 from .input_form import NtaInputs
-from ..app.nta_task import NtaRun
+from ..app.nta_task import run_nta_dask
 
 def input_page(request, form_data=None, form_files=None):
 
@@ -34,10 +36,11 @@ def input_page(request, form_data=None, form_files=None):
             inputs = [pos_input, neg_input]
             input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs)]
             #print(input_dfs[0])
-            print(str(request.FILES.keys()))
-            nta_run = NtaRun(parameters, input_dfs, tracer_df, job_id)
-            nta_run.execute()
-            #return HttpResponseTemporaryRedirect('/nta/output/')
+            run_nta_dask(parameters, input_dfs, tracer_df, job_id)
+            #nta_run = NtaRun(parameters, input_dfs, tracer_df, job_id)
+            #nta_run.execute()
+            return redirect('/nta/processing/'+job_id, permanent=True)
+            #return HttpResponseTemporaryRedirect('/nta/output/'+job_id)
         else:
             form_data = request.POST
             form_files = request.FILES
@@ -50,7 +53,6 @@ def input_page(request, form_data=None, form_files=None):
     html += render_to_string('epa_drupal_section_title_nta.html', {})
 
     # function name example: 'sip_input_page'
-    html += render_to_string('04uberinput_jquery.html', {'model': model})
     html += render_to_string('nta_input_scripts.html')
     html += render_to_string('nta_input_css.html')
     html += render_to_string('nta_input_start_drupal.html', {
