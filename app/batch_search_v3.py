@@ -2,7 +2,9 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.remote.remote_connection import LOGGER
 
+import logging
 import os
 import time
 import urllib.request, urllib.parse, urllib.error
@@ -23,7 +25,7 @@ class BatchSearch:
         #        "safebrowsing.enabled": True}
 
         #chrome_profile.add_experimental_option("prefs", profile)
-
+        LOGGER.setLevel(logging.WARNING)
         options = webdriver.firefox.options.Options()
         options.set_headless(headless=True)  # change this to false to see the browser in action (slower)
         firefox_profile = webdriver.FirefoxProfile()

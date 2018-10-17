@@ -19,7 +19,8 @@ from .utilities import connect_to_mongoDB
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
     dask_client = Client(processes=False)
-    return dask_client.submit(run_nta, parameters, input_dfs, tracer_df, jobid, verbose)
+    dask_input_dfs = dask_client.scatter(input_dfs)
+    return dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, jobid, verbose)
 
 
 def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):

@@ -370,7 +370,7 @@ def combine(df1,df2):
     #df1[list(set(Abundance[0])-set(diff))]    = np.nan
     #df2[list(set(Abundance[1])-set(diff))]    = np.nan
     dfc = pd.concat([df1,df2])
-    dfc = dfc.reindex_axis(df1.columns, axis=1)
+    dfc = dfc.reindex(columns = df1.columns)
     columns = dfc.columns.values.tolist()
     #print((str(len(columns)) + " ##### " + str(len(df1.columns.values.tolist())) + " #### " + str(len(df2.columns.values.tolist()))))
     dfc = pd.merge(dfc,df2,suffixes=['','_x'],on='Compound',how='left')
@@ -473,17 +473,17 @@ def duplicates(df,index):
         df['Feature_Number'] = df.index
         df['Mass_Rounded'] = df['Mass'].round(2)
         df['Retention_Time_Rounded'] = df['Retention_Time'].round(1)
-        df2 = pd.merge(df,df,how='left',suffixes=('','_x'),on=['Mass_Rounded','Retention_Time_Rounded'])
+        df2 = pd.merge(df,df,how='left',suffixes=('','_x'),on=['Mass_Rounded','Retention_Time_Rounded']).copy()
         df2.sort_index(inplace=True)
 
         df2['Matches'] = np.where((abs(df2['Mass']-df2['Mass_x'])<=0.005) & (abs(df2['Retention_Time']-df2['Retention_Time_x'])<=0.05) & ((df2[a_Abundance[index]].values == df2[b_Abundance[index]].values).any(axis=1)) & (df2['Feature_Number'] != df2['Feature_Number_x']),1,0)
-        df2 = df2[df2['Matches']==1]
+        df2 = df2[df2['Matches']==1].copy()
         df2['N_hits'] = df2[a_Abundance[index]].count(axis=1).round(0)
         df2.sort_values(['N_hits','Mass','Retention_Time'],ascending=[False,False,False],inplace=True)
         #df2['has_Formula'] = np.where( df2['Compound'].str.contains('C') ,1,0)
         #df2['has_not_Formula'] = np.where( df2['Compound'].str.contains('@') ,1,0)
         #df2.to_csv('Testing-duplicates-Algorithm-before.csv', index=False)
-        df2 = df2.drop_duplicates(subset=['Compound','Mass','Retention_Time','Feature_Number'], keep="first")
+        df2 = df2.drop_duplicates(subset=['Compound','Mass','Retention_Time','Feature_Number'], keep="first").copy()
         for i in Abundance:
                 df2[i] = df2[i].fillna(df2.groupby(['Compound','Mass_Rounded','Retention_Time_Rounded','Matches'])[i].transform(max))
         #df2.to_csv('Testing-duplicates-Algorithm-after.csv', index=False)
@@ -491,8 +491,8 @@ def duplicates(df,index):
         df2 = df2[df.columns.values.tolist() + ['Group_Position','N_hits']]
         dft = pd.merge(df,df2,how='left',suffixes=('','_x'),on='Feature_Number')
         dft['Group_Position'] = dft['Group_Position'].fillna(0)
-        dft = dft[dft['Group_Position'] == 0]
-        dft = dft[df.columns.values.tolist()]
+        dft = dft[dft['Group_Position'] == 0].copy()
+        dft = dft[df.columns.values.tolist()].copy()
         dft.drop(['Mass_Rounded','Retention_Time_Rounded'],axis=1,inplace=True)
         #dft.to_csv('what_is_in_here.csv',index=False)
         return dft
