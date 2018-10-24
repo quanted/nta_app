@@ -7,7 +7,7 @@ import os
 import csv
 import time
 from datetime import datetime
-from dask.distributed import Client
+from dask.distributed import Client, LocalCluster
 
 from . import functions_Universal_v3 as fn
 from. import Toxpi_v3 as toxpi
@@ -18,7 +18,8 @@ from .utilities import connect_to_mongoDB
 
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
-    dask_client = Client(processes=False)
+    local_cluster = LocalCluster(processes=False, diagnostics_port = None)
+    dask_client = Client(local_cluster)
     dask_input_dfs = dask_client.scatter(input_dfs)
     return dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, jobid, verbose)
 
