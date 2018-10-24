@@ -6,7 +6,7 @@ import os
 IN_DOCKER = os.environ.get("IN_DOCKER")
 rest_url = os.environ['UBERTOOL_REST_SERVER'][:-5] #get address of flask backend for monggodb, no port for flask
 
-IN_DOCKER = "False"
+#IN_DOCKER = "False"
 
 def connect_to_mongoDB():
     if IN_DOCKER == "False":

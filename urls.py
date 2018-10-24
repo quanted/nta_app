@@ -6,7 +6,7 @@ from django.conf.urls import url
 #from .views import batch
 #from .views import sam_watershed
 #from .views import proxy
-from .views import input, processing, output, results_api
+from .views import input, processing, output, results_api, algorithms, qaqc, references, misc
 
 print('qed.nta_app.urls')
 
@@ -18,7 +18,11 @@ urlpatterns = [
     path('output/<slug:jobid>', output.output_page),
     path('results/toxpi/<slug:jobid>', results_api.download_toxpi),
     path('results/all/<slug:jobid>', results_api.download_all),
-    path('status/<slug:jobid>', results_api.check_status)
+    path('status/<slug:jobid>', results_api.check_status),
+    path('algorithms/', algorithms.algorithms_page),
+    path('qaqc/', qaqc.qaqcd_page),
+    path('references/', references.references_page),
+    path('github/', misc.github)
 ]
 
 # 404 Error view (file not found)
