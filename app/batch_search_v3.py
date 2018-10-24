@@ -43,10 +43,11 @@ class BatchSearch:
         #self.driver = webdriver.Chrome(executable_path=os.getcwd()+"\chromedriver.exe",
         #chrome_options=chrome_profile)
         gecko_dir = os.path.dirname(os.path.abspath(__file__))
-        if self.bit_64:
-            gecko_path = os.path.join(gecko_dir,"geckodriver_64.exe")
-        else:
-            gecko_path = os.path.join(gecko_dir,"geckodriver.exe")
+        gecko_path = os.path.join(gecko_dir,"geckodriver.elf")
+        # if self.bit_64:
+        #     gecko_path = os.path.join(gecko_dir,"geckodriver_64.exe")
+        # else:
+        #     gecko_path = os.path.join(gecko_dir,"geckodriver.exe")
         print(gecko_path)
         self.driver = webdriver.Firefox(executable_path=gecko_path, firefox_profile=firefox_profile, firefox_options=options)
         self.driver.set_window_position(0,0)
