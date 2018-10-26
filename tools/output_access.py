@@ -10,7 +10,7 @@ from ..app.nta_task import FILENAMES
 from pymongo.errors import OperationFailure
 
 IN_DOCKER = os.environ.get("IN_DOCKER")
-IN_DOCKER = "False"  #for local
+#IN_DOCKER = "False"  #for local
 
 
 def datetime_handler(x):

@@ -13,7 +13,7 @@ from .batch_search_v3 import BatchSearch
 from .utilities import connect_to_mongoDB
 
 IN_DOCKER = os.environ.get("IN_DOCKER")
-IN_DOCKER = "False"  #for local
+#IN_DOCKER = "False"  #for local
 
 logger = logging.getLogger(__name__)
 
