@@ -13,9 +13,10 @@ driver = None
 
 class BatchSearch:
 
-    def __init__(self,bit_64 = True):
+    def __init__(self,bit_64 = True, linux = True):
         self.bit_64 = bit_64
         self.driver = None
+        self.linux = linux
 
     def batch_search(self,masses=None,formulas=None,directory='',by_formula=True,ppm=10):
         # chrome_profile = webdriver.ChromeOptions()
@@ -43,7 +44,10 @@ class BatchSearch:
         #self.driver = webdriver.Chrome(executable_path=os.getcwd()+"\chromedriver.exe",
         #chrome_options=chrome_profile)
         gecko_dir = os.path.dirname(os.path.abspath(__file__))
-        gecko_path = os.path.join(gecko_dir,"geckodriver.elf")
+        if self.linux:
+            gecko_path = os.path.join(gecko_dir,"geckodriver.elf")
+        else:
+            gecko_path = os.path.join(gecko_dir, "geckodriver_64.exe")
         # if self.bit_64:
         #     gecko_path = os.path.join(gecko_dir,"geckodriver_64.exe")
         # else:

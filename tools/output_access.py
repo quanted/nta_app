@@ -1,11 +1,6 @@
 import pandas as pd
-import numpy as np
 import json
-#import gridfs
-import sys
 import os
-import csv
-import time
 from datetime import datetime
 from io import StringIO, BytesIO
 from zipfile import ZipFile
@@ -13,6 +8,10 @@ from django.http import HttpResponse, JsonResponse
 from ..app.utilities import connect_to_mongoDB
 from ..app.nta_task import FILENAMES
 from pymongo.errors import OperationFailure
+
+IN_DOCKER = os.environ.get("IN_DOCKER")
+IN_DOCKER = "False"  #for local
+
 
 def datetime_handler(x):
     if isinstance(x, datetime):
@@ -29,7 +28,8 @@ class OutputServer:
     def __init__(self,jobid = '00000000', project_name = None):
         self.jobid = jobid
         self.project_name = ''
-        self.mongo = connect_to_mongoDB()
+        self.in_docker = IN_DOCKER != "False"
+        self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
         self.posts = self.mongo.posts
         self.names_toxpi = FILENAMES['toxpi']
         self.names_stats = FILENAMES['stats']

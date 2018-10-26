@@ -1,8 +1,5 @@
 import pandas as pd
-import numpy as np
 import json
-#import gridfs
-import sys
 import os
 import csv
 import time
@@ -13,25 +10,32 @@ from dask.distributed import Client, LocalCluster, fire_and_forget
 from . import functions_Universal_v3 as fn
 from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
-#from .functions_Universal_v3 import parse_headers, duplicates, statistics,\
-#    adduct_identifier, check_feature_tracers, clean_features, flags, combine
 from .utilities import connect_to_mongoDB
+
+IN_DOCKER = os.environ.get("IN_DOCKER")
+IN_DOCKER = "False"  #for local
+
+logger = logging.getLogger(__name__)
 
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
-    local_cluster = LocalCluster(processes=False, diagnostics_port = None)
-    # dask_client = Client(local_cluster)
-    dask_client = Client('dask_scheduler:8786', processes=False)
+    in_docker = IN_DOCKER != "False"
+    if not in_docker:
+        logger.info("Running in local development mode.")
+        local_cluster = LocalCluster(processes=False)
+        dask_client = Client(local_cluster)
+    else:
+        logger.info("Running in docker environment.")
+        dask_client = Client('dask_scheduler:8786', processes=False)
     dask_input_dfs = dask_client.scatter(input_dfs)
-    print("Submitting Nta Dask task")
-    task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, jobid, verbose)
-    #task = dask_client.submit(run_nta, parameters, None, None, jobid, verbose)
+    logger.info("Submitting Nta Dask task")
+    task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
     fire_and_forget(task)
-    print("Awaiting task completion") 
+    #logger.info("Awaiting task completion")
 
 
-def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
-    nta_run = NtaRun(parameters, input_dfs, tracer_df, jobid, verbose)
+def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True, in_docker = True):
+    nta_run = NtaRun(parameters, input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
     nta_run.execute()
     return True
 
@@ -47,9 +51,8 @@ FILENAMES = {'stats': ['stats_pos', 'stats_neg'],
 
 class NtaRun:
     
-    def __init__(self, parameters=None, input_dfs=None, tracer_df=None, jobid = "00000000", verbose = True):
-        print("Initializing NtaRun Task")
-        logging.info("Initializing NtaRun Task")
+    def __init__(self, parameters=None, input_dfs=None, tracer_df=None, jobid = "00000000", verbose = True, in_docker = True):
+        logger.info("Initializing NtaRun Task")
         self.project_name = parameters['project_name']
         self.mass_accuracy = float(parameters['mass_accuracy'])
         self.mass_accuracy_units = parameters['mass_accuracy_units']
@@ -73,7 +76,8 @@ class NtaRun:
         self.download_filename = None
         self.jobid = jobid
         self.verbose = verbose
-        self.mongo = connect_to_mongoDB()
+        self.in_docker = in_docker
+        self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
         self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         os.mkdir(self.data_dir)
@@ -87,55 +91,54 @@ class NtaRun:
         # 1: drop duplicates
         self.drop_duplicates()
         if self.verbose:
-            print("Dropped duplicates.")
+            logger.info("Dropped duplicates.")
             #print(self.dfs[0])
 
         # 2: statistics
         self.calc_statistics()
         if self.verbose:
-            print("Calculated statistics.")
+            logger.info("Calculated statistics.")
             #print(self.dfs[0])
             #print(str(list(self.dfs[0])))
 
         # 3: check tracers (optional)
         self.check_tracers()
         if self.verbose:
-            print("Checked tracers.")
+            logger.info("Checked tracers.")
             #print(self.tracer_dfs_out)
 
         # 4: clean features
         self.clean_features()
         if self.verbose:
-            print("Cleaned features.")
+            logger.info("Cleaned features.")
             #print(self.dfs[0])
 
         # 5: create flags
         self.create_flags()
         if self.verbose:
-            print("Created flags.")
+            logger.info("Created flags.")
             #print(self.dfs[0])
 
         # 6: combine modes
         self.combine_modes()
         if self.verbose:
-            print("Combined modes.")
+            logger.info("Combined modes.")
             #print(self.df_combined)
 
         # 7: search dashboard
         self.search_dashboard()
         if self.verbose:
-            print("Searching Dashboard.")
-            print()
+            logger.info("Searching Dashboard.")
         self.download_finished()
         if self.verbose:
-            print("Download finished.")
+            logger.info("Download finished.")
         self.fix_overflows()
         self.process_toxpi()
         if self.verbose:
-            print("Final result processed.")
+            logger.info("Final result processed.")
         self.clean_files()
         if self.verbose:
-            print("Download files removed, processing complete.")
+            logger.info("Download files removed, processing complete.")
 
         # 8: set status to completed
         self.set_status('Completed')
@@ -174,10 +177,10 @@ class NtaRun:
 
     def check_tracers(self):
         if self.tracer_df is None:
-            print("No tracer file, skipping this step.")
+            logger.info("No tracer file, skipping this step.")
             return
         if self.verbose:
-            print("Tracer file found, checking tracers.")
+            logger.info("Tracer file found, checking tracers.")
         ppm = self.mass_accuracy_units_tr == 'ppm'
         self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.tracer_dfs_out[0], FILENAMES['tracers'][0])
@@ -206,11 +209,11 @@ class NtaRun:
         if self.search_mode == 'mass':
             mono_masses = fn.masses(self.df_combined)
             mono_masses_str = [str(i) for i in mono_masses]
-            self.search = BatchSearch()
+            self.search = BatchSearch(linux = self.in_docker)
             self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.data_dir, by_formula=False, ppm=self.parent_ion_mass_accuracy)
         else:
             compounds = fn.formulas(self.df_combined)
-            self.search = BatchSearch()
+            self.search = BatchSearch(linux = self.in_docker)
             self.search.batch_search(masses=None, formulas=compounds, directory=self.data_dir)
 
     def download_finished(self):
@@ -277,7 +280,7 @@ class NtaRun:
         os.remove(path_to_remove)
         os.rmdir(self.data_dir)
         if self.verbose:
-            print("Cleaned up download file.")
+            logger.info("Cleaned up download file.")
 
 
 

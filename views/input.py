@@ -1,4 +1,3 @@
-import importlib
 import os
 import string, random
 
@@ -6,10 +5,9 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.encoding import iri_to_uri
-from dask.distributed import Client
 
 
-from . import links_left, processing
+from . import links_left
 from ..tools import file_manager
 from .input_form import NtaInputs
 from ..app.nta_task import run_nta_dask
@@ -36,12 +34,8 @@ def input_page(request, form_data=None, form_files=None):
                 tracer_df = None
             inputs = [pos_input, neg_input]
             input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs)]
-            #print(input_dfs[0])
             run_nta_dask(parameters, input_dfs, tracer_df, job_id)
-            #nta_run = NtaRun(parameters, input_dfs, tracer_df, job_id)
-            #nta_run.execute()
             return redirect('/nta/processing/'+job_id, permanent=True)
-            #return HttpResponseTemporaryRedirect('/nta/output/'+job_id)
         else:
             form_data = request.POST
             form_files = request.FILES
