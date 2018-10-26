@@ -1,13 +1,14 @@
 import pandas as pd
 import numpy as np
 import json
-import gridfs
+#import gridfs
 import sys
 import os
 import csv
 import time
+import logging
 from datetime import datetime
-from dask.distributed import Client, LocalCluster
+from dask.distributed import Client, LocalCluster, fire_and_forget
 
 from . import functions_Universal_v3 as fn
 from. import Toxpi_v3 as toxpi
@@ -19,9 +20,14 @@ from .utilities import connect_to_mongoDB
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
     local_cluster = LocalCluster(processes=False, diagnostics_port = None)
-    dask_client = Client(local_cluster)
+    # dask_client = Client(local_cluster)
+    dask_client = Client('dask_scheduler:8786', processes=False)
     dask_input_dfs = dask_client.scatter(input_dfs)
-    return dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, jobid, verbose)
+    print("Submitting Nta Dask task")
+    task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, jobid, verbose)
+    #task = dask_client.submit(run_nta, parameters, None, None, jobid, verbose)
+    fire_and_forget(task)
+    print("Awaiting task completion") 
 
 
 def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
@@ -40,8 +46,10 @@ FILENAMES = {'stats': ['stats_pos', 'stats_neg'],
              'toxpi': 'combined_toxpi'}
 
 class NtaRun:
-
-    def __init__(self, parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
+    
+    def __init__(self, parameters=None, input_dfs=None, tracer_df=None, jobid = "00000000", verbose = True):
+        print("Initializing NtaRun Task")
+        logging.info("Initializing NtaRun Task")
         self.project_name = parameters['project_name']
         self.mass_accuracy = float(parameters['mass_accuracy'])
         self.mass_accuracy_units = parameters['mass_accuracy_units']

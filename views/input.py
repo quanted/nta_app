@@ -24,6 +24,7 @@ def input_page(request, form_data=None, form_files=None):
         if (form.is_valid()):
             print("form is valid")
             parameters = request.POST
+            parameters = parameters.dict()
             job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             print("job ID: " + job_id)
             pos_input = request.FILES["pos_input"]
