@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator, FileExtensionValidator
 from django.utils.safestring import mark_safe
 from django.forms.widgets import NumberInput
 
-from pram_app.models.forms import validation
+from nta_app.models.forms import validation
 
 
 class RangeInput(NumberInput):
