@@ -21,10 +21,6 @@ class NtaInputs(forms.Form):
     neg_input = forms.FileField(
         label='Negative MPP file (csv)',
         validators= [FileExtensionValidator(['csv'])])
-    entact = forms.ChoiceField(
-        label = 'ENTACT files?',
-        choices = (('yes', 'yes'), ('no', 'no'),),
-        initial = 'no')
     mass_accuracy_units = forms.ChoiceField(
         choices=(('ppm', 'ppm'), ('Da', 'Da'),),
         label = 'Adduct mass accuracy units',

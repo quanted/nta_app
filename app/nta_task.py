@@ -12,14 +12,13 @@ from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
 from .utilities import connect_to_mongoDB
 
-IN_DOCKER = os.environ.get("IN_DOCKER")
+in_docker= os.environ.get("IN_DOCKER")
 #IN_DOCKER = "False"  #for local
 
 logger = logging.getLogger(__name__)
 
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
-    in_docker = IN_DOCKER != "False"
     if not in_docker:
         logger.info("Running in local development mode.")
         local_cluster = LocalCluster(processes=False)

@@ -9,8 +9,6 @@ from ..app.utilities import connect_to_mongoDB
 from ..app.nta_task import FILENAMES
 from pymongo.errors import OperationFailure
 
-IN_DOCKER = os.environ.get("IN_DOCKER")
-#IN_DOCKER = "False"  #for local
 
 
 def datetime_handler(x):
@@ -28,7 +26,8 @@ class OutputServer:
     def __init__(self,jobid = '00000000', project_name = None):
         self.jobid = jobid
         self.project_name = ''
-        self.in_docker = IN_DOCKER != "False"
+        in_docker = os.environ.get("IN_DOCKER")
+        self.in_docker = in_docker
         self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
         self.posts = self.mongo.posts
         self.names_toxpi = FILENAMES['toxpi']
