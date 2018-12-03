@@ -88,12 +88,14 @@ class NtaRun:
         self.set_status('Processing')
 
         # 1: drop duplicates
+        self.set_status('Dropping duplicates')
         self.drop_duplicates()
         if self.verbose:
             logger.info("Dropped duplicates.")
             #print(self.dfs[0])
 
         # 2: statistics
+        self.set_status('Calculating statistics')
         self.calc_statistics()
         if self.verbose:
             logger.info("Calculated statistics.")
@@ -101,30 +103,35 @@ class NtaRun:
             #print(str(list(self.dfs[0])))
 
         # 3: check tracers (optional)
+        self.set_status('Checking tracers')
         self.check_tracers()
         if self.verbose:
             logger.info("Checked tracers.")
             #print(self.tracer_dfs_out)
 
         # 4: clean features
+        self.set_status('Cleaning features')
         self.clean_features()
         if self.verbose:
             logger.info("Cleaned features.")
             #print(self.dfs[0])
 
         # 5: create flags
+        self.set_status('Creating flags')
         self.create_flags()
         if self.verbose:
             logger.info("Created flags.")
             #print(self.dfs[0])
 
         # 6: combine modes
+        self.set_status('Combining modes')
         self.combine_modes()
         if self.verbose:
             logger.info("Combined modes.")
             #print(self.df_combined)
 
         # 7: search dashboard
+        self.set_status('Searching dashboard')
         self.search_dashboard()
         if self.verbose:
             logger.info("Searching Dashboard.")
