@@ -9,7 +9,7 @@ from ..app.utilities import connect_to_mongoDB
 from ..app.nta_task import FILENAMES
 from pymongo.errors import OperationFailure
 
-#os.environ['IN_DOCKER'] = "False" #for local dev
+os.environ['IN_DOCKER'] = "False" #for local dev
 
 def datetime_handler(x):
     if isinstance(x, datetime):

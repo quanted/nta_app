@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator, FileExtensionValidator
 from django.utils.safestring import mark_safe
 from django.forms.widgets import NumberInput
 
-from pram_app.models.forms import validation
+from nta_app.models.forms import validation
 
 
 class RangeInput(NumberInput):
@@ -21,10 +21,6 @@ class NtaInputs(forms.Form):
     neg_input = forms.FileField(
         label='Negative MPP file (csv)',
         validators= [FileExtensionValidator(['csv'])])
-    entact = forms.ChoiceField(
-        label = 'ENTACT files?',
-        choices = (('yes', 'yes'), ('no', 'no'),),
-        initial = 'no')
     mass_accuracy_units = forms.ChoiceField(
         choices=(('ppm', 'ppm'), ('Da', 'Da'),),
         label = 'Adduct mass accuracy units',

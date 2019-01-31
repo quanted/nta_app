@@ -12,13 +12,15 @@ from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
 from .utilities import connect_to_mongoDB
 
-#os.environ['IN_DOCKER'] = "False" #for local dev
+os.environ['IN_DOCKER'] = "False" #for local dev
 
 logger = logging.getLogger(__name__)
 
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
+    print(os.environ.get("IN_DOCKER"))
     in_docker = os.environ.get("IN_DOCKER") != "False"
+    print(str(in_docker))
     if not in_docker:
         logger.info("Running in local development mode.")
         local_cluster = LocalCluster(processes=False)
@@ -30,7 +32,6 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
     logger.info("Submitting Nta Dask task")
     task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
     fire_and_forget(task)
-    #logger.info("Awaiting task completion")
 
 
 def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True, in_docker = True):
@@ -68,7 +69,7 @@ class NtaRun:
         self.mass_accuracy_tr = float(parameters['mass_accuracy_tr'])
         self.mass_accuracy_units_tr = parameters['mass_accuracy_units_tr']
         self.rt_accuracy_tr = float(parameters['rt_accuracy_tr'])
-        self.entact = parameters['entact'] == "yes"
+        self.entact = False #parameters['entact'] == "yes"
         self.sample_to_blank = float(parameters['sample_to_blank'])
         self.min_replicate_hits = float(parameters['min_replicate_hits'])
         self.max_replicate_cv = float(parameters['max_replicate_cv'])
