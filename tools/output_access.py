@@ -10,7 +10,7 @@ from ..app.nta_task import FILENAMES
 from pymongo.errors import OperationFailure
 
 IN_DOCKER = os.environ.get("IN_DOCKER")
-#IN_DOCKER = "False"  #for local
+IN_DOCKER = "False"  #for local
 
 
 def datetime_handler(x):
@@ -49,12 +49,14 @@ class OutputServer:
             db_record = self.posts.find_one({'_id': id})
             status = db_record['status']
             time = db_record['date']
+            except_text = db_record['error_info']
             #status = json.dumps(db_record['status'])
             #time = json.dumps(db_record['date'], default = datetime_handler)
         except TypeError:
             status = "Not found"
             time = "Not found"
-        response_data = {'start_time': time, 'status': status}
+            except_text = "Not found"
+        response_data = {'start_time': time, 'status': status, 'error_info': except_text}
         return JsonResponse(response_data)
 
     def final_result(self):

@@ -13,7 +13,7 @@ from .batch_search_v3 import BatchSearch
 from .utilities import connect_to_mongoDB
 
 IN_DOCKER = os.environ.get("IN_DOCKER")
-#IN_DOCKER = "False"  #for local
+IN_DOCKER = "False"  #for local
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,14 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
 
 def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True, in_docker = True):
     nta_run = NtaRun(parameters, input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
-    nta_run.execute()
+    try:
+        nta_run.execute()
+    except Exception as e:
+        fail_step = nta_run.get_step()
+        nta_run.set_status("Failed on step: " + fail_step)
+        error = repr(e)
+        nta_run.set_except_message(error)
+        raise e
     return True
 
 
@@ -80,21 +87,24 @@ class NtaRun:
         self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
         self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
+        self.step = "Started" #tracks the current step (for fail messages)
         os.mkdir(self.data_dir)
 
 
     def execute(self):
 
         # 0: create a status in mongo
-        self.set_status('Processing')
+        self.set_status('Processing', create = True)
 
         # 1: drop duplicates
+        self.step = "Dropping duplicates"
         self.drop_duplicates()
         if self.verbose:
             logger.info("Dropped duplicates.")
             #print(self.dfs[0])
 
         # 2: statistics
+        self.step = "Calculating statistics"
         self.calc_statistics()
         if self.verbose:
             logger.info("Calculated statistics.")
@@ -102,30 +112,35 @@ class NtaRun:
             #print(str(list(self.dfs[0])))
 
         # 3: check tracers (optional)
+        self.step = "Checking tracers"
         self.check_tracers()
         if self.verbose:
             logger.info("Checked tracers.")
             #print(self.tracer_dfs_out)
 
         # 4: clean features
+        self.step = "Cleaning features"
         self.clean_features()
         if self.verbose:
             logger.info("Cleaned features.")
             #print(self.dfs[0])
 
         # 5: create flags
+        self.step = "Creating flags"
         self.create_flags()
         if self.verbose:
             logger.info("Created flags.")
             #print(self.dfs[0])
 
         # 6: combine modes
+        self.step = "Combining modes"
         self.combine_modes()
         if self.verbose:
             logger.info("Combined modes.")
             #print(self.df_combined)
 
         # 7: search dashboard
+        self.step = "Searching dashboard"
         self.search_dashboard()
         if self.verbose:
             logger.info("Searching Dashboard.")
@@ -141,26 +156,42 @@ class NtaRun:
             logger.info("Download files removed, processing complete.")
 
         # 8: set status to completed
+        self.step = "Displaying results"
         self.set_status('Completed')
 
 
 
-    def set_status(self, status):
+    def set_status(self, status, create = False):
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
         id = self.jobid + "_" + "status"
         data = {'_id': id, 'date': time_stamp, 'status': status}
+        if create:
+            posts.update_one({'_id': id},{'$set': {'_id': id,
+                                                   'date': time_stamp,
+                                                   'status': status,
+                                                   'error_info': ''}},
+                             upsert=True)
+        else:
+            posts.update_one({'_id': id}, {'$set': {'_id': id,
+                                                    'status': status}},
+                             upsert=True)
+
+    def set_except_message(self, e):
+        posts = self.mongo.posts
+        time_stamp = datetime.utcnow()
+        id = self.jobid + "_" + "status"
+        data = {'_id': id, 'date': time_stamp, 'error_info': e}
         posts.update_one({'_id': id},{'$set': {'_id': id,
                                               'date': time_stamp,
-                                              'status': status}},
+                                              'error_info': e}},
                          upsert=True)
-        posts.replace_one(data, data, upsert=True)
 
+    def get_step(self):
+        return self.step
 
     def drop_duplicates(self):
         self.dfs = [fn.duplicates(df, index) for index, df in enumerate(self.dfs)]
-        #self.mongo_save(self.dfs[0], 'input_no_duplicates_pos')
-        #self.mongo_save( self.dfs[1], 'input_no_duplicates_neg')
         return
 
     def calc_statistics(self):
@@ -168,8 +199,6 @@ class NtaRun:
         self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
         #print("Calculating statistics with units: " + self.mass_accuracy_units)
         self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
-        #self.save_df_to_mongo('stats_pos', self.dfs[0])
-        #self.save_df_to_mongo('stats_neg', self.dfs[1])
         self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
         self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
@@ -224,8 +253,10 @@ class NtaRun:
                 if filename.startswith('ChemistryDashboard-Batch-Search') and not filename.endswith("part"):
                         self.download_filename = filename
                         finished = True
+            tries += 1
             time.sleep(1)
         if not finished:
+            logger.info("Download never finished")
             self.search.close_driver()
             raise Exception("Download from the CompTox Chemistry Dashboard failed!")
         print("This is what was downloaded: " + self.download_filename)

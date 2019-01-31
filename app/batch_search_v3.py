@@ -7,6 +7,7 @@ from selenium.webdriver.remote.remote_connection import LOGGER
 import logging
 import os
 import time
+import signal
 import urllib.request, urllib.parse, urllib.error
 
 driver = None
@@ -141,6 +142,8 @@ class BatchSearch:
     
     
     def close_driver(self):
+        self.driver.service.process.send_signal(signal.SIGTERM)
+        #self.driver.close()
         self.driver.quit()
 
 

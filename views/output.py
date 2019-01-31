@@ -16,8 +16,10 @@ def output_page(request, model='nta', header='NTA', jobid = '00000000'):
     header = "NTA"
     model = "nta"
     model_output_html = "<h3> Job ID: " + jobid + "</h3> <br>"
+
     #this is where the func to generate output html will be called
     model_output_html += file_download_buttons(jobid)
+    model_output_html += '<div id="except_info"></div>' #if there is an error, exception info will be placed here by the js script
     html = output_page_html(header, model, model_output_html)
     response = HttpResponse()
     response.write(html)
