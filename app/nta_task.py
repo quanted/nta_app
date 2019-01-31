@@ -12,7 +12,7 @@ from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
 from .utilities import connect_to_mongoDB
 
-os.environ['IN_DOCKER'] = "False" #for local dev
+#os.environ['IN_DOCKER'] = "False" #for local dev
 
 logger = logging.getLogger(__name__)
 
