@@ -1,4 +1,3 @@
-from django.http import HttpResponse
 from ..tools.output_access import OutputServer
 
 

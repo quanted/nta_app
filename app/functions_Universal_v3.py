@@ -34,7 +34,7 @@ def fix_names(df,index): # parse the Dataframe into a numpy array
         NewSamples = common_substrings(Samples)
         df.drop([col for col in df.columns if 'Spectrum' in col], axis=1,inplace=True)
         for i in range(len(Samples)):
-            df.rename(columns = {Samples[i]:NewSamples[i]},inplace=True)    
+            df.rename(columns = {Samples[i]:NewSamples[i]},inplace=True)
         #df = df
         return df
 
@@ -58,7 +58,7 @@ def read_data(file,index):  # read a csv file into a DataFrame
 
 def differences(s1,s2): #find the number of different characters between two strings (headers)
         s1 = re.sub(re.compile(r'\([^)]*\)'),'',s1)
-        s2 = re.sub(re.compile(r'\([^)]*\)'),'',s2)    
+        s2 = re.sub(re.compile(r'\([^)]*\)'),'',s2)
         count = sum(1 for a, b in zip(s1, s2) if a != b) + abs(len(s1) - len(s2))
         return count
 
@@ -143,20 +143,20 @@ def statistics(df,index): # calculate Mean,Median,STD,CV for every feature in a 
         headers[index] = ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + Abundance[index]
         df = df[headers[index]].copy()
         #print((Headers[index])) #stopped here before my optometrist appointment
-        for list in Headers[index]:
-                REP_NUM = len(list)
+        for the_list in Headers[index]:
+                REP_NUM = len(the_list)
                 if REP_NUM > 1:
                     for i in range(0,REP_NUM):
                         # the match part finds the indices of the largest common subtring between two strings
-                            match = SequenceMatcher(None, list[i], list[i+1]).find_longest_match(0, len(list[i]),0, len(list[i+1]))
-                            df['Mean_'+ str(list[i])[match.a:match.a +  match.size]] = df[list[i:i + REP_NUM]].mean(axis=1).round(0)
-                            df['Median_'+ str(list[i])[match.a:match.a +  match.size]] = df[list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0) 
-                            df['STD_'+ str(list[i])[match.a:match.a +  match.size]] = df[list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
-                            df['CV_'+ str(list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(list[i])[match.a:match.a +  match.size]]/df['Mean_'+ str(list[i])[match.a:match.a +  match.size]]).round(2)            
-                            df['N_Abun_'+ str(list[i])[match.a:match.a +  match.size]] = df[list[i:i + REP_NUM]].count(axis=1).round(0)
-                            #print list[i][match.a:match.a +  match.size]
+                            match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
+                            df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(0)
+                            df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0) 
+                            df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
+                            df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]]).round(2)            
+                            df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
+                            #print the_list[i][match.a:match.a +  match.size]
                             break
-        df.sort_values(['Mass','Retention_Time'],ascending=[True,True],inplace=True)    
+        df.sort_values(['Mass','Retention_Time'],ascending=[True,True],inplace=True)
         #df.to_csv('input-updated.csv', index=False)
         return df
 
@@ -182,7 +182,6 @@ def Blank_Subtract(df,index):
         return df
 
 
- 
 def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm): #a method to query and save the features with tracers criteria
         df1 = df
         df2 = tracers_file #pd.read_csv(tracers_file,comment='#',na_values= 1 | 0)
@@ -197,34 +196,10 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
             dft['Matches'] = np.where((abs((dft['Monoisotopic_Mass']-dft['Observed_Mass'])/dft['Monoisotopic_Mass'])*1000000<=Mass_Difference) & (abs(dft['Retention_Time']-dft['Observed_Retention_Time'])<=Retention_Difference) ,1,0)
         else:    
             dft['Matches'] = np.where((abs(dft['Monoisotopic_Mass']-dft['Observed_Mass'])<=Mass_Difference) & (abs(dft['Retention_Time']-dft['Observed_Retention_Time'])<=Retention_Difference) ,1,0)
-        dft = dft[dft['Matches']==1]    
+        dft = dft[dft['Matches']==1]
         dft.drop(['Rounded_Mass','Matches'],axis=1,inplace=True)
         df.rename(columns = {'Observed_Mass':'Mass','Observed_Retention_Time':'Retention_Time'},inplace=True)        
         return dft
-        
-        '''
-        df_sql = [None,None]
-        if ppm: # PPM cut
-            print "PPM selected"
-            mass_cut =  """ from df2 as a left join df1 as b where abs((a.Monoisotopic_Mass-b.Mass)/a.Monoisotopic_Mass)*(1000000)<=""" + str(Mass_Difference)
-        else: # Da Cut
-            print "Da selected"            
-            mass_cut =  """ from df2 as a left join df1 as b where abs(a.Monoisotopic_Mass-b.Mass)<=""" + str(Mass_Difference)            
-        Statistics = [[],[]]
-        b_Statistics = [[],[]]
-        q = [None,None]
-        df1 = df    
-        df2 = pd.read_csv(os.getcwd()+"\Tracers_Table_ for_SRM2585_20170524.csv",comment='#',na_values= 1 | 0)
-        Statistics[index] = df.columns[df.columns.str.contains(pat ='N_|CV_|Mean_|Median_|STD_')].tolist()
-        print df2
-        b_Statistics[index] = ["b." + B for B in Statistics[index]]
-        q[index] ="""select a.*, b.Mass as Observed_Mass,
-                 b.Retention_Time as Observed_Retention_Time,""" + " , ".join([b + " as " + a  for b,a in zip(b_Statistics[index],Statistics[index])]) + mass_cut  + """ and abs(a.Retention_Time-b.Retention_Time)<=""" + str(Retention_Difference) + """ and a.Ionization_Mode = b.Ionization_Mode;"""
-        df_sql[index] = sqldf(q[index],locals())         
-        #df_sql.to_csv('input_after_tracers.csv', index=False)
-        return df_sql[index]
-        '''
-
 
 
 
@@ -232,12 +207,12 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
 def clean_features(df,index,ENTACT,controls): # a method that drops rows based on conditions
     
         Abundance=[[],[]]
-        Abundance[index] =  df.columns[df.columns.str.contains(pat ='N_Abun_')].tolist()   
+        Abundance[index] =  df.columns[df.columns.str.contains(pat ='N_Abun_')].tolist()
         #for header in Abundance:
         #    df = df.drop(df[df[header] < 2].index) # drop rows with n_abundance_high <2
   
         Median=[[],[]]
-        Median_Samples=[[],[]]       
+        Median_Samples=[[],[]]
         Median_MB=[[],[]]
         Median_Low = [[],[]]
         Median_Mid = [[],[]]
@@ -261,8 +236,8 @@ def clean_features(df,index,ENTACT,controls): # a method that drops rows based o
         N_Abun_MB[index] = [N for N in Abundance[index] if 'MB' in N]
         N_Abun_Samples[index] = [N for N in Abundance[index] if not any(x in N for x in blanks)]    
         N_Abun_MB[index] = [N for N in Abundance[index] if 'MB' in N]
-        CV[index] =  df.columns[df.columns.str.contains(pat ='CV_')].tolist()        
-        CV_Samples[index] = [C for C in CV[index] if not any(x in C for x in blanks)]        
+        CV[index] =  df.columns[df.columns.str.contains(pat ='CV_')].tolist()
+        CV_Samples[index] = [C for C in CV[index] if not any(x in C for x in blanks)]
         #print("***********")
         #print((N_Abun_Samples[index]))
         
@@ -271,8 +246,8 @@ def clean_features(df,index,ENTACT,controls): # a method that drops rows based o
                 df['HightoMid_ratio']=df[median].astype('float')/df[Median_Mid[index][0]].astype('float')
                 df['HightoBlanks_ratio']=df[median].astype('float')/df[Median_MB[index][0]].astype('float')
                 df.drop(df[df[N_Abun_High[index][0]] < controls[1]].index,inplace=True)
-                df = df[(df['HightoBlanks_ratio'] >= controls[0]) | (df[N_Abun_MB[index][0]] == 0)]  
-                df = df[(df[median].astype('float')/df[Median_Mid[index][0]].astype('float') >= controls[2]) | 
+                df = df[(df['HightoBlanks_ratio'] >= controls[0]) | (df[N_Abun_MB[index][0]] == 0)]
+                df = df[(df[median].astype('float')/df[Median_Mid[index][0]].astype('float') >= controls[2]) |
                            (df['HightoMid_ratio'].isnull())]
                 
         else: # Regular NTA data
@@ -300,10 +275,10 @@ def flags(df): # a method to develop required flags
         df['Formula_Match'] = np.where(df.Score != df.Score,'0','1') #check if it does not have a score
         df['Formula_Match_Above90'] = np.where(df.Score >= SCORE,'1','0')
         df['X_NegMassDef_Below90'] = np.where(((df.Score < SCORE) & (df.Neg_Mass_Defect == '1') & (df.Halogen == '1')),'1','0')
-        df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '0') 
-        df.sort_values(['Formula_Match','For_Dashboard_Search','Formula_Match_Above90','X_NegMassDef_Below90'],ascending=[False,False,False,False],inplace=True) 
-        #df.to_csv('input-afterflag.csv', index=False) 
-        #print df1 
+        df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '0')
+        df.sort_values(['Formula_Match','For_Dashboard_Search','Formula_Match_Above90','X_NegMassDef_Below90'],ascending=[False,False,False,False],inplace=True)
+        #df.to_csv('input-afterflag.csv', index=False)
+        #print df1
         df.sort_values('Compound',ascending=True,inplace=True)
         return df
 
@@ -320,22 +295,22 @@ def match_headers(list1=None,list2=None):
 
 def append_headers(list1,list2):
         #list1.sort()
-        list_new = list()
+        #list_new = list()
         #list2.sort()
         diff = list()
         if len(list1) > len(list2):
             diff = list(set(list1) - set(list2))
-            list_new = list2 + diff        
+            list_new = list2 + diff
         if len(list2) > len(list1):
             diff = list(set(list2) - set(list1))
             list_new = list1 + diff
         else:
             list_new = list1
         #print(list_new)
-        return diff            
+        return diff
         
 
-def common_substrings(ls=[]):
+def common_substrings(ls=None):
         match  = SequenceMatcher(None,ls[0],ls[len(ls)-1]).find_longest_match(0,len(ls[0]),0,len(ls[len(ls)-1]))
         common = ls[0][match.a: match.a + match.size]
         #print((" ********* " + common))
@@ -357,8 +332,8 @@ def combine(df1,df2):
     #print("##############")
     Abundance=[[],[]]
     Abundance[0] = df1.columns.values.tolist()
-    Abundance[1] = df2.columns.values.tolist()         
-    diff = append_headers(Abundance[0],Abundance[1])
+    Abundance[1] = df2.columns.values.tolist()
+    #diff = append_headers(Abundance[0],Abundance[1])
     #print len(df1.columns.values.tolist())
     #for i in range(len(Abundance[0])):
     #    #print (Abundance[0][i],Abundance[1][i])
@@ -392,7 +367,7 @@ def combine(df1,df2):
     dfc['Est_Chem_Count'] = None #Default to non-type
     dfc.loc[dfc['One_Mode_No_Isomers'] == '1','Est_Chem_Count'] = 1
     dfc.loc[dfc['One_Mode_Isomers'] == '1','Est_Chem_Count'] = dfc['N_Compound_Hits']
-    dfc.loc[(dfc['Two_Modes_No_Isomers'] == '1') | (dfc['Two_Modes_Isomers'] == '1'),'Est_Chem_Count'] = dfc['N_Compound_Hits']/2    
+    dfc.loc[(dfc['Two_Modes_No_Isomers'] == '1') | (dfc['Two_Modes_Isomers'] == '1'),'Est_Chem_Count'] = dfc['N_Compound_Hits']/2
     columns.extend(('Both_Modes','N_Compound_Hits','N_Abun_Samples','Median_Abun_Samples','One_Mode_No_Isomers','One_Mode_Isomers','Two_Modes_No_Isomers',
             'Two_Modes_Isomers','Est_Chem_Count'))
     dfc = dfc[columns].sort_values(['Compound'],ascending=[True])
@@ -422,7 +397,7 @@ def adduct_identifier(df,index,Mass_Difference,Retention_Difference,ppm):
     d = {'Formate':['Esi-',43.99093],'Na':['Esi+',21.98194],'Ammonium':['Esi+',17.02655],'H2O':['Esi-',17.00329],'CO2':['Esi-',42.98255]} #dictionary of adducts
     lst = list()
     boolst = list()
-    for key in d:    
+    for key in d:
         is_name = 'is_' + str(key) + '_Adduct'
         has_name = 'has_' + str(key) + '_Adduct'
         #print((d[key][1]))

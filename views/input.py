@@ -30,7 +30,7 @@ def input_page(request, form_data=None, form_files=None):
             try:
                 tracer_file = request.FILES["tracer_input"]
                 tracer_df = file_manager.tracer_handler(tracer_file)
-            except:
+            except Exception:
                 tracer_df = None
             inputs = [pos_input, neg_input]
             input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs)]

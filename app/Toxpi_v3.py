@@ -11,7 +11,7 @@ WE=1.0
 WN=2.0
 WB=2.0
 
-def plot_toxpi(Radii=[]):
+def plot_toxpi(Radii=None):
 # force square figure and square axes looks better for polar, IMO
     fig = pt.figure(facecolor='white')
     ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
@@ -28,7 +28,7 @@ def plot_toxpi(Radii=[]):
     HA=['left','right','left','left']
     #VA=['top','top','bottom','bottom']
     for i in range(0,4):
-        theta = Theta[i]
+        #theta = Theta[i]
         bars = ax.bar(Theta[i], Radii[i], width=Width[i], bottom=0.0,edgecolor="none")
         ax.annotate(annotation[i],xy=(Theta[i],max(Radii)),xytext=(text_pos[i],5.6),horizontalalignment=HA[i],size=14)
         for bar in bars:
@@ -55,9 +55,9 @@ def process_toxpi(df=None, dir='', file='',tophit=False,by_mass=True):
     dft = pd.read_csv(dir+"/"+file,sep='\t',na_values= '-')
     #df = pd.read_csv('L:\Lab\NERL_RTP_D589A_Quincy\Hussein\Python_NTA_v2\\trial_3_hussein\\499_POS_Combined.csv')
         #dft = pd.read_excel(file,'Worksheet1',index_col=None)
-    directory = dir
+    #directory = dir
     # Some initial file cleaning
-    TOTAL_ASSAYS = "\/([0-9]+)" # a regex to find the digits after a slash 
+    TOTAL_ASSAYS = "\/([0-9]+)" # a regex to find the digits after a slash
     dft['TOTAL_ASSAYS_TESTED'] = dft['TOXCAST_NUMBER_OF_ASSAYS/TOTAL'].str.extract(TOTAL_ASSAYS,expand=True)
     NUMBER_ASSAYS = "([0-9]+)\/" # a regex to find the digits before a slash
     dft['NUMBER_ACTIVE_ASSAYS'] = dft['TOXCAST_NUMBER_OF_ASSAYS/TOTAL'].str.extract(NUMBER_ASSAYS,expand=True)
@@ -70,7 +70,6 @@ def process_toxpi(df=None, dir='', file='',tophit=False,by_mass=True):
         dft['INPUT'] = dft['INPUT'].str.replace("\ \+\/\- .*$","")
         dft['INPUT'] = dft['INPUT'].astype(float)
 
-        
     
     
     '''
@@ -101,7 +100,7 @@ def process_toxpi(df=None, dir='', file='',tophit=False,by_mass=True):
         dfe = pd.merge(df,dft,left_on='SEARCHED_MASS',right_on='INPUT',how='left')
         dfe['DASHBOARD_FORMULA_MATCH'] = np.where(dfe['MPP_ASSIGNED_FORMULA'] == dfe['MOLECULAR_FORMULA'],1,0)
     else:
-        dfe = pd.merge(df,dft,left_on='Compound',right_on='INPUT',how='left')          
+        dfe = pd.merge(df,dft,left_on='Compound',right_on='INPUT',how='left')
     if tophit:
         dfe = dfe.drop_duplicates(subset=['Compound','Mass','Retention_Time','Score'])
     else:
@@ -113,13 +112,13 @@ def process_toxpi(df=None, dir='', file='',tophit=False,by_mass=True):
     columns.append('DTXSID')
     print(columns)
     dfe.dropna(how='all')
-    dfe = dfe[pd.notnull(dfe['INPUT'])]  
+    dfe = dfe[pd.notnull(dfe['INPUT'])]
     #dfe.fillna('',inplace=True)
     #dfe = dfe.set_index(columns)
     #dfe.to_csv(directory+"/csv_toxpi.csv")
 
     #print dfe
-    #dfe.to_excel('trying_excel.xlsx',na_rep='',engine='xlsxwriter') 
+    #dfe.to_excel('trying_excel.xlsx',na_rep='',engine='xlsxwriter')
     return dfe
 
 

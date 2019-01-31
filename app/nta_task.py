@@ -12,15 +12,13 @@ from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
 from .utilities import connect_to_mongoDB
 
-#os.environ['IN_DOCKER'] = "False" #for local dev
+#os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 
 logger = logging.getLogger(__name__)
 
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
-    print(os.environ.get("IN_DOCKER"))
     in_docker = os.environ.get("IN_DOCKER") != "False"
-    print(str(in_docker))
     if not in_docker:
         logger.info("Running in local development mode.")
         local_cluster = LocalCluster(processes=False)

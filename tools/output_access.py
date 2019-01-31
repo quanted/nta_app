@@ -9,7 +9,7 @@ from ..app.utilities import connect_to_mongoDB
 from ..app.nta_task import FILENAMES
 from pymongo.errors import OperationFailure
 
-#os.environ['IN_DOCKER'] = "False" #for local dev
+#os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in app/nta_task.py
 
 def datetime_handler(x):
     if isinstance(x, datetime):
@@ -43,8 +43,8 @@ class OutputServer:
 
     def status(self):
         try:
-            id = self.jobid + "_status"
-            db_record = self.posts.find_one({'_id': id})
+            search_id = self.jobid + "_status"
+            db_record = self.posts.find_one({'_id': search_id})
             status = db_record['status']
             time = db_record['date']
             except_text = db_record['error_info']
@@ -75,21 +75,21 @@ class OutputServer:
     def all_files(self):
         in_memory_zip = BytesIO()
         #zip = ZipFile(in_memory_zip, 'w')
-        with ZipFile(in_memory_zip, 'w') as zip:
+        with ZipFile(in_memory_zip, 'w') as zipf:
             for name in self.main_file_names:
                 try:
-                    id = self.jobid + "_" + name
-                    db_record = self.posts.find_one({'_id': id})
+                    record_id = self.jobid + "_" + name
+                    db_record = self.posts.find_one({'_id': record_id})
                     json_string = json.dumps(db_record['data'])
                     df = pd.read_json(json_string, orient='split')
                     project_name = db_record['project_name']
                     if project_name:
                         filename = project_name.replace(" ", "_") + '_' + name + '.csv'
                     else:
-                        filename = id + '.csv'
+                        filename = record_id + '.csv'
                     #csv_string = StringIO()
                     csv_string = df.to_csv(index = False)
-                    zip.writestr(filename, csv_string)
+                    zipf.writestr(filename, csv_string)
 
                 except (OperationFailure, TypeError):
                     return None
@@ -97,15 +97,15 @@ class OutputServer:
                 #now do the (optional) tracers file
             for name in self.names_tracers:
                 try:
-                    id = self.jobid + "_" + name
-                    db_record = self.posts.find_one({'_id': id})
+                    tracer_id = self.jobid + "_" + name
+                    db_record = self.posts.find_one({'_id': tracer_id})
                     json_string = json.dumps(db_record['data'])
                     df = pd.read_json(json_string, orient='split')
                     project_name = db_record['project_name']
                     if project_name:
                         filename = project_name.replace(" ", "_") + '_' + name + '.csv'
                     else:
-                        filename = id + '.csv'
+                        filename = tracer_id + '.csv'
                     # csv_string = StringIO()
                     csv_string = df.to_csv(index=False)
                     zip.writestr(filename, csv_string)

@@ -1,14 +1,9 @@
-import importlib
 import os
 
 from django.http import HttpResponse
-from django.shortcuts import redirect
 from django.template.loader import render_to_string
-from django.utils.encoding import iri_to_uri
-from django.views.decorators.http import require_POST
 
 from . import links_left
-from .input_form import NtaInputs
 
 
 #@require_POST

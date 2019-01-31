@@ -1,13 +1,13 @@
 """
 .. module:: model_handler
-   :synopsis: The model_handler module prepares the model inputs 
-   to be sent to the backend model server as well as creating a 
-   Model object consisting of the inputs, outputs, and other 
-   model-specific attributes such as 'run_type' and 'user' who 
-   ran the model.  This generic Model object is the communication 
-   backbone between the frontend and backend / model server.  If 
-   a model requires specific treatment for frontend-backend 
-   communication, this module can be bypassed by creating a 
+   :synopsis: The model_handler module prepares the model inputs
+   to be sent to the backend model server as well as creating a
+   Model object consisting of the inputs, outputs, and other
+   model-specific attributes such as 'run_type' and 'user' who
+   ran the model.  This generic Model object is the communication
+   backbone between the frontend and backend / model server.  If
+   a model requires specific treatment for frontend-backend
+   communication, this module can be bypassed by creating a
    "*_model" module in the model's module directory.
 """
 
@@ -203,7 +203,7 @@ class ModelQAQC(object):
 
 def generate_model_object_list(response):
     """
-        Loops over the input and output DataFrames creating 
+        Loops over the input and output DataFrames creating
         a Python object 'Model' for each model run and appends
         the object to a Python list.  Returns the list of objects.
     """

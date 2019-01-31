@@ -1,20 +1,11 @@
 
 from __future__ import absolute_import
-import os
 import re
 import pandas as pd
-import logging
-import json
-import uuid
-from datetime import datetime
 from operator import itemgetter
 from itertools import groupby
 from difflib import SequenceMatcher
-from ..app.utilities import connect_to_mongoDB
-from flask import request, Response
-from flask_restful import Resource
 
-import pymongo as pymongo
 
 #convert the user-supplied input file into dataframe
 def input_handler(file, index):
@@ -94,7 +85,7 @@ def parse_headers(df,index): #group headers into a group of samples
         return Headers[index]
 
 
-def common_substrings(ls=[]):
+def common_substrings(ls=None):
         match  = SequenceMatcher(None,ls[0],ls[len(ls)-1]).find_longest_match(0,len(ls[0]),0,len(ls[len(ls)-1]))
         common = ls[0][match.a: match.a + match.size]
         #print((" ********* " + common))

@@ -1,11 +1,4 @@
-from django.urls import include, path, re_path
-from django.conf.urls import url
-#from .api import views as api_views
-#from .views import description, input, output, algorithms, references, qaqc
-#from .views import misc, landing
-#from .views import batch
-#from .views import sam_watershed
-#from .views import proxy
+from django.urls import path
 from .views import input, processing, output, results_api, algorithms, qaqc, references, misc
 
 print('qed.nta_app.urls')
