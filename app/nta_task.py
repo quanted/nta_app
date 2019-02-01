@@ -162,25 +162,23 @@ class NtaRun:
     def set_status(self, status, create = False):
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
-        id = self.jobid + "_" + "status"
-        data = {'_id': id, 'date': time_stamp, 'status': status}
+        post_id = self.jobid + "_" + "status"
         if create:
-            posts.update_one({'_id': id},{'$set': {'_id': id,
+            posts.update_one({'_id': post_id},{'$set': {'_id': post_id,
                                                    'date': time_stamp,
                                                    'status': status,
                                                    'error_info': ''}},
                              upsert=True)
         else:
-            posts.update_one({'_id': id}, {'$set': {'_id': id,
+            posts.update_one({'_id': post_id}, {'$set': {'_id': post_id,
                                                     'status': status}},
                              upsert=True)
 
     def set_except_message(self, e):
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
-        id = self.jobid + "_" + "status"
-        data = {'_id': id, 'date': time_stamp, 'error_info': e}
-        posts.update_one({'_id': id},{'$set': {'_id': id,
+        post_id = self.jobid + "_" + "status"
+        posts.update_one({'_id': post_id},{'$set': {'_id': post_id,
                                               'date': time_stamp,
                                               'error_info': e}},
                          upsert=True)
