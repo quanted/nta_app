@@ -21,6 +21,7 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
     in_docker = os.environ.get("IN_DOCKER") != "False"
     if not in_docker:
         logger.info("Running in local development mode.")
+        logger.info("Detected OS is {}".format(os.environ.get("SYSTEM_NAME")))
         local_cluster = LocalCluster(processes=False)
         dask_client = Client(local_cluster)
     else:
@@ -231,14 +232,15 @@ class NtaRun:
         self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'])
 
     def search_dashboard(self):
+        in_linux = os.environ.get("SYSTEM_NAME") != "WINDOWS" #check the OS is linux/unix, so that we can use the .elf webdriver
         if self.search_mode == 'mass':
             mono_masses = fn.masses(self.df_combined)
             mono_masses_str = [str(i) for i in mono_masses]
-            self.search = BatchSearch(linux = self.in_docker)
+            self.search = BatchSearch(linux = in_linux)
             self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.data_dir, by_formula=False, ppm=self.parent_ion_mass_accuracy)
         else:
             compounds = fn.formulas(self.df_combined)
-            self.search = BatchSearch(linux = self.in_docker)
+            self.search = BatchSearch(linux = in_linux)
             self.search.batch_search(masses=None, formulas=compounds, directory=self.data_dir)
 
     def download_finished(self):
