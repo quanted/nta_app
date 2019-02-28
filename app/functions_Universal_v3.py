@@ -344,7 +344,7 @@ def combine(df1,df2):
     #print df2.columns.values.tolist()
     #df1[list(set(Abundance[0])-set(diff))]    = np.nan
     #df2[list(set(Abundance[1])-set(diff))]    = np.nan
-    dfc = pd.concat([df1,df2])
+    dfc = pd.concat([df1,df2], sort=True) #fixing pandas FutureWarning
     dfc = dfc.reindex(columns = df1.columns)
     columns = dfc.columns.values.tolist()
     #print((str(len(columns)) + " ##### " + str(len(df1.columns.values.tolist())) + " #### " + str(len(df2.columns.values.tolist()))))

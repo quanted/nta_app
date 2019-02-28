@@ -14,15 +14,15 @@ from .utilities import connect_to_mongoDB
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 
-logger = logging.getLogger(__name__)
-
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
     in_docker = os.environ.get("IN_DOCKER") != "False"
     if not in_docker:
         logger.info("Running in local development mode.")
         logger.info("Detected OS is {}".format(os.environ.get("SYSTEM_NAME")))
-        local_cluster = LocalCluster(processes=False)
+        local_cluster = LocalCluster(processes=False, ip='127.0.0.1')
         dask_client = Client(local_cluster)
     else:
         logger.info("Running in docker environment.")
