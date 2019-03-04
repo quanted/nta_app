@@ -122,6 +122,9 @@ def parse_headers(df,index): #group headers into a group of samples
 def score(df): # Get that Sneaky score from Annotations.
         regex = "^.*=(.*) \].*$" # a regex to find the score looking for a pattern of "=something_to_find ]" 
         if "Annotations" in df:
+            if df.Annotations.isnull().all():  # make sure there isn't a totally blank Annotations column
+                df['Score'] = None
+                return df
             if df.Annotations.str.contains('overall=').any():
                 df['Score'] = df.Annotations.str.extract(regex,expand=True).astype('float64')
         else:
@@ -234,7 +237,7 @@ def clean_features(df,index,ENTACT,controls): # a method that drops rows based o
         #print((Median_MB[index]))
         N_Abun_High[index] = [N for N in Abundance[index] if 'C' in N]
         N_Abun_MB[index] = [N for N in Abundance[index] if 'MB' in N]
-        N_Abun_Samples[index] = [N for N in Abundance[index] if not any(x in N for x in blanks)]    
+        N_Abun_Samples[index] = [N for N in Abundance[index] if not any(x in N for x in blanks)]
         N_Abun_MB[index] = [N for N in Abundance[index] if 'MB' in N]
         CV[index] =  df.columns[df.columns.str.contains(pat ='CV_')].tolist()
         CV_Samples[index] = [C for C in CV[index] if not any(x in C for x in blanks)]
