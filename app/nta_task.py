@@ -4,6 +4,7 @@ import os
 import csv
 import time
 import logging
+import traceback
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
@@ -13,12 +14,15 @@ from .batch_search_v3 import BatchSearch
 from .utilities import connect_to_mongoDB
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
+NO_DASK = False  # set this to true to run locally without test (for debug purposes)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
     in_docker = os.environ.get("IN_DOCKER") != "False"
+    if NO_DASK:
+        run_nta(parameters, input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
     if not in_docker:
         logger.info("Running in local development mode.")
         logger.info("Detected OS is {}".format(os.environ.get("SYSTEM_NAME")))
@@ -38,6 +42,8 @@ def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose
     try:
         nta_run.execute()
     except Exception as e:
+        trace = traceback.format_exc()
+        logger.info(trace)
         fail_step = nta_run.get_step()
         nta_run.set_status("Failed on step: " + fail_step)
         error = repr(e)
