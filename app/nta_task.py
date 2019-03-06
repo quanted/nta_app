@@ -16,7 +16,7 @@ from .utilities import connect_to_mongoDB
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
