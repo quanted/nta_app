@@ -236,9 +236,9 @@ def clean_features(df,index,ENTACT,controls): # a method that drops rows based o
         #print("***********")
         #print((Median_MB[index]))
         N_Abun_High[index] = [N for N in Abundance[index] if 'C' in N]
-        N_Abun_MB[index] = [N for N in Abundance[index] if 'MB' in N]
+        N_Abun_MB[index] = [N for N in Abundance[index] if any(x in N for x in blanks)]
         N_Abun_Samples[index] = [N for N in Abundance[index] if not any(x in N for x in blanks)]
-        N_Abun_MB[index] = [N for N in Abundance[index] if 'MB' in N]
+        #N_Abun_MB[index] = [N for N in Abundance[index] if 'MB' in N]
         CV[index] =  df.columns[df.columns.str.contains(pat ='CV_')].tolist()
         CV_Samples[index] = [C for C in CV[index] if not any(x in C for x in blanks)]
         #print("***********")
