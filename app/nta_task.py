@@ -23,6 +23,7 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
     in_docker = os.environ.get("IN_DOCKER") != "False"
     if NO_DASK:
         run_nta(parameters, input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
+        return
     if not in_docker:
         logger.info("Running in local development mode.")
         logger.info("Detected OS is {}".format(os.environ.get("SYSTEM_NAME")))
