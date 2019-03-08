@@ -95,13 +95,13 @@ class BatchSearch:
         #time.sleep(4)
     
         #INChlKey
-        self.driver.find_element_by_xpath('//*[@id ="output-headers"]/ul[2]/li[4]/label/input').click()
+        self.driver.find_element_by_xpath('//*[@id ="output-headers"]/ul[2]/li[5]/label/input').click()
     
         #IUPAC Name
-        self.driver.find_element_by_xpath('//*[@id="output-headers"]/ul[2]/li[5]/label').click()
+        self.driver.find_element_by_xpath('//*[@id="output-headers"]/ul[2]/li[6]/label/input').click()
     
         #Molecular Formula
-        self.driver.find_element_by_xpath('//*[@id="output-headers"]/ul[4]/li[1]/label').click()
+        self.driver.find_element_by_xpath('//*[@id="output-headers"]/ul[4]/li[1]/label/input').click()
     
     
         #Average Mass
