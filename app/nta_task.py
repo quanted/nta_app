@@ -5,13 +5,14 @@ import csv
 import time
 import logging
 import traceback
+import gridfs
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
 from . import functions_Universal_v3 as fn
 from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
-from .utilities import connect_to_mongoDB
+from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
@@ -91,6 +92,7 @@ class NtaRun:
         self.verbose = verbose
         self.in_docker = in_docker
         self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
+        self.gridfs = connect_to_mongo_gridfs(in_docker = self.in_docker)
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
         self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         self.step = "Started" #tracks the current step (for fail messages)
@@ -202,7 +204,7 @@ class NtaRun:
         ppm = self.mass_accuracy_units == 'ppm'
         self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
         #print("Calculating statistics with units: " + self.mass_accuracy_units)
-        self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
+        #self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
         self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
@@ -218,6 +220,7 @@ class NtaRun:
         self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.tracer_dfs_out[0], FILENAMES['tracers'][0])
         self.mongo_save(self.tracer_dfs_out[1], FILENAMES['tracers'][1])
+
         return
 
     def clean_features(self):
@@ -317,16 +320,17 @@ class NtaRun:
         os.rmdir(self.data_dir)
         if self.verbose:
             logger.info("Cleaned up download file.")
-
-
+    #
+    # def mongo_save(self, file, step=""):
+    #     to_save = json.loads(file.to_json(orient='split'))
+    #     posts = self.mongo.posts
+    #     time_stamp = datetime.utcnow()
+    #     id = self.jobid + "_" + step
+    #     data = {'_id': id, 'date': time_stamp, 'project_name': self.project_name,'data': to_save}
+    #     posts.insert_one(data)
 
     def mongo_save(self, file, step=""):
-        to_save = json.loads(file.to_json(orient='split'))
-        posts = self.mongo.posts
-        time_stamp = datetime.utcnow()
+        to_save = file.to_json(orient='split')
         id = self.jobid + "_" + step
-        data = {'_id': id, 'date': time_stamp, 'project_name': self.project_name,'data': to_save}
-        posts.insert_one(data)
-
-
+        self.gridfs.put(to_save, _id=id, encoding='utf-8', project_name = self.project_name)
 

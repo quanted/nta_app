@@ -5,9 +5,10 @@ from datetime import datetime
 from io import StringIO, BytesIO
 from zipfile import ZipFile
 from django.http import HttpResponse, JsonResponse
-from ..app.utilities import connect_to_mongoDB
+from ..app.utilities import connect_to_mongoDB, connect_to_mongo_gridfs
 from ..app.nta_task import FILENAMES
 from pymongo.errors import OperationFailure
+from gridfs.errors import NoFile
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in app/nta_task.py
 
@@ -28,6 +29,7 @@ class OutputServer:
         self.project_name = ''
         self.in_docker = os.environ.get("IN_DOCKER") != "False"
         self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
+        self.gridfs = connect_to_mongo_gridfs(in_docker = self.in_docker)
         self.posts = self.mongo.posts
         self.names_toxpi = FILENAMES['toxpi']
         self.names_stats = FILENAMES['stats']
@@ -59,10 +61,13 @@ class OutputServer:
 
     def final_result(self):
         id = self.jobid + "_" + self.names_toxpi
-        db_record = self.posts.find_one({'_id': id})
-        json_string = json.dumps(db_record['data'])
+        #db_record = self.posts.find_one({'_id': id})
+        #json_string = json.dumps(db_record['data'])
+        db_record = self.gridfs.get(id)
+        json_string = db_record.read().decode('utf-8')
         df = pd.read_json(json_string, orient='split')
-        project_name = db_record['project_name']
+        #project_name = db_record['project_name']
+        project_name = db_record.project_name
         if project_name:
             filename = project_name.replace(" ", "_") + '_' + self.names_toxpi + '.csv'
         else:
@@ -79,10 +84,13 @@ class OutputServer:
             for name in self.main_file_names:
                 try:
                     record_id = self.jobid + "_" + name
-                    db_record = self.posts.find_one({'_id': record_id})
-                    json_string = json.dumps(db_record['data'])
+                    #db_record = self.posts.find_one({'_id': record_id})
+                    #json_string = json.dumps(db_record['data'])
+                    db_record = self.gridfs.get(record_id)
+                    json_string = db_record.read().decode('utf-8')
                     df = pd.read_json(json_string, orient='split')
-                    project_name = db_record['project_name']
+                    #project_name = db_record['project_name']
+                    project_name = db_record.project_name
                     if project_name:
                         filename = project_name.replace(" ", "_") + '_' + name + '.csv'
                     else:
@@ -91,25 +99,28 @@ class OutputServer:
                     csv_string = df.to_csv(index = False)
                     zipf.writestr(filename, csv_string)
 
-                except (OperationFailure, TypeError):
-                    return None
+                except (OperationFailure, TypeError, NoFile) as e:
+                    break
 
                 #now do the (optional) tracers file
             for name in self.names_tracers:
                 try:
                     tracer_id = self.jobid + "_" + name
-                    db_record = self.posts.find_one({'_id': tracer_id})
-                    json_string = json.dumps(db_record['data'])
+                    #db_record = self.posts.find_one({'_id': tracer_id})
+                    #json_string = json.dumps(db_record['data'])
+                    db_record = self.gridfs.get(tracer_id)
+                    json_string = db_record.read().decode('utf-8')
                     df = pd.read_json(json_string, orient='split')
-                    project_name = db_record['project_name']
+                    #project_name = db_record['project_name']
+                    project_name = db_record.project_name
                     if project_name:
                         filename = project_name.replace(" ", "_") + '_' + name + '.csv'
                     else:
                         filename = tracer_id + '.csv'
                     # csv_string = StringIO()
                     csv_string = df.to_csv(index=False)
-                    zip.writestr(filename, csv_string)
-                except (OperationFailure, TypeError):
+                    zipf.writestr(filename, csv_string)
+                except (OperationFailure, TypeError, NoFile):
                     break
 
 
