@@ -6,6 +6,7 @@ import time
 import logging
 import traceback
 import gridfs
+import shutil
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
@@ -87,7 +88,7 @@ class NtaRun:
         self.df_combined = None
         self.mpp_ready = None
         self.search_results = None
-        self.download_filename = None
+        self.download_filenames = []
         self.jobid = jobid
         self.verbose = verbose
         self.in_docker = in_docker
@@ -95,8 +96,10 @@ class NtaRun:
         self.gridfs = connect_to_mongo_gridfs(in_docker = self.in_docker)
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
         self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
-        self.step = "Started" #tracks the current step (for fail messages)
+        self.new_download_dir = os.path.join(self.data_dir, "new")
+        self.step = "Started"  # tracks the current step (for fail messages)
         os.mkdir(self.data_dir)
+        os.mkdir(self.new_download_dir)
 
 
     def execute(self):
@@ -149,13 +152,7 @@ class NtaRun:
 
         # 7: search dashboard
         self.step = "Searching dashboard"
-        self.search_dashboard()
-        if self.verbose:
-            logger.info("Searching Dashboard.")
-        self.download_finished()
-        if self.verbose:
-            logger.info("Download finished.")
-        self.fix_overflows()
+        self.iterate_searches()
         self.process_toxpi()
         if self.verbose:
             logger.info("Final result processed.")
@@ -241,25 +238,50 @@ class NtaRun:
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
         self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'])
 
-    def search_dashboard(self):
+    def iterate_searches(self):
+        to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :]  # only rows flagged
+        n_search = len(to_search)  # number of fragments to search
+        logger.info("Total # of queries: {}".format(n_search))
+        max_search = 200  # the maximum number of fragments to search at a time
+        upper_index = 0
+        finished = False
+        while not finished:
+            lower_index = upper_index
+            upper_index = upper_index + max_search
+            if upper_index >= (n_search - 1):
+                upper_index = n_search - 1
+                finished = True
+            # finished = upper_index >= (n_search-1)
+            if self.verbose:
+                logger.info("Searching Dashboard for compounds {} - {}.".format(lower_index, upper_index))
+            self.search_dashboard(to_search, lower_index, upper_index)
+            self.download_finished(save=finished)
+            if self.verbose:
+                logger.info("Download finished.")
+            self.fix_overflows()
+
+
+    def search_dashboard(self, df_search, lower_index, upper_index):
         in_linux = os.environ.get("SYSTEM_NAME") != "WINDOWS" #check the OS is linux/unix, so that we can use the .elf webdriver
+        to_search = df_search.iloc[lower_index:upper_index, :]
         if self.search_mode == 'mass':
-            mono_masses = fn.masses(self.df_combined)
+            mono_masses = fn.masses(to_search)
             mono_masses_str = [str(i) for i in mono_masses]
             self.search = BatchSearch(linux = in_linux)
-            self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.data_dir, by_formula=False, ppm=self.parent_ion_mass_accuracy)
+            self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.new_download_dir, by_formula=False, ppm=self.parent_ion_mass_accuracy)
         else:
-            compounds = fn.formulas(self.df_combined)
+            compounds = fn.formulas(to_search)
             self.search = BatchSearch(linux = in_linux)
-            self.search.batch_search(masses=None, formulas=compounds, directory=self.data_dir)
+            self.search.batch_search(masses=None, formulas=compounds, directory=self.new_download_dir)
 
-    def download_finished(self):
+    def download_finished(self, save = False):
         finished = False
         tries = 0
-        while not finished and tries < 100:
-            for filename in os.listdir(self.data_dir):
+        while not finished and tries < 150:
+            for filename in os.listdir(self.new_download_dir):
                 if filename.startswith('ChemistryDashboard-Batch-Search') and not filename.endswith("part"):
-                        self.download_filename = filename
+                        self.download_filenames.append(filename)
+                        os.rename(os.path.join(self.new_download_dir, filename), os.path.join(self.data_dir, filename))
                         finished = True
             tries += 1
             time.sleep(1)
@@ -267,22 +289,28 @@ class NtaRun:
             logger.info("Download never finished")
             self.search.close_driver()
             raise Exception("Download from the CompTox Chemistry Dashboard failed!")
-        print("This is what was downloaded: " + self.download_filename)
+        print("This is what was downloaded: " + self.download_filenames[-1])
         self.search.close_driver()
-        results_path = os.path.join(self.data_dir,self.download_filename)
+        results_path = os.path.join(self.data_dir,self.download_filenames[-1])
         time.sleep(5) #waiting a second to make sure data is copied from the partial dl file
-        self.search_results = pd.read_csv(results_path, sep='\t')
-        self.mongo_save(self.search_results, FILENAMES['dashboard'])
-        return self.download_filename
+        self.fix_overflows(self.download_filenames[-1])
+        download_df = pd.read_csv(results_path, sep='\t')
+        if self.search_results is None:
+            self.search_results = download_df
+        else:
+            self.search_results.append(download_df)
+        if save:
+            self.mongo_save(self.search_results, FILENAMES['dashboard'])
+        return self.download_filenames[-1]
 
-    def fix_overflows(self):
+    def fix_overflows(self, filename=None):
         """
         This function fixes an error seen in some comptox dashboard results, where a newline character is inserted into
         the middle of the chemical names, messing up the tsv file.
         :return:
         """
-        if self.download_filename is not None:
-            results_path = os.path.join(self.data_dir, self.download_filename)
+        if  filename is not None:
+            results_path = os.path.join(self.data_dir, filename)
             new_file = []
             problems = []
             row_len = []
@@ -310,14 +338,15 @@ class NtaRun:
 
     def process_toxpi(self):
         by_mass = self.search_mode == "mass"
-        self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filename,
+        self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filenames,
                                                tophit=self.top_result_only, by_mass = by_mass)
-        self.mongo_save(self.search_results, FILENAMES['toxpi'])
+        self.mongo_save(self.df_combined, FILENAMES['toxpi'])
 
     def clean_files(self):
-        path_to_remove = os.path.join(self.data_dir, self.download_filename)
-        os.remove(path_to_remove)
-        os.rmdir(self.data_dir)
+        #path_to_removes = os.path.join(self.data_dir, self.download_filenames)
+        #os.remove(path_to_remove)
+        #os.rmdir(self.data_dir)
+        shutil.rmtree(self.data_dir)  # remove data directory and all download files
         if self.verbose:
             logger.info("Cleaned up download file.")
     #

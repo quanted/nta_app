@@ -49,10 +49,14 @@ def classification(x=None,y=None):
     return clas    
 
 
-def process_toxpi(df=None, dir='', file='',tophit=False,by_mass=True):
+def process_toxpi(df=None, dir='', files=[],tophit=False,by_mass=True):
     #xls_file = pd.ExcelFile(file)
     #dft = xls_file.parse('Worksheet1', index_col=None, na_values='-')
-    dft = pd.read_csv(dir+"/"+file,sep='\t',na_values= '-')
+    dft = pd.read_csv(dir+"/"+files[0],sep='\t',na_values= '-')
+    for i, file in enumerate(files):
+        if i > 0:
+            add = pd.read_csv(dir+"/"+file,sep='\t',na_values= '-')
+            dft.append(add)
     #df = pd.read_csv('L:\Lab\NERL_RTP_D589A_Quincy\Hussein\Python_NTA_v2\\trial_3_hussein\\499_POS_Combined.csv')
         #dft = pd.read_excel(file,'Worksheet1',index_col=None)
     #directory = dir
