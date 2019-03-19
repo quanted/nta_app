@@ -1,17 +1,17 @@
 import pandas as pd
-import json
 import os
 import csv
 import time
 import logging
 import traceback
+import shutil
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
 from . import functions_Universal_v3 as fn
 from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
-from .utilities import connect_to_mongoDB
+from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
@@ -86,15 +86,19 @@ class NtaRun:
         self.df_combined = None
         self.mpp_ready = None
         self.search_results = None
-        self.download_filename = None
+        self.search = None
+        self.download_filenames = []
         self.jobid = jobid
         self.verbose = verbose
         self.in_docker = in_docker
         self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
+        self.gridfs = connect_to_mongo_gridfs(in_docker = self.in_docker)
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
         self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
-        self.step = "Started" #tracks the current step (for fail messages)
+        self.new_download_dir = os.path.join(self.data_dir, "new")
+        self.step = "Started"  # tracks the current step (for fail messages)
         os.mkdir(self.data_dir)
+        os.mkdir(self.new_download_dir)
 
 
     def execute(self):
@@ -147,13 +151,7 @@ class NtaRun:
 
         # 7: search dashboard
         self.step = "Searching dashboard"
-        self.search_dashboard()
-        if self.verbose:
-            logger.info("Searching Dashboard.")
-        self.download_finished()
-        if self.verbose:
-            logger.info("Download finished.")
-        self.fix_overflows()
+        self.iterate_searches()
         self.process_toxpi()
         if self.verbose:
             logger.info("Final result processed.")
@@ -164,8 +162,6 @@ class NtaRun:
         # 8: set status to completed
         self.step = "Displaying results"
         self.set_status('Completed')
-
-
 
     def set_status(self, status, create = False):
         posts = self.mongo.posts
@@ -202,7 +198,7 @@ class NtaRun:
         ppm = self.mass_accuracy_units == 'ppm'
         self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
         #print("Calculating statistics with units: " + self.mass_accuracy_units)
-        self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
+        #self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
         self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
@@ -218,6 +214,7 @@ class NtaRun:
         self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.tracer_dfs_out[0], FILENAMES['tracers'][0])
         self.mongo_save(self.tracer_dfs_out[1], FILENAMES['tracers'][1])
+
         return
 
     def clean_features(self):
@@ -238,25 +235,64 @@ class NtaRun:
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
         self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'])
 
-    def search_dashboard(self):
-        in_linux = os.environ.get("SYSTEM_NAME") != "WINDOWS" #check the OS is linux/unix, so that we can use the .elf webdriver
+    def iterate_searches(self):
+        to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
         if self.search_mode == 'mass':
-            mono_masses = fn.masses(self.df_combined)
+            to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
+        else:
+            to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
+        n_search = len(to_search)  # number of fragments to search
+        logger.info("Total # of queries: {}".format(n_search))
+        max_search = 300 # the maximum number of fragments to search at a time
+        upper_index = 0
+        finished = False
+        while not finished:
+            lower_index = upper_index
+            upper_index = upper_index + max_search
+            if upper_index >= (n_search - 1):
+                upper_index = n_search - 1
+                finished = True
+            # finished = upper_index >= (n_search-1)
+            if self.verbose:
+                logger.info("Searching Dashboard for compounds {} - {}.".format(lower_index, upper_index))
+            self.search_dashboard(to_search, lower_index, upper_index)
+            self.download_finished(save=finished)
+            if self.verbose:
+                logger.info("Download finished.")
+            self.fix_overflows()
+
+    def search_dashboard(self, df_search, lower_index, upper_index):
+        in_linux = os.environ.get("SYSTEM_NAME") != "WINDOWS"  # check for correct webdriver
+        to_search = df_search.iloc[lower_index:upper_index, :]
+        if self.search_mode == 'mass':
+            mono_masses = fn.masses(to_search)
             mono_masses_str = [str(i) for i in mono_masses]
             self.search = BatchSearch(linux = in_linux)
-            self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.data_dir, by_formula=False, ppm=self.parent_ion_mass_accuracy)
+            self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.new_download_dir,
+                                                     by_formula=False, ppm=self.parent_ion_mass_accuracy)
         else:
-            compounds = fn.formulas(self.df_combined)
+            compounds = fn.formulas(to_search)
             self.search = BatchSearch(linux = in_linux)
-            self.search.batch_search(masses=None, formulas=compounds, directory=self.data_dir)
+            self.search.batch_search(masses=None, formulas=compounds, directory=self.new_download_dir)
 
-    def download_finished(self):
+    def download_finished(self, save = False):
         finished = False
         tries = 0
-        while not finished and tries < 100:
-            for filename in os.listdir(self.data_dir):
+        while not finished and tries < 150:
+            for filename in os.listdir(self.new_download_dir):
                 if filename.startswith('ChemistryDashboard-Batch-Search') and not filename.endswith("part"):
-                        self.download_filename = filename
+                        self.download_filenames.append(filename)
+                        copy_tries = 0
+                        source = os.path.join(self.new_download_dir, filename)
+                        destination = os.path.join(self.data_dir, filename)
+                        while copy_tries < 10:
+                            time.sleep(5)  # waiting a second to make sure data is copied from the partial dl file
+                            shutil.copy(source, destination)
+                            if os.path.exists(destination):
+                                if os.path.getsize(destination) > 0:
+                                    os.remove(source)
+                                    break
+                            copy_tries = copy_tries + 1
                         finished = True
             tries += 1
             time.sleep(1)
@@ -264,22 +300,27 @@ class NtaRun:
             logger.info("Download never finished")
             self.search.close_driver()
             raise Exception("Download from the CompTox Chemistry Dashboard failed!")
-        print("This is what was downloaded: " + self.download_filename)
+        print("This is what was downloaded: " + self.download_filenames[-1])
         self.search.close_driver()
-        results_path = os.path.join(self.data_dir,self.download_filename)
-        time.sleep(5) #waiting a second to make sure data is copied from the partial dl file
-        self.search_results = pd.read_csv(results_path, sep='\t')
-        self.mongo_save(self.search_results, FILENAMES['dashboard'])
-        return self.download_filename
+        results_path = os.path.join(self.data_dir,self.download_filenames[-1])
+        self.fix_overflows(self.download_filenames[-1])
+        download_df = pd.read_csv(results_path, sep='\t')
+        if self.search_results is None:
+            self.search_results = download_df
+        else:
+            self.search_results.append(download_df)
+        if save:
+            self.mongo_save(self.search_results, FILENAMES['dashboard'])
+        return self.download_filenames[-1]
 
-    def fix_overflows(self):
+    def fix_overflows(self, filename=None):
         """
         This function fixes an error seen in some comptox dashboard results, where a newline character is inserted into
         the middle of the chemical names, messing up the tsv file.
         :return:
         """
-        if self.download_filename is not None:
-            results_path = os.path.join(self.data_dir, self.download_filename)
+        if  filename is not None:
+            results_path = os.path.join(self.data_dir, filename)
             new_file = []
             problems = []
             row_len = []
@@ -303,30 +344,26 @@ class NtaRun:
                 writer = csv.writer(file, delimiter = '\t')
                 writer.writerows(new_file)
 
-
-
     def process_toxpi(self):
         by_mass = self.search_mode == "mass"
-        self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filename,
+        self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filenames,
                                                tophit=self.top_result_only, by_mass = by_mass)
-        self.mongo_save(self.search_results, FILENAMES['toxpi'])
+        self.mongo_save(self.df_combined, FILENAMES['toxpi'])
 
     def clean_files(self):
-        path_to_remove = os.path.join(self.data_dir, self.download_filename)
-        os.remove(path_to_remove)
-        os.rmdir(self.data_dir)
+        shutil.rmtree(self.data_dir)  # remove data directory and all download files
         if self.verbose:
             logger.info("Cleaned up download file.")
 
-
+    # def mongo_save(self, file, step=""):
+    #     to_save = json.loads(file.to_json(orient='split'))
+    #     posts = self.mongo.posts
+    #     time_stamp = datetime.utcnow()
+    #     id = self.jobid + "_" + step
+    #     data = {'_id': id, 'date': time_stamp, 'project_name': self.project_name,'data': to_save}
+    #     posts.insert_one(data)
 
     def mongo_save(self, file, step=""):
-        to_save = json.loads(file.to_json(orient='split'))
-        posts = self.mongo.posts
-        time_stamp = datetime.utcnow()
+        to_save = file.to_json(orient='split')
         id = self.jobid + "_" + step
-        data = {'_id': id, 'date': time_stamp, 'project_name': self.project_name,'data': to_save}
-        posts.insert_one(data)
-
-
-
+        self.gridfs.put(to_save, _id=id, encoding='utf-8', project_name = self.project_name)

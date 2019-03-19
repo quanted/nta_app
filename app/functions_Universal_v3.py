@@ -12,6 +12,7 @@ import os
 from operator import itemgetter
 from itertools import groupby
 from difflib import SequenceMatcher
+import dask.dataframe as dd
 
 #REP_NUM = 3
 HBR = 3.0 # High_Blank_Ratio condition
@@ -141,7 +142,7 @@ def statistics(df,index): # calculate Mean,Median,STD,CV for every feature in a 
         headers = [0,0]
         Headers[index] = parse_headers(df,index)
         Abundance[index] = [item for sublist in Headers[index] for item in sublist if len(sublist)>1]
-        df = score(df) 
+        df = score(df)
     # Do some statistical acrobatics
         headers[index] = ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + Abundance[index]
         df = df[headers[index]].copy()
@@ -394,9 +395,12 @@ def reduce(df,index):
 def adduct_identifier(df,index,Mass_Difference,Retention_Difference,ppm):
     columns = df.columns.values.tolist()
     #print(("type is " + str(type(Mass_Difference))))
-
     df['rt_rounded'] = df['Retention_Time'].round(2)
-    dft = pd.merge(df,df,how='left',suffixes = ('','_y'), on='rt_rounded')
+    df_dask = dd.from_pandas(df, chunksize = 1000)
+    dft_dask = df_dask.merge(df_dask,how='left',suffixes = ('','_y'), on='rt_rounded')
+    dft = dft_dask.compute()
+    dft = dft.reset_index()
+    #dft = pd.merge(df,df,how='left',suffixes = ('','_y'), on='rt_rounded')
     d = {'Formate':['Esi-',43.99093],'Na':['Esi+',21.98194],'Ammonium':['Esi+',17.02655],'H2O':['Esi-',17.00329],'CO2':['Esi-',42.98255]} #dictionary of adducts
     lst = list()
     boolst = list()
@@ -417,8 +421,8 @@ def adduct_identifier(df,index,Mass_Difference,Retention_Difference,ppm):
                  & (((abs(dft.Mass-(dft.Mass_y-d[key][1]))/dft.Mass)*10**6)<=Mass_Difference),'1','')
         dft['temp_'+str(key)+'_category'] = None        
         dft['temp_'+str(key)+'_RTdiff']= None        
-        dft['temp_'+str(key)+'_Massdiff']= None                
-        dft.loc[(dft[is_name] =='1') | (dft[has_name] =='1'),'temp_'+str(key)+'_category' ] = 1       
+        dft['temp_'+str(key)+'_Massdiff']= None
+        dft.loc[(dft[is_name] =='1') | (dft[has_name] =='1'),'temp_'+str(key)+'_category' ] = 1
         dft.loc[((dft[is_name] =='1') & (dft[is_name].notnull())) | ((dft[has_name] =='1') & (dft[has_name].notnull())),'temp_'+str(key)+'_RTdiff'] = abs(dft.Retention_Time-dft.Retention_Time_y)
         dft.loc[((dft[is_name] =='1') & (dft[is_name].notnull())) | ((dft[has_name] =='1') & (dft[has_name].notnull())),'temp_'+str(key)+'_Massdiff'] = abs(dft.Mass-dft.Mass_y)
         dft['unique_'+str(key)+'_Number'] = dft.groupby(['temp_'+str(key)+'_category','temp_'+str(key)+'_Massdiff','temp_'+str(key)+'_RTdiff']).ngroup()
@@ -428,7 +432,7 @@ def adduct_identifier(df,index,Mass_Difference,Retention_Difference,ppm):
 
     dft.sort_values(lst,ascending=boolst,inplace=True)
     #if index==0:
-    #    dft.to_csv('adduct_trial.csv')    
+    #    dft.to_csv('adduct_trial.csv')
     dft.drop_duplicates(subset=['Compound','Mass','Retention_Time'],keep='last',inplace=True)
     columns.extend(lst)
     dft = dft[columns]

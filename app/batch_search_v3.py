@@ -6,26 +6,18 @@ from selenium.webdriver.remote.remote_connection import LOGGER
 import logging
 import os
 import time
-import signal
 import urllib.request, urllib.parse, urllib.error
 
 driver = None
 
 class BatchSearch:
 
-    def __init__(self,bit_64 = True, linux = True):
+    def __init__(self, bit_64=True, linux=True):
         self.bit_64 = bit_64
         self.driver = None
         self.linux = linux
 
-    def batch_search(self,masses=None,formulas=None,directory='',by_formula=True,ppm=10):
-        # chrome_profile = webdriver.ChromeOptions()
-        # profile = {"download.default_directory": directory,
-        #        "download.prompt_for_download": False,
-        #        "download.directory_upgrade": True,
-        #        "safebrowsing.enabled": True}
-
-        #chrome_profile.add_experimental_option("prefs", profile)
+    def batch_search(self, masses=None, formulas=None, directory='', by_formula=True, ppm=10):
         LOGGER.setLevel(logging.WARNING)
         options = webdriver.firefox.options.Options()
         options.set_headless(headless=True)  # change this to false to see the browser in action (slower)
@@ -34,30 +26,20 @@ class BatchSearch:
         firefox_profile.set_preference("browser.download.folderList",2)
         firefox_profile.set_preference("browser.download.manager.showWhenStarting",False)
         firefox_profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/tab-separated-values")
-    
+
         external_url = "https://comptox.epa.gov/dashboard/dsstoxdb/batch_search"
         internal_url = "http://comptox.zn.epa.gov/dashboard/dsstoxdb/batch_search"
-        #Helpful command line switches
-        # http://peter.sh/experiments/chromium-command-line-switches/
-    
-        #chrome_profile.add_argument("--disable-extensions")
-        #self.driver = webdriver.Chrome(executable_path=os.getcwd()+"\chromedriver.exe",
-        #chrome_options=chrome_profile)
         gecko_dir = os.path.dirname(os.path.abspath(__file__))
         if self.linux:
             gecko_path = os.path.join(gecko_dir,"geckodriver.elf")
         else:
             gecko_path = os.path.join(gecko_dir, "geckodriver_64.exe")
-        # if self.bit_64:
-        #     gecko_path = os.path.join(gecko_dir,"geckodriver_64.exe")
-        # else:
-        #     gecko_path = os.path.join(gecko_dir,"geckodriver.exe")
         print(gecko_path)
         self.driver = webdriver.Firefox(executable_path=gecko_path, firefox_profile=firefox_profile, firefox_options=options)
         self.driver.set_window_position(0,0)
         self.driver.maximize_window()
         value = 'true-value'
-    
+
         if urllib.request.urlopen(external_url).getcode() == 200:
             #value = 'value'
             self.driver.get(external_url)
@@ -141,8 +123,8 @@ class BatchSearch:
     
     
     def close_driver(self):
-        self.driver.service.process.send_signal(signal.SIGTERM)
-        #self.driver.close()
+        #self.driver.service.process.send_signal(signal.SIGKILL)
+        self.driver.close()
         self.driver.quit()
 
 
