@@ -1,11 +1,9 @@
 import pandas as pd
-import json
 import os
 import csv
 import time
 import logging
 import traceback
-import gridfs
 import shutil
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
@@ -88,6 +86,7 @@ class NtaRun:
         self.df_combined = None
         self.mpp_ready = None
         self.search_results = None
+        self.search = None
         self.download_filenames = []
         self.jobid = jobid
         self.verbose = verbose
@@ -164,8 +163,6 @@ class NtaRun:
         self.step = "Displaying results"
         self.set_status('Completed')
 
-
-
     def set_status(self, status, create = False):
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
@@ -239,14 +236,14 @@ class NtaRun:
         self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'])
 
     def iterate_searches(self):
-        to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :]  # only rows flagged
+        to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
         if self.search_mode == 'mass':
             to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
         else:
             to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
         n_search = len(to_search)  # number of fragments to search
         logger.info("Total # of queries: {}".format(n_search))
-        max_search = 200  # the maximum number of fragments to search at a time
+        max_search = 300 # the maximum number of fragments to search at a time
         upper_index = 0
         finished = False
         while not finished:
@@ -264,15 +261,15 @@ class NtaRun:
                 logger.info("Download finished.")
             self.fix_overflows()
 
-
     def search_dashboard(self, df_search, lower_index, upper_index):
-        in_linux = os.environ.get("SYSTEM_NAME") != "WINDOWS" #check the OS is linux/unix, so that we can use the .elf webdriver
+        in_linux = os.environ.get("SYSTEM_NAME") != "WINDOWS"  # check for correct webdriver
         to_search = df_search.iloc[lower_index:upper_index, :]
         if self.search_mode == 'mass':
             mono_masses = fn.masses(to_search)
             mono_masses_str = [str(i) for i in mono_masses]
             self.search = BatchSearch(linux = in_linux)
-            self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.new_download_dir, by_formula=False, ppm=self.parent_ion_mass_accuracy)
+            self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.new_download_dir,
+                                                     by_formula=False, ppm=self.parent_ion_mass_accuracy)
         else:
             compounds = fn.formulas(to_search)
             self.search = BatchSearch(linux = in_linux)
@@ -285,7 +282,17 @@ class NtaRun:
             for filename in os.listdir(self.new_download_dir):
                 if filename.startswith('ChemistryDashboard-Batch-Search') and not filename.endswith("part"):
                         self.download_filenames.append(filename)
-                        shutil.move(os.path.join(self.new_download_dir, filename), os.path.join(self.data_dir, filename))
+                        copy_tries = 0
+                        source = os.path.join(self.new_download_dir, filename)
+                        destination = os.path.join(self.data_dir, filename)
+                        while copy_tries < 10:
+                            time.sleep(5)  # waiting a second to make sure data is copied from the partial dl file
+                            shutil.copy(source, destination)
+                            if os.path.exists(destination):
+                                if os.path.getsize(destination) > 0:
+                                    os.remove(source)
+                                    break
+                            copy_tries = copy_tries + 1
                         finished = True
             tries += 1
             time.sleep(1)
@@ -296,7 +303,6 @@ class NtaRun:
         print("This is what was downloaded: " + self.download_filenames[-1])
         self.search.close_driver()
         results_path = os.path.join(self.data_dir,self.download_filenames[-1])
-        time.sleep(5) #waiting a second to make sure data is copied from the partial dl file
         self.fix_overflows(self.download_filenames[-1])
         download_df = pd.read_csv(results_path, sep='\t')
         if self.search_results is None:
@@ -338,8 +344,6 @@ class NtaRun:
                 writer = csv.writer(file, delimiter = '\t')
                 writer.writerows(new_file)
 
-
-
     def process_toxpi(self):
         by_mass = self.search_mode == "mass"
         self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filenames,
@@ -347,13 +351,10 @@ class NtaRun:
         self.mongo_save(self.df_combined, FILENAMES['toxpi'])
 
     def clean_files(self):
-        #path_to_removes = os.path.join(self.data_dir, self.download_filenames)
-        #os.remove(path_to_remove)
-        #os.rmdir(self.data_dir)
         shutil.rmtree(self.data_dir)  # remove data directory and all download files
         if self.verbose:
             logger.info("Cleaned up download file.")
-    #
+
     # def mongo_save(self, file, step=""):
     #     to_save = json.loads(file.to_json(orient='split'))
     #     posts = self.mongo.posts
@@ -366,4 +367,3 @@ class NtaRun:
         to_save = file.to_json(orient='split')
         id = self.jobid + "_" + step
         self.gridfs.put(to_save, _id=id, encoding='utf-8', project_name = self.project_name)
-
