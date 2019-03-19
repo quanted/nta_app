@@ -240,6 +240,10 @@ class NtaRun:
 
     def iterate_searches(self):
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :]  # only rows flagged
+        if self.search_mode == 'mass':
+            to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
+        else:
+            to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
         n_search = len(to_search)  # number of fragments to search
         logger.info("Total # of queries: {}".format(n_search))
         max_search = 200  # the maximum number of fragments to search at a time
@@ -281,7 +285,7 @@ class NtaRun:
             for filename in os.listdir(self.new_download_dir):
                 if filename.startswith('ChemistryDashboard-Batch-Search') and not filename.endswith("part"):
                         self.download_filenames.append(filename)
-                        os.rename(os.path.join(self.new_download_dir, filename), os.path.join(self.data_dir, filename))
+                        shutil.move(os.path.join(self.new_download_dir, filename), os.path.join(self.data_dir, filename))
                         finished = True
             tries += 1
             time.sleep(1)
