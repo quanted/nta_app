@@ -27,6 +27,7 @@ class NtaInputs(forms.Form):
         initial=10,
         validators=[MinValueValidator(0)])
     rt_accuracy = forms.FloatField(
+        widget=forms.NumberInput(attrs={'step': 0.1}),
         label='Adduct retention time accuracy (min)',
         initial=1,
         validators=[MinValueValidator(0)])
@@ -40,11 +41,12 @@ class NtaInputs(forms.Form):
         initial='ppm')
     mass_accuracy_tr = forms.FloatField(
         label='Tracer mass accuracy',
-        initial=10,
+        initial=5,
         validators=[MinValueValidator(0)])
-    rt_accuracy_tr = forms.FloatField(
+    rt_accuracy_tr = forms.DecimalField(
+        widget=forms.NumberInput(attrs={'step': 0.1}),
         label='Tracer retention time accuracy (min)',
-        initial=1,
+        initial=0.1,
         validators=[MinValueValidator(0)])
     sample_to_blank = forms.FloatField(
         label = 'Min sample:blank cutoff',
@@ -55,7 +57,8 @@ class NtaInputs(forms.Form):
         label='Min replicate hits',
         initial=1,
         validators=[MinValueValidator(0)])
-    max_replicate_cv = forms.FloatField(
+    max_replicate_cv = forms.DecimalField(
+        widget=forms.NumberInput(attrs={'step': 0.1}),
         label='Max replicate CV',
         initial=0.8,
         validators=[MinValueValidator(0)])
