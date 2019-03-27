@@ -31,6 +31,7 @@ class OutputServer:
         self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
         self.gridfs = connect_to_mongo_gridfs(in_docker = self.in_docker)
         self.posts = self.mongo.posts
+        self.names_duplicates = FILENAMES['duplicates']
         self.names_toxpi = FILENAMES['toxpi']
         self.names_stats = FILENAMES['stats']
         self.names_tracers = FILENAMES['tracers']
@@ -39,7 +40,7 @@ class OutputServer:
         self.names_combined = FILENAMES['combined']
         self.names_mpp_ready = FILENAMES['mpp_ready']
         self.names_dashboard = FILENAMES['dashboard']
-        self.main_file_names = self.names_stats + self.names_cleaned + self.names_flags + [self.names_combined] + \
+        self.main_file_names = self.names_duplicates + self.names_stats + self.names_cleaned + self.names_flags + [self.names_combined] + \
                                [self.names_mpp_ready] + [self.names_dashboard] + [self.names_toxpi]
 
 
@@ -69,7 +70,8 @@ class OutputServer:
         #project_name = db_record['project_name']
         project_name = db_record.project_name
         if project_name:
-            filename = project_name.replace(" ", "_") + '_' + self.names_toxpi + '.csv'
+            #filename = project_name.replace(" ", "_") + '_' + self.names_toxpi + '.csv'
+            filename = project_name.replace(" ", "_") + '_' + self.names_duplicates + '.csv' # TODO revert to normal
         else:
             filename = id + '.csv'
         response = HttpResponse(content_type='text/csv')

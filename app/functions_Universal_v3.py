@@ -441,7 +441,44 @@ def adduct_identifier(df,index,Mass_Difference,Retention_Difference,ppm):
     return dft    
 
 
-def duplicates(df,index):
+def duplicates(df,index, high_res=False):
+    if high_res:
+        df_new = df.copy()
+        samples_df = df.filter(like='Sample', axis=1)
+        df_new['all_sample_mean'] = samples_df.mean(axis=0)
+        df_new.sort_values(by=['all_sample_mean'], inplace=True)
+        df_new.reset_index(drop=True, inplace = True)
+        duplicate_set_id = np.zeros(len(df.index))
+        set = 1
+        for i, row in df_new.iterrows():
+            if duplicate_set_id[i] > 0:
+                continue
+            mass_i = row['Mass']
+            rt_i = row['Retention_Time']
+            matches = np.where((abs(df_new['Mass']-mass_i) <= 0.005) & (abs(df_new['Retention_Time'] - rt_i) <= 0.05) & (duplicate_set_id == 0), set, 0)
+            #if np.sum(matches==set) > 1:
+            #    print("Found {} matches".format(np.sum(matches == set)))
+            if np.sum(matches==set) <= 1:
+                matches[i] = 0
+            else:
+                duplicate_set_id = duplicate_set_id + matches
+                set = set+1
+        df_new['duplicate_set_id'] = duplicate_set_id
+        df_new.drop_duplicates(subset='duplicate_set_id', keep='first', inplace=True) # keeping feature with the highest mean intensity across all samples
+        df_new.sort_values(by=['Mass'], inplace=True)
+        df_new.reset_index(drop=True, inplace = True)
+        to_return = df_new.drop(['duplicate_set_id', 'all_sample_mean'], axis=1).copy()
+        return to_return
+        #keeps = np.ones(len(df.index))
+        #for set in range(duplicate_set_id.max()+1):
+        #    members = df_new.loc[duplicate_set_id == set, :]
+        #    cutoff = members['all_sample_mean'].max()
+        #    keeps[duplicate_set_id == set & df_new['all_sample_mean'] < cutoff] = 0
+        #to_return = df.loc[keeps == 1, :]
+        #return to_return
+
+
+    else:
         Abundance = [[],[]]
         a_Abundance = [[],[]]
         b_Abundance = [[],[]]
@@ -479,7 +516,6 @@ def duplicates(df,index):
         #dft.to_csv('what_is_in_here.csv',index=False)
         return dft
 ########### keep looking for solution to failed duplicated  drops & ((df2['Compound'] == df2['Compound_x']) | (df2['Compound'].str.contains('@')))
-
 
 def MPP_Ready(dft, directory='',file=''):
         dft = dft.rename(columns = {'Compound':'Formula','Retention_Time':'RT'})

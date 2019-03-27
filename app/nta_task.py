@@ -53,7 +53,8 @@ def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose
     return True
 
 
-FILENAMES = {'stats': ['stats_pos', 'stats_neg'],
+FILENAMES = {'duplicates': ['duplicates_dropped_pos', 'Duplicates_dropped_neg'],
+             'stats': ['stats_pos', 'stats_neg'],
              'tracers': ['tracers_pos', 'tracers_neg'],
              'cleaned': ['cleaned_pos', 'cleaned_neg'],
              'flags': ['flags_pos', 'flags_neg'],
@@ -191,7 +192,9 @@ class NtaRun:
         return self.step
 
     def drop_duplicates(self):
-        self.dfs = [fn.duplicates(df, index) for index, df in enumerate(self.dfs)]
+        self.dfs = [fn.duplicates(df, index, high_res=True) for index, df in enumerate(self.dfs)]
+        self.mongo_save(self.dfs[0], FILENAMES['duplicates'][0])
+        self.mongo_save(self.dfs[1], FILENAMES['duplicates'][1])
         return
 
     def calc_statistics(self):
