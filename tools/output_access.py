@@ -31,6 +31,7 @@ class OutputServer:
         self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
         self.gridfs = connect_to_mongo_gridfs(in_docker = self.in_docker)
         self.posts = self.mongo.posts
+        self.names_duplicates = FILENAMES['duplicates']
         self.names_toxpi = FILENAMES['toxpi']
         self.names_stats = FILENAMES['stats']
         self.names_tracers = FILENAMES['tracers']
@@ -39,7 +40,7 @@ class OutputServer:
         self.names_combined = FILENAMES['combined']
         self.names_mpp_ready = FILENAMES['mpp_ready']
         self.names_dashboard = FILENAMES['dashboard']
-        self.main_file_names = self.names_stats + self.names_cleaned + self.names_flags + [self.names_combined] + \
+        self.main_file_names = self.names_duplicates + self.names_stats + self.names_cleaned + self.names_flags + [self.names_combined] + \
                                [self.names_mpp_ready] + [self.names_dashboard] + [self.names_toxpi]
 
 
@@ -61,6 +62,7 @@ class OutputServer:
 
     def final_result(self):
         id = self.jobid + "_" + self.names_toxpi
+        #id = self.jobid + "_" + self.names_duplicates[0]# TODO remove
         #db_record = self.posts.find_one({'_id': id})
         #json_string = json.dumps(db_record['data'])
         db_record = self.gridfs.get(id)
@@ -70,6 +72,7 @@ class OutputServer:
         project_name = db_record.project_name
         if project_name:
             filename = project_name.replace(" ", "_") + '_' + self.names_toxpi + '.csv'
+            #filename = project_name.replace(" ", "_") + '_' + self.names_duplicates[0] + '.csv' # TODO remove
         else:
             filename = id + '.csv'
         response = HttpResponse(content_type='text/csv')
