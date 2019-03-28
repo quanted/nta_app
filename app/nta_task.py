@@ -109,7 +109,7 @@ class NtaRun:
 
         # 1: drop duplicates
         self.step = "Dropping duplicates"
-        self.drop_duplicates()
+        self.filter_duplicates()
         if self.verbose:
             logger.info("Dropped duplicates.")
             #print(self.dfs[0])
@@ -191,7 +191,7 @@ class NtaRun:
     def get_step(self):
         return self.step
 
-    def drop_duplicates(self):
+    def filter_duplicates(self):
         self.dfs = [fn.duplicates(df, index, high_res=True) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], FILENAMES['duplicates'][0])
         self.mongo_save(self.dfs[1], FILENAMES['duplicates'][1])

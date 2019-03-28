@@ -445,7 +445,7 @@ def duplicates(df,index, high_res=False):
     if high_res:
         df_new = df.copy()
         samples_df = df.filter(like='Sample', axis=1)
-        df_new['all_sample_mean'] = samples_df.mean(axis=0)
+        df_new['all_sample_mean'] = samples_df.mean(axis=1)
         df_new.sort_values(by=['all_sample_mean'], inplace=True)
         df_new.reset_index(drop=True, inplace = True)
         duplicate_set_id = np.zeros(len(df.index))
@@ -464,7 +464,8 @@ def duplicates(df,index, high_res=False):
                 duplicate_set_id = duplicate_set_id + matches
                 set = set+1
         df_new['duplicate_set_id'] = duplicate_set_id
-        df_new.drop_duplicates(subset='duplicate_set_id', keep='first', inplace=True) # keeping feature with the highest mean intensity across all samples
+        #df_new.drop_duplicates(subset='duplicate_set_id', keep='first', inplace=True) # keeping feature with the highest mean intensity across all samples
+        df_new = df_new[(duplicate_set_id == 0) | (np.invert(pd.Series(duplicate_set_id).duplicated()))].copy()
         df_new.sort_values(by=['Mass'], inplace=True)
         df_new.reset_index(drop=True, inplace = True)
         to_return = df_new.drop(['duplicate_set_id', 'all_sample_mean'], axis=1).copy()

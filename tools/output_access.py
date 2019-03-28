@@ -62,6 +62,7 @@ class OutputServer:
 
     def final_result(self):
         id = self.jobid + "_" + self.names_toxpi
+        #id = self.jobid + "_" + self.names_duplicates[0]# TODO remove
         #db_record = self.posts.find_one({'_id': id})
         #json_string = json.dumps(db_record['data'])
         db_record = self.gridfs.get(id)
@@ -70,8 +71,8 @@ class OutputServer:
         #project_name = db_record['project_name']
         project_name = db_record.project_name
         if project_name:
-            #filename = project_name.replace(" ", "_") + '_' + self.names_toxpi + '.csv'
-            filename = project_name.replace(" ", "_") + '_' + self.names_duplicates + '.csv' # TODO revert to normal
+            filename = project_name.replace(" ", "_") + '_' + self.names_toxpi + '.csv'
+            #filename = project_name.replace(" ", "_") + '_' + self.names_duplicates[0] + '.csv' # TODO remove
         else:
             filename = id + '.csv'
         response = HttpResponse(content_type='text/csv')
