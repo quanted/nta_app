@@ -467,15 +467,6 @@ def duplicates(df,index, high_res=False):
         df_new.reset_index(drop=True, inplace = True)
         to_return = df_new.drop(['duplicate_set_id', 'all_sample_mean'], axis=1).copy()
         return to_return
-        #keeps = np.ones(len(df.index))
-        #for set in range(duplicate_set_id.max()+1):
-        #    members = df_new.loc[duplicate_set_id == set, :]
-        #    cutoff = members['all_sample_mean'].max()
-        #    keeps[duplicate_set_id == set & df_new['all_sample_mean'] < cutoff] = 0
-        #to_return = df.loc[keeps == 1, :]
-        #return to_return
-
-
     else:
         Abundance = [[],[]]
         a_Abundance = [[],[]]
