@@ -1,8 +1,10 @@
 matplotlib
 numpy
 pandas
-pymysql
 selenium
-tk #includes tkinter
 django
+pymongo
+gridfs
 dask
+distributed
+bokeh
