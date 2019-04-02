@@ -30,8 +30,9 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
         local_cluster = LocalCluster(processes=False, ip='127.0.0.1')
         dask_client = Client(local_cluster)
     else:
-        logger.info("Running in docker environment.")
-        dask_client = Client('dask_scheduler:8786', processes=False)
+        dask_scheduler = os.environ.get("DASK_SCHEDULER")
+        logger.info("Running in docker environment. Dask Scheduler: {}".format(dask_scheduler))
+        dask_client = Client(dask_scheduler, processes=False)
     dask_input_dfs = dask_client.scatter(input_dfs)
     logger.info("Submitting Nta Dask task")
     task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
