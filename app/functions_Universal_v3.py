@@ -392,53 +392,87 @@ def reduce(df,index):
         return df
 
 
-def adduct_identifier(df,index,Mass_Difference,Retention_Difference,ppm):
-    columns = df.columns.values.tolist()
-    #print(("type is " + str(type(Mass_Difference))))
-    df['rt_rounded'] = df['Retention_Time'].round(2)
-    df_dask = dd.from_pandas(df, chunksize = 1000)
-    dft_dask = df_dask.merge(df_dask,how='left',suffixes = ('','_y'), on='rt_rounded')
-    dft = dft_dask.compute()
-    dft = dft.reset_index()
-    #dft = pd.merge(df,df,how='left',suffixes = ('','_y'), on='rt_rounded')
-    d = {'Formate':['Esi-',43.99093],'Na':['Esi+',21.98194],'Ammonium':['Esi+',17.02655],'H2O':['Esi-',17.00329],'CO2':['Esi-',42.98255]} #dictionary of adducts
-    lst = list()
-    boolst = list()
-    for key in d:
-        is_name = 'is_' + str(key) + '_Adduct'
-        has_name = 'has_' + str(key) + '_Adduct'
-        #print((d[key][1]))
-        if ppm: # PPM cut
-            #print("PPM selected")
-            dft[is_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
-                     & (((abs(dft.Mass-(dft.Mass_y+d[key][1]))/dft.Mass)*10**6)<=Mass_Difference),'1','')
-        else: # Da Cut
-            #print("Da selected")
-            dft[is_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
-                     & ((abs(dft.Mass-(dft.Mass_y+d[key][1])))<=Mass_Difference),'1','')
-
-        dft[has_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
-                 & (((abs(dft.Mass-(dft.Mass_y-d[key][1]))/dft.Mass)*10**6)<=Mass_Difference),'1','')
-        dft['temp_'+str(key)+'_category'] = None        
-        dft['temp_'+str(key)+'_RTdiff']= None        
-        dft['temp_'+str(key)+'_Massdiff']= None
-        dft.loc[(dft[is_name] =='1') | (dft[has_name] =='1'),'temp_'+str(key)+'_category' ] = 1
-        dft.loc[((dft[is_name] =='1') & (dft[is_name].notnull())) | ((dft[has_name] =='1') & (dft[has_name].notnull())),'temp_'+str(key)+'_RTdiff'] = abs(dft.Retention_Time-dft.Retention_Time_y)
-        dft.loc[((dft[is_name] =='1') & (dft[is_name].notnull())) | ((dft[has_name] =='1') & (dft[has_name].notnull())),'temp_'+str(key)+'_Massdiff'] = abs(dft.Mass-dft.Mass_y)
-        dft['unique_'+str(key)+'_Number'] = dft.groupby(['temp_'+str(key)+'_category','temp_'+str(key)+'_Massdiff','temp_'+str(key)+'_RTdiff']).ngroup()
-        dft.loc[dft['unique_'+str(key)+'_Number'] < 0,'unique_'+str(key)+'_Number' ] = np.nan
-        lst.extend((is_name,has_name,'unique_'+str(key)+'_Number'))
-        boolst.extend((True,True,True))
-
-    dft.sort_values(lst,ascending=boolst,inplace=True)
-    #if index==0:
-    #    dft.to_csv('adduct_trial.csv')
-    dft.drop_duplicates(subset=['Compound','Mass','Retention_Time'],keep='last',inplace=True)
-    columns.extend(lst)
-    dft = dft[columns]
-    
-    #print(dft)
-    return dft    
+def adduct_identifier(df_in,index,Mass_Difference,Retention_Difference,ppm, ionization):
+    df = df_in.copy()
+    mass = df['Mass'].to_numpy()
+    rts = df['Retention_Time'].to_numpy()
+    masses_matrix = np.reshape(mass, (len(mass), 1))
+    rts_matrix = np.reshape(rts, (len(rts),1))
+    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
+    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
+    adducts = {'Formate':['Esi-',43.99093],'Na':['Esi+',21.98194],'Ammonium':['Esi+',17.02655], # TODO Double check masses
+               'H2O':['Esi-',17.00329],'CO2':['Esi-',42.98255]}  # dictionary of adducts
+    adducts_possible = {k: v for k, v in adducts.items() if v[0] == ionization}
+    for a_name, a_info in adducts_possible.items():
+        is_adduct_diff = abs(diff_matrix_mass - a_info[1])  #is = subtract
+        has_adduct_diff = abs(diff_matrix_mass + a_info[1])
+        if ppm:
+            is_adduct_diff = (is_adduct_diff/masses_matrix)*10**6
+            has_adduct_diff = (has_adduct_diff/masses_matrix)*10**6
+        is_adduct_matrix = np.where((is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
+        has_adduct_matrix = np.where((has_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
+        np.fill_diagonal(is_adduct_matrix, 0)  # remove self matches
+        np.fill_diagonal(has_adduct_matrix, 0)  # remove self matches
+        row_num = len(mass)
+        is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + 1
+        has_id_matrix = is_id_matrix.transpose()
+        is_adduct_number = is_adduct_matrix * is_id_matrix
+        is_adduct_number_flat= np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row
+        has_adduct_number = has_adduct_matrix * has_id_matrix
+        has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
+        unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat)
+        if ionization == 'Esi-':
+            unique_adduct_number = unique_adduct_number * -1
+        df['unique_{}_number'.format(a_name)] = unique_adduct_number
+        df['has_{}_adduct'.format(a_name)] = np.where(has_adduct_number_flat > 0, 1, 0)
+        df['is_{}_adduct'.format(a_name)] = np.where(is_adduct_number_flat > 0, 1, 0)
+    return df
+    # columns = df.columns.values.tolist()
+    # #print(("type is " + str(type(Mass_Difference))))
+    # df['rt_rounded'] = df['Retention_Time'].round(2)
+    # df_dask = dd.from_pandas(df, chunksize = 1000)
+    # dft_dask = df_dask.merge(df_dask,how='left',suffixes = ('','_y'), on='rt_rounded')
+    # dft = dft_dask.compute()
+    # dft = dft.reset_index()
+    # #dft = pd.merge(df,df,how='left',suffixes = ('','_y'), on='rt_rounded')
+    # d = {'Formate':['Esi-',43.99093],'Na':['Esi+',21.98194],'Ammonium':['Esi+',17.02655],'H2O':['Esi-',17.00329],'CO2':['Esi-',42.98255]} #dictionary of adducts
+    # lst = list()
+    # boolst = list()
+    # for key in d:
+    #     is_name = 'is_' + str(key) + '_Adduct'
+    #     has_name = 'has_' + str(key) + '_Adduct'
+    #     #print((d[key][1]))
+    #     if ppm: # PPM cut
+    #         #print("PPM selected")
+    #         dft[is_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
+    #                  & (((abs(dft.Mass-(dft.Mass_y+d[key][1]))/dft.Mass)*10**6)<=Mass_Difference),'1','')
+    #     else: # Da Cut
+    #         #print("Da selected")
+    #         dft[is_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
+    #                  & ((abs(dft.Mass-(dft.Mass_y+d[key][1])))<=Mass_Difference),'1','')
+    #
+    #     dft[has_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
+    #              & (((abs(dft.Mass-(dft.Mass_y-d[key][1]))/dft.Mass)*10**6)<=Mass_Difference),'1','')
+    #     dft['temp_'+str(key)+'_category'] = None
+    #     dft['temp_'+str(key)+'_RTdiff']= None
+    #     dft['temp_'+str(key)+'_Massdiff']= None
+    #     dft.loc[(dft[is_name] =='1') | (dft[has_name] =='1'),'temp_'+str(key)+'_category' ] = 1
+    #     dft.loc[((dft[is_name] =='1') & (dft[is_name].notnull())) | ((dft[has_name] =='1') & (dft[has_name].notnull())),'temp_'+str(key)+'_RTdiff'] = abs(dft.Retention_Time-dft.Retention_Time_y)
+    #     dft.loc[((dft[is_name] =='1') & (dft[is_name].notnull())) | ((dft[has_name] =='1') & (dft[has_name].notnull())),'temp_'+str(key)+'_Massdiff'] = abs(dft.Mass-dft.Mass_y)
+    #     dft['unique_'+str(key)+'_Number'] = dft.groupby(['temp_'+str(key)+'_category','temp_'+str(key)+'_Massdiff','temp_'+str(key)+'_RTdiff']).ngroup()
+    #     dft.loc[dft['unique_'+str(key)+'_Number'] < 0,'unique_'+str(key)+'_Number' ] = np.nan
+    #     lst.extend((is_name,has_name,'unique_'+str(key)+'_Number'))
+    #     boolst.extend((True,True,True))
+    #
+    # dft.sort_values(lst,ascending=boolst,inplace=True)
+    # #if index==0:
+    # #    dft.to_csv('adduct_trial.csv')
+    # dft.drop_duplicates(subset=['Compound','Mass','Retention_Time'],keep='last',inplace=True)
+    # columns.extend(lst)
+    # dft = dft[columns]
+    #
+    # #print(dft)
+    # return dft
 
 
 def duplicates(df,index, high_res=False):

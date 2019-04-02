@@ -201,7 +201,9 @@ class NtaRun:
         ppm = self.mass_accuracy_units == 'ppm'
         self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
         #print("Calculating statistics with units: " + self.mass_accuracy_units)
-        #self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm) for index, df in enumerate(self.dfs)]
+        modes = ['Esi+', 'Esi-']
+        self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm,
+                                         ionization = modes[index]) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
         self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
