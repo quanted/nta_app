@@ -28,7 +28,7 @@ class NtaInputs(forms.Form):
         validators=[MinValueValidator(0)])
     rt_accuracy = forms.FloatField(
         widget=forms.NumberInput(attrs={'step': 0.01}),
-        label='Adduct retention time accuracy (min)',
+        label='Adduct retention time accuracy (mins)',
         initial=0.05,
         validators=[MinValueValidator(0)])
     tracer_input = forms.FileField(
@@ -45,7 +45,7 @@ class NtaInputs(forms.Form):
         validators=[MinValueValidator(0)])
     rt_accuracy_tr = forms.DecimalField(
         widget=forms.NumberInput(attrs={'step': 0.1}),
-        label='Tracer retention time accuracy (min)',
+        label='Tracer retention time accuracy (mins)',
         initial=0.1,
         validators=[MinValueValidator(0)])
     sample_to_blank = forms.FloatField(
@@ -66,6 +66,11 @@ class NtaInputs(forms.Form):
         widget = RangeInput(attrs={'max': '10', 'min':'1', 'class': 'slider_bar'}),
         label='Parent ion mass accuracy (ppm)',
         initial=5,
+        validators=[MinValueValidator(0)])
+    minimum_rt = forms.FloatField(
+        widget=forms.NumberInput(attrs={'step': 0.1}),
+        label='Discard features below this retention time (mins)',
+        initial=0.00,
         validators=[MinValueValidator(0)])
     search_mode = forms.ChoiceField(
         label='Search dashboard by',

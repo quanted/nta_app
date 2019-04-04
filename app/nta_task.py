@@ -84,6 +84,7 @@ class NtaRun:
         self.parent_ion_mass_accuracy = float(parameters['parent_ion_mass_accuracy'])
         self.search_mode = parameters['search_mode']
         self.top_result_only = parameters['top_result_only'] == 'yes'
+        self.minimum_rt = float(parameters['minimum_rt']) # throw out features below this (void volume)
         self.dfs = input_dfs
         self.df_combined = None
         self.mpp_ready = None
@@ -108,8 +109,9 @@ class NtaRun:
         # 0: create a status in mongo
         self.set_status('Processing', create = True)
 
-        # 1: drop duplicates
+        # 1: drop duplicates and throw out void volume
         self.step = "Dropping duplicates"
+        self.filter_void_volume(self.minimum_rt)
         self.filter_duplicates()
         if self.verbose:
             logger.info("Dropped duplicates.")
@@ -196,6 +198,10 @@ class NtaRun:
         self.dfs = [fn.duplicates(df, index, high_res=True) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], FILENAMES['duplicates'][0])
         self.mongo_save(self.dfs[1], FILENAMES['duplicates'][1])
+        return
+
+    def filter_void_volume(self, min_rt):
+        self.dfs = [df.loc[df['Retention_Time'] > min_rt].copy() for index, df in enumerate(self.dfs)]
         return
 
     def calc_statistics(self):

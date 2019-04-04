@@ -442,7 +442,7 @@ def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):
         df_new = df.copy()
         samples_df = df.filter(like='Sample', axis=1)
         df_new['all_sample_mean'] = samples_df.mean(axis=1)  # mean intensity across all samples
-        df_new.sort_values(by=['all_sample_mean'], inplace=True)
+        df_new.sort_values(by=['all_sample_mean'], inplace=True, ascending=False)
         df_new.reset_index(drop=True, inplace=True)
         mass = df_new['Mass'].to_numpy()
         rts = df_new['Retention_Time'].to_numpy()
