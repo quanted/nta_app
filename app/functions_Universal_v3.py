@@ -436,53 +436,6 @@ def adduct_identifier(df_in, index, Mass_Difference, Retention_Difference,ppm, i
         new_cols = ['unique_{}_number'.format(a_name), 'has_{}_adduct'.format(a_name), 'is_{}_adduct'.format(a_name)]
         df[new_cols] = df[new_cols].replace(0, np.nan)
     return df
-    # columns = df.columns.values.tolist()
-    # #print(("type is " + str(type(Mass_Difference))))
-    # df['rt_rounded'] = df['Retention_Time'].round(2)
-    # df_dask = dd.from_pandas(df, chunksize = 1000)
-    # dft_dask = df_dask.merge(df_dask,how='left',suffixes = ('','_y'), on='rt_rounded')
-    # dft = dft_dask.compute()
-    # dft = dft.reset_index()
-    # #dft = pd.merge(df,df,how='left',suffixes = ('','_y'), on='rt_rounded')
-    # d = {'Formate':['Esi-',43.99093],'Na':['Esi+',21.98194],'Ammonium':['Esi+',17.02655],'H2O':['Esi-',17.00329],'CO2':['Esi-',42.98255]} #dictionary of adducts
-    # lst = list()
-    # boolst = list()
-    # for key in d:
-    #     is_name = 'is_' + str(key) + '_Adduct'
-    #     has_name = 'has_' + str(key) + '_Adduct'
-    #     #print((d[key][1]))
-    #     if ppm: # PPM cut
-    #         #print("PPM selected")
-    #         dft[is_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
-    #                  & (((abs(dft.Mass-(dft.Mass_y+d[key][1]))/dft.Mass)*10**6)<=Mass_Difference),'1','')
-    #     else: # Da Cut
-    #         #print("Da selected")
-    #         dft[is_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
-    #                  & ((abs(dft.Mass-(dft.Mass_y+d[key][1])))<=Mass_Difference),'1','')
-    #
-    #     dft[has_name] = np.where( (abs(dft.Retention_Time-dft.Retention_Time_y)<Retention_Difference) & (dft.Ionization_Mode==d[key][0])\
-    #              & (((abs(dft.Mass-(dft.Mass_y-d[key][1]))/dft.Mass)*10**6)<=Mass_Difference),'1','')
-    #     dft['temp_'+str(key)+'_category'] = None
-    #     dft['temp_'+str(key)+'_RTdiff']= None
-    #     dft['temp_'+str(key)+'_Massdiff']= None
-    #     dft.loc[(dft[is_name] =='1') | (dft[has_name] =='1'),'temp_'+str(key)+'_category' ] = 1
-    #     dft.loc[((dft[is_name] =='1') & (dft[is_name].notnull())) | ((dft[has_name] =='1') & (dft[has_name].notnull())),'temp_'+str(key)+'_RTdiff'] = abs(dft.Retention_Time-dft.Retention_Time_y)
-    #     dft.loc[((dft[is_name] =='1') & (dft[is_name].notnull())) | ((dft[has_name] =='1') & (dft[has_name].notnull())),'temp_'+str(key)+'_Massdiff'] = abs(dft.Mass-dft.Mass_y)
-    #     dft['unique_'+str(key)+'_Number'] = dft.groupby(['temp_'+str(key)+'_category','temp_'+str(key)+'_Massdiff','temp_'+str(key)+'_RTdiff']).ngroup()
-    #     dft.loc[dft['unique_'+str(key)+'_Number'] < 0,'unique_'+str(key)+'_Number' ] = np.nan
-    #     lst.extend((is_name,has_name,'unique_'+str(key)+'_Number'))
-    #     boolst.extend((True,True,True))
-    #
-    # dft.sort_values(lst,ascending=boolst,inplace=True)
-    # #if index==0:
-    # #    dft.to_csv('adduct_trial.csv')
-    # dft.drop_duplicates(subset=['Compound','Mass','Retention_Time'],keep='last',inplace=True)
-    # columns.extend(lst)
-    # dft = dft[columns]
-    #
-    # #print(dft)
-    # return dft
-
 
 def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):  # TODO optimize memory usage
     if high_res:  # new procedure for the higher res machine
@@ -507,27 +460,6 @@ def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):
         to_keep.reset_index(drop=True, inplace=True)
         to_keep = to_keep.drop(['all_sample_mean'], axis=1).copy()
         return to_keep
-        #
-        #
-        # duplicate_set_id = np.zeros(len(df.index)) #vector to store the grouping IDs. 0 = no duplicates
-        # set = 1
-        # for i, row in df_new.iterrows():  # TODO: optimize this if we like how it is working
-        #     if duplicate_set_id[i] > 0:
-        #         continue
-        #     mass_i = row['Mass']
-        #     rt_i = row['Retention_Time']
-        #     matches = np.where((abs(df_new['Mass']-mass_i) <= 0.005) & (abs(df_new['Retention_Time'] - rt_i) <= 0.05) & (duplicate_set_id == 0), set, 0)
-        #     if np.sum(matches == set) <= 1:
-        #         matches[i] = 0  # set the self-match to 0 if there were no duplicates
-        #     else:
-        #         duplicate_set_id = duplicate_set_id + matches  # add the new set of duplicates to our set_id vector
-        #         set = set+1
-        # df_new['duplicate_set_id'] = duplicate_set_id
-        # df_new = df_new[(duplicate_set_id == 0) | (np.invert(pd.Series(duplicate_set_id).duplicated()))].copy() # keeps first duplicate, which will have highest all_sample_mean
-        # df_new.sort_values(by=['Mass'], inplace=True)
-        # df_new.reset_index(drop=True, inplace = True)
-        # to_return = df_new.drop(['duplicate_set_id', 'all_sample_mean'], axis=1).copy()
-        # return to_return
     else:
         Abundance = [[],[]]
         a_Abundance = [[],[]]

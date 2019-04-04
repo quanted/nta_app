@@ -150,17 +150,3 @@ def calculate_toxpi(df,dir):
     df.to_csv(directory+"/calculated_toxpi_variables.csv", index=False)
     return df
 
-
-
-
-#dire='L:/Lab/NERL_RTP_D589A_Quincy/Hussein/Python_NTA_v2\/trial_3_hussein'
-#filee='ChemistryDashboard-Batch-Search_2018-05-24_16_38_36.tsv'
-#fix='/home/hussein/Documents/NTA/Python_alt/Trial2_Hussein/ChemistryDashboard-AdvancedSearch_2017-12-07_14_46_46.xls'
-#fi='/home/hussein/Documents/NTA/Python_alt/ChemistryDashboard-AdvancedSearch_2017-12-07_14_46_46.csv'    
-
-
-#process_toxpi(dir=dire,file=filee)
-#calculate_toxpi(None,dir)
-#Radii=[2,1,3,5]
-
-#plot_toxpi(Radii)
