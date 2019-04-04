@@ -3,7 +3,7 @@ import json
 import os
 from datetime import datetime
 from io import StringIO, BytesIO
-from zipfile import ZipFile
+from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import HttpResponse, JsonResponse
 from ..app.utilities import connect_to_mongoDB, connect_to_mongo_gridfs
 from ..app.nta_task import FILENAMES
@@ -83,7 +83,7 @@ class OutputServer:
     def all_files(self):
         in_memory_zip = BytesIO()
         #zip = ZipFile(in_memory_zip, 'w')
-        with ZipFile(in_memory_zip, 'w') as zipf:
+        with ZipFile(in_memory_zip, 'w', ZIP_DEFLATED) as zipf:
             for name in self.main_file_names:
                 try:
                     record_id = self.jobid + "_" + name
