@@ -27,9 +27,9 @@ class NtaInputs(forms.Form):
         initial=10,
         validators=[MinValueValidator(0)])
     rt_accuracy = forms.FloatField(
-        widget=forms.NumberInput(attrs={'step': 0.1}),
+        widget=forms.NumberInput(attrs={'step': 0.01}),
         label='Adduct retention time accuracy (min)',
-        initial=1,
+        initial=0.05,
         validators=[MinValueValidator(0)])
     tracer_input = forms.FileField(
         label='Tracer file (csv; optional)',

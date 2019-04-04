@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov 14 10:11:13 2017
+Modified Nov 18 - Apr 19
+Modified Nov 18 - Apr 19
 
 @author: HALGhoul
+         Adapted/edited by Jeff Minucci
 """
 
 import pandas as pd
@@ -392,7 +395,7 @@ def reduce(df,index):
         return df
 
 
-def adduct_identifier(df_in,index,Mass_Difference,Retention_Difference,ppm, ionization):
+def adduct_identifier(df_in, index, Mass_Difference, Retention_Difference,ppm, ionization):  # TODO optimize memory usage
     df = df_in.copy()
     mass = df['Mass'].to_numpy()
     rts = df['Retention_Time'].to_numpy()
@@ -402,6 +405,10 @@ def adduct_identifier(df_in,index,Mass_Difference,Retention_Difference,ppm, ioni
     diff_matrix_rt = rts_matrix - rts_matrix.transpose()
     adducts = {'Formate':['Esi-',43.99093],'Na':['Esi+',21.98194],'Ammonium':['Esi+',17.02655], # TODO Double check masses
                'H2O':['Esi-',17.00329],'CO2':['Esi-',42.98255]}  # dictionary of adducts
+    for a_name, a_info in adducts.items():
+        df['unique_{}_number'.format(a_name)] = np.nan
+        df['has_{}_adduct'.format(a_name)] = np.nan
+        df['is_{}_adduct'.format(a_name)] = np.nan
     adducts_possible = {k: v for k, v in adducts.items() if v[0] == ionization}
     for a_name, a_info in adducts_possible.items():
         is_adduct_diff = abs(diff_matrix_mass - a_info[1])  #is = subtract
@@ -417,7 +424,7 @@ def adduct_identifier(df_in,index,Mass_Difference,Retention_Difference,ppm, ioni
         is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + 1
         has_id_matrix = is_id_matrix.transpose()
         is_adduct_number = is_adduct_matrix * is_id_matrix
-        is_adduct_number_flat= np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row
+        is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row
         has_adduct_number = has_adduct_matrix * has_id_matrix
         has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
         unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat)
@@ -425,7 +432,9 @@ def adduct_identifier(df_in,index,Mass_Difference,Retention_Difference,ppm, ioni
             unique_adduct_number = unique_adduct_number * -1
         df['unique_{}_number'.format(a_name)] = unique_adduct_number
         df['has_{}_adduct'.format(a_name)] = np.where(has_adduct_number_flat > 0, 1, 0)
-        df['is_{}_adduct'.format(a_name)] = np.where(is_adduct_number_flat > 0, 1, 0)
+        df['is_{}_adduct'.format(a_name)] = np.where((is_adduct_number_flat > 0) & (has_adduct_number_flat == 0), 1, 0)
+        new_cols = ['unique_{}_number'.format(a_name), 'has_{}_adduct'.format(a_name), 'is_{}_adduct'.format(a_name)]
+        df[new_cols] = df[new_cols].replace(0, np.nan)
     return df
     # columns = df.columns.values.tolist()
     # #print(("type is " + str(type(Mass_Difference))))
@@ -475,32 +484,50 @@ def adduct_identifier(df_in,index,Mass_Difference,Retention_Difference,ppm, ioni
     # return dft
 
 
-def duplicates(df,index, high_res=False):
+def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):  # TODO optimize memory usage
     if high_res:  # new procedure for the higher res machine
         df_new = df.copy()
         samples_df = df.filter(like='Sample', axis=1)
         df_new['all_sample_mean'] = samples_df.mean(axis=1)  # mean intensity across all samples
         df_new.sort_values(by=['all_sample_mean'], inplace=True)
         df_new.reset_index(drop=True, inplace=True)
-        duplicate_set_id = np.zeros(len(df.index)) #vector to store the grouping IDs. 0 = no duplicates
-        set = 1
-        for i, row in df_new.iterrows():  # TODO: optimize this if we like how it is working
-            if duplicate_set_id[i] > 0:
-                continue
-            mass_i = row['Mass']
-            rt_i = row['Retention_Time']
-            matches = np.where((abs(df_new['Mass']-mass_i) <= 0.005) & (abs(df_new['Retention_Time'] - rt_i) <= 0.05) & (duplicate_set_id == 0), set, 0)
-            if np.sum(matches == set) <= 1:
-                matches[i] = 0  # set the self-match to 0 if there were no duplicates
-            else:
-                duplicate_set_id = duplicate_set_id + matches  # add the new set of duplicates to our set_id vector
-                set = set+1
-        df_new['duplicate_set_id'] = duplicate_set_id
-        df_new = df_new[(duplicate_set_id == 0) | (np.invert(pd.Series(duplicate_set_id).duplicated()))].copy() # keeps first duplicate, which will have highest all_sample_mean
-        df_new.sort_values(by=['Mass'], inplace=True)
-        df_new.reset_index(drop=True, inplace = True)
-        to_return = df_new.drop(['duplicate_set_id', 'all_sample_mean'], axis=1).copy()
-        return to_return
+        mass = df_new['Mass'].to_numpy()
+        rts = df_new['Retention_Time'].to_numpy()
+        masses_matrix = np.reshape(mass, (len(mass), 1))
+        rts_matrix = np.reshape(rts, (len(rts), 1))
+        diff_matrix_mass = masses_matrix - masses_matrix.transpose()
+        diff_matrix_rt = rts_matrix - rts_matrix.transpose()
+        duplicates_matrix = np.where((abs(diff_matrix_mass) <= mass_cutoff) & (abs(diff_matrix_rt) <= rt_cutoff),1,0)
+        np.fill_diagonal(duplicates_matrix, 0)
+        row_sums = np.sum(duplicates_matrix, axis=1)  # gives number of duplicates for each df row
+        duplicates_matrix_lower = np.tril(duplicates_matrix)  # lower triangle of matrix
+        lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
+        to_keep = df_new[(row_sums == 0) | (lower_row_sums == 0)].copy()
+        to_keep.sort_values(by=['Mass'], inplace=True)
+        to_keep.reset_index(drop=True, inplace=True)
+        to_keep = to_keep.drop(['all_sample_mean'], axis=1).copy()
+        return to_keep
+        #
+        #
+        # duplicate_set_id = np.zeros(len(df.index)) #vector to store the grouping IDs. 0 = no duplicates
+        # set = 1
+        # for i, row in df_new.iterrows():  # TODO: optimize this if we like how it is working
+        #     if duplicate_set_id[i] > 0:
+        #         continue
+        #     mass_i = row['Mass']
+        #     rt_i = row['Retention_Time']
+        #     matches = np.where((abs(df_new['Mass']-mass_i) <= 0.005) & (abs(df_new['Retention_Time'] - rt_i) <= 0.05) & (duplicate_set_id == 0), set, 0)
+        #     if np.sum(matches == set) <= 1:
+        #         matches[i] = 0  # set the self-match to 0 if there were no duplicates
+        #     else:
+        #         duplicate_set_id = duplicate_set_id + matches  # add the new set of duplicates to our set_id vector
+        #         set = set+1
+        # df_new['duplicate_set_id'] = duplicate_set_id
+        # df_new = df_new[(duplicate_set_id == 0) | (np.invert(pd.Series(duplicate_set_id).duplicated()))].copy() # keeps first duplicate, which will have highest all_sample_mean
+        # df_new.sort_values(by=['Mass'], inplace=True)
+        # df_new.reset_index(drop=True, inplace = True)
+        # to_return = df_new.drop(['duplicate_set_id', 'all_sample_mean'], axis=1).copy()
+        # return to_return
     else:
         Abundance = [[],[]]
         a_Abundance = [[],[]]

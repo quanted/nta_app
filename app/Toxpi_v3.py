@@ -100,11 +100,13 @@ def process_toxpi(df=None, dir='', files=[],tophit=False,by_mass=True):
     df['MPP_ASSIGNED_FORMULA'] = df['Compound']
     df['MPP_RETENTION_TIME'] = df['Retention_Time']
     df['FORMULA_MATCH_SCORE'] = df['Score']
+    dft['For_Dashboard_Search'] = "1"  # adding this to the join so we only match features that we meant to search
     if by_mass:
-        dfe = pd.merge(df,dft,left_on='SEARCHED_MASS',right_on='INPUT',how='left')
+        dfe = pd.merge(df, dft, left_on=['SEARCHED_MASS', 'For_Dashboard_Search'],
+                       right_on=['INPUT', 'For_Dashboard_Search'], how='left')
         dfe['DASHBOARD_FORMULA_MATCH'] = np.where(dfe['MPP_ASSIGNED_FORMULA'] == dfe['MOLECULAR_FORMULA'],1,0)
     else:
-        dfe = pd.merge(df,dft,left_on='Compound',right_on='INPUT',how='left')
+        dfe = pd.merge(df,dft,left_on=['Compound', 'For_Dashboard_Search'],right_on='INPUT',how='left')
     if tophit:
         dfe = dfe.drop_duplicates(subset=['Compound','Mass','Retention_Time','Score'])
     else:

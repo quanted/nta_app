@@ -54,7 +54,7 @@ def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose
     return True
 
 
-FILENAMES = {'duplicates': ['duplicates_dropped_pos', 'Duplicates_dropped_neg'],
+FILENAMES = {'duplicates': ['duplicates_dropped_pos', 'duplicates_dropped_neg'],
              'stats': ['stats_pos', 'stats_neg'],
              'tracers': ['tracers_pos', 'tracers_neg'],
              'cleaned': ['cleaned_pos', 'cleaned_neg'],
