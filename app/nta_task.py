@@ -209,6 +209,7 @@ class NtaRun:
         self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
         #print("Calculating statistics with units: " + self.mass_accuracy_units)
         modes = ['Esi+', 'Esi-']
+        logger.info("Identifying adducts...")
         self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm,
                                          ionization = modes[index]) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
@@ -232,6 +233,7 @@ class NtaRun:
     def clean_features(self):
         controls = [self.sample_to_blank, self.min_replicate_hits, self.max_replicate_cv]
         self.dfs = [fn.clean_features(df, index, self.entact, controls) for index, df in enumerate(self.dfs)]
+        self.dfs = [fn.Blank_Subtract(df, index) for index, df in enumerate(self.dfs)]  # TODO where to put this
         self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
         self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
         return
