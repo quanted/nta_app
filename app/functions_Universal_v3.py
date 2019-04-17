@@ -22,6 +22,7 @@ HBR = 3.0 # High_Blank_Ratio condition
 HMR = 1.5 # High_Mid_Ratio condition
 SCORE = 90 # formula match is 90
 
+BLANKS = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank']
 
 def fix_names(df,index): # parse the Dataframe into a numpy array
         #df.columns = df.columns.str.replace(': Log2','') #log specific code
@@ -144,7 +145,7 @@ def statistics(df,index): # calculate Mean,Median,STD,CV for every feature in a 
         Headers = [0,0]
         headers = [0,0]
         Headers[index] = parse_headers(df,index)
-        Abundance[index] = [item for sublist in Headers[index] for item in sublist if len(sublist)>1]
+        Abundance[index] = [item for sublist in Headers[index] for item in sublist if len(sublist) > 1]
         df = score(df)
     # Do some statistical acrobatics
         headers[index] = ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + Abundance[index]
@@ -179,12 +180,13 @@ def Blank_Subtract(df,index):
     Blanks = [[],[]]
     Median = [[],[]]
     Headers[index] = parse_headers(df,index)
-    blanks_str = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank']
+    blanks_str = BLANKS
     Abundance[index] = [item for sublist in Headers[index] for item in sublist if (len(sublist)>1) & (not any(x in item for x in blanks_str))]
     # On with the agony of subtracting the MB median from Samples
-    Blanks[index] = df.columns[df.columns.str.contains(pat ='MB_|blank|blanks|BLANK|Blank')].tolist()
+    Blanks[index] = df.columns[(df.columns.str.contains(pat ='MB_|blank|blanks|BLANK|Blank')) &
+                               (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio') == False)].tolist()
     Median[index] = df.columns[(df.columns.str.contains(pat ='Median_')==True) & (df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank')==False)].tolist()
-    df['Median_ALLMB'] = df[Blanks[index]].median(axis=1,skipna=True).round(0).fillna(0)
+    df['Median_ALLMB'] = df[Blanks[index]].median(axis=1,skipna=True).round(0).fillna(0)  # instead using median calc in statistics
     #df[Abundance[index]] = df[Abundance[index]].sub(df['Median_ALLMB'],axis=0)
     for median in Median[index]:
         df["BlankSub_"+str(median)] = df[median].sub(df['Median_ALLMB'],axis=0)
@@ -261,18 +263,18 @@ def clean_features(df,index,ENTACT,controls): # a method that drops rows based o
 
     else: # Regular NTA data
         #set medians where feature abundance is less than some cutoff to nan
-        df['AnySamplesDropped'] = 0
+        df['AnySamplesDropped'] = np.nan
         for median,N in zip(Median_Samples[index],N_Abun_Samples[index]):
             #print((str(median) + " , " +str(N)))
-            df.loc[df[N]<controls[1], median]= np.nan
-            df.loc[df[N]<controls[1], 'AnySamplesDropped'] = 1
+            df.loc[df[N] < controls[1], median] = np.nan
+            df.loc[df[N] < controls[1], 'AnySamplesDropped'] = 1
         #find the median of all samples and select features where median_samples/ median_blanks >= cutoff
         df['Max_Median_ALLSamples'] = df[Median_Samples[index]].max(axis=1,skipna=True).round(0)
-        df['SampletoBlanks_ratio']=df['Max_Median_ALLSamples'].astype('float')/df[Median_MB[index][0]].astype('float')
+        df['SampletoBlanks_ratio'] = df['Max_Median_ALLSamples'].astype('float')/df[Median_MB[index][0]].astype('float')
         df = df[(df[N_Abun_MB[index][0]] == 0) | (df['SampletoBlanks_ratio'] >= controls[0])].copy()
         # remove all features where the abundance is less than some cutoff in all samples
-        df.drop(df[(df[N_Abun_Samples[index]] < controls[1]).all(axis=1)].index,inplace=True)
-        df.drop(df[(df[CV_Samples[index]] >= controls[2]).all(axis=1)].index,inplace=True)
+        df.drop(df[(df[N_Abun_Samples[index]] < controls[1]).all(axis=1)].index, inplace=True)
+        df.drop(df[(df[CV_Samples[index]] >= controls[2]).all(axis=1)].index, inplace=True)
     return df
 
 
@@ -465,21 +467,23 @@ def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):
 
 
 def MPP_Ready(dft, directory='',file=''):
-    dft = dft.rename(columns = {'Compound':'Formula','Retention_Time':'RT'})
-    dft['Compound Name'] = dft['Formula']
+    #dft = dft.rename(columns = {'Compound':'Formula','Retention_Time':'RT'})
+    #dft['Compound Name'] = dft['Formula']
+    dft = dft.rename(columns = {'Compound':'Formula'})
     dft['CAS ID'] = ""
     Headers = parse_headers(dft,0)
-    Abundance = [item for sublist in Headers for item in sublist if len(sublist)>2]
-    Blanks = dft.columns[dft.columns.str.contains(pat ='MB_')].tolist()
-    Samples = [x for x in Abundance if x not in Blanks]
-    NewSamples = common_substrings(Samples)
-    for i in range(len(Samples)):
-        dft.rename(columns = {Samples[i]:NewSamples[i]},inplace=True)
+    raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
+    blank_subtracted_medians = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
+    #Blanks = dft.columns[dft.columns.str.contains(pat ='MB_')].tolist()
+    #Samples = [x for x in Abundance if x not in Blanks]
+    #NewSamples = common_substrings(Samples)
+    #for i in range(len(Samples)):
+    #    dft.rename(columns = {Samples[i]:NewSamples[i]},inplace=True)
     #columns = dft.columns.values.tolist()
     #dft = dft.reindex(columns=Columns)
     #print dft
     #dft.to_csv(directory+'/'+file+'_MPP_Ready.csv', index=False)
-    dft = dft[['Formula','Compound Name','CAS ID','Mass','RT'] + NewSamples]
+    dft = dft[['Feature_ID','Formula','Score','CAS ID','Mass','Retention_Time'] + raw_samples + blank_subtracted_medians]
     #dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)
     return dft
 

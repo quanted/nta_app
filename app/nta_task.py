@@ -11,7 +11,8 @@ from dask.distributed import Client, LocalCluster, fire_and_forget
 from . import functions_Universal_v3 as fn
 from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
-from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs
+from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file
+from . import task_functions as task_fun
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
@@ -60,9 +61,10 @@ FILENAMES = {'duplicates': ['duplicates_dropped_pos', 'duplicates_dropped_neg'],
              'cleaned': ['cleaned_pos', 'cleaned_neg'],
              'flags': ['flags_pos', 'flags_neg'],
              'combined': 'combined',
-             'mpp_ready': 'combined_mpp_ready',
+             'mpp_ready': ['processed_inputs_full', 'processed_inputs_reduced'],
              'dashboard': 'dashboard_search',
-             'toxpi': 'combined_toxpi'}
+             'toxpi': ['final_output_full', 'final_output_reduced']
+             }
 
 class NtaRun:
     
@@ -207,11 +209,12 @@ class NtaRun:
     def calc_statistics(self):
         ppm = self.mass_accuracy_units == 'ppm'
         self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
-        #print("Calculating statistics with units: " + self.mass_accuracy_units)
+        self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
+        self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start = len(self.dfs[0].index)+1)
         modes = ['Esi+', 'Esi-']
-        logger.info("Identifying adducts...")
-        self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm,
-                                         ionization = modes[index]) for index, df in enumerate(self.dfs)]
+        #logger.info("Identifying adducts...")
+        #self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm,
+        #                                 ionization = modes[index]) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
         self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
@@ -233,7 +236,7 @@ class NtaRun:
     def clean_features(self):
         controls = [self.sample_to_blank, self.min_replicate_hits, self.max_replicate_cv]
         self.dfs = [fn.clean_features(df, index, self.entact, controls) for index, df in enumerate(self.dfs)]
-        self.dfs = [fn.Blank_Subtract(df, index) for index, df in enumerate(self.dfs)]  # TODO where to put this
+        self.dfs = [fn.Blank_Subtract(df, index) for index, df in enumerate(self.dfs)]  # subtract blanks from medians
         self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
         self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
         return
@@ -247,7 +250,9 @@ class NtaRun:
         self.df_combined = fn.combine(self.dfs[0], self.dfs[1])
         self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
-        self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'])
+        self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'][0])
+        self.mongo_save(reduced_file(self.mpp_ready), FILENAMES['mpp_ready'][1])  # save the reduced version
+
 
     def iterate_searches(self):
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
@@ -362,20 +367,14 @@ class NtaRun:
         by_mass = self.search_mode == "mass"
         self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filenames,
                                                tophit=self.top_result_only, by_mass = by_mass)
-        self.mongo_save(self.df_combined, FILENAMES['toxpi'])
+        self.mongo_save(self.df_combined, FILENAMES['toxpi'][0])
+        self.mongo_save(reduced_file(self.df_combined), FILENAMES['toxpi'][1])
+
 
     def clean_files(self):
         shutil.rmtree(self.data_dir)  # remove data directory and all download files
         if self.verbose:
             logger.info("Cleaned up download file.")
-
-    # def mongo_save(self, file, step=""):
-    #     to_save = json.loads(file.to_json(orient='split'))
-    #     posts = self.mongo.posts
-    #     time_stamp = datetime.utcnow()
-    #     id = self.jobid + "_" + step
-    #     data = {'_id': id, 'date': time_stamp, 'project_name': self.project_name,'data': to_save}
-    #     posts.insert_one(data)
 
     def mongo_save(self, file, step=""):
         to_save = file.to_json(orient='split')

@@ -41,7 +41,7 @@ class OutputServer:
         self.names_mpp_ready = FILENAMES['mpp_ready']
         self.names_dashboard = FILENAMES['dashboard']
         self.main_file_names = self.names_duplicates + self.names_stats + self.names_cleaned + self.names_flags + [self.names_combined] + \
-                               [self.names_mpp_ready] + [self.names_dashboard] + [self.names_toxpi]
+                               self.names_mpp_ready + [self.names_dashboard] + self.names_toxpi
 
 
     def status(self):
@@ -61,7 +61,7 @@ class OutputServer:
         return JsonResponse(response_data)
 
     def final_result(self):
-        id = self.jobid + "_" + self.names_toxpi
+        id = self.jobid + "_" + self.names_toxpi[1]
         #id = self.jobid + "_" + self.names_duplicates[0]# TODO remove
         #db_record = self.posts.find_one({'_id': id})
         #json_string = json.dumps(db_record['data'])
@@ -71,7 +71,7 @@ class OutputServer:
         #project_name = db_record['project_name']
         project_name = db_record.project_name
         if project_name:
-            filename = project_name.replace(" ", "_") + '_' + self.names_toxpi + '.csv'
+            filename = project_name.replace(" ", "_") + '_' + self.names_toxpi[1] + '.csv'
             #filename = project_name.replace(" ", "_") + '_' + self.names_duplicates[0] + '.csv' # TODO remove
         else:
             filename = id + '.csv'
