@@ -61,7 +61,7 @@ FILENAMES = {'duplicates': ['duplicates_dropped_pos', 'duplicates_dropped_neg'],
              'cleaned': ['cleaned_pos', 'cleaned_neg'],
              'flags': ['flags_pos', 'flags_neg'],
              'combined': 'combined',
-             'mpp_ready': ['processed_inputs_full', 'processed_inputs_reduced'],
+             'mpp_ready': ['for_stats_full', 'for_stats_reduced'],
              'dashboard': 'dashboard_search',
              'toxpi': ['final_output_full', 'final_output_reduced']
              }

@@ -107,7 +107,8 @@ def process_toxpi(df=None, dir='', files=[], tophit=False, by_mass=True):
                        right_on=['INPUT', 'For_Dashboard_Search'], how='left')
         dfe['DASHBOARD_FORMULA_MATCH'] = np.where(dfe['MPP_ASSIGNED_FORMULA'] == dfe['MOLECULAR_FORMULA'],1,0)
     else:
-        dfe = pd.merge(df,dft,left_on=['Compound', 'For_Dashboard_Search'],right_on='INPUT',how='left')
+        dfe = pd.merge(df,dft,left_on=['Compound', 'For_Dashboard_Search'],
+                       right_on=['INPUT', 'For_Dashboard_Search'],how='left')
     if tophit:
         dfe = dfe.drop_duplicates(subset=['Compound','Mass','Retention_Time','Score'])
     else:
@@ -117,15 +118,9 @@ def process_toxpi(df=None, dir='', files=[], tophit=False, by_mass=True):
     columns.append('INPUT')    
     columns.append('FOUND_BY')
     columns.append('DTXSID')
-    print(columns)
-    dfe.dropna(how='all')
-    dfe = dfe[pd.notnull(dfe['INPUT'])]
-    #dfe.fillna('',inplace=True)
-    #dfe = dfe.set_index(columns)
-    #dfe.to_csv(directory+"/csv_toxpi.csv")
-
-    #print dfe
-    #dfe.to_excel('trying_excel.xlsx',na_rep='',engine='xlsxwriter')
+    #dfe.dropna(how='all')
+    #dfe = dfe[pd.notnull(dfe['INPUT'])]
+    #dfe.fillna('',inplace=True)  # problematic memory use here
     return dfe
 
 
