@@ -210,11 +210,11 @@ class NtaRun:
         ppm = self.mass_accuracy_units == 'ppm'
         self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
         self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
-        self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start = len(self.dfs[0].index)+1)
-        modes = ['Esi+', 'Esi-']
-        #logger.info("Identifying adducts...")
-        #self.dfs = [fn.adduct_identifier(df, index, self.mass_accuracy, self.rt_accuracy, ppm,
-        #                                 ionization = modes[index]) for index, df in enumerate(self.dfs)]
+        self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
+        self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], self.mass_accuracy, self.rt_accuracy, ppm,
+                                                 ionization='positive', id_start=1)
+        self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
+                                                 ionization='negative', id_start=len(self.dfs[0].index))
         self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
         self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
