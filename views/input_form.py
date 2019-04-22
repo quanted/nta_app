@@ -49,13 +49,14 @@ class NtaInputs(forms.Form):
         initial=0.1,
         validators=[MinValueValidator(0)])
     sample_to_blank = forms.FloatField(
-        label = 'Min sample:blank cutoff',
+        widget=forms.NumberInput(attrs={'step': 0.5}),
+        label='Min sample:blank cutoff',
         initial=3,
         validators=[MinValueValidator(0)])
     min_replicate_hits = forms.IntegerField(
         widget = RangeInput(attrs={'max': '3', 'min':'1', 'class': 'slider_bar'}),
         label='Min replicate hits',
-        initial=1,
+        initial=2,
         validators=[MinValueValidator(0)])
     max_replicate_cv = forms.DecimalField(
         widget=forms.NumberInput(attrs={'step': 0.1}),
