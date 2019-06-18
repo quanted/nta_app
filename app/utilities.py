@@ -1,8 +1,16 @@
 
 import pymongo as pymongo
 import gridfs
+import os
+import logging
+import requests
 from .functions_Universal_v3 import parse_headers
 
+logger = logging.getLogger("nta_app")
+logger.setLevel(logging.INFO)
+
+DSSTOX_API = os.environ.get('DSSTOX_API')
+DSSTOX_API = '127.0.0.1:5050'
 
 def connect_to_mongoDB(in_docker = True):
     if not in_docker:
@@ -47,3 +55,14 @@ def reduced_file(df_in):
         to_drop.extend(['Median_ALLMB'])
     df.drop(to_drop, axis=1, inplace=True)
     return df
+
+
+def search_mass(masses, accuracy, units, jobID = "00000"):
+    input_json = self.format_varroapop_payload()
+    logger.info("=========== calling DSSTOX REST API")
+    api_url = '{}/nta/rest/nta/batch/{}/'.format(DSSTOX_API, jobID)
+    logger.info(api_url)
+    http_headers = {'Content-Type': 'application/json'}
+    #logger.info("JSON payload:")
+    #print(input_json)
+    return requests.post(api_url, headers=http_headers, data=input_json, timeout=60)
