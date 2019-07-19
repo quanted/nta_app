@@ -5,13 +5,14 @@ import time
 import logging
 import traceback
 import shutil
+import json
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
 from . import functions_Universal_v3 as fn
 from. import Toxpi_v3 as toxpi
 from .batch_search_v3 import BatchSearch
-from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file
+from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas
 from . import task_functions as task_fun
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
@@ -157,7 +158,8 @@ class NtaRun:
 
         # 7: search dashboard
         self.step = "Searching dashboard"
-        self.iterate_searches()
+        self.search_dashboard()
+        #self.iterate_searches()
         self.process_toxpi()
         if self.verbose:
             logger.info("Final result processed.")
@@ -280,19 +282,30 @@ class NtaRun:
                 logger.info("Download finished.")
             self.fix_overflows()
 
-    def search_dashboard(self, df_search, lower_index, upper_index):
-        in_linux = os.environ.get("SYSTEM_NAME") != "WINDOWS"  # check for correct webdriver
-        to_search = df_search.iloc[lower_index:upper_index, :]
+    def search_dashboard(self, lower_index=0, upper_index=10, save = True):
+        to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
         if self.search_mode == 'mass':
-            mono_masses = fn.masses(to_search)
-            mono_masses_str = [str(i) for i in mono_masses]
-            self.search = BatchSearch(linux = in_linux)
-            self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.new_download_dir,
-                                                     by_formula=False, ppm=self.parent_ion_mass_accuracy)
+            to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
         else:
-            compounds = fn.formulas(to_search)
-            self.search = BatchSearch(linux = in_linux)
-            self.search.batch_search(masses=None, formulas=compounds, directory=self.new_download_dir)
+            to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
+        n_search = len(to_search)  # number of fragments to search
+        logger.info("Total # of queries: {}".format(n_search))
+        #max_search = 300  # the maximum number of fragments to search at a time
+        #upper_index = 0
+        to_search = to_search.iloc[lower_index:upper_index, :]
+        if self.search_mode == 'mass':
+            mono_masses = task_fun.masses(to_search)
+            response = api_search_masses(mono_masses, self.parent_ion_mass_accuracy, self.jobid)
+            self.search_results.append(download_df)
+            if save:
+                self.mongo_save(self.search_results, FILENAMES['dashboard'])
+        else:
+            formulas = task_fun.formulas(to_search)
+            response = api_search_formulas(formulas, self.jobid)
+        dsstox_search_json = response['result']
+        self.search_results = dsstox_search_df
+        if save:
+            self.mongo_save(self.search_results, FILENAMES['dashboard'])
 
     def download_finished(self, save = False):
         finished = False

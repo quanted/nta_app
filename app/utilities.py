@@ -3,14 +3,15 @@ import pymongo as pymongo
 import gridfs
 import os
 import logging
+import json
 import requests
 from .functions_Universal_v3 import parse_headers
 
 logger = logging.getLogger("nta_app")
 logger.setLevel(logging.INFO)
 
-DSSTOX_API = os.environ.get('DSSTOX_API')
-DSSTOX_API = '127.0.0.1:5050'
+DSSTOX_API = os.environ.get('UBERTOOL_REST_SERVER')
+DSSTOX_API = 'http://127.0.0.1:7777'
 
 def connect_to_mongoDB(in_docker = True):
     if not in_docker:
@@ -57,12 +58,20 @@ def reduced_file(df_in):
     return df
 
 
-def search_mass(masses, accuracy, units, jobID = "00000"):
-    input_json = self.format_varroapop_payload()
+def api_search_masses(masses, accuracy, jobID = "00000"):
+    input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
     logger.info("=========== calling DSSTOX REST API")
-    api_url = '{}/nta/rest/nta/batch/{}/'.format(DSSTOX_API, jobID)
+    api_url = '{}/nta/rest/nta/batch/{}'.format(DSSTOX_API, jobID)
     logger.info(api_url)
     http_headers = {'Content-Type': 'application/json'}
-    #logger.info("JSON payload:")
-    #print(input_json)
+    return requests.post(api_url, headers=http_headers, data=input_json, timeout=60)
+
+
+
+def api_search_formulas(formulas, jobID = "00000"):
+    input_json = json.dumps({"search_by": "formula", "query": formulas})  # assumes ppm
+    logger.info("=========== calling DSSTOX REST API")
+    api_url = '{}/nta/rest/nta/batch/{}'.format(DSSTOX_API, jobID)
+    logger.info(api_url)
+    http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json, timeout=60)

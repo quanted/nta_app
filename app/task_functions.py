@@ -35,13 +35,15 @@ def differences(s1, s2):
 def formulas(df):
     df.drop_duplicates(subset='Compound',keep='first',inplace=True)
     formulas = df.loc[df['For_Dashboard_Search'] == '1','Compound'].values
-    return formulas
+    formulas_list = [str(i) for i in formulas]
+    return formulas_list
 
 
 def masses(df):
     #df.drop_duplicates(subset='Mass',keep='first',inplace=True)  # TODO should this be on?
     masses = df.loc[df['For_Dashboard_Search'] == '1','Mass'].values
-    return masses
+    masses_list = [str(i) for i in masses]
+    return masses_list
 
 
 #untested
