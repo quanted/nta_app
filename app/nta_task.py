@@ -96,8 +96,8 @@ class NtaRun:
         self.jobid = jobid
         self.verbose = verbose
         self.in_docker = in_docker
-        self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
-        self.gridfs = connect_to_mongo_gridfs(in_docker = self.in_docker)
+        self.mongo = connect_to_mongoDB()
+        self.gridfs = connect_to_mongo_gridfs()
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
         self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         self.new_download_dir = os.path.join(self.data_dir, "new")

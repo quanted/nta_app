@@ -28,8 +28,8 @@ class OutputServer:
         self.jobid = jobid
         self.project_name = ''
         self.in_docker = os.environ.get("IN_DOCKER") != "False"
-        self.mongo = connect_to_mongoDB(in_docker = self.in_docker)
-        self.gridfs = connect_to_mongo_gridfs(in_docker = self.in_docker)
+        self.mongo = connect_to_mongoDB()
+        self.gridfs = connect_to_mongo_gridfs()
         self.posts = self.mongo.posts
         self.names_duplicates = FILENAMES['duplicates']
         self.names_toxpi = FILENAMES['toxpi']

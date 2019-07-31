@@ -12,16 +12,10 @@ logger.setLevel(logging.INFO)
 DSSTOX_API = os.environ.get('DSSTOX_API')
 DSSTOX_API = '127.0.0.1:5050'
 
-def connect_to_mongoDB(in_docker = True):
-    if not in_docker:
-        # Dev env mongoDB
-        mongo = pymongo.MongoClient(host='mongodb://localhost:27017/0')
-        #print("MONGODB: mongodb://localhost:27017/0")
-    else:
-        # Production env mongoDB
-        mongo = pymongo.MongoClient(host='mongodb://mongodb:27017/0')
-        #print("MONGODB: mongodb://mongodb:27017/0")
+MONGO_ADDRESS = os.environ.get('MONGO_SERVER')
 
+def connect_to_mongoDB():
+    mongo = pymongo.MongoClient(host=MONGO_ADDRESS)
     mongo_db = mongo['nta_runs']
     mongo.nta_runs.Collection.create_index([("date", pymongo.DESCENDING)], expireAfterSeconds=86400)
     # ALL entries into mongo.nta_runs must have datetime.utcnow() timestamp, which is used to delete the record after 86400
@@ -29,15 +23,9 @@ def connect_to_mongoDB(in_docker = True):
     return mongo_db
 
 
-def connect_to_mongo_gridfs(in_docker = True):
-    if not in_docker:
-        # Dev env mongoDB
-        db = pymongo.MongoClient(host='mongodb://localhost:27017/0').nta_storage
-        print("MONGODB: mongodb://localhost:27017/0")
-    else:
-        # Production env mongoDB
-        db = pymongo.MongoClient(host='mongodb://mongodb:27017/0').nta_storage
-        print("MONGODB: mongodb://mongodb:27017/0")
+def connect_to_mongo_gridfs():
+    db = pymongo.MongoClient(host=MONGO_ADDRESS).nta_storage
+    print(MONGO_ADDRESS)
     fs = gridfs.GridFS(db)
     return fs
 
