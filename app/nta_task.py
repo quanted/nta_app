@@ -23,8 +23,9 @@ logger.setLevel(logging.INFO)
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
     in_docker = os.environ.get("IN_DOCKER") != "False"
+    mongo_address = os.environ.get('MONGO_SERVER')
     if NO_DASK:
-        run_nta(parameters, input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
+        run_nta(parameters, input_dfs, tracer_df, mongo_address, jobid, verbose, in_docker = in_docker)
         return
     if not in_docker:
         logger.info("Running in local development mode.")
@@ -37,12 +38,14 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
         dask_client = Client(dask_scheduler, processes=False)
     dask_input_dfs = dask_client.scatter(input_dfs)
     logger.info("Submitting Nta Dask task")
-    task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
+    task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, mongo_address, jobid, verbose,
+                              in_docker = in_docker)
     fire_and_forget(task)
 
 
-def run_nta(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True, in_docker = True):
-    nta_run = NtaRun(parameters, input_dfs, tracer_df, jobid, verbose, in_docker = in_docker)
+def run_nta(parameters, input_dfs, tracer_df = None, mongo_address = None, jobid = "00000000", verbose = True,
+            in_docker = True):
+    nta_run = NtaRun(parameters, input_dfs, tracer_df, mongo_address, jobid, verbose, in_docker = in_docker)
     try:
         nta_run.execute()
     except Exception as e:
@@ -69,7 +72,8 @@ FILENAMES = {'duplicates': ['duplicates_dropped_pos', 'duplicates_dropped_neg'],
 
 class NtaRun:
     
-    def __init__(self, parameters=None, input_dfs=None, tracer_df=None, jobid = "00000000", verbose = True, in_docker = True):
+    def __init__(self, parameters=None, input_dfs=None, tracer_df=None, mongo_address = None, jobid = "00000000",
+                 verbose = True, in_docker = True):
         logger.info("Initializing NtaRun Task")
         self.project_name = parameters['project_name']
         self.mass_accuracy = float(parameters['mass_accuracy'])
@@ -97,8 +101,9 @@ class NtaRun:
         self.jobid = jobid
         self.verbose = verbose
         self.in_docker = in_docker
-        self.mongo = connect_to_mongoDB()
-        self.gridfs = connect_to_mongo_gridfs()
+        self.mongo_address = mongo_address
+        self.mongo = connect_to_mongoDB(self.mongo_address)
+        self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
         self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         self.new_download_dir = os.path.join(self.data_dir, "new")
