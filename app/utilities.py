@@ -25,7 +25,7 @@ def connect_to_mongoDB(address):
 
 def connect_to_mongo_gridfs(address):
     db = pymongo.MongoClient(host=address).nta_storage
-    print(MONGO_ADDRESS)
+    print("Connecting to mongodb at {}".format(address))
     fs = gridfs.GridFS(db)
     return fs
 
