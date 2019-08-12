@@ -46,12 +46,13 @@ def reduced_file(df_in):
 
 
 def api_search_masses(masses, accuracy, jobID = "00000"):
+    print("Sending {} masses".format(len(masses)))
     input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
     logger.info("=========== calling DSSTOX REST API")
     api_url = '{}/nta/rest/nta/batch/{}'.format(DSSTOX_API, jobID)
     logger.info(api_url)
     http_headers = {'Content-Type': 'application/json'}
-    return requests.post(api_url, headers=http_headers, data=input_json, timeout=60)
+    return requests.post(api_url, headers=http_headers, data=input_json)
 
 
 
@@ -61,4 +62,4 @@ def api_search_formulas(formulas, jobID = "00000"):
     api_url = '{}/nta/rest/nta/batch/{}'.format(DSSTOX_API, jobID)
     logger.info(api_url)
     http_headers = {'Content-Type': 'application/json'}
-    return requests.post(api_url, headers=http_headers, data=input_json, timeout=60)
+    return requests.post(api_url, headers=http_headers, data=input_json)

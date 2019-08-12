@@ -10,7 +10,7 @@ from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
 from . import functions_Universal_v3 as fn
-from. import Toxpi_v3 as toxpi
+from. import toxpi
 from .batch_search_v3 import BatchSearch
 from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas
 from . import task_functions as task_fun
@@ -162,15 +162,15 @@ class NtaRun:
             #print(self.df_combined)
 
         # 7: search dashboard
-        self.step = "Searching dashboard"
+        self.step = "Searching dsstox database"
         self.search_dashboard()
         #self.iterate_searches()
         self.process_toxpi()
         if self.verbose:
             logger.info("Final result processed.")
-        self.clean_files()
-        if self.verbose:
-            logger.info("Download files removed, processing complete.")
+        #self.clean_files()
+        #if self.verbose:
+        #    logger.info("Download files removed, processing complete.")
 
         # 8: set status to completed
         self.step = "Displaying results"
@@ -287,7 +287,7 @@ class NtaRun:
                 logger.info("Download finished.")
             self.fix_overflows()
 
-    def search_dashboard(self, lower_index=0, upper_index=10, save = True):
+    def search_dashboard(self, lower_index=0, upper_index=None, save = True):
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
         if self.search_mode == 'mass':
             to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
@@ -301,13 +301,14 @@ class NtaRun:
         if self.search_mode == 'mass':
             mono_masses = task_fun.masses(to_search)
             response = api_search_masses(mono_masses, self.parent_ion_mass_accuracy, self.jobid)
-            self.search_results.append(download_df)
-            if save:
-                self.mongo_save(self.search_results, FILENAMES['dashboard'])
+            #self.search_results.append(download_df)
+            #if save:
+            #    self.mongo_save(self.search_results, FILENAMES['dashboard'])
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)
-        dsstox_search_json = response['result']
+        dsstox_search_json = json.dumps(response.json()['results'])
+        dsstox_search_df = pd.read_json(dsstox_search_json, orient='list')
         self.search_results = dsstox_search_df
         if save:
             self.mongo_save(self.search_results, FILENAMES['dashboard'])
@@ -383,7 +384,7 @@ class NtaRun:
 
     def process_toxpi(self):
         by_mass = self.search_mode == "mass"
-        self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filenames,
+        self.df_combined = toxpi.process_toxpi(self.df_combined, self.search_results,
                                                tophit=self.top_result_only, by_mass = by_mass)
         self.mongo_save(self.df_combined, FILENAMES['toxpi'][0])
         self.mongo_save(reduced_file(self.df_combined), FILENAMES['toxpi'][1])
