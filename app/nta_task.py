@@ -10,8 +10,7 @@ from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
 from . import functions_Universal_v3 as fn
-from. import toxpi
-from .batch_search_v3 import BatchSearch
+from . import toxpi
 from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas
 from . import task_functions as task_fun
 
@@ -226,7 +225,6 @@ class NtaRun:
         self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
 
-
     def check_tracers(self):
         if self.tracer_df is None:
             logger.info("No tracer file, skipping this step.")
@@ -237,7 +235,6 @@ class NtaRun:
         self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.tracer_dfs_out[0], FILENAMES['tracers'][0])
         self.mongo_save(self.tracer_dfs_out[1], FILENAMES['tracers'][1])
-
         return
 
     def clean_features(self):
@@ -259,7 +256,6 @@ class NtaRun:
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
         self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'][0])
         self.mongo_save(reduced_file(self.mpp_ready), FILENAMES['mpp_ready'][1])  # save the reduced version
-
 
     def iterate_searches(self):
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
@@ -301,14 +297,11 @@ class NtaRun:
         if self.search_mode == 'mass':
             mono_masses = task_fun.masses(to_search)
             response = api_search_masses(mono_masses, self.parent_ion_mass_accuracy, self.jobid)
-            #self.search_results.append(download_df)
-            #if save:
-            #    self.mongo_save(self.search_results, FILENAMES['dashboard'])
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)
         dsstox_search_json = json.dumps(response.json()['results'])
-        dsstox_search_df = pd.read_json(dsstox_search_json, orient='list')
+        dsstox_search_df = pd.read_json(dsstox_search_json, orient='split')
         self.search_results = dsstox_search_df
         if save:
             self.mongo_save(self.search_results, FILENAMES['dashboard'])
@@ -388,7 +381,6 @@ class NtaRun:
                                                tophit=self.top_result_only, by_mass = by_mass)
         self.mongo_save(self.df_combined, FILENAMES['toxpi'][0])
         self.mongo_save(reduced_file(self.df_combined), FILENAMES['toxpi'][1])
-
 
     def clean_files(self):
         shutil.rmtree(self.data_dir)  # remove data directory and all download files
