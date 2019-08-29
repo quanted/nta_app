@@ -82,7 +82,6 @@ def parse_headers(df_in):
     return new_headers_list
 
 
-
 def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 1):  # TODO optimize memory usage
     df = df_in.copy()
     mass = df['Mass'].to_numpy()
@@ -139,3 +138,27 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
         df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
                                              df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
     return df
+
+
+def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):  # TODO optimize memory usage
+    df_new = df.copy()
+    samples_df = df.filter(like='Sample', axis=1)
+    df_new['all_sample_mean'] = samples_df.mean(axis=1)  # mean intensity across all samples
+    df_new.sort_values(by=['all_sample_mean'], inplace=True, ascending=False)
+    df_new.reset_index(drop=True, inplace=True)
+    mass = df_new['Mass'].to_numpy()
+    rts = df_new['Retention_Time'].to_numpy()
+    masses_matrix = np.reshape(mass, (len(mass), 1))
+    rts_matrix = np.reshape(rts, (len(rts), 1))
+    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
+    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
+    duplicates_matrix = np.where((abs(diff_matrix_mass) <= mass_cutoff) & (abs(diff_matrix_rt) <= rt_cutoff),1,0)
+    np.fill_diagonal(duplicates_matrix, 0)
+    row_sums = np.sum(duplicates_matrix, axis=1)  # gives number of duplicates for each df row
+    duplicates_matrix_lower = np.tril(duplicates_matrix)  # lower triangle of matrix
+    lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
+    to_keep = df_new[(row_sums == 0) | (lower_row_sums == 0)].copy()
+    to_keep.sort_values(by=['Mass'], inplace=True)
+    to_keep.reset_index(drop=True, inplace=True)
+    to_keep = to_keep.drop(['all_sample_mean'], axis=1).copy()
+    return to_keep

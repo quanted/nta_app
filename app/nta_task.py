@@ -203,7 +203,7 @@ class NtaRun:
         return self.step
 
     def filter_duplicates(self):
-        self.dfs = [fn.duplicates(df, index, high_res=True) for index, df in enumerate(self.dfs)]
+        self.dfs = [task_fun.duplicates(df, index, high_res=True) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.dfs[0], FILENAMES['duplicates'][0])
         self.mongo_save(self.dfs[1], FILENAMES['duplicates'][1])
         return
