@@ -203,7 +203,7 @@ class NtaRun:
         return self.step
 
     def filter_duplicates(self):
-        self.dfs = [task_fun.duplicates(df, index, high_res=True) for index, df in enumerate(self.dfs)]
+        self.dfs = [task_fun.duplicates(df) for df in self.dfs]
         self.mongo_save(self.dfs[0], FILENAMES['duplicates'][0])
         self.mongo_save(self.dfs[1], FILENAMES['duplicates'][1])
         return
@@ -214,7 +214,7 @@ class NtaRun:
 
     def calc_statistics(self):
         ppm = self.mass_accuracy_units == 'ppm'
-        self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
+        self.dfs = [task_fun.statistics(df) for df in self.dfs]
         self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
         self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
         self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], self.mass_accuracy, self.rt_accuracy, ppm,

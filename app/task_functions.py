@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from operator import itemgetter
+from difflib import SequenceMatcher
 from itertools import groupby
 import os
 import re
@@ -83,6 +84,20 @@ def parse_headers(df_in):
 
 
 def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 1):  # TODO optimize memory usage
+    """
+    Label features which could have adduct or loss products in the feature list, or may be adduct of loss products of
+    other features. This information is added to the dataframe in three columns, Has_Adduct_or_Loss - true/false,
+    Is_Adduct_or_Loss - true/false, and Adduct_or_Less_Info which points to the feature number of the associated
+    adduct/loss or parent feature and gives the type of adduct/loss.
+    :param df_in: A dataframe of MS features
+    :param Mass_Difference: Mass differences below this number are possible duplicates. Units of ppm or Da based on the
+    ppm parameter.
+    :param Retention_Difference: Retention time differences below this number are possible duplicates. Units of mins.
+    :param ppm: True if mass differences are given in ppm, otherwise False and units are Da.
+    :param ionization: 'positive' if data are from positive ionization mode, otherwise 'negative'.
+    :param id_start: The first feature id in the dataset (defaults to 1)
+    :return: A Dataframe where adduct info is given in three new columns.
+    """
     df = df_in.copy()
     mass = df['Mass'].to_numpy()
     rts = df['Retention_Time'].to_numpy()
@@ -140,7 +155,16 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     return df
 
 
-def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):  # TODO optimize memory usage
+#untested
+def duplicates(df, mass_cutoff=0.005, rt_cutoff=0.05):
+    """
+    Drop features that are deemed to be duplicates. Duplicates are defined as two features whose differences in
+    both mass and retention time are less than the defined cutoffs.
+    :param df: A dataframe of MS feature data
+    :param mass_cutoff: Mass differences below this number are possible duplicates. Units of Da.
+    :param rt_cutoff: Retention time differences below this number are possible duplicates. Units of mins.
+    :return: A dataframe with duplicates removed
+    """
     df_new = df.copy()
     samples_df = df.filter(like='Sample', axis=1)
     df_new['all_sample_mean'] = samples_df.mean(axis=1)  # mean intensity across all samples
@@ -162,3 +186,45 @@ def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):
     to_keep.reset_index(drop=True, inplace=True)
     to_keep = to_keep.drop(['all_sample_mean'], axis=1).copy()
     return to_keep
+
+
+#untested
+def statistics(df_in):
+    """
+    # Calculate Mean,Median,STD,CV for every feature in a sample of multiple replicates
+    :param df_in: the dataframe to calculate stats for
+    :return: a new dataframe including the stats
+    """
+    df = df_in.copy()
+    all_headers = parse_headers(df)
+    abundance = [item for sublist in all_headers[index] for item in sublist if len(sublist) > 1]
+    df = score(df)
+    filter_headers= ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + abundance
+    df = df[filter_headers].copy()
+    for the_list in all_headers:
+        REP_NUM = len(the_list)
+        if REP_NUM > 1:
+            for i in range(0, REP_NUM):
+                # match finds the indices of the largest common substring between two strings
+                match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
+                df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(0)
+                df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0)
+                df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
+                df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(2)
+                df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
+                break
+    df.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
+    return df
+
+
+def score(df):  # Get score from annotations.
+    regex = "^.*=(.*) \].*$"  # a regex to find the score looking for a pattern of "=something_to_find ]"
+    if "Annotations" in df:
+        if df.Annotations.isnull().all():  # make sure there isn't a totally blank Annotations column
+            df['Score'] = None
+            return df
+        if df.Annotations.str.contains('overall=').any():
+            df['Score'] = df.Annotations.str.extract(regex, expand=True).astype('float64')
+    else:
+        df['Score'] = None
+    return df
