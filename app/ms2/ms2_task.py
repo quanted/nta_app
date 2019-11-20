@@ -16,6 +16,7 @@ NO_DASK = False  # set this to True to run locally without dask (for debug purpo
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
 
+
 def run_ms2_dask(parameters, input_dfs, jobid = "00000000", verbose = True):
     in_docker = os.environ.get("IN_DOCKER") != "False"
     mongo_address = os.environ.get('MONGO_SERVER')

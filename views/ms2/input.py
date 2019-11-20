@@ -10,7 +10,7 @@ from django.utils.encoding import iri_to_uri
 from .. import links_left
 from ...tools.ms1 import file_manager
 from .input_form import NtaInputs
-from ...app.ms1.nta_task import run_nta_dask
+from ...app.ms2.ms2_task import run_ms2_dask
 
 def input_page(request, form_data=None, form_files=None):
 
@@ -34,8 +34,8 @@ def input_page(request, form_data=None, form_files=None):
                 tracer_df = None
             inputs = [pos_input, neg_input]
             input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs)]
-            run_nta_dask(parameters, input_dfs, tracer_df, job_id)
-            return redirect('/nta/ms1/processing/'+job_id, permanent=True)
+            run_ms2_dask(parameters, input_dfs, tracer_df, job_id)
+            return redirect('/nta/ms2/processing/'+job_id, permanent=True)
         else:
             form_data = request.POST
             form_files = request.FILES

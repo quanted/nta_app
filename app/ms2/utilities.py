@@ -5,7 +5,6 @@ import os
 import logging
 import json
 import requests
-from .functions_Universal_v3 import parse_headers
 
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
