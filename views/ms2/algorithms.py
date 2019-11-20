@@ -1,12 +1,12 @@
 import os
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from . import links_left
+from .. import links_left
 
 #@require_POST
 def algorithms_page(request, model='nta', header='NTA', jobid='00000000'):
     header = "NTA"
-    model = "nta"
+    model = "ms2"
     model_html = '<div id="soon">Coming soon...</div>'
     html = algorithms_page_html(header, model, model_html)
     response = HttpResponse()

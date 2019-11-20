@@ -17,7 +17,7 @@ from . import task_functions as task_fun
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
 
-logger = logging.getLogger("nta_app")
+logger = logging.getLogger("nta_app.ms1")
 logger.setLevel(logging.INFO)
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
@@ -103,7 +103,7 @@ class NtaRun:
         self.mongo_address = mongo_address
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
-        self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
+        self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../../.."))
         self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         self.new_download_dir = os.path.join(self.data_dir, "new")
         self.step = "Started"  # tracks the current step (for fail messages)

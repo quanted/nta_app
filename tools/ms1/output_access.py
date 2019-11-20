@@ -5,8 +5,8 @@ from datetime import datetime
 from io import StringIO, BytesIO
 from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import HttpResponse, JsonResponse
-from ..app.utilities import connect_to_mongoDB, connect_to_mongo_gridfs
-from ..app.nta_task import FILENAMES
+from ...app.ms1.utilities import connect_to_mongoDB, connect_to_mongo_gridfs
+from ...app.ms1.nta_task import FILENAMES
 from pymongo.errors import OperationFailure
 from gridfs.errors import NoFile
 

@@ -1,4 +1,4 @@
-from ..tools.output_access import OutputServer
+from ...tools.ms1.output_access import OutputServer
 
 
 def download_toxpi(request, jobid = None):

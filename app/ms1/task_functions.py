@@ -197,7 +197,7 @@ def statistics(df_in):
     """
     df = df_in.copy()
     all_headers = parse_headers(df)
-    abundance = [item for sublist in all_headers[index] for item in sublist if len(sublist) > 1]
+    abundance = [item for sublist in all_headers for item in sublist if len(sublist) > 1]
     df = score(df)
     filter_headers= ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + abundance
     df = df[filter_headers].copy()
