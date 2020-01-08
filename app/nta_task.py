@@ -15,7 +15,7 @@ from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file
 from . import task_functions as task_fun
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
-NO_DASK = True  # set this to true to run locally without test (for debug purposes)
+NO_DASK = False  # set this to true to run locally without test (for debug purposes)
 
 logger = logging.getLogger("nta_app")
 logger.setLevel(logging.INFO)
