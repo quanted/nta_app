@@ -34,7 +34,7 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
     else:
         dask_scheduler = os.environ.get("DASK_SCHEDULER")
         logger.info("Running in docker environment. Dask Scheduler: {}".format(dask_scheduler))
-        dask_client = Client(dask_scheduler, processes=False)
+        dask_client = Client(dask_scheduler)
     dask_input_dfs = dask_client.scatter(input_dfs)
     logger.info("Submitting Nta Dask task")
     task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, mongo_address, jobid, verbose,
