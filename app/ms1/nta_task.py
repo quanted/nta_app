@@ -104,11 +104,11 @@ class NtaRun:
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../../.."))
-        self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
-        self.new_download_dir = os.path.join(self.data_dir, "new")
+        #self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
+        #self.new_download_dir = os.path.join(self.data_dir, "new")
         self.step = "Started"  # tracks the current step (for fail messages)
-        os.mkdir(self.data_dir)
-        os.mkdir(self.new_download_dir)
+        #os.mkdir(self.data_dir)
+        #os.mkdir(self.new_download_dir)
 
 
     def execute(self):
@@ -301,7 +301,8 @@ class NtaRun:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)
         dsstox_search_json = json.dumps(response.json()['results'])
-        dsstox_search_df = pd.read_json(dsstox_search_json, orient='split')
+        dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
+                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
         self.search_results = dsstox_search_df
         if save:
             self.mongo_save(self.search_results, FILENAMES['dashboard'])

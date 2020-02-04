@@ -5,7 +5,7 @@ def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     dft = search_df.copy()
     df = features_df.copy()
     TOTAL_ASSAYS = "\/([0-9]+)"  # a regex to find the digits after a slash
-    dft['TOTAL_ASSAYS_TESTED'] = dft['TOXCAST_NUMBER_OF_ASSAYS/TOTAL'].str.extract(TOTAL_ASSAYS, expand=True)
+    dft['TOTAL_ASSAYS_TESTED'] = dft['TOXCAST_NUMBER_OF_ASSAYS/TOTAL'].astype('str').str.extract(TOTAL_ASSAYS, expand=True)
     NUMBER_ASSAYS = "([0-9]+)\/"  # a regex to find the digits before a slash
     dft['NUMBER_ACTIVE_ASSAYS'] = dft['TOXCAST_NUMBER_OF_ASSAYS/TOTAL'].str.extract(NUMBER_ASSAYS, expand=True)
     dft = dft.rename(columns={'TOXCAST_PERCENT_ACTIVE': 'PERCENT_ACTIVE_CALLS'})
