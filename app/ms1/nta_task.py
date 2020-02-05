@@ -29,7 +29,7 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
     if not in_docker:
         logger.info("Running in local development mode.")
         logger.info("Detected OS is {}".format(os.environ.get("SYSTEM_NAME")))
-        local_cluster = LocalCluster(processes=False, ip='127.0.0.1')
+        local_cluster = LocalCluster(processes=False)
         dask_client = Client(local_cluster)
     else:
         dask_scheduler = os.environ.get("DASK_SCHEDULER")
@@ -220,7 +220,7 @@ class NtaRun:
         self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], self.mass_accuracy, self.rt_accuracy, ppm,
                                                  ionization='positive', id_start=1)
         self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
-                                                 ionization='negative', id_start=len(self.dfs[0].index))
+                                                 ionization='negative', id_start=len(self.dfs[0].index)+1)
         self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
         self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
