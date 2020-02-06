@@ -5,4 +5,5 @@ App for non-targeted analysis of mass spectrometry
 
 For running a development version locally:
 *  Requires a mongoDB instance running locally on default port (27017)
-*  Requires a local installation of Firefox (64-bit) for web scraping
+*  Run this Django app from manage.py with DJANGO_SETTINGS_MODULE = "settings_local"
+*  Run the flask database api (flask_qed repo) using flask_qed/flask_cgi.py

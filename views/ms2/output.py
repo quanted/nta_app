@@ -3,26 +3,26 @@ import os
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 
-from . import links_left
+from .. import links_left
 
 
 #@require_POST
-def processing_page(request, model='nta', header='NTA', jobid='00000000'):
+def output_page(request, model='nta', header='NTA', jobid = '00000000'):
     header = "NTA"
-    model = "nta"
-    model_output_html = '<div id="wait_gif"><img src="/static_qed/nta/loading1.gif" alt="Loading..."></div>'
-    model_output_html += '<div id="jobid"> Job ID: {}</div>'.format(jobid)
-    model_output_html += '<div id="status"> Processing... please wait. </div>' #this is where the func to generate output html will be called
-    model_output_html += '<div id="except_info"></div>' #if there is an error, exception info will be placed here by the js script
+    model = "ms2"
+    model_output_html = "<h3> Job ID: " + jobid + "</h3> <br>"
 
-    html = processing_page_html(header, model, model_output_html)
+    #this is where the func to generate output html will be called
+    model_output_html += file_download_buttons(jobid)
+    model_output_html += '<div id="except_info"></div>' #if there is an error, exception info will be placed here by the js script
+    html = output_page_html(header, model, model_output_html)
     response = HttpResponse()
     response.write(html)
     #print(html)
     return response
 
 
-def processing_page_html(header, model, tables_html):
+def output_page_html(header, model, tables_html):
     """Generates HTML to fill '.articles_output' div on output page"""
 
     #epa template header
@@ -43,10 +43,27 @@ def processing_page_html(header, model, tables_html):
 
     #css and scripts
     html += render_to_string('09epa_drupal_pram_css.html', {})
-    html += render_to_string('09epa_drupal_pram_scripts.html', {})
-    html += render_to_string('nta_processing_scripts.html')
-    #html += render_to_string('09epa_drupal_pram_scripts.html', {})
+    html += render_to_string('ms2/nta_output_scripts.html', {})
 
     #epa template footer
     html += render_to_string('10epa_drupal_footer.html', {})
     return html
+
+
+def file_download_buttons(jobid):
+    html = """
+    <div id="download_area">
+        <H3 id="section1">Download results:</H3>
+        <div class="buttons">
+            <input type="button" value="Final results" onclick="window.open('/nta/ms1/results/toxpi/{jobid}')">
+        </div>
+    """
+    html +=  """
+        <div class="buttons">
+            <input type="button" value="All files" onclick="window.open('/nta/ms1/results/all/{jobid}')">
+        </div>
+    </div>
+    """
+    return html.format(jobid = jobid)
+
+

@@ -5,19 +5,19 @@ import time
 import logging
 import traceback
 import shutil
+import json
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
 from . import functions_Universal_v3 as fn
-from. import Toxpi_v3 as toxpi
-from .batch_search_v3 import BatchSearch
-from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file
+from . import toxpi
+from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas
 from . import task_functions as task_fun
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
 
-logger = logging.getLogger("nta_app")
+logger = logging.getLogger("nta_app.ms1")
 logger.setLevel(logging.INFO)
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
@@ -29,7 +29,7 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
     if not in_docker:
         logger.info("Running in local development mode.")
         logger.info("Detected OS is {}".format(os.environ.get("SYSTEM_NAME")))
-        local_cluster = LocalCluster(processes=False, ip='127.0.0.1')
+        local_cluster = LocalCluster(processes=False)
         dask_client = Client(local_cluster)
     else:
         dask_scheduler = os.environ.get("DASK_SCHEDULER")
@@ -103,12 +103,12 @@ class NtaRun:
         self.mongo_address = mongo_address
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
-        self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../.."))
-        self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
-        self.new_download_dir = os.path.join(self.data_dir, "new")
+        self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../../.."))
+        #self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
+        #self.new_download_dir = os.path.join(self.data_dir, "new")
         self.step = "Started"  # tracks the current step (for fail messages)
-        os.mkdir(self.data_dir)
-        os.mkdir(self.new_download_dir)
+        #os.mkdir(self.data_dir)
+        #os.mkdir(self.new_download_dir)
 
 
     def execute(self):
@@ -161,14 +161,15 @@ class NtaRun:
             #print(self.df_combined)
 
         # 7: search dashboard
-        self.step = "Searching dashboard"
-        self.iterate_searches()
+        self.step = "Searching dsstox database"
+        self.search_dashboard()
+        #self.iterate_searches()
         self.process_toxpi()
         if self.verbose:
             logger.info("Final result processed.")
-        self.clean_files()
-        if self.verbose:
-            logger.info("Download files removed, processing complete.")
+        #self.clean_files()
+        #if self.verbose:
+        #    logger.info("Download files removed, processing complete.")
 
         # 8: set status to completed
         self.step = "Displaying results"
@@ -202,7 +203,7 @@ class NtaRun:
         return self.step
 
     def filter_duplicates(self):
-        self.dfs = [fn.duplicates(df, index, high_res=True) for index, df in enumerate(self.dfs)]
+        self.dfs = [task_fun.duplicates(df) for df in self.dfs]
         self.mongo_save(self.dfs[0], FILENAMES['duplicates'][0])
         self.mongo_save(self.dfs[1], FILENAMES['duplicates'][1])
         return
@@ -213,17 +214,16 @@ class NtaRun:
 
     def calc_statistics(self):
         ppm = self.mass_accuracy_units == 'ppm'
-        self.dfs = [fn.statistics(df, index) for index, df in enumerate(self.dfs)]
+        self.dfs = [task_fun.statistics(df) for df in self.dfs]
         self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
         self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
         self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], self.mass_accuracy, self.rt_accuracy, ppm,
                                                  ionization='positive', id_start=1)
         self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
-                                                 ionization='negative', id_start=len(self.dfs[0].index))
+                                                 ionization='negative', id_start=len(self.dfs[0].index)+1)
         self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
         self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
         return
-
 
     def check_tracers(self):
         if self.tracer_df is None:
@@ -235,7 +235,6 @@ class NtaRun:
         self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
         self.mongo_save(self.tracer_dfs_out[0], FILENAMES['tracers'][0])
         self.mongo_save(self.tracer_dfs_out[1], FILENAMES['tracers'][1])
-
         return
 
     def clean_features(self):
@@ -257,7 +256,6 @@ class NtaRun:
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
         self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'][0])
         self.mongo_save(reduced_file(self.mpp_ready), FILENAMES['mpp_ready'][1])  # save the reduced version
-
 
     def iterate_searches(self):
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
@@ -285,19 +283,29 @@ class NtaRun:
                 logger.info("Download finished.")
             self.fix_overflows()
 
-    def search_dashboard(self, df_search, lower_index, upper_index):
-        in_linux = os.environ.get("SYSTEM_NAME") != "WINDOWS"  # check for correct webdriver
-        to_search = df_search.iloc[lower_index:upper_index, :]
+    def search_dashboard(self, lower_index=0, upper_index=None, save = True):
+        to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
         if self.search_mode == 'mass':
-            mono_masses = fn.masses(to_search)
-            mono_masses_str = [str(i) for i in mono_masses]
-            self.search = BatchSearch(linux = in_linux)
-            self.search.batch_search(masses=mono_masses_str, formulas=None, directory=self.new_download_dir,
-                                                     by_formula=False, ppm=self.parent_ion_mass_accuracy)
+            to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
         else:
-            compounds = fn.formulas(to_search)
-            self.search = BatchSearch(linux = in_linux)
-            self.search.batch_search(masses=None, formulas=compounds, directory=self.new_download_dir)
+            to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
+        n_search = len(to_search)  # number of fragments to search
+        logger.info("Total # of queries: {}".format(n_search))
+        #max_search = 300  # the maximum number of fragments to search at a time
+        #upper_index = 0
+        to_search = to_search.iloc[lower_index:upper_index, :]
+        if self.search_mode == 'mass':
+            mono_masses = task_fun.masses(to_search)
+            response = api_search_masses(mono_masses, self.parent_ion_mass_accuracy, self.jobid)
+        else:
+            formulas = task_fun.formulas(to_search)
+            response = api_search_formulas(formulas, self.jobid)
+        dsstox_search_json = json.dumps(response.json()['results'])
+        dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
+                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
+        self.search_results = dsstox_search_df
+        if save:
+            self.mongo_save(self.search_results, FILENAMES['dashboard'])
 
     def download_finished(self, save = False):
         finished = False
@@ -370,11 +378,10 @@ class NtaRun:
 
     def process_toxpi(self):
         by_mass = self.search_mode == "mass"
-        self.df_combined = toxpi.process_toxpi(self.df_combined, self.data_dir, self.download_filenames,
+        self.df_combined = toxpi.process_toxpi(self.df_combined, self.search_results,
                                                tophit=self.top_result_only, by_mass = by_mass)
         self.mongo_save(self.df_combined, FILENAMES['toxpi'][0])
         self.mongo_save(reduced_file(self.df_combined), FILENAMES['toxpi'][1])
-
 
     def clean_files(self):
         shutil.rmtree(self.data_dir)  # remove data directory and all download files
