@@ -137,7 +137,7 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
         is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row
         is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0)
         is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
-                                       (df['Is_Adduct_or_Loss'][is_adduct_number_flat_index] > 0), 1, 0)
+                                       (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
         is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
         has_adduct_number = has_adduct_matrix * is_id_matrix
         has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
