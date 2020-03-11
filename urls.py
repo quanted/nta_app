@@ -11,6 +11,7 @@ from .views.ms2 import output as ms2_output
 from .views.ms2 import algorithms as ms2_algorithms
 from .views.ms2 import qaqc as ms2_qaqc
 from .views.ms2 import references as ms2_references
+from .views.ms2 import processing as ms2_processing
 from .views.misc import github
 
 print('qed.nta_app.urls')
@@ -38,6 +39,9 @@ urlpatterns = [
     path('ms2/algorithms/', ms2_algorithms.algorithms_page),
     path('ms2/qaqc/', ms2_qaqc.qaqcd_page),
     path('ms2/references/', ms2_references.references_page),
+    path('ms2/processing/<slug:jobid>', ms2_processing.processing_page),
+    path('ms2/results/<slug:jobid>', ms2_processing.processing_page, name='ms2_results'),
+
 ]
 
 # 404 Error view (file not found)

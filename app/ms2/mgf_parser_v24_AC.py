@@ -67,10 +67,10 @@ def parseMGF(file=''):
 
 
 
-def spectrum_reader(file=''):
-    dfg = pd.read_csv(file)
-    dfg = dfg[(dfg['INTENSITY0M']<=100) & (dfg['INTENSITY0M']>0.0)]
-    return dfg
+#def spectrum_reader(file=''):
+#    dfg = pd.read_csv(file)
+#    dfg = dfg[(dfg['INTENSITY0M']<=100) & (dfg['INTENSITY0M']>0.0)]
+#    return dfg
 
 
 ''' A SQL query to get all the corresponding info from the database'''
@@ -122,9 +122,10 @@ order by DTXCID,ENERGY,INTENSITY0C desc;
     return chunks
             
 
-
-def compare_mgf_df(file,filename,mass_error,fragment_error,POSMODE,filtering):
-    dfg = spectrum_reader(file)
+#  Transforms positive or negative precursor ions to neutral mass. Then searches CFMID database for chemical candidates
+#  within a mass error window.
+def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, filtering=False):
+    dfg = df_in
     if POSMODE:
         mode='ESI-MSMS-pos'
         polarity=['ESI+','Esi+']
@@ -165,7 +166,7 @@ def compare_mgf_df(file,filename,mass_error,fragment_error,POSMODE,filtering):
         print("No matches All Energies found")
     else:
         dfAE_total = pd.concat(dfAE_list) #all energies scores for all matches
-
-    dfAE_total.to_excel(filename+'_CFMID_results.xlsx',engine='xlsxwriter')
+    return dfAE_total
+    #dfAE_total.to_excel(filename+'_CFMID_results.xlsx',engine='xlsxwriter')
 
 

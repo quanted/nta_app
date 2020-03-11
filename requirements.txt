@@ -8,3 +8,4 @@ gridfs
 dask
 distributed
 bokeh
+pymysql
