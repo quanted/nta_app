@@ -11,7 +11,8 @@ from dask.distributed import Client, LocalCluster, fire_and_forget
 
 from . import functions_Universal_v3 as fn
 from . import toxpi
-from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas
+from .utilities import *  #connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
+
 from . import task_functions as task_fun
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
@@ -58,14 +59,14 @@ def run_nta(parameters, input_dfs, tracer_df = None, mongo_address = None, jobid
     return True
 
 
-FILENAMES = {'duplicates': ['duplicates_dropped_pos', 'duplicates_dropped_neg'],
-             'stats': ['stats_pos', 'stats_neg'],
+FILENAMES = {'stats': ['stats_pos', 'stats_neg'],
              'tracers': ['tracers_pos', 'tracers_neg'],
-             'cleaned': ['cleaned_pos', 'cleaned_neg'],
-             'flags': ['flags_pos', 'flags_neg'],
-             'combined': 'combined',
+             'tracer_plots': ['tracer_plot_pos', 'tracer_plot_neg'],
+             #'cleaned': ['cleaned_pos', 'cleaned_neg'],
+             #'flags': ['flags_pos', 'flags_neg'],
+             #'combined': 'combined',
              'mpp_ready': ['for_stats_full', 'for_stats_reduced'],
-             'dashboard': 'dashboard_search',
+             #'dashboard': 'dashboard_search',
              'toxpi': ['final_output_full', 'final_output_reduced']
              }
 
@@ -204,8 +205,8 @@ class NtaRun:
 
     def filter_duplicates(self):
         self.dfs = [task_fun.duplicates(df) for df in self.dfs]
-        self.mongo_save(self.dfs[0], FILENAMES['duplicates'][0])
-        self.mongo_save(self.dfs[1], FILENAMES['duplicates'][1])
+        #self.mongo_save(self.dfs[0], FILENAMES['duplicates'][0])
+        #self.mongo_save(self.dfs[1], FILENAMES['duplicates'][1])
         return
 
     def filter_void_volume(self, min_rt):
@@ -233,26 +234,30 @@ class NtaRun:
             logger.info("Tracer file found, checking tracers.")
         ppm = self.mass_accuracy_units_tr == 'ppm'
         self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
+        self.tracer_dfs_out = [format_tracer_file(df) for df in self.tracer_dfs_out]
+        self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
         self.mongo_save(self.tracer_dfs_out[0], FILENAMES['tracers'][0])
         self.mongo_save(self.tracer_dfs_out[1], FILENAMES['tracers'][1])
+        self.mongo_save(self.tracer_plots_out[0], FILENAMES['tracer_plots'][0], df=False)
+        self.mongo_save(self.tracer_plots_out[1], FILENAMES['tracer_plots'][1], df=False)
         return
 
     def clean_features(self):
         controls = [self.sample_to_blank, self.min_replicate_hits, self.max_replicate_cv]
         self.dfs = [fn.clean_features(df, index, self.entact, controls) for index, df in enumerate(self.dfs)]
         self.dfs = [fn.Blank_Subtract(df, index) for index, df in enumerate(self.dfs)]  # subtract blanks from medians
-        self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
-        self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
+        #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
+        #self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
         return
 
     def create_flags(self):
         self.dfs = [fn.flags(df) for df in self.dfs]
-        self.mongo_save(self.dfs[0], FILENAMES['flags'][0])
-        self.mongo_save(self.dfs[1], FILENAMES['flags'][1])
+        #self.mongo_save(self.dfs[0], FILENAMES['flags'][0])
+        #self.mongo_save(self.dfs[1], FILENAMES['flags'][1])
 
     def combine_modes(self):
         self.df_combined = fn.combine(self.dfs[0], self.dfs[1])
-        self.mongo_save(self.df_combined, FILENAMES['combined'])
+        #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
         self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'][0])
         self.mongo_save(reduced_file(self.mpp_ready), FILENAMES['mpp_ready'][1])  # save the reduced version
@@ -304,8 +309,8 @@ class NtaRun:
         dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                         dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
         self.search_results = dsstox_search_df
-        if save:
-            self.mongo_save(self.search_results, FILENAMES['dashboard'])
+        #if save:
+            #self.mongo_save(self.search_results, FILENAMES['dashboard'])
 
     def download_finished(self, save = False):
         finished = False
@@ -388,7 +393,10 @@ class NtaRun:
         if self.verbose:
             logger.info("Cleaned up download file.")
 
-    def mongo_save(self, file, step=""):
-        to_save = file.to_json(orient='split')
+    def mongo_save(self, file, step="", df=True):
+        if df:
+            to_save = file.to_json(orient='split')
+        else:
+            to_save = file
         id = self.jobid + "_" + step
         self.gridfs.put(to_save, _id=id, encoding='utf-8', project_name = self.project_name)

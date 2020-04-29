@@ -1,10 +1,13 @@
 
 import pymongo as pymongo
+import matplotlib.pyplot as plt
 import gridfs
+import io
 import os
 import logging
 import json
 import requests
+import numpy as np
 from .functions_Universal_v3 import parse_headers
 
 logger = logging.getLogger("nta_app.ms1")
@@ -63,3 +66,37 @@ def api_search_formulas(formulas, jobID = "00000"):
     logger.info(api_url)
     http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json)
+
+
+def format_tracer_file(df_in):
+    df = df_in.copy()
+    df = df.drop(columns=['Compound', 'Score'])
+    rt_diff = df['Observed_Retention_Time'] - df['Retention_Time']
+    mass_diff = ((df['Observed_Mass'] - df['Monoisotopic_Mass']) / df['Monoisotopic_Mass']) * 1000000
+    df.insert(7, 'Mass_Error_PPM', mass_diff)
+    df.insert(9, 'Retention_Time_Difference', rt_diff)
+    return df
+
+def create_tracer_plot(df_in):
+    headers = parse_headers(df_in, 0)
+    abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
+    print(abundance)
+    print(df_in.columns)
+    fig, ax = plt.subplots()
+    for i, tracer in df_in.iterrows():
+        y = tracer[abundance]
+        x = abundance
+        ax.plot(x, y, marker='o',label=tracer[0])
+        ax.set_ylabel('Log abundance')
+        ax.set_xlabel('Sample name')
+    #plt.title('Tracers {} mode')
+    plt.yscale('log')
+    plt.xticks(rotation=-90)
+    plt.legend()
+    plt.tight_layout()
+    buffer = io.BytesIO()
+    plt.savefig(buffer)#, format='png')
+    #plt.show()
+    plt.close()
+    return buffer.getvalue()
+
