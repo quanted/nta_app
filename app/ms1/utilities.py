@@ -1,6 +1,7 @@
 
 import pymongo as pymongo
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
 import gridfs
 import io
 import os
@@ -78,10 +79,10 @@ def format_tracer_file(df_in):
     return df
 
 def create_tracer_plot(df_in):
+    mpl_logger = logging.getLogger('matplotlib')
+    mpl_logger.setLevel(logging.WARNING)
     headers = parse_headers(df_in, 0)
     abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-    print(abundance)
-    print(df_in.columns)
     fig, ax = plt.subplots()
     for i, tracer in df_in.iterrows():
         y = tracer[abundance]
@@ -94,6 +95,10 @@ def create_tracer_plot(df_in):
     plt.xticks(rotation=-90)
     plt.legend()
     plt.tight_layout()
+    sf = ScalarFormatter()
+    sf.set_scientific(False)
+    ax.yaxis.set_major_formatter(sf)
+    ax.margins(x=0.3)
     buffer = io.BytesIO()
     plt.savefig(buffer)#, format='png')
     #plt.show()

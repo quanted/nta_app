@@ -39,4 +39,12 @@ def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     # dfe.dropna(how='all')
     # dfe = dfe[pd.notnull(dfe['INPUT'])]
     # dfe.fillna('',inplace=True)  # problematic memory use here
+    # reorder some columns
+    dfe.insert(5, 'Rounded_Mass', dfe.pop('Rounded_Mass'))
+    dfe.insert(8, 'AnySamplesDropped', dfe.pop('AnySamplesDropped'))
+    last_stats_col = dfe.columns.get_loc('Neg_Mass_Defect')
+    dfe.insert(last_stats_col-1, 'SampletoBlanks_ratio', dfe.pop('SampletoBlanks_ratio'))
+    dfe.insert(last_stats_col-1, 'Has_Adduct_or_Loss', dfe.pop('Has_Adduct_or_Loss'))
+    dfe.insert(last_stats_col-1, 'Is_Adduct_or_Loss', dfe.pop('Is_Adduct_or_Loss'))
+    dfe.insert(last_stats_col-1, 'Adduct_or_Loss_Info', dfe.pop('Adduct_or_Loss_Info'))
     return dfe

@@ -32,17 +32,18 @@ class OutputServer:
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.posts = self.mongo.posts
-        self.names_duplicates = FILENAMES['duplicates']
+        #self.names_duplicates = FILENAMES['duplicates']
         self.names_toxpi = FILENAMES['toxpi']
-        self.names_stats = FILENAMES['stats']
+        #self.names_stats = FILENAMES['stats']
         self.names_tracers = FILENAMES['tracers']
-        self.names_cleaned = FILENAMES['cleaned']
-        self.names_flags = FILENAMES['flags']
-        self.names_combined = FILENAMES['combined']
+        self.names_tracer_plots = FILENAMES['tracer_plots']
+        #self.names_cleaned = FILENAMES['cleaned']
+        #self.names_flags = FILENAMES['flags']
+        #self.names_combined = FILENAMES['combined']
         self.names_mpp_ready = FILENAMES['mpp_ready']
-        self.names_dashboard = FILENAMES['dashboard']
-        self.main_file_names = self.names_duplicates + self.names_stats + self.names_cleaned + self.names_flags + [self.names_combined] + \
-                               self.names_mpp_ready + [self.names_dashboard] + self.names_toxpi
+        #self.names_dashboard = FILENAMES['dashboard']
+        self.main_file_names = self.names_stats + \
+                               self.names_mpp_ready + self.names_toxpi
 
 
     def status(self):
@@ -112,6 +113,23 @@ class OutputServer:
                     tracer_id = self.jobid + "_" + name
                     #db_record = self.posts.find_one({'_id': tracer_id})
                     #json_string = json.dumps(db_record['data'])
+                    db_record = self.gridfs.get(tracer_id)
+                    json_string = db_record.read().decode('utf-8')
+                    df = pd.read_json(json_string, orient='split')
+                    #project_name = db_record['project_name']
+                    project_name = db_record.project_name
+                    if project_name:
+                        filename = project_name.replace(" ", "_") + '_' + name + '.csv'
+                    else:
+                        filename = tracer_id + '.csv'
+                    # csv_string = StringIO()
+                    csv_string = df.to_csv(index=False)
+                    zipf.writestr(filename, csv_string)
+                except (OperationFailure, TypeError, NoFile):
+                    break
+            for name in self.names_tracer_plots:
+                try:
+                    tracer_id = self.jobid + "_" + name
                     db_record = self.gridfs.get(tracer_id)
                     json_string = db_record.read().decode('utf-8')
                     df = pd.read_json(json_string, orient='split')

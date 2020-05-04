@@ -128,7 +128,6 @@ class OutputServer:
                 except (OperationFailure, TypeError, NoFile):
                     break
             for name in self.names_tracer_plots:
-                print(name)
                 try:
                     tracer_id = self.jobid + "_" + name
                     db_record = self.gridfs.get(tracer_id)
@@ -145,8 +144,6 @@ class OutputServer:
                     csv_string = df.to_csv(index=False)
                     zipf.writestr(filename, buffer)#.getvalue())
                 except (OperationFailure, TypeError, NoFile) as e:
-                    print('ERROR FETCHING TRACER PLOT')
-                    raise e
                     break
 
 
