@@ -13,8 +13,9 @@ class MS2Inputs(forms.Form):
         initial='Example ms2 nta',
         required=True)
     results_email = forms.EmailField(
-        label='Email for results:',
-        initial='')
+        label='Email for results link (optional):',
+        initial='',
+        required=False)
     pos_inputs = forms.FileField(
         widget=forms.ClearableFileInput(attrs={'multiple': True}),
         label = 'Positive MS2 files (mgf)',

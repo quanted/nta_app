@@ -57,14 +57,20 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, filtering=False):
 #  A SQL query to get all the corresponding info from the database
 def sqlCFMID(mass=None, mass_error=None, mode=None):
 
-    with open('secrets/secret_nta_db_key.txt') as f:
+    with open('secrets/secret_nta_db_key_aws.txt') as f:
         pw = f.read().strip()
 
-    db = mysql.connect(host="mysql-dev1.epa.gov",
+    # db = mysql.connect(host="mysql-dev1.epa.gov",
+    #                    port=3306,
+    #                    user='app_nta',
+    #                    passwd=pw,
+    #                    db="dev_nta_predictions")
+
+    db = mysql.connect(host="qedaurorastack-databaseb269d8bb-1dy6l8bdz01k1.cluster-ro-crqjwmaelnsw.us-east-1.rds.amazonaws.com",
                        port=3306,
-                       user='app_nta',
+                       user='qedadmin',
                        passwd=pw,
-                       db="dev_nta_predictions")
+                       db="ms2_db")
 
     cur = db.cursor()
     accuracy_condition = ''
