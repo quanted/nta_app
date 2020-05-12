@@ -79,16 +79,24 @@ class MS2Run:
         self.step = "Started"  # tracks the current step (for fail messages)
 
     def execute(self):
+        self.set_status('Processing', create = True)
         self.results_dfs[0] = pd.concat([compare_mgf_df(x, self.precursor_mass_accuracy, self.fragment_mass_accuracy, POSMODE=True) for x in self.input_dfs[0]])
         self.results_dfs[1] = pd.concat([compare_mgf_df(x, self.precursor_mass_accuracy, self.fragment_mass_accuracy, POSMODE=False) for x in self.input_dfs[1]])
-        self.mongo_save(self.results_dfs[0], step='pos_results')
-        self.mongo_save(self.results_dfs[1], step='neg_results')
+        self.mongo_save(self.results_dfs[0], step=FILENAMES['final_output'][0])
+        self.mongo_save(self.results_dfs[1], step=FILENAMES['final_output'][1])
         self.set_status('Completed')
         self.send_email()
+        print('Run Finished')
 
     def send_email(self):
-        link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
-        send_ms2_finished(self.email, link_address)
+        try:
+            link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
+            send_ms2_finished(self.email, link_address)
+        except Exception as e:
+            print('email error')
+            raise e
+            #return
+        print('email end function')
 
 
     def set_status(self, status, create = False):

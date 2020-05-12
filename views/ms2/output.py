@@ -51,16 +51,9 @@ def output_page_html(header, model, tables_html):
 
 
 def file_download_buttons(jobid):
-    html = """
-    <div id="download_area">
-        <H3 id="section1">Download results:</H3>
+    html =  """
         <div class="buttons">
-            <input type="button" value="Final results" onclick="window.open('/nta/ms1/results/toxpi/{jobid}')">
-        </div>
-    """
-    html +=  """
-        <div class="buttons">
-            <input type="button" value="All files" onclick="window.open('/nta/ms1/results/all/{jobid}')">
+            <input type="button" value="Get results" onclick="window.open('/nta/ms2/results/{jobid}')">
         </div>
     </div>
     """
