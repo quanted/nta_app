@@ -5,7 +5,7 @@
 import pandas as pd
 
 from . import scoring
-import pymysql as mysql
+import psycopg2
 
 #  Transforms positive or negative precursor ions to neutral mass. Then searches CFMID database for chemical candidates
 #  within a mass error window.
@@ -66,13 +66,13 @@ def sqlCFMID(mass=None, mass_error=None, mode=None):
     #                    passwd=pw,
     #                    db="dev_nta_predictions")
 
-    db = mysql.connect(host="qedaurorastack-databaseb269d8bb-1dy6l8bdz01k1.cluster-ro-crqjwmaelnsw.us-east-1.rds.amazonaws.com",
+    db = psycopg2.connect(host="qedaurorastack-databaseb269d8bb-1dy6l8bdz01k1.cluster-ro-crqjwmaelnsw.us-east-1.rds.amazonaws.com",
                        port=3306,
                        user='qedadmin',
-                       passwd=pw,
-                       db="ms2_db")
+                       password=pw,
+                       database="ms2_db")
 
-    cur = db.cursor()
+    #cur = db.cursor()
     accuracy_condition = ''
     if mass:
         if mass_error >= 1:
@@ -105,10 +105,13 @@ on t1.dtxcid=t2.dtxcid and t1.energy=t2.energy
 order by DTXCID,ENERGY,INTENSITY0C desc;
 
             """
-    print(query)
-    # Decided to chunk the query results for speed optimization in post porocessing (spectral matching)
-    cur.execute(query)
+    #print(query)
+    # Decided to chunk the query results for speed optimization in post processing (spectral matching)
+    #cur.execute(query)
     chunks = list()
     for chunk in pd.read_sql(query, db, chunksize=1000):
         chunks.append(chunk)
+    #cursor.close()
+    db.close()
+    db = None
     return chunks
