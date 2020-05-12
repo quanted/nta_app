@@ -7,7 +7,7 @@ def ordered_list(model=None, page=None):
     link_dict = OrderedDict([
         ('Tools', OrderedDict([
                 ('MS1 Tool', 'ms1'),
-                ('MS2 Tool', 'ms2')
+                ('MS2 CFMID Tool', 'ms2')
             ])
          ),
         ('Documentation', OrderedDict([

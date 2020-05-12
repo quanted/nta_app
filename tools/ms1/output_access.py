@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime
 from io import StringIO, BytesIO
+from PIL import Image
 from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import HttpResponse, JsonResponse
 from ...app.ms1.utilities import connect_to_mongoDB, connect_to_mongo_gridfs
@@ -32,17 +33,17 @@ class OutputServer:
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.posts = self.mongo.posts
-        self.names_duplicates = FILENAMES['duplicates']
+        # self.names_duplicates = FILENAMES['duplicates']
         self.names_toxpi = FILENAMES['toxpi']
         self.names_stats = FILENAMES['stats']
         self.names_tracers = FILENAMES['tracers']
-        self.names_cleaned = FILENAMES['cleaned']
-        self.names_flags = FILENAMES['flags']
-        self.names_combined = FILENAMES['combined']
+        self.names_tracer_plots = FILENAMES['tracer_plots']
+        # self.names_cleaned = FILENAMES['cleaned']
+        # self.names_flags = FILENAMES['flags']
+        # self.names_combined = FILENAMES['combined']
         self.names_mpp_ready = FILENAMES['mpp_ready']
-        self.names_dashboard = FILENAMES['dashboard']
-        self.main_file_names = self.names_duplicates + self.names_stats + self.names_cleaned + self.names_flags + [self.names_combined] + \
-                               self.names_mpp_ready + [self.names_dashboard] + self.names_toxpi
+        # self.names_dashboard = FILENAMES['dashboard']
+        self.main_file_names = self.names_stats + self.names_mpp_ready + self.names_toxpi
 
 
     def status(self):
@@ -125,6 +126,24 @@ class OutputServer:
                     csv_string = df.to_csv(index=False)
                     zipf.writestr(filename, csv_string)
                 except (OperationFailure, TypeError, NoFile):
+                    break
+            for name in self.names_tracer_plots:
+                try:
+                    tracer_id = self.jobid + "_" + name
+                    db_record = self.gridfs.get(tracer_id)
+                    buffer = db_record.read()#.decode('utf-8')
+                    #stream.seek(0)
+                    #image = Image.open(stream)
+                    # project_name = db_record['project_name']
+                    project_name = db_record.project_name
+                    if project_name:
+                        filename = project_name.replace(" ", "_") + '_' + name + '.png'
+                    else:
+                        filename = tracer_id + '.png'
+                    # csv_string = StringIO()
+                    csv_string = df.to_csv(index=False)
+                    zipf.writestr(filename, buffer)#.getvalue())
+                except (OperationFailure, TypeError, NoFile) as e:
                     break
 
 

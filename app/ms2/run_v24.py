@@ -24,7 +24,7 @@ path = "mgf/"
 for infile in glob.glob( os.path.join(path, '*.csv') ): # Reads all CSV files in directory
     print "CSV search/score: current file is: " + infile
     t0=time.clock()
-    mg.compare_mgf_df(infile,infile,10,0.02,POSMODE=True,filtering=False)
+    mg.compare_mgf_df(infile,infile,10,0.02,POSMODE=True,filtering=False)  # filtering always false (for now)
     t1=time.clock()
     print("time to Process is " + str(t1-t0))
     #print("Total time processing is " + str(round((t1-t_start)/60)) + " minutes")

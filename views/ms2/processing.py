@@ -7,22 +7,22 @@ from .. import links_left
 
 
 #@require_POST
-def output_page(request, model='nta', header='NTA', jobid = '00000000'):
-    header = "NTA"
+def processing_page(request, model='nta', header='NTA', jobid='00000000', email = ""):
+    header = "MS2 CFMID Tool"
     model = "ms2"
-    model_output_html = "<h3> Job ID: " + jobid + "</h3> <br>"
-
-    #this is where the func to generate output html will be called
-    model_output_html += file_download_buttons(jobid)
+    model_output_html = '<div id="submitted>CFMID task successfully submitted.</div>'
+    model_output_html += '<div id="jobid"> Job ID: {}</div>'.format(jobid)
+    model_output_html += '<div id="status"> You will receive an email when your results are ready. </div>'.format(email)
     model_output_html += '<div id="except_info"></div>' #if there is an error, exception info will be placed here by the js script
-    html = output_page_html(header, model, model_output_html)
+
+    html = processing_page_html(header, model, model_output_html)
     response = HttpResponse()
     response.write(html)
     #print(html)
     return response
 
 
-def output_page_html(header, model, tables_html):
+def processing_page_html(header, model, tables_html):
     """Generates HTML to fill '.articles_output' div on output page"""
 
     #epa template header
@@ -35,7 +35,7 @@ def output_page_html(header, model, tables_html):
 
     #main body
     html += render_to_string('06ubertext_start_index_drupal.html', {
-        'TITLE': header + ' Output',
+        'TITLE': header,
         'TEXT_PARAGRAPH': tables_html
     })
     html += render_to_string('07ubertext_end_drupal.html', {})
@@ -43,20 +43,10 @@ def output_page_html(header, model, tables_html):
 
     #css and scripts
     html += render_to_string('09epa_drupal_pram_css.html', {})
-    html += render_to_string('ms2/nta_output_scripts.html', {})
+    html += render_to_string('09epa_drupal_pram_scripts.html', {})
+    html += render_to_string('ms2/nta_processing_scripts.html')
+    #html += render_to_string('09epa_drupal_pram_scripts.html', {})
 
     #epa template footer
     html += render_to_string('10epa_drupal_footer.html', {})
     return html
-
-
-def file_download_buttons(jobid):
-    html =  """
-        <div class="buttons">
-            <input type="button" value="Get results" onclick="window.open('/nta/ms2/results/{jobid}')">
-        </div>
-    </div>
-    """
-    return html.format(jobid = jobid)
-
-

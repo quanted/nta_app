@@ -8,8 +8,10 @@ import shutil
 import json
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
-
+from django.urls import reverse
 from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs
+from .ms2_functions import compare_mgf_df
+from ...tools.ms2.send_email import send_ms2_finished
 
 NO_DASK = False  # set this to True to run locally without dask (for debug purposes)
 
@@ -26,15 +28,15 @@ def run_ms2_dask(parameters, input_dfs, jobid = "00000000", verbose = True):
     if not in_docker:
         logger.info("Running in local development mode.")
         logger.info("Detected OS is {}".format(os.environ.get("SYSTEM_NAME")))
-        local_cluster = LocalCluster(processes=False, ip='127.0.0.1')
+        local_cluster = LocalCluster(processes=False)
         dask_client = Client(local_cluster)
     else:
         dask_scheduler = os.environ.get("DASK_SCHEDULER")
         logger.info("Running in docker environment. Dask Scheduler: {}".format(dask_scheduler))
-        dask_client = Client(dask_scheduler, processes=False)
+        dask_client = Client(dask_scheduler)
     dask_input_dfs = dask_client.scatter(input_dfs)
     logger.info("Submitting Nta ms2 Dask task")
-    task = dask_client.submit(run_ms2, parameters, dask_input_dfs, tracer_df, mongo_address, jobid, verbose,
+    task = dask_client.submit(run_ms2, parameters, dask_input_dfs, mongo_address, jobid, verbose,
                               in_docker = in_docker)
     fire_and_forget(task)
 
@@ -55,22 +57,19 @@ def run_ms2(parameters, input_dfs,  mongo_address = None, jobid = "00000000", ve
     return True
 
 
-FILENAMES = {'duplicates': ['duplicates_dropped_pos', 'duplicates_dropped_neg'],
-             'stats': ['stats_pos', 'stats_neg'],
-             'tracers': ['tracers_pos', 'tracers_neg'],
-             'cleaned': ['cleaned_pos', 'cleaned_neg'],
-             'flags': ['flags_pos', 'flags_neg'],
-             'combined': 'combined',
-             'mpp_ready': ['for_stats_full', 'for_stats_reduced'],
-             'dashboard': 'dashboard_search',
-             'toxpi': ['final_output_full', 'final_output_reduced']
-             }
+FILENAMES = {'final_output': ['CFMID_results_pos', 'CFMID_results_neg']}
 
 
 class MS2Run:
     
     def __init__(self, parameters=None, input_dfs=None, mongo_address = None, jobid = "00000000",
-                 verbose = True, in_docker = True):
+                 output_email = None, verbose = True, in_docker = True):
+        self.project_name = parameters['project_name']
+        self.input_dfs = input_dfs
+        self.results_dfs = [[None],[None]]
+        self.email = output_email
+        self.precursor_mass_accuracy = float(parameters['precursor_mass_accuracy'])
+        self.fragment_mass_accuracy = float(parameters['fragment_mass_accuracy'])
         self.jobid = jobid
         self.verbose = verbose
         self.in_docker = in_docker
@@ -78,10 +77,27 @@ class MS2Run:
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.step = "Started"  # tracks the current step (for fail messages)
-        pass
 
     def execute(self):
-        pass
+        self.set_status('Processing', create = True)
+        self.results_dfs[0] = pd.concat([compare_mgf_df(x, self.precursor_mass_accuracy, self.fragment_mass_accuracy, POSMODE=True) for x in self.input_dfs[0]])
+        self.results_dfs[1] = pd.concat([compare_mgf_df(x, self.precursor_mass_accuracy, self.fragment_mass_accuracy, POSMODE=False) for x in self.input_dfs[1]])
+        self.mongo_save(self.results_dfs[0], step=FILENAMES['final_output'][0])
+        self.mongo_save(self.results_dfs[1], step=FILENAMES['final_output'][1])
+        self.set_status('Completed')
+        self.send_email()
+        print('Run Finished')
+
+    def send_email(self):
+        try:
+            link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
+            send_ms2_finished(self.email, link_address)
+        except Exception as e:
+            print('email error')
+            raise e
+            #return
+        print('email end function')
+
 
     def set_status(self, status, create = False):
         posts = self.mongo.posts

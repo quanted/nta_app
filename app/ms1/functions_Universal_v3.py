@@ -470,7 +470,6 @@ def MPP_Ready(dft, directory='',file=''):
     #dft = dft.rename(columns = {'Compound':'Formula','Retention_Time':'RT'})
     #dft['Compound Name'] = dft['Formula']
     dft = dft.rename(columns = {'Compound':'Formula'})
-    dft['CAS ID'] = ""
     Headers = parse_headers(dft,0)
     raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
     blank_subtracted_medians = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
@@ -483,7 +482,7 @@ def MPP_Ready(dft, directory='',file=''):
     #dft = dft.reindex(columns=Columns)
     #print dft
     #dft.to_csv(directory+'/'+file+'_MPP_Ready.csv', index=False)
-    dft = dft[['Feature_ID','Formula','Score','CAS ID','Mass','Retention_Time'] + raw_samples + blank_subtracted_medians]
+    dft = dft[['Feature_ID','Formula','Score', 'Mass','Retention_Time'] + raw_samples + blank_subtracted_medians]
     #dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)
     return dft
 

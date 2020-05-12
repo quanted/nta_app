@@ -1,19 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 29 09:57:30 2018
-
-@author: HALGhoul
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec 21 10:11:13 2017
-
-@author: Hussein Al Ghoul
-"""
-
-import os
-import time
 import pandas as pd
 import numpy as np
 
@@ -142,27 +126,4 @@ def Score(dfL=None,dfU=None,Mass=0.0,fragment_error=0,filtering=False):
         df['MATCHES'] = df.groupby(['MASS'])['MASS'].transform('count')
 
     print ("Number of Matches: " + str(len(WL)))
-
     return df
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
-    
-    

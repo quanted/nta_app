@@ -225,6 +225,8 @@ def score(df):  # Get score from annotations.
             return df
         if df.Annotations.str.contains('overall=').any():
             df['Score'] = df.Annotations.str.extract(regex, expand=True).astype('float64')
+    elif "Score" in df:
+        pass
     else:
         df['Score'] = None
     return df
