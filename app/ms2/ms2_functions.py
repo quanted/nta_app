@@ -88,9 +88,7 @@ from
 (select c.dtxcid, max(p.intensity) as maxintensity, p.energy from peak p
 Inner Join job j on p.job_id=j.id
 Inner Join spectra s on j.spectra_id = s.id
-Inner Join chemical c on j.dtxcid=c.dtxcid
-#Inner Join fragtool ft on j.fragtool_id=ft.id
-#inner join fragintensity fi on fi.peak_id = p.id       
+Inner Join chemical c on j.dtxcid=c.dtxcid    
 where """ + accuracy_condition + """ 
 and s.type='""" + mode + """'
 group by c.dtxcid, p.energy) as t2
@@ -98,9 +96,7 @@ left join
 (select c.*, p.* from peak p
 Inner Join job j on p.job_id=j.id
 Inner Join spectra s on j.spectra_id = s.id
-Inner Join chemical c on j.dtxcid=c.dtxcid
-#Inner Join fragtool ft on j.fragtool_id=ft.id   
-#inner join fragintensity fi on fi.peak_id = p.id 
+Inner Join chemical c on j.dtxcid=c.dtxcid 
 where """ + accuracy_condition + """ 
 and s.type='""" + mode + """') t1
 on t1.dtxcid=t2.dtxcid and t1.energy=t2.energy
