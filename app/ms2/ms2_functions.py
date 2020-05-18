@@ -3,9 +3,11 @@
 
 
 import pandas as pd
-
+import os
 from . import scoring
 import psycopg2
+
+pw = os.environ.get('AURORA_PW')
 
 #  Transforms positive or negative precursor ions to neutral mass. Then searches CFMID database for chemical candidates
 #  within a mass error window.
@@ -57,8 +59,8 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, filtering=False):
 #  A SQL query to get all the corresponding info from the database
 def sqlCFMID(mass=None, mass_error=None, mode=None):
 
-    with open('secrets/secret_nta_db_key_aws.txt') as f:
-        pw = f.read().strip()
+    #with open('secrets/secret_nta_db_key_aws.txt') as f:
+    #    pw = f.read().strip()
 
     # db = mysql.connect(host="mysql-dev1.epa.gov",
     #                    port=3306,
