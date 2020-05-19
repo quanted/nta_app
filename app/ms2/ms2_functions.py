@@ -93,7 +93,7 @@ where """ + accuracy_condition + """
 and s.type='""" + mode + """'
 group by c.dtxcid, p.energy) as t2
 left join
-(select c.*, p.* from peak p
+(select c.dtxcid, c.formula, c.mass, p.mz, p.intensity from peak p
 Inner Join job j on p.job_id=j.id
 Inner Join spectra s on j.spectra_id = s.id
 Inner Join chemical c on j.dtxcid=c.dtxcid 
