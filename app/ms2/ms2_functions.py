@@ -88,20 +88,20 @@ def sqlCFMID(mass=None, mass_error=None, mode=None):
 from 
 (select c.dtxcid, max(p.intensity) as maxintensity, p.energy from 
 (select c.dtxcid from chemical c
-where """ + accuracy_condition + """ 
-and s.type='""" + mode + """') c
+where """ + accuracy_condition + """) c
 Inner Join job j on c.ddtxcid=j.dtxcid
 Inner Join spectra s on j.spectra_id=s.id
 Inner Join peak p on j.id=p.job_id
+where s.type='""" + mode + """'
 group by c.dtxcid, p.energy) as t2
 left join
 (select c.dtxcid, c.formula, c.mass, p.mz, p.intensity, p.energy from
 (select c.dtxcid, c.formula, c.mass from chemical c
-where """ + accuracy_condition + """ 
-and s.type='""" + mode + """') c
+where """ + accuracy_condition + """) c
 Inner Join job j on c.ddtxcid=j.dtxcid
 Inner Join spectra s on j.spectra_id=s.id
-Inner Join peak p on j.id=p.job_id) as t1
+Inner Join peak p on j.id=p.job_id
+where s.type='""" + mode + """') as t1
 on t1.dtxcid=t2.dtxcid and t1.energy=t2.energy
 order by "DTXCID","ENERGY","INTENSITY0C" desc;
 
