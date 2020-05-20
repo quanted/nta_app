@@ -86,20 +86,22 @@ def sqlCFMID(mass=None, mass_error=None, mode=None):
 
     query = """Select t1.dtxcid as "DTXCID", t1.formula as "FORMULA",t1.mass as "MASS", t1.mz as "PMASS_x", (t1.intensity/maxintensity)*100.0 as "INTENSITY0C",t1.energy as "ENERGY" 
 from 
-(select c.dtxcid, max(p.intensity) as maxintensity, p.energy from peak p
-Inner Join job j on p.job_id=j.id
-Inner Join spectra s on j.spectra_id = s.id
-Inner Join chemical c on j.dtxcid=c.dtxcid    
+(select c.dtxcid, max(p.intensity) as maxintensity, p.energy from 
+(select c.dtxcid from chemical c
 where """ + accuracy_condition + """ 
-and s.type='""" + mode + """'
+and s.type='""" + mode + """') c
+Inner Join job j on c.ddtxcid=j.dtxcid
+Inner Join spectra s on j.spectra_id=s.id
+Inner Join peak p on j.id=p.job_id
 group by c.dtxcid, p.energy) as t2
 left join
-(select c.dtxcid, c.formula, c.mass, p.mz, p.intensity, p.energy from peak p
-Inner Join job j on p.job_id=j.id
-Inner Join spectra s on j.spectra_id = s.id
-Inner Join chemical c on j.dtxcid=c.dtxcid 
+(select c.dtxcid, c.formula, c.mass, p.mz, p.intensity, p.energy from
+(select c.dtxcid, c.formula, c.mass from chemical c
 where """ + accuracy_condition + """ 
-and s.type='""" + mode + """') t1
+and s.type='""" + mode + """') c
+Inner Join job j on c.ddtxcid=j.dtxcid
+Inner Join spectra s on j.spectra_id=s.id
+Inner Join peak p on j.id=p.job_id) as t1
 on t1.dtxcid=t2.dtxcid and t1.energy=t2.energy
 order by "DTXCID","ENERGY","INTENSITY0C" desc;
 
@@ -108,11 +110,11 @@ order by "DTXCID","ENERGY","INTENSITY0C" desc;
     # Decided to chunk the query results for speed optimization in post processing (spectral matching)
     #cur.execute(query)
     chunks = list()
-    for chunk in pd.read_sql(query, db, chunksize=300):
+    for chunk in pd.read_sql(query, db, chunksize=1000):
         chunks.append(chunk)
     #cursor.close()
     db.close()
     db = None
     logging.critical("num of chunks: {}".format(len(chunks)))
-    logging.critical("first chunk: {}".format(chunks[0].head()))
+    #logging.critical("first chunk: {}".format(chunks[0].head()))
     return chunks
