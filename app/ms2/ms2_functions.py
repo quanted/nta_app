@@ -113,4 +113,6 @@ order by DTXCID,ENERGY,INTENSITY0C desc;
     #cursor.close()
     db.close()
     db = None
+    logging.critical("num of chunks: {}".format(len(chunks)))
+    logging.critical("first chunk: {}".format(chunks[0].head()))
     return chunks
