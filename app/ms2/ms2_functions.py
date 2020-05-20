@@ -89,7 +89,7 @@ from
 (select c.dtxcid, max(p.intensity) as maxintensity, p.energy from 
 (select c.dtxcid from chemical c
 where """ + accuracy_condition + """) c
-Inner Join job j on c.ddtxcid=j.dtxcid
+Inner Join job j on c.dtxcid=j.dtxcid
 Inner Join spectra s on j.spectra_id=s.id
 Inner Join peak p on j.id=p.job_id
 where s.type='""" + mode + """'
