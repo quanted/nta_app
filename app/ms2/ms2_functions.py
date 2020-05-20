@@ -84,7 +84,7 @@ def sqlCFMID(mass=None, mass_error=None, mode=None):
         if mass_error < 1 and mass_error > 0:
             accuracy_condition = """abs(c.mass-""" + str(mass) + """)<=""" + str(mass_error)
 
-    query = """Select t1.dtxcid as DTXCID, t1.formula as FORMULA,t1.mass as MASS, t1.mz as PMASS_x, (t1.intensity/maxintensity)*100.0 as INTENSITY0C,t1.energy as ENERGY 
+    query = """Select t1.dtxcid as "DTXCID", t1.formula as "FORMULA",t1.mass as "MASS", t1.mz as "PMASS_x", (t1.intensity/maxintensity)*100.0 as "INTENSITY0C",t1.energy as "ENERGY" 
 from 
 (select c.dtxcid, max(p.intensity) as maxintensity, p.energy from peak p
 Inner Join job j on p.job_id=j.id
@@ -108,7 +108,7 @@ order by DTXCID,ENERGY,INTENSITY0C desc;
     # Decided to chunk the query results for speed optimization in post processing (spectral matching)
     #cur.execute(query)
     chunks = list()
-    for chunk in pd.read_sql(query, db, chunksize=1000):
+    for chunk in pd.read_sql(query, db, chunksize=300):
         chunks.append(chunk)
     #cursor.close()
     db.close()
