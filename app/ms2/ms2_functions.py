@@ -101,7 +101,7 @@ Inner Join chemical c on j.dtxcid=c.dtxcid
 where """ + accuracy_condition + """ 
 and s.type='""" + mode + """') t1
 on t1.dtxcid=t2.dtxcid and t1.energy=t2.energy
-order by DTXCID,ENERGY,INTENSITY0C desc;
+order by "DTXCID","ENERGY","INTENSITY0C" desc;
 
             """
     #print(query)
