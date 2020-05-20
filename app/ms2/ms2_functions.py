@@ -98,7 +98,7 @@ left join
 (select c.dtxcid, c.formula, c.mass, p.mz, p.intensity, p.energy from
 (select c.dtxcid, c.formula, c.mass from chemical c
 where """ + accuracy_condition + """) c
-Inner Join job j on c.ddtxcid=j.dtxcid
+Inner Join job j on c.dtxcid=j.dtxcid
 Inner Join spectra s on j.spectra_id=s.id
 Inner Join peak p on j.id=p.job_id
 where s.type='""" + mode + """') as t1
