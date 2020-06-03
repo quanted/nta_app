@@ -83,24 +83,19 @@ def sqlCFMID(mass=None, mass_error=None, mode=None):
         if mass_error < 1 and mass_error > 0:
             accuracy_condition = """abs(c.mass-""" + str(mass) + """)<=""" + str(mass_error)
 
-    query = """Select t1.dtxcid as DTXCID, t1.formula as FORMULA,t1.mass as MASS, t1.mz as PMASS_x, (t1.intensity/maxintensity)*100.0 as INTENSITY0C,t1.energy as ENERGY 
-from 
-(select c.dtxcid, max(p.intensity) as maxintensity, p.energy from peak p
-Inner Join job j on p.job_id=j.id
-Inner Join spectra s on j.spectra_id = s.id
-Inner Join chemical c on j.dtxcid=c.dtxcid    
+    query = """with c as (
+    select dtxcid, formula, mass, mz, intensity, energy  from job_peak  
 where """ + accuracy_condition + """ 
-and s.type='""" + mode + """'
-group by c.dtxcid, p.energy) as t2
-left join
-(select c.dtxcid, c.formula, c.mass, p.mz, p.intensity, p.energy from peak p
-Inner Join job j on p.job_id=j.id
-Inner Join spectra s on j.spectra_id = s.id
-Inner Join chemical c on j.dtxcid=c.dtxcid 
-where """ + accuracy_condition + """ 
-and s.type='""" + mode + """') t1
-on t1.dtxcid=t2.dtxcid and t1.energy=t2.energy
-order by DTXCID,ENERGY,INTENSITY0C desc;
+and s.type='""" + mode + """',
+d as (
+select dtxcid, energy, max(intensity) as maxintensity
+              from c group by dtxcid, energy
+)
+select c.dtxcid as "DTXCID", c.formula as "FORMULA", c.mass as "MASS", c.mz as "PMASS_x", c.energy as "ENERGY", (c.intensity/d.maxintensity)*100.0 as "INTENSITY0C"
+from c, d
+where c.dtxcid=d.dtxcid and c.energy=d.energy
+order by "DTXCID","ENERGY", "INTENSITY0C" desc;
+
 
             """
     #print(query)
