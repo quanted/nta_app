@@ -85,9 +85,9 @@ def sqlCFMID(mass=None, mass_error=None, mode=None):
             accuracy_condition = """abs(job_peak.mass-""" + str(mass) + """)<=""" + str(mass_error)
 
     query = """with c as (
-    select dtxcid, formula, mass, mz, intensity, energy  from job_peak  
+    select dtxcid, formula, mass, mz, intensity, energy from job_peak  
 where """ + accuracy_condition + """ 
-and s.type='""" + mode + """'),
+and type='""" + mode + """'),
 d as (
 select dtxcid, energy, max(intensity) as maxintensity
               from c group by dtxcid, energy
