@@ -6,6 +6,7 @@ import pandas as pd
 import os
 from . import scoring
 import psycopg2
+import logging
 
 pw = os.environ.get('AURORA_PW')
 
@@ -31,10 +32,10 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, filtering=False):
     dfS_list = list()
     for mass in mass_list:
         index = mass_list.index(mass) + 1
-        print("searching mass " + str(mass) + " number " + str(index) + " of " + str(len(mass_list)))
+        logging.critical("searching mass " + str(mass) + " number " + str(index) + " of " + str(len(mass_list)))
         dfcfmid = sqlCFMID(mass, mass_error, mode)
         if not dfcfmid:
-            print("No matches for this mass in CFMID library, consider changing the accuracy of the queried mass")
+            logging.critical("No matches for this mass in CFMID library, consider changing the accuracy of the queried mass")
         else:
             dfmgf = None
             df = None
@@ -49,7 +50,7 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, filtering=False):
             dfAE_list.append(df)  # all energies scores
 
     if not dfAE_list:
-        print("No matches All Energies found")
+        logging.critical("No matches All Energies found")
     else:
         dfAE_total = pd.concat(dfAE_list)  # all energies scores for all matches
     return dfAE_total
@@ -95,8 +96,6 @@ select c.dtxcid as "DTXCID", c.formula as "FORMULA", c.mass as "MASS", c.mz as "
 from c, d
 where c.dtxcid=d.dtxcid and c.energy=d.energy
 order by "DTXCID","ENERGY", "INTENSITY0C" desc;
-
-
             """
     #print(query)
     # Decided to chunk the query results for speed optimization in post processing (spectral matching)
@@ -107,4 +106,6 @@ order by "DTXCID","ENERGY", "INTENSITY0C" desc;
     #cursor.close()
     db.close()
     db = None
+    logging.critical("num of chunks: {}".format(len(chunks)))
+    #logging.critical("first chunk: {}".format(chunks[0].head()))
     return chunks
