@@ -24,7 +24,7 @@ def run_ms2_dask(parameters, input_dfs, jobid = "00000000", verbose = True):
     mongo_address = os.environ.get('MONGO_SERVER')
     link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
     if NO_DASK:
-        run_ms2(parameters, input_dfs, mongo_address, jobid, results_link=link_address, verbose=verbose, in_docker = in_docker)
+        run_ms2(parameters, input_dfs, mongo_address, jobid, results_link=link_address, verbose=verbose, in_docker=in_docker)
         return
     if not in_docker:
         logger.info("Running in local development mode.")
@@ -38,7 +38,7 @@ def run_ms2_dask(parameters, input_dfs, jobid = "00000000", verbose = True):
     dask_input_dfs = dask_client.scatter(input_dfs)
     logger.info("Submitting Nta ms2 Dask task")
     task = dask_client.submit(run_ms2, parameters, dask_input_dfs, mongo_address, jobid, results_link=link_address,
-                              verbose, in_docker = in_docker)
+                              verbose=verbose, in_docker=in_docker)
     fire_and_forget(task)
 
 
