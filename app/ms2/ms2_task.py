@@ -22,8 +22,9 @@ logger.setLevel(logging.INFO)
 def run_ms2_dask(parameters, input_dfs, jobid = "00000000", verbose = True):
     in_docker = os.environ.get("IN_DOCKER") != "False"
     mongo_address = os.environ.get('MONGO_SERVER')
+    link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
     if NO_DASK:
-        run_ms2(parameters, input_dfs, mongo_address, jobid, verbose, in_docker = in_docker)
+        run_ms2(parameters, input_dfs, mongo_address, jobid, results_link=link_address, verbose, in_docker = in_docker)
         return
     if not in_docker:
         logger.info("Running in local development mode.")
@@ -36,12 +37,12 @@ def run_ms2_dask(parameters, input_dfs, jobid = "00000000", verbose = True):
         dask_client = Client(dask_scheduler)
     dask_input_dfs = dask_client.scatter(input_dfs)
     logger.info("Submitting Nta ms2 Dask task")
-    task = dask_client.submit(run_ms2, parameters, dask_input_dfs, mongo_address, jobid, verbose,
-                              in_docker = in_docker)
+    task = dask_client.submit(run_ms2, parameters, dask_input_dfs, mongo_address, jobid, results_link=link_address,
+                              verbose, in_docker = in_docker)
     fire_and_forget(task)
 
 
-def run_ms2(parameters, input_dfs,  mongo_address = None, jobid = "00000000", verbose = True,
+def run_ms2(parameters, input_dfs,  mongo_address = None, jobid = "00000000", link = "", verbose = True,
             in_docker = True):
     ms2_run = MS2Run(parameters, input_dfs, mongo_address, jobid, verbose, in_docker = in_docker)
     try:
@@ -63,11 +64,12 @@ FILENAMES = {'final_output': ['CFMID_results_pos', 'CFMID_results_neg']}
 class MS2Run:
     
     def __init__(self, parameters=None, input_dfs=None, mongo_address = None, jobid = "00000000",
-                 output_email = None, verbose = True, in_docker = True):
+                 results_link = None, verbose = True, in_docker = True):
         self.project_name = parameters['project_name']
         self.input_dfs = input_dfs
         self.results_dfs = [[None],[None]]
-        self.email = output_email
+        self.email = parameters['results_email']
+        self.results_link = results_link
         self.precursor_mass_accuracy = float(parameters['precursor_mass_accuracy'])
         self.fragment_mass_accuracy = float(parameters['fragment_mass_accuracy'])
         self.jobid = jobid
@@ -86,17 +88,16 @@ class MS2Run:
         self.mongo_save(self.results_dfs[1], step=FILENAMES['final_output'][1])
         self.set_status('Completed')
         self.send_email()
-        print('Run Finished')
+        logger.critical('Run Finished')
 
     def send_email(self):
         try:
-            link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
-            send_ms2_finished(self.email, link_address)
+            #link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
+            send_ms2_finished(self.email, self.results_link)
         except Exception as e:
-            print('email error')
-            raise e
-            #return
-        print('email end function')
+            logger.critical('email error')
+            logger.critical("Error sending email: {}".format(e.message))
+        logger.critical('email end function')
 
 
     def set_status(self, status, create = False):
