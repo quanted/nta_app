@@ -97,6 +97,7 @@ from c, d
 where c.dtxcid=d.dtxcid and c.energy=d.energy
 order by "DTXCID","ENERGY", "INTENSITY0C" desc;
             """
+    logging.critical(query)
     #print(query)
     # Decided to chunk the query results for speed optimization in post processing (spectral matching)
     #cur.execute(query)
