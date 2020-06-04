@@ -24,7 +24,7 @@ def run_ms2_dask(parameters, input_dfs, jobid = "00000000", verbose = True):
     mongo_address = os.environ.get('MONGO_SERVER')
     link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
     if NO_DASK:
-        run_ms2(parameters, input_dfs, mongo_address, jobid, results_link=link_address, verbose, in_docker = in_docker)
+        run_ms2(parameters, input_dfs, mongo_address, jobid, results_link=link_address, verbose=verbose, in_docker = in_docker)
         return
     if not in_docker:
         logger.info("Running in local development mode.")
@@ -42,9 +42,9 @@ def run_ms2_dask(parameters, input_dfs, jobid = "00000000", verbose = True):
     fire_and_forget(task)
 
 
-def run_ms2(parameters, input_dfs,  mongo_address = None, jobid = "00000000", link = "", verbose = True,
+def run_ms2(parameters, input_dfs,  mongo_address = None, jobid = "00000000", results_link = "", verbose = True,
             in_docker = True):
-    ms2_run = MS2Run(parameters, input_dfs, mongo_address, jobid, verbose, in_docker = in_docker)
+    ms2_run = MS2Run(parameters, input_dfs, mongo_address, jobid, results_link, verbose, in_docker = in_docker)
     try:
         ms2_run.execute()
     except Exception as e:
