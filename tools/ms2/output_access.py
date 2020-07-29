@@ -44,13 +44,16 @@ class OutputServer:
             status = db_record['status']
             time = db_record['date']
             except_text = db_record['error_info']
+            n_masses = db_record['n_masses']
+            progress = db_record['progress']
             #status = json.dumps(db_record['status'])
             #time = json.dumps(db_record['date'], default = datetime_handler)
         except TypeError:
             status = "Not found"
             time = "Not found"
             except_text = "Not found"
-        response_data = {'start_time': time, 'status': status, 'error_info': except_text}
+        response_data = {'start_time': time, 'status': status, 'error_info': except_text,
+                         'n_masses': n_masses, 'progress': progress}
         return JsonResponse(response_data)
 
     # def final_result(self):
