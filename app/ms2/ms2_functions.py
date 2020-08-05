@@ -11,7 +11,7 @@ import logging
 from ...tools.ms2.set_job_status import set_job_status
 
 pw = os.environ.get('AURORA_PW')
-LOCAL = True
+LOCAL = False
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
 
@@ -92,6 +92,7 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
 def sqlCFMID(mass=None, mass_error=None, mode=None):
 
     if LOCAL:
+        logging.critical("LOCAL development mode turned on!")
         import pymysql as mysql
         with open('secrets/secret_nta_db_key.txt') as f:
             pw = f.read().strip()

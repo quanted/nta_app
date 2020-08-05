@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-LOCAL = True
+LOCAL = False
 
 m=0.5
 n=0.5
