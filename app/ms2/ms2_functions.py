@@ -12,6 +12,8 @@ from ...tools.ms2.set_job_status import set_job_status
 
 pw = os.environ.get('AURORA_PW')
 LOCAL = True
+logger = logging.getLogger("nta_app.ms2")
+logger.setLevel(logging.INFO)
 
 def count_masses(df_in, POSMODE):
     dfg = df_in
@@ -51,16 +53,22 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
     dfS_list = list()
     for mass in mass_list:
         index = mass_list.index(mass) + 1
-        logging.critical("searching mass " + str(mass) + " number " + str(index) + " of " + str(len(mass_list)))
+        logger.critical("searching mass " + str(mass) + " number " + str(index) + " of " + str(len(mass_list)))
+        t0 = time.clock()
         dfcfmid = sqlCFMID(mass, mass_error, mode)
+        t1 = time.clock()
+        logger.critical("time for SQL query is :" + str(t1-t0))
         if not dfcfmid:
-            logging.critical("No matches for this mass in CFMID library, consider changing the accuracy of the queried mass")
+            logger.critical("No matches for this mass in CFMID library, consider changing the accuracy of the queried mass")
         else:
             dfmgf = None
             df = None
             dfmgf = dfg[dfg['MASS'] == mass].reset_index()
             dfmgf.sort_values('MASS', ascending=True, inplace=True)
+            t0 = time.clock()
             df = scoring.Score(dfcfmid, dfmgf, mass, fragment_error, filtering)
+            t1 = time.clock()
+            logger.critical("time for scoring is :" + str(t1 - t0))
             if mode == 'ESI-MSMS-pos':
                 df['MASS_in_MGF'] = mass + 1.0073
             if mode == 'ESI-MSMS-neg':
@@ -72,7 +80,7 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
         #time.sleep(5)
 
     if not dfAE_list:
-        logging.critical("No matches All Energies found")
+        logger.critical("No matches All Energies found")
         return None
     else:
         dfAE_total = pd.concat(dfAE_list)  # all energies scores for all matches
@@ -109,17 +117,10 @@ def sqlCFMID(mass=None, mass_error=None, mode=None):
         if mass_error < 1 and mass_error > 0:
             accuracy_condition = """abs(job_peak.mass-""" + str(mass) + """)<=""" + str(mass_error)
 
-    query = """with c as (
-    select dtxcid, formula, mass, mz, intensity, energy from job_peak  
+    query = """select dtxcid as "DTXCID", formula as "FORMULA", mass as "MASS", mz as "PMASS_x", intensity as "INTENSITY0C", energy as "ENERGY"
+from job_peak
 where """ + accuracy_condition + """ 
-and type='""" + mode + """'),
-d as (
-select dtxcid, energy, max(intensity) as maxintensity
-              from c group by dtxcid, energy
-)
-select c.dtxcid as "DTXCID", c.formula as "FORMULA", c.mass as "MASS", c.mz as "PMASS_x", c.energy as "ENERGY", (c.intensity/d.maxintensity)*100.0 as "INTENSITY0C"
-from c, d
-where c.dtxcid=d.dtxcid and c.energy=d.energy
+and type='""" + mode + """'
 order by "DTXCID","ENERGY", "INTENSITY0C" desc;
             """
     if LOCAL:
@@ -154,7 +155,7 @@ order by "DTXCID","ENERGY", "INTENSITY0C" desc;
         on t1.dtxcid=t2.dtxcid and t1.energy=t2.energy
         order by DTXCID,ENERGY,INTENSITY0C desc;
                     """
-    logging.critical(query)
+    #logger.critical(query)
     #print(query)
     # Decided to chunk the query results for speed optimization in post processing (spectral matching)
     #cur.execute(query)
@@ -164,6 +165,6 @@ order by "DTXCID","ENERGY", "INTENSITY0C" desc;
     #cursor.close()
     db.close()
     db = None
-    logging.critical("num of chunks: {}".format(len(chunks)))
-    #logging.critical("first chunk: {}".format(chunks[0].head()))
+    logger.critical("num of chunks: {}".format(len(chunks)))
+    #logger.critical("first chunk: {}".format(chunks[0].head()))
     return chunks

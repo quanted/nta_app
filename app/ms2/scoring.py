@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+LOCAL = True
+
 m=0.5
 n=0.5
 def Commons(chunks,dfU,fragment_error,filtering):
@@ -32,6 +34,28 @@ def Commons(chunks,dfU,fragment_error,filtering):
 
     dft=pd.concat(df_list)
     dfLt=pd.concat(dfL_list)
+
+    # This performs the normalization of peak intensities from raw values into values normalized to maximum intensity observed
+    if not LOCAL:
+        print("Normalizing intensities")
+        dft.rename(columns={'INTENSITY0C': 'old_intensity'}, inplace=True)
+        dfLt.rename(columns={'INTENSITY0C': 'old_intensity'}, inplace=True)
+
+        dft_temp = dft.groupby(['MASS', 'ENERGY'], as_index=False)['old_intensity'].max()
+        dfLt_temp = dfLt.groupby(['MASS', 'ENERGY'], as_index=False)['old_intensity'].max()
+        dft_temp.rename(columns={'old_intensity': 'max_intensity'}, inplace=True)
+        dfLt_temp.rename(columns={'old_intensity': 'max_intensity'}, inplace=True)
+
+        dft = pd.merge(dft, dft_temp, how='left', on=['MASS', 'ENERGY'])
+        dfLt = pd.merge(dfLt, dfLt_temp, how='left', on=['MASS', 'ENERGY'])
+
+        dft['INTENSITY0C'] = dft['old_intensity'] / dft['max_intensity'] * 100
+        dfLt['INTENSITY0C'] = dfLt['old_intensity'] / dfLt['max_intensity'] * 100
+
+        dft.drop('old_intensity', axis=1, inplace=True)
+        dft.drop('max_intensity', axis=1, inplace=True)
+        dfLt.drop('old_intensity', axis=1, inplace=True)
+        dfLt.drop('max_intensity', axis=1, inplace=True)
 
     if filtering:
         dft.sort_values(['DTXCID','ENERGY','INTENSITY0C'],ascending=[True,True,False],inplace=True) 
