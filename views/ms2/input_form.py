@@ -12,18 +12,16 @@ class MS2Inputs(forms.Form):
         widget=forms.Textarea(attrs={'cols': 30, 'rows': 1}),
         initial='Example ms2 nta',
         required=True)
-    results_email = forms.EmailField(
-        label='Email for results link (optional):',
-        initial='',
-        required=False)
     pos_inputs = forms.FileField(
         widget=forms.ClearableFileInput(attrs={'multiple': True}),
-        label = 'Positive MS2 files (mgf)',
-        validators= [FileExtensionValidator(['mgf'])])
+        label = 'Positive mode MS2 files (mgf)',
+        validators= [FileExtensionValidator(['mgf'])],
+        required=False)
     neg_inputs = forms.FileField(
         widget=forms.ClearableFileInput(attrs={'multiple': True}),
-        label='Negative MS2 files (mgf)',
-        validators= [FileExtensionValidator(['mgf'])])
+        label='Negative mode MS2 files (mgf)',
+        validators= [FileExtensionValidator(['mgf'])],
+        required=False)
     #mass_accuracy_units = forms.ChoiceField(
     #    choices=(('ppm', 'ppm'), ('Da', 'Da'),),
     #    label = 'Adduct mass accuracy units',

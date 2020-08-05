@@ -70,9 +70,10 @@ class MS2Run:
         self.n_masses_pos = sum([count_masses(x, POSMODE=True) for x in self.input_dfs[0]])
         self.n_masses_neg = sum([count_masses(x, POSMODE=False) for x in self.input_dfs[1]])
         self.n_masses = self.n_masses_pos + self.n_masses_neg
+        print("Total job number of masses: {}".format(self.n_masses))
         self.progress = 0
         self.results_dfs = [[None],[None]]
-        self.email = parameters['results_email']
+        #self.email = parameters['results_email']
         self.results_link = results_link
         self.precursor_mass_accuracy = float(parameters['precursor_mass_accuracy'])
         self.fragment_mass_accuracy = float(parameters['fragment_mass_accuracy'])
@@ -86,12 +87,14 @@ class MS2Run:
 
     def execute(self):
         self.set_status('Processing', create = True)
-        self.results_dfs[0] = pd.concat([self.process_results(x, POSMODE=True) for x in self.input_dfs[0]])
-        self.results_dfs[1] = pd.concat([self.process_results(x, POSMODE=False) for x in self.input_dfs[1]])
-        self.mongo_save(self.results_dfs[0], step=FILENAMES['final_output'][0])
-        self.mongo_save(self.results_dfs[1], step=FILENAMES['final_output'][1])
+        if len(self.input_dfs[0]) > 0:  # if there is at least one pos file
+            self.results_dfs[0] = pd.concat([self.process_results(x, POSMODE=True) for x in self.input_dfs[0]])
+            self.mongo_save(self.results_dfs[0], step=FILENAMES['final_output'][0])
+        if len(self.input_dfs[1]) > 0:  # if there is at least one neg file
+            self.results_dfs[1] = pd.concat([self.process_results(x, POSMODE=False) for x in self.input_dfs[1]])
+            self.mongo_save(self.results_dfs[1], step=FILENAMES['final_output'][1])
         self.set_status('Completed', progress=self.n_masses)
-        self.send_email()
+        #self.send_email()
         logger.critical('Run Finished')
 
     def process_results(self, input_df, POSMODE=True):

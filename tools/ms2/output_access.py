@@ -100,8 +100,7 @@ class OutputServer:
                     zipf.writestr(filename, csv_string)
 
                 except (OperationFailure, TypeError, NoFile) as e:
-                    raise e
-                    break
+                    pass
 
         zip_filename = 'nta_ms2_results_' + self.jobid + '.zip'
         response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')

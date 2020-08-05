@@ -12,7 +12,7 @@ def processing_page(request, model='nta', header='NTA', jobid='00000000', email 
     model = "ms2"
     model_output_html = '<div id="submitted>CFMID task successfully submitted.</div>'
     model_output_html += '<div id="jobid"> Job ID: {}</div>'.format(jobid)
-    model_output_html += '<div id="status"> Processing... 0% completed</div>'.format(email)
+    model_output_html += '<div id="status"> Processing... checking progress...</div>'.format(email)
     model_output_html += '<div id="except_info"></div>' #if there is an error, exception info will be placed here by the js script
 
     html = processing_page_html(header, model, model_output_html)

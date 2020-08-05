@@ -25,13 +25,13 @@ def input_page(request, form_data=None, form_files=None):
             parameters = parameters.dict()
             job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             print("job ID: " + job_id)
-            pos_input = [request.FILES["pos_inputs"]]
-            neg_input= request.FILES["neg_inputs"]
+            pos_input = request.FILES.getlist("pos_inputs")
+            neg_input = request.FILES.getlist("neg_inputs")
             pos_input_list = pos_input if type(pos_input) in [list, tuple] else [pos_input]
             neg_input_list = neg_input if type(neg_input) in [list, tuple] else [neg_input]
             input_dfs = [None,None]
-            input_dfs[0] = [file_manager.parse_mgf(csv_file) for csv_file in pos_input_list]
-            input_dfs[1] = [file_manager.parse_mgf(csv_file) for csv_file in neg_input_list]
+            input_dfs[0] = [file_manager.parse_mgf(csv_file) for csv_file in pos_input_list if csv_file]
+            input_dfs[1] = [file_manager.parse_mgf(csv_file) for csv_file in neg_input_list if csv_file]
             run_ms2_dask(parameters, input_dfs, job_id)
             return redirect('/nta/ms2/processing/'+job_id, permanent=True)
         else:

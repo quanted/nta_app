@@ -73,6 +73,7 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
 
     if not dfAE_list:
         logging.critical("No matches All Energies found")
+        return None
     else:
         dfAE_total = pd.concat(dfAE_list)  # all energies scores for all matches
     return dfAE_total
