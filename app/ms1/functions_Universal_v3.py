@@ -195,13 +195,13 @@ def Blank_Subtract(df,index):
     return df
 
 def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm): #a method to query and save the features with tracers criteria
-    df1 = df
+    df1 = df.copy()
     df2 = tracers_file #pd.read_csv(tracers_file,comment='#',na_values= 1 | 0)
     #b_Statistics[index] = [B + '_x' for B in Statistics[index]]
     df2['Rounded_Mass'] = df2['Monoisotopic_Mass'].round(0)
     #df2['Rounded_RT'] = df2['Retention_Time'].round(0)
     df1.rename(columns = {'Mass':'Observed_Mass','Retention_Time':'Observed_Retention_Time'},inplace=True)
-    df1['Rounded_Mass'] = df1['Observed_Mass'].round(0)
+    #df1['Rounded_Mass'] = df1['Observed_Mass'].round(0)
     #df['Rounded_RT'] = df['Observed_Retention_Time'].round(0)
     dft = pd.merge(df2,df1,how='left',on=['Rounded_Mass','Ionization_Mode'])
     if ppm:
@@ -210,7 +210,7 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
         dft['Matches'] = np.where((abs(dft['Monoisotopic_Mass']-dft['Observed_Mass'])<=Mass_Difference) & (abs(dft['Retention_Time']-dft['Observed_Retention_Time'])<=Retention_Difference) ,1,0)
     dft = dft[dft['Matches']==1]
     dft.drop(['Rounded_Mass','Matches'],axis=1,inplace=True)
-    df.rename(columns = {'Observed_Mass':'Mass','Observed_Retention_Time':'Retention_Time'},inplace=True)
+    #df.rename(columns = {'Observed_Mass':'Mass','Observed_Retention_Time':'Retention_Time'},inplace=True)
     return dft
 
 

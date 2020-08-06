@@ -214,6 +214,7 @@ def statistics(df_in):
                 df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
                 break
     df.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
+    df['Rounded_Mass'] = df['Mass'].round(0)
     return df
 
 
