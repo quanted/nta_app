@@ -18,6 +18,8 @@ from . import task_functions as task_fun
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
 logger = logging.getLogger("nta_app.ms1")
 logger.setLevel(logging.INFO)
 
