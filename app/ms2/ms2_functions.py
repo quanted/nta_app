@@ -14,6 +14,9 @@ pw = os.environ.get('AURORA_PW')
 LOCAL = False
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
+print("Test")
+print("Test: {}".format(pw))
+logger.critical("Test2")
 
 def count_masses(df_in, POSMODE):
     dfg = df_in
@@ -90,7 +93,10 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
 
 #  A SQL query to get all the corresponding info from the database
 def sqlCFMID(mass=None, mass_error=None, mode=None):
-
+    pw = os.environ.get('AURORA_PW')
+    print("Test")
+    print("Test: {}".format(pw))
+    logger.critical("Test2")
     if LOCAL:
         logging.critical("LOCAL development mode turned on!")
         import pymysql as mysql
