@@ -7,8 +7,10 @@ import io
 import os
 import logging
 import json
+import math
 import requests
 import numpy as np
+import pandas as pd
 from .functions_Universal_v3 import parse_headers
 
 logger = logging.getLogger("nta_app.ms1")
@@ -49,16 +51,33 @@ def reduced_file(df_in):
     return df
 
 
-def api_search_masses(masses, accuracy, jobID = "00000"):
+def api_search_masses(masses, accuracy, jobid = "00000"):
     print("Sending {} masses".format(len(masses)))
     input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
     logger.info("=========== calling DSSTOX REST API")
-    api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobID)
+    api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
     logger.info(api_url)
     http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json)
 
-
+def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
+    n_masses = len(masses)
+    print("Sending {} masses in batches of {}".format(n_masses, batchsize))
+    i = 0
+    while i < n_masses:
+        end = i + batchsize-1
+        if end > n_masses-1:
+            end = n_masses-1
+        response = api_search_masses(masses[i:end+1], accuracy, jobid)
+        dsstox_search_json = json.dumps(response.json()['results'])
+        if i == 0:
+            dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
+                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
+        else:
+            dsstox_search_df.append(pd.read_json(dsstox_search_json, orient='split',
+                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'}))
+        i = i + batchsize
+    return dsstox_search_df
 
 def api_search_formulas(formulas, jobID = "00000"):
     input_json = json.dumps({"search_by": "formula", "query": formulas})  # assumes ppm
