@@ -81,3 +81,7 @@ class NtaInputs(forms.Form):
         label='Save top result only?',
         choices=(('yes', 'yes'), ('no', 'no'),),
         initial='no')
+    api_batch_size = forms.IntegerField(
+        widget=forms.NumberInput(attrs={'step': 1}),
+        label='API Batch Size (debugging)',
+        initial=50)

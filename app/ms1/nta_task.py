@@ -94,6 +94,7 @@ class NtaRun:
         self.search_mode = parameters['search_mode']
         self.top_result_only = parameters['top_result_only'] == 'yes'
         self.minimum_rt = float(parameters['minimum_rt']) # throw out features below this (void volume)
+        self.api_batch_size = int(parameters['api_batch_size'])
         self.dfs = input_dfs
         self.df_combined = None
         self.mpp_ready = None
@@ -304,7 +305,7 @@ class NtaRun:
         if self.search_mode == 'mass':
             mono_masses = task_fun.masses(to_search)
             dsstox_search_df = api_search_masses_batch(mono_masses, self.parent_ion_mass_accuracy,
-                                                       batchsize=5, jobid=self.jobid)
+                                                       batchsize=self.api_batch_size, jobid=self.jobid)
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)

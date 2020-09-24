@@ -52,7 +52,7 @@ def reduced_file(df_in):
 
 
 def api_search_masses(masses, accuracy, jobid = "00000"):
-    print("Sending {} masses".format(len(masses)))
+    #print("Sending {} masses".format(len(masses)))
     input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
     logger.info("=========== calling DSSTOX REST API")
     api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
@@ -62,7 +62,7 @@ def api_search_masses(masses, accuracy, jobid = "00000"):
 
 def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
     n_masses = len(masses)
-    print("Sending {} masses in batches of {}".format(n_masses, batchsize))
+    logging.info("Sending {} masses in batches of {}".format(n_masses, batchsize))
     i = 0
     while i < n_masses:
         end = i + batchsize-1
