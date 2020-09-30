@@ -83,5 +83,5 @@ class NtaInputs(forms.Form):
         initial='no')
     api_batch_size = forms.IntegerField(
         widget=forms.NumberInput(attrs={'step': 1}),
-        label='API Batch Size (debugging)',
-        initial=50)
+        label='DSSTox search batch size (debugging)',
+        initial=150)
