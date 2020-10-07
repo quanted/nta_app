@@ -49,7 +49,7 @@ urlpatterns = [
     path('ms2/references/', ms2_references.references_page),
     path('ms2/processing/<slug:jobid>', ms2_processing.processing_page),
     path('ms2/results/<slug:jobid>', ms2_results_api.download_all),
-    path('ms2/status/<slug:jobid>', ms2_results_api.check_status)
+    path('ms2/status/<slug:jobid>', ms2_results_api.check_status),
     #
     # merge tool
     path('merge', merge_input.input_page),
