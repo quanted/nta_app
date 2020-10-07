@@ -13,6 +13,13 @@ from .views.ms2 import qaqc as ms2_qaqc
 from .views.ms2 import references as ms2_references
 from .views.ms2 import processing as ms2_processing
 from .views.ms2 import results_api as ms2_results_api
+from .views.merge import input as merge_input
+from .views.merge import output as merge_output
+from .views.merge import algorithms as merge_algorithms
+from .views.merge import qaqc as merge_qaqc
+from .views.merge import references as merge_references
+from .views.merge import processing as merge_processing
+from .views.merge import results_api as merge_results_api
 from .views.misc import github
 
 print('qed.nta_app.urls')
@@ -43,6 +50,17 @@ urlpatterns = [
     path('ms2/processing/<slug:jobid>', ms2_processing.processing_page),
     path('ms2/results/<slug:jobid>', ms2_results_api.download_all),
     path('ms2/status/<slug:jobid>', ms2_results_api.check_status)
+    #
+    # merge tool
+    path('merge', merge_input.input_page),
+    path('merge/input/', merge_input.input_page),
+    path('merge/output/<slug:jobid>', merge_output.output_page, name='merge_results'),
+    path('merge/algorithms/', merge_algorithms.algorithms_page),
+    path('merge/qaqc/', merge_qaqc.qaqcd_page),
+    path('merge/references/', merge_references.references_page),
+    path('merge/processing/<slug:jobid>', merge_processing.processing_page),
+    path('merge/results/<slug:jobid>', merge_results_api.download_all),
+    path('merge/status/<slug:jobid>', merge_results_api.check_status)
 
 ]
 
