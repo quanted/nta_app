@@ -10,16 +10,17 @@ class MS2Inputs(forms.Form):
 
     project_name = forms.CharField(
         widget=forms.Textarea(attrs={'cols': 30, 'rows': 1}),
-        initial='Example ms2 nta',
+        initial='Example NTA merge',
         required=True)
     pos_inputs = forms.FileField(
         widget=forms.ClearableFileInput(attrs={'multiple': True}),
-        label = 'Positive mode MS2 files (mgf)',
+        #label = 'Positive mode MS2 files (mgf)',
+        label = 'NTA MS1 results file',
         validators= [FileExtensionValidator(['mgf'])],
         required=False)
     neg_inputs = forms.FileField(
         widget=forms.ClearableFileInput(attrs={'multiple': True}),
-        label='Negative mode MS2 files (mgf)',
+        label='NTA MS2 results file',
         validators= [FileExtensionValidator(['mgf'])],
         required=False)
     #mass_accuracy_units = forms.ChoiceField(
