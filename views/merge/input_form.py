@@ -10,7 +10,7 @@ class MS2Inputs(forms.Form):
 
     project_name = forms.CharField(
         widget=forms.Textarea(attrs={'cols': 30, 'rows': 1}),
-        initial='Example NTA merge (test)',
+        initial='Example NTA merge (test 2)',
         required=True)
     ms1_inputs = forms.FileField(
         widget=forms.ClearableFileInput(attrs={'multiple': True}),
