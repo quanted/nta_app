@@ -210,7 +210,7 @@ def statistics(df_in):
                 df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(0)
                 df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0)
                 df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
-                df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(2)
+                df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(4)
                 df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
                 break
     df.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
@@ -230,4 +230,41 @@ def score(df):  # Get score from annotations.
         pass
     else:
         df['Score'] = None
+    return df
+
+
+# not yet unit tested
+def clean_features(df, controls):  # a method that drops rows based on conditions
+    Abundance=  df.columns[df.columns.str.contains(pat ='N_Abun_')].tolist()
+    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
+    Median = df.columns[df.columns.str.contains(pat ='Median_')].tolist()
+    Median_Samples = [md for md in Median if not any(x in md for x in blanks)]
+    Median_High = [md for md in Median if 'C' in md]
+    Median_Mid = [md for md in Median if 'B' in md]
+    Median_Low = [md for md in Median if 'A' in md]
+    Median_MB = [md for md in Median if any(x in md for x in blanks)]
+    N_Abun_High = [N for N in Abundance if 'C' in N]
+    N_Abun_MB = [N for N in Abundance if any(x in N for x in blanks)]
+    N_Abun_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
+    #N_Abun_MB= [N for N in Abundanceif 'MB' in N]
+    CV =  df.columns[df.columns.str.contains(pat ='CV_')].tolist()
+    CV_Samples= [C for C in CV if not any(x in C for x in blanks)]
+    #set medians where feature abundance is less than some cutoff to nan
+    df['AnySamplesDropped'] = np.nan
+    for median,N in zip(Median_Samples,N_Abun_Samples):
+        #print((str(median) + " , " +str(N)))
+        df.loc[df[N] < controls[1], median] = np.nan
+        df.loc[df[N] < controls[1], 'AnySamplesDropped'] = 1
+    # remove all features where the abundance is less than some cutoff in all samples
+    df.drop(df[(df[N_Abun_Samples] < controls[1]).all(axis=1)].index, inplace=True)
+    df.drop(df[(df[CV_Samples] > controls[2]).all(axis=1)].index, inplace=True)
+    # blank out samples that do not meet the CV cutoff
+    cv_not_met = df[CV_Samples] > controls[2]
+    m = df[Median_Samples].copy()
+    cv_not_met.columns = m.columns
+    df[Median_Samples] = m.mask(cv_not_met)
+    #find the median of all samples and select features where median_samples/ median_blanks >= cutoff
+    df['Max_Median_ALLSamples'] = df[Median_Samples].max(axis=1,skipna=True).round(0)
+    df['SampletoBlanks_ratio'] = df['Max_Median_ALLSamples'].astype('float')/df[Median_MB[0]].astype('float')
+    df = df[(df[N_Abun_MB[0]] == 0) | (df['SampletoBlanks_ratio'] >= controls[0])].copy()
     return df
