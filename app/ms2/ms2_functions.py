@@ -113,10 +113,13 @@ def sqlCFMID(mass=None, mass_error=None, mode=None):
     accuracy_condition = ''
     if mass:
         if mass_error >= 1:
-            accuracy_condition = """(abs(job_peak.mass-""" + str(mass) + """)/""" + str(mass) + """)*1000000<""" + str(
-                mass_error)
+            max_mass = mass + mass * mass_error / 1000000
+            min_mass = mass - mass * mass_error / 1000000
+            accuracy_condition = """job_peak.mass BETWEEN """ + str(min_mass) + """ AND """ + str(max_mass)
         if mass_error < 1 and mass_error > 0:
-            accuracy_condition = """abs(job_peak.mass-""" + str(mass) + """)<=""" + str(mass_error)
+            max_mass = mass + mass_error
+            min_mass = mass - mass_error
+            accuracy_condition = """job_peak.mass BETWEEN """ + str(min_mass) + """ AND """ + str(max_mass)
 
     query = """select dtxcid as "DTXCID", formula as "FORMULA", mass as "MASS", mz as "PMASS_x", intensity as "INTENSITY0C", energy as "ENERGY"
 from job_peak
