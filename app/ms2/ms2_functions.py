@@ -54,9 +54,9 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
     for mass in mass_list:
         index = mass_list.index(mass) + 1
         logger.critical("searching mass " + str(mass) + " number " + str(index) + " of " + str(len(mass_list)))
-        t0 = time.clock()
+        t0 = time.perf_counter()
         dfcfmid = sqlCFMID(mass, mass_error, mode)
-        t1 = time.clock()
+        t1 = time.perf_counter()
         logger.critical("time for SQL query is :" + str(t1-t0))
         if not dfcfmid:
             logger.critical("No matches for this mass in CFMID library, consider changing the accuracy of the queried mass")
@@ -65,9 +65,9 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
             df = None
             dfmgf = dfg[dfg['MASS'] == mass].reset_index()
             dfmgf.sort_values('MASS', ascending=True, inplace=True)
-            t0 = time.clock()
+            t0 = time.perf_counter()
             df = scoring.Score(dfcfmid, dfmgf, mass, fragment_error, filtering)
-            t1 = time.clock()
+            t1 = time.perf_counter()
             logger.critical("time for scoring is :" + str(t1 - t0))
             if mode == 'ESI-MSMS-pos':
                 df['MASS_in_MGF'] = mass + 1.0073
