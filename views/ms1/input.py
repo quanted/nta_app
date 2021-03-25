@@ -34,6 +34,7 @@ def input_page(request, form_data=None, form_files=None):
                 pos_input = os.path.join(example_data_dir, 'pooled_blood_pos_MPP.csv')
                 neg_input = os.path.join(example_data_dir, 'pooled_blood_pos_MPP.csv')
                 tracer_file = os.path.join(example_data_dir, 'pooled_blood_tracers.csv')
+                tracer_df = file_manager.tracer_handler(tracer_file)
             else:
                 pos_input = request.FILES["pos_input"]
                 neg_input = request.FILES["neg_input"]
