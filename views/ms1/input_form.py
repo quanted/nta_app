@@ -12,6 +12,9 @@ class NtaInputs(forms.Form):
         widget=forms.Textarea(attrs={'cols': 30, 'rows': 1}),
         initial='Example nta',
         required=True)
+    test_files = forms.BooleanField(
+        label='Run test files only (debugging)'
+        initial=False)
     pos_input = forms.FileField(
         label = 'Positive MPP file (csv)',
         validators= [FileExtensionValidator(['csv'])])
