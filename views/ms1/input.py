@@ -19,9 +19,10 @@ def input_page(request, form_data=None, form_files=None):
     page = 'run_model'
     if (request.method == "POST"):
         form = NtaInputs(request.POST, request.FILES)
-        inputs_required = request.POST['test_files'] == 'yes'
+        inputs_required = request.POST['test_files'] == 'no'
         form.fields['pos_input'].required = inputs_required
-        form.fields['pos_input'].required = inputs_required
+        form.fields['neg_input'].required = inputs_required
+        print("Inputs required: {}".format(inputs_required))
         if (form.is_valid()):
             print("form is valid")
             parameters = request.POST
