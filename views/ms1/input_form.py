@@ -14,7 +14,7 @@ class NtaInputs(forms.Form):
         required=True)
     test_files = forms.ChoiceField(
         label='Run test files only (debugging)',
-        choices=(('yes', 'yes'), ('no', 'no'),),
+        choices=(('no', 'no'),('yes', 'yes')),
         initial='no')
     pos_input = forms.FileField(
         label = 'Positive MPP file (csv)',
