@@ -13,7 +13,7 @@ class NtaInputs(forms.Form):
         initial='Example nta',
         required=True)
     test_files = forms.BooleanField(
-        label='Run test files only (debugging)'
+        label='Run test files only (debugging)',
         initial=False)
     pos_input = forms.FileField(
         label = 'Positive MPP file (csv)',
