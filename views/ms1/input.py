@@ -25,13 +25,19 @@ def input_page(request, form_data=None, form_files=None):
             parameters = parameters.dict()
             job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             print("job ID: " + job_id)
-            pos_input = request.FILES["pos_input"]
-            neg_input = request.FILES["neg_input"]
-            try:
-                tracer_file = request.FILES["tracer_input"]
-                tracer_df = file_manager.tracer_handler(tracer_file)
-            except Exception:
-                tracer_df = None
+            if parameters['test_files'] == 'yes':
+                example_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','input/ms1')
+                pos_input = os.path.join(example_data_dir, 'pooled_blood_pos_MPP.csv')
+                neg_input = os.path.join(example_data_dir, 'pooled_blood_pos_MPP.csv')
+                tracer_file = os.path.join(example_data_dir, 'pooled_blood_tracers.csv')
+            else:
+                pos_input = request.FILES["pos_input"]
+                neg_input = request.FILES["neg_input"]
+                try:
+                    tracer_file = request.FILES["tracer_input"]
+                    tracer_df = file_manager.tracer_handler(tracer_file)
+                except Exception:
+                    tracer_df = None
             inputs = [pos_input, neg_input]
             input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs)]
             run_nta_dask(parameters, input_dfs, tracer_df, job_id)
