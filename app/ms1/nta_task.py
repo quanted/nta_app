@@ -309,7 +309,7 @@ class NtaRun:
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)
-            dsstox_search_json = json.dumps(response.json()['results'])
+            dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                             dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
         self.search_results = dsstox_search_df

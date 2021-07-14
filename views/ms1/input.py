@@ -12,6 +12,10 @@ from ...tools.ms1 import file_manager
 from .input_form import NtaInputs
 from ...app.ms1.nta_task import run_nta_dask
 
+example_pos_filename = 'pooled_blood_pos_MPP.csv'
+example_neg_filename = 'pooled_blood_pos_MPP.csv'
+example_tracer_filename = 'pooled_blood_tracers.csv'
+
 def input_page(request, form_data=None, form_files=None):
 
     model = 'ms1'
@@ -31,9 +35,9 @@ def input_page(request, form_data=None, form_files=None):
             print("job ID: " + job_id)
             if parameters['test_files'] == 'yes':
                 example_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','input/ms1')
-                pos_input = os.path.join(example_data_dir, 'pooled_blood_pos_MPP.csv')
-                neg_input = os.path.join(example_data_dir, 'pooled_blood_pos_MPP.csv')
-                tracer_file = os.path.join(example_data_dir, 'pooled_blood_tracers.csv')
+                pos_input = os.path.join(example_data_dir, example_pos_filename)
+                neg_input = os.path.join(example_data_dir, example_neg_filename)
+                tracer_file = os.path.join(example_data_dir, example_tracer_filename)
                 tracer_df = file_manager.tracer_handler(tracer_file)
             else:
                 pos_input = request.FILES["pos_input"]
