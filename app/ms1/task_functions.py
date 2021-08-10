@@ -219,13 +219,16 @@ def statistics(df_in):
 
 
 def score(df):  # Get score from annotations.
-    regex = "^.*=(.*) \].*$"  # a regex to find the score looking for a pattern of "=something_to_find ]"
+    regex = "overall=(.*?),.*"  # grab score from first match of overall=(value)
     if "Annotations" in df:
         if df.Annotations.isnull().all():  # make sure there isn't a totally blank Annotations column
             df['Score'] = None
             return df
         if df.Annotations.str.contains('overall=').any():
-            df['Score'] = df.Annotations.str.extract(regex, expand=True).astype('float64')
+            try:
+                df['Score'] = df.Annotations.str.extract(regex, expand=True).astype('float64')
+            except ValueError:
+                df['Score'] = None
     elif "Score" in df:
         pass
     else:
