@@ -219,7 +219,7 @@ def statistics(df_in):
 
 
 def score(df):  # Get score from annotations.
-    regex = "overall=(.*?),.*"  # grab score from first match of overall=(value)
+    regex = "db=(.*?),.*"  # grab score from first match of overall=(value)
     if "Annotations" in df:
         if df.Annotations.isnull().all():  # make sure there isn't a totally blank Annotations column
             df['Score'] = None
