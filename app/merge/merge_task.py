@@ -98,7 +98,7 @@ class MergeRun:
             self.mongo_save(self.results_dfs[1], step=FILENAMES['final_output'][1])
         '''
         if len(self.input_dfs[0]) > 0:  # if there is at least one pos file
-            self.results_dfs = pd.concat([self.process_results(x) for x in self.input_dfs)
+            self.results_dfs = pd.concat([self.process_results(x) for x in self.input_dfs])
             self.mongo_save(self.results_dfs, step=FILENAMES['final_output'])
         self.set_status('Completed', progress=self.n_masses)
         #self.send_email()
