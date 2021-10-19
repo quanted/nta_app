@@ -1,0 +1,17 @@
+<!--start 04uberinput_start-->
+<script type="text/javascript" src="/static_qed/js/jquery.blockUI.js"></script>
+<script src="/static_qed/js/scripts_input.js"></script>
+
+  <div class="main-column clearfix">
+    <h1 class="page-title">{{ TITLE }}</h1>
+    <div class="panel-pane pane-node-content" >
+      <div class="pane-content">
+{#        <div class="node node-page clearfix view-mode-full">#}
+          <div class="model_inputs">
+          <form method="post" action="/nta/ms1/input/" name="input_table" enctype="multipart/form-data">
+              {% csrf_token %}
+            <table class="nostripe input_table">
+              <thead>
+                <tr><th scope="col">Input</th><th scope="col">Value</th></tr>
+              </thead>
+<!--end 04uberinput_start-->
