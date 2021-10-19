@@ -8,8 +8,10 @@ RUN apt-get install -y --fix-missing --no-install-recommends \
     pip install -U pip
 
 WORKDIR /src/
+COPY . /src/
 
-RUN pip install -r requirements.txt
+RUN pip install -r /src/requirements.txt
+RUN pip install uwsgi
 RUN python --version
 
 ENV PATH "/src":${PATH}
@@ -19,6 +21,5 @@ EXPOSE 8080
 
 COPY uwsgi.ini /etc/uwsgi/
 
-COPY . /src/
 RUN chmod 755 /src/start_django.sh
 CMD ["sh", "/src/start_django.sh"]
