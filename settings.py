@@ -113,7 +113,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
-STATIC_ROOT = os.path.join(PROJECT_ROOT, "collected_static")
+STATIC_ROOT = os.path.join(PROJECT_ROOT, "collected_static/nta")
 
 # Define ENVIRONMENTAL VARIABLES
 os.environ.update({
