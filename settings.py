@@ -3,6 +3,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+)
+
 logger.info("NTA-APP django:settings.py")
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -11,7 +16,7 @@ TEMPLATE_ROOT = os.path.join(PROJECT_ROOT, 'templates/')
 DEPLOY_ENV = os.getenv("DEPLOY_ENV", "kube-dev")
 
 # logger.info(f"PROJECT_ROOT: {PROJECT_ROOT}")
-# logger.info(f"TEMPLATE_ROOT: {TEMPLATE_ROOT}")
+logger.info(f"TEMPLATE_ROOT: {TEMPLATE_ROOT}")
 # logger.info(f"DEPLOY_ENV: {DEPLOY_ENV}")
 
 if DEPLOY_ENV == "kube-dev":
@@ -20,20 +25,6 @@ if DEPLOY_ENV == "kube-dev":
 else:
     DEBUG = False
     CORS_ORIGIN_ALLOW_ALL = False
-DEBUG = False
-
-logger.info(f"NTA-APP: DEBUG {DEBUG}")
-if DEBUG:
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s %(levelname)s %(message)s',
-    )
-else:
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s %(levelname)s %(message)s',
-    )
-
 
 ALLOWED_HOSTS = ['*']
 APPEND_SLASH = True
@@ -49,6 +40,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             os.path.join(TEMPLATE_ROOT),
+            os.path.join(TEMPLATE_ROOT, 'drupal_2017'),
         ],
         'APP_DIRS': True,
         'OPTIONS': {
