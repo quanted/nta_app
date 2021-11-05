@@ -1,13 +1,18 @@
 import os
 import logging
 
+logger = logging.getLogger(__name__)
 
-print("NTA-APP settings.py")
+logger.info("NTA-APP django:settings.py")
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 TEMPLATE_ROOT = os.path.join(PROJECT_ROOT, 'templates/')
 
 DEPLOY_ENV = os.getenv("DEPLOY_ENV", "kube-dev")
+
+# logger.info(f"PROJECT_ROOT: {PROJECT_ROOT}")
+# logger.info(f"TEMPLATE_ROOT: {TEMPLATE_ROOT}")
+# logger.info(f"DEPLOY_ENV: {DEPLOY_ENV}")
 
 if DEPLOY_ENV == "kube-dev":
     DEBUG = True
@@ -15,8 +20,9 @@ if DEPLOY_ENV == "kube-dev":
 else:
     DEBUG = False
     CORS_ORIGIN_ALLOW_ALL = False
+DEBUG = False
 
-logging.info(f"NTA-APP: DEBUG {DEBUG}")
+logger.info(f"NTA-APP: DEBUG {DEBUG}")
 if DEBUG:
     logging.basicConfig(
         level=logging.DEBUG,
@@ -27,6 +33,7 @@ else:
         level=logging.INFO,
         format='%(asctime)s %(levelname)s %(message)s',
     )
+
 
 ALLOWED_HOSTS = []
 APPEND_SLASH = True
@@ -105,7 +112,7 @@ USE_L10N = True
 USE_TZ = True
 
 STATICFILES_DIRS = (
-    os.path.join(PROJECT_ROOT, 'static')
+    os.path.join(PROJECT_ROOT, 'static'),
 )
 
 STATICFILES_FINDERS = (
@@ -114,6 +121,7 @@ STATICFILES_FINDERS = (
 )
 
 STATIC_ROOT = os.path.join(PROJECT_ROOT, "collected_static/nta")
+STATIC_URL = '/static/'
 
 # Define ENVIRONMENTAL VARIABLES
 os.environ.update({

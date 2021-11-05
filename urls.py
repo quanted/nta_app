@@ -1,26 +1,26 @@
 from django.urls import path
-from .views.ms1 import input as ms1_input
-from .views.ms1 import processing as ms1_processing
-from .views.ms1 import output as ms1_output
-from .views.ms1 import results_api as ms1_results_api
-from .views.ms1 import algorithms as ms1_algorithms
-from .views.ms1 import qaqc as ms1_qaqc
-from .views.ms1 import references as ms1_references
-from .views.ms2 import input as ms2_input
-from .views.ms2 import output as ms2_output
-from .views.ms2 import algorithms as ms2_algorithms
-from .views.ms2 import qaqc as ms2_qaqc
-from .views.ms2 import references as ms2_references
-from .views.ms2 import processing as ms2_processing
-from .views.ms2 import results_api as ms2_results_api
-from .views.merge import input as merge_input
-from .views.merge import output as merge_output
-from .views.merge import algorithms as merge_algorithms
-from .views.merge import qaqc as merge_qaqc
-from .views.merge import references as merge_references
-from .views.merge import processing as merge_processing
-from .views.merge import results_api as merge_results_api
-from .views.misc import github
+from nta_app.views.ms1 import input as ms1_input
+from nta_app.views.ms1 import processing as ms1_processing
+from nta_app.views.ms1 import output as ms1_output
+from nta_app.views.ms1 import results_api as ms1_results_api
+from nta_app.views.ms1 import algorithms as ms1_algorithms
+from nta_app.views.ms1 import qaqc as ms1_qaqc
+from nta_app.views.ms1 import references as ms1_references
+from nta_app.views.ms2 import input as ms2_input
+from nta_app.views.ms2 import output as ms2_output
+from nta_app.views.ms2 import algorithms as ms2_algorithms
+from nta_app.views.ms2 import qaqc as ms2_qaqc
+from nta_app.views.ms2 import references as ms2_references
+from nta_app.views.ms2 import processing as ms2_processing
+from nta_app.views.ms2 import results_api as ms2_results_api
+from nta_app.views.merge import input as merge_input
+from nta_app.views.merge import output as merge_output
+from nta_app.views.merge import algorithms as merge_algorithms
+from nta_app.views.merge import qaqc as merge_qaqc
+from nta_app.views.merge import references as merge_references
+from nta_app.views.merge import processing as merge_processing
+from nta_app.views.merge import results_api as merge_results_api
+from nta_app.views.misc import github
 
 print('qed.nta_app.urls')
 

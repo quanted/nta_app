@@ -7,19 +7,19 @@ RUN apt-get install -y --fix-missing --no-install-recommends \
     cmake sqlite3 gfortran python-dev && \
     pip install -U pip
 
-WORKDIR /src/
-COPY . /src/
+WORKDIR /src/nta_app
+COPY . /src/nta_app
 
-RUN pip install -r /src/requirements.txt
+RUN pip install -r /src/nta_app/requirements.txt
 RUN pip install uwsgi
 RUN python --version
 
-ENV PATH "/src":${PATH}
-ENV PYTHONPATH "/src":${PYTHONPATH}
-ENV DJANGO_SETTINGS_MODULE = "settings"
+ENV PATH "/src:/src/nta_app":${PATH}
+ENV PYTHONPATH "/src:/src/nta_app":${PYTHONPATH}
+ENV DJANGO_SETTINGS_MODULE "settings"
 EXPOSE 8080
 
 COPY uwsgi.ini /etc/uwsgi/
 
-RUN chmod 755 /src/start_django.sh
-CMD ["sh", "/src/start_django.sh"]
+RUN chmod 755 /src/nta_app/start_django.sh
+CMD ["sh", "/src/nta_app/start_django.sh"]
