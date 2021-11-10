@@ -126,6 +126,8 @@ class NtaRun:
         self.filter_duplicates()
         if self.verbose:
             logger.info("Dropped duplicates.")
+            logger.info("POS df length: {}".format(len(self.dfs[0])))
+            logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
 
         # 2: statistics
@@ -133,6 +135,8 @@ class NtaRun:
         self.calc_statistics()
         if self.verbose:
             logger.info("Calculated statistics.")
+            logger.info("POS df length: {}".format(len(self.dfs[0])))
+            logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
             #print(str(list(self.dfs[0])))
 
@@ -148,6 +152,8 @@ class NtaRun:
         self.clean_features()
         if self.verbose:
             logger.info("Cleaned features.")
+            logger.info("POS df length: {}".format(len(self.dfs[0])))
+            logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
 
         # 5: create flags
@@ -155,6 +161,8 @@ class NtaRun:
         self.create_flags()
         if self.verbose:
             logger.info("Created flags.")
+            logger.info("POS df length: {}".format(len(self.dfs[0])))
+            logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
 
         # 6: combine modes
@@ -162,6 +170,7 @@ class NtaRun:
         self.combine_modes()
         if self.verbose:
             logger.info("Combined modes.")
+            logger.info("combined df length: {}".format(len(self.df_combined)))
             #print(self.df_combined)
 
         # 7: search dashboard
@@ -292,6 +301,7 @@ class NtaRun:
             self.fix_overflows()
 
     def search_dashboard(self, lower_index=0, upper_index=None, save = True):
+        logging.info('Rows flagged for dashboard search: {} out of {}'.format(len(self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :]), len(self.df_combined)))
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
         if self.search_mode == 'mass':
             to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
@@ -313,8 +323,8 @@ class NtaRun:
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                             dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
         self.search_results = dsstox_search_df
-        #if save:
-            #self.mongo_save(self.search_results, FILENAMES['dashboard'])
+        #if save:                                                        
+        #    self.mongo_save(self.search_results, FILENAMES['dashboard'])
 
     def download_finished(self, save = False):
         finished = False

@@ -14,26 +14,45 @@ from ...app.ms2.ms2_task import run_ms2_dask
 
 def input_page(request, form_data=None, form_files=None):
 
-    model = 'MS2'
-    header = "Run MS2 CFMID Tool"
+    model = 'Merge'
+    header = "Run Merge CFMID Tool"
     page = 'run_model'
     if (request.method == "POST"):
-        form = MS2Inputs(request.POST, request.FILES)
+        form = MergeInputs(request.POST, request.FILES)
         if (form.is_valid()):
             print("form is valid")
             parameters = request.POST
             parameters = parameters.dict()
             job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             print("job ID: " + job_id)
-            pos_input = request.FILES.getlist("pos_inputs")
-            neg_input = request.FILES.getlist("neg_inputs")
-            pos_input_list = pos_input if type(pos_input) in [list, tuple] else [pos_input]
-            neg_input_list = neg_input if type(neg_input) in [list, tuple] else [neg_input]
-            input_dfs = [None,None]
-            input_dfs[0] = [file_manager.parse_mgf(csv_file) for csv_file in pos_input_list if csv_file]
-            input_dfs[1] = [file_manager.parse_mgf(csv_file) for csv_file in neg_input_list if csv_file]
-            run_ms2_dask(parameters, input_dfs, job_id)
-            return redirect('/nta/ms2/processing/'+job_id, permanent=True)
+            #pos_input = request.FILES.getlist("pos_inputs")
+            #neg_input = request.FILES.getlist("neg_inputs")
+            ms1_input = request.FILES.getlist("ms1_inputs")
+            ms2_neg_input = request.FILES.getlist("ms2_neg_inputs")
+            ms2_pos_input = request.FILES.getlist("ms2_pos_inputs")
+            pcdl_neg_input = request.FILES.getlist("pcdl_neg_inputs")
+            pcdl_pos_input = request.FILES.getlist("pcdl_pos_inputs")
+            
+            #pos_input_list = pos_input if type(pos_input) in [list, tuple] else [pos_input]
+            #neg_input_list = neg_input if type(neg_input) in [list, tuple] else [neg_input]
+            ms1_input_list = ms1_input if type(ms1_input) in [list, tuple] else [ms1_input]
+            ms2_neg_input_list = ms2_neg_input if type(ms2_neg_input in [list, tuple] else [ms2_neg_input]
+            ms2_pos_input_list = ms2_pos_input if type(ms2_pos_input) in [list, tuple] else [ms2_pos_input]
+            pcdl_neg_input_list = pcdl_neg_input_input if type(pcdl_neg_input_input) in [list, tuple] else [pcdl_neg_input]
+            pcdl_pos_input_list = pcdl_pos_input if type(pcdl_pos_input) in [list, tuple] else [pcdl_pos_input]
+            
+            #input_dfs = [None,None]
+            input_dfs = [None,None,None,None,None]
+            #input_dfs[0] = [file_manager.parse_mgf(csv_file) for csv_file in pos_input_list if csv_file]
+            #input_dfs[1] = [file_manager.parse_mgf(csv_file) for csv_file in neg_input_list if csv_file]
+            #### What is parse_mgf?
+            input_dfs[0] = [file_manager.parse_mgf(csv_file) for csv_file in ms1_input_list if csv_file]
+            input_dfs[1] = [file_manager.parse_mgf(csv_file) for csv_file in ms2_neg_input_list if csv_file]
+            input_dfs[2] = [file_manager.parse_mgf(csv_file) for csv_file in ms2_pos_input_list if csv_file]
+            input_dfs[3] = [file_manager.parse_mgf(csv_file) for csv_file in pcdl_neg_input_list if csv_file]
+            input_dfs[4] = [file_manager.parse_mgf(csv_file) for csv_file in pcdl_pos_input_list if csv_file]
+            run_merge_dask(parameters, input_dfs, job_id)
+            return redirect('/nta/merge/processing/'+job_id, permanent=True)
         else:
             form_data = request.POST
             form_files = request.FILES

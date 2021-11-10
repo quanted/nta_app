@@ -42,7 +42,7 @@ class OutputServer:
         # self.names_flags = FILENAMES['flags']
         # self.names_combined = FILENAMES['combined']
         self.names_mpp_ready = FILENAMES['mpp_ready']
-        # self.names_dashboard = FILENAMES['dashboard']
+        #self.names_dashboard = FILENAMES['dashboard']
         self.main_file_names = self.names_stats + self.names_mpp_ready + self.names_toxpi
 
 

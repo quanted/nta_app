@@ -20,12 +20,12 @@ def count_masses(df_in, POSMODE):
     if POSMODE:
         mode = 'ESI-MSMS-pos'
         polarity = ['ESI+', 'Esi+']
-        dfg['MASS'] = dfg.groupby('RETENTION TIME')['MASS'].transform(lambda x: (x - 1.0073))
+        #dfg['MASS'] = dfg.groupby('RETENTION TIME')['MASS'].transform(lambda x: (x - 1.0073)) #Comment out, redundant with compare_mfg_df
         dfg['MASS'] = dfg['MASS'].round(6)
     else:
         mode = 'ESI-MSMS-neg'
         polarity = ['ESI-', 'Esi-']
-        dfg['MASS'] = dfg.groupby('RETENTION TIME')['MASS'].transform(lambda x: (x + 1.0073))
+        #dfg['MASS'] = dfg.groupby('RETENTION TIME')['MASS'].transform(lambda x: (x + 1.0073)) #Comment out, redundant with compare_mfg_df
         dfg['MASS'] = dfg['MASS'].round(6)
 
     mass_list = dfg['MASS'].unique().tolist()
@@ -73,7 +73,6 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
                 df['MASS_in_MGF'] = mass + 1.0073
             if mode == 'ESI-MSMS-neg':
                 df['MASS_in_MGF'] = mass - 1.0073
-
             dfAE_list.append(df)  # all energies scores
         progress = progress + 1
         set_job_status(mongo, jobid, status='Processing', progress=progress)
