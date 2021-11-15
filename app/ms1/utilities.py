@@ -1,4 +1,3 @@
-
 import pymongo as pymongo
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
@@ -64,6 +63,7 @@ def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
     n_masses = len(masses)
     logging.info("Sending {} masses in batches of {}".format(n_masses, batchsize))
     i = 0
+    dsstox_search_df = None
     while i < n_masses:
         end = i + batchsize-1
         if end > n_masses-1:
