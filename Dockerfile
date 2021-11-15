@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM continuumio/miniconda3:4.10.3
 
 RUN apt-get update --allow-releaseinfo-change -y
 RUN apt-get upgrade --fix-missing -y
@@ -10,9 +10,10 @@ RUN apt-get install -y --fix-missing --no-install-recommends \
 WORKDIR /src/nta_app
 COPY . /src/nta_app
 
-RUN pip install -r /src/nta_app/requirements.txt
-RUN pip install uwsgi
-RUN python --version
+RUN conda create --name pyenv python=3.9
+RUN conda config --add channels conda-forge
+RUN conda run -n pyenv --no-capture-output pip install -r /src/nta_app/requirements.txt
+RUN conda install -n pyenv uwsgi
 
 ENV PATH "/src:/src/nta_app":${PATH}
 ENV PYTHONPATH "/src:/src/nta_app":${PYTHONPATH}
@@ -22,4 +23,4 @@ EXPOSE 8080
 COPY uwsgi.ini /etc/uwsgi/
 
 RUN chmod 755 /src/nta_app/start_django.sh
-CMD ["sh", "/src/nta_app/start_django.sh"]
+CMD ["conda", "run", "-n", "pyenv", "--no-capture-output", "sh", "/src/nta_app/start_django.sh"]
