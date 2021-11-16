@@ -36,7 +36,7 @@ def input_page(request, form_data=None, form_files=None):
             #pos_input_list = pos_input if type(pos_input) in [list, tuple] else [pos_input]
             #neg_input_list = neg_input if type(neg_input) in [list, tuple] else [neg_input]
             ms1_input_list = ms1_input if type(ms1_input) in [list, tuple] else [ms1_input]
-            ms2_neg_input_list = ms2_neg_input if type(ms2_neg_input in [list, tuple] else [ms2_neg_input]
+            ms2_neg_input_list = ms2_neg_input if type(ms2_neg_input) in [list, tuple] else [ms2_neg_input]
             ms2_pos_input_list = ms2_pos_input if type(ms2_pos_input) in [list, tuple] else [ms2_pos_input]
             pcdl_neg_input_list = pcdl_neg_input_input if type(pcdl_neg_input_input) in [list, tuple] else [pcdl_neg_input]
             pcdl_pos_input_list = pcdl_pos_input if type(pcdl_pos_input) in [list, tuple] else [pcdl_pos_input]
