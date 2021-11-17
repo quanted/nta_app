@@ -22,6 +22,7 @@ from nta_app.views.merge import references as merge_references
 from nta_app.views.merge import processing as merge_processing
 from nta_app.views.merge import results_api as merge_results_api
 from nta_app.views.misc import github
+import os
 
 print('qed.nta_app.urls')
 
@@ -64,7 +65,7 @@ urlpatterns = [
     path('merge/status/<slug:jobid>', merge_results_api.check_status)
 ]
 
-urlpatterns = [path(r'^nta/', include(urlpatterns))]
+urlpatterns = [path('nta/', include(urlpatterns))]
 
 # 404 Error view (file not found)
 #handler404 = misc.file_not_found
