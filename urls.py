@@ -1,4 +1,5 @@
 from django.urls import path
+from django.conf.urls import include
 from nta_app.views.ms1 import input as ms1_input
 from nta_app.views.ms1 import processing as ms1_processing
 from nta_app.views.ms1 import output as ms1_output
@@ -61,8 +62,9 @@ urlpatterns = [
     path('merge/processing/<slug:jobid>', merge_processing.processing_page),
     path('merge/results/<slug:jobid>', merge_results_api.download_all),
     path('merge/status/<slug:jobid>', merge_results_api.check_status)
-
 ]
+
+urlpatterns = [path(r'^nta/', include(urlpatterns))]
 
 # 404 Error view (file not found)
 #handler404 = misc.file_not_found
