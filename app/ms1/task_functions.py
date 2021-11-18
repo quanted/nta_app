@@ -5,9 +5,14 @@ from difflib import SequenceMatcher
 from itertools import groupby
 import os
 import re
+import logging
 
 BLANKS = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank']
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger("nta_app.ms1")
+logger.setLevel(logging.INFO)
 
 def assign_feature_id(df_in, start = 1):
     """
@@ -41,8 +46,9 @@ def formulas(df):
 
 
 def masses(df):
-    #df.drop_duplicates(subset='Mass',keep='first',inplace=True)  # TODO should this be on?
+    #df.drop_duplicates(subset='Mass', keep='first',inplace=True)  # TODO should this be on?
     masses = df.loc[df['For_Dashboard_Search'] == '1','Mass'].values
+    logger.info('# of masses for dashboard search: {} out of {}'.format(len(masses),len(df)))
     masses_list = [str(i) for i in masses]
     return masses_list
 
@@ -219,7 +225,7 @@ def statistics(df_in):
 
 
 def score(df):  # Get score from annotations.
-    regex = "db=(.*?),.*"  # grab score from first match of overall=(value)
+    regex = "db=(.*?)[, \]].*"  # grab score from first match of db=(value) followed by a , ] or space
     if "Annotations" in df:
         if df.Annotations.isnull().all():  # make sure there isn't a totally blank Annotations column
             df['Score'] = None
@@ -233,6 +239,7 @@ def score(df):  # Get score from annotations.
         pass
     else:
         df['Score'] = None
+    #logging.info("List of scores: {}".format(df['Score']))
     return df
 
 

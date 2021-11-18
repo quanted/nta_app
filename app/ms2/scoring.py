@@ -22,7 +22,8 @@ def Commons(chunks,dfU,fragment_error,filtering):
         dfL['WEIGHTSC'] = (dfL['INTENSITY0C']**m)*(dfL['PMASS_x']**n)
         dfInput = dfU
 
-        df = pd.merge(dfL,dfInput,how='left',on='MASS')             
+        df = pd.merge(dfL,dfInput,how='left',on='MASS')
+        print(df) #Added 11/5 MWB
         if fragment_error >=1:
             df['MATCHES'] = np.where((((abs(df.PMASS_x-df.PMASS_y)/df.PMASS_x)*1000000)<=fragment_error),'1','0') 
         else:
@@ -70,7 +71,7 @@ def Commons(chunks,dfU,fragment_error,filtering):
     WUI = dfU.groupby('MASS_y')['WEIGHTSM'].apply(list).to_dict() 
     WL = dft.groupby(['MASS_x','DTXCID','FORMULA','ENERGY'])['WEIGHTSC'].apply(list).to_dict()
     WU = dft.groupby(['MASS_x','DTXCID','FORMULA','ENERGY'])['WEIGHTSM'].apply(list).to_dict()
-    print(len(WL))
+    #print(len(WL))
     W = list()
     W.append(WL)
     W.append(WU)

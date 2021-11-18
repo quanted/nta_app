@@ -1,3 +1,4 @@
+
 import pymongo as pymongo
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
@@ -54,7 +55,10 @@ def api_search_masses(masses, accuracy, jobid = "00000"):
     #print("Sending {} masses".format(len(masses)))
     input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
     logger.info("=========== calling DSSTOX REST API")
-    api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
+    if "edap-cluster" in DSSTOX_API:
+        api_url = '{}/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
+    else:
+        api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
     logger.info(api_url)
     http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json)
@@ -63,29 +67,31 @@ def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
     n_masses = len(masses)
     logging.info("Sending {} masses in batches of {}".format(n_masses, batchsize))
     i = 0
-    dsstox_search_df = pd.DataFrame()
     while i < n_masses:
         end = i + batchsize-1
         if end > n_masses-1:
             end = n_masses-1
         response = api_search_masses(masses[i:end+1], accuracy, jobid)
+        logger.info(f"Response: {response}")
         dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
         if i == 0:
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                         dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
         else:
-            dsstox_search_df.append(pd.read_json(dsstox_search_json, orient='split',
-                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'}))
+            dsstox_search_df = dsstox_search_df.append(pd.read_json(dsstox_search_json, orient='split',
+                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'}), ignore_index = True) #Added ignore index, may not be needed 11/2 MWB
         i = i + batchsize
+    
     return dsstox_search_df
-
 
 def api_search_formulas(formulas, jobID = "00000"):
     input_json = json.dumps({"search_by": "formula", "query": formulas})  # assumes ppm
-    logger.info("=========== calling DSSTOX REST API =========== ")
-    api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobID)
-    logger.info(f"URL: {api_url}")
-    logger.info(f"Request Data: {input_json}")
+    logger.info("=========== calling DSSTOX REST API")
+    if "edap-cluster" in DSSTOX_API:
+        api_url = '{}/rest/ms1/batch/{}'.format(DSSTOX_API, jobID)
+    else:
+        api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobID)
+    logger.info(api_url)
     http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json)
 
