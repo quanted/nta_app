@@ -1,9 +1,18 @@
 import numpy as np
 import pandas as pd
+import logging
+
+logger = logging.getLogger("nta_app.ms1")
+logger.setLevel(logging.INFO)
 
 def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     dft = search_df.copy()
     df = features_df.copy()
+    f_c = "None" if features_df is None else features_df.columns
+    s_c = "None" if search_df is None else search_df.columns
+    logging.info(f"Feature DF: {f_c}")
+    logging.info(f"Search DF: {s_c}")
+
     TOTAL_ASSAYS = "\/([0-9]+)"  # a regex to find the digits after a slash
     dft['TOTAL_ASSAYS_TESTED'] = dft['TOXCAST_NUMBER_OF_ASSAYS/TOTAL'].astype('str').str.extract(TOTAL_ASSAYS, expand=True)
     NUMBER_ASSAYS = "([0-9]+)\/"  # a regex to find the digits before a slash
