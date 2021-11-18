@@ -114,7 +114,7 @@ STATICFILES_FINDERS = (
 )
 
 STATIC_ROOT = os.path.join(PROJECT_ROOT, "collected_static/nta")
-STATIC_URL = '/static/'
+STATIC_URL = '/nta/static/'
 
 # Define ENVIRONMENTAL VARIABLES
 os.environ.update({

@@ -2,15 +2,16 @@
 <!-- start 09epa_drupal_pram_scripts.html -->
 
     <!-- start qed and pram scripts of dubious provenance -->
-    <script src="/static_qed/js/qed.js"></script>
-    <script src="/static_qed/js/scripts_header_eco.js" type="text/javascript"></script>
-    <script src="/static_qed/js/landing_slides.js" type="text/javascript"></script>
-    <script src="/static_qed/js/application.js" type="text/javascript"></script>
+    {% load static %}
+    <script src="{% static 'js/qed.js' %}"></script>
+    <script src="{% static 'js/scripts_header_eco.js'%}" type="text/javascript"></script>
+    <script src="{% static 'js/landing_slides.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/application.js' %}" type="text/javascript"></script>
     <!-- end qed and pram scripts of dubious provenance -->
 
     <!-- jquery from qed start -->
-    <script src="/static_qed/js/jquery.animate-enhanced.min.js"></script>
-    <script src="/static_qed/js/jquery.superslides.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="{% static 'js/jquery.animate-enhanced.min.js' %}"></script>
+    <script src="{% static 'js/jquery.superslides.min.js' %}" type="text/javascript" charset="utf-8"></script>
     <!-- jquery from qed end -->
 
     <!-- start google analytics -->
