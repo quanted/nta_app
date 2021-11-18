@@ -10,7 +10,7 @@ from .. import links_left
 def processing_page(request, model='nta', header='NTA', jobid='00000000'):
     header = "NTA"
     model = "ms1"
-    model_output_html = '<div id="wait_gif"><img src="/static_qed/nta/loading1.gif" alt="Loading..."></div>'
+    model_output_html = '<div id="wait_gif"><img src="/nta/static/loading1.gif" alt="Loading..."></div>'
     model_output_html += '<div id="jobid"> Job ID: {}</div>'.format(jobid)
     model_output_html += '<div id="status"> Processing... please wait. </div>' #this is where the func to generate output html will be called
     model_output_html += '<div id="except_info"></div>' #if there is an error, exception info will be placed here by the js script

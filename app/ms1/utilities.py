@@ -79,11 +79,13 @@ def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
         i = i + batchsize
     return dsstox_search_df
 
+
 def api_search_formulas(formulas, jobID = "00000"):
     input_json = json.dumps({"search_by": "formula", "query": formulas})  # assumes ppm
-    logger.info("=========== calling DSSTOX REST API")
+    logger.info("=========== calling DSSTOX REST API =========== ")
     api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobID)
-    logger.info(api_url)
+    logger.info(f"URL: {api_url}")
+    logger.info(f"Request Data: {input_json}")
     http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json)
 
