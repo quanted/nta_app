@@ -9,6 +9,7 @@ import psycopg2
 import time
 import logging
 from ...tools.ms2.set_job_status import set_job_status
+from .utilities import *
 
 pw = os.environ.get('AURORA_PW')
 LOCAL = False
@@ -55,7 +56,8 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
         index = mass_list.index(mass) + 1
         logger.critical("searching mass " + str(mass) + " number " + str(index) + " of " + str(len(mass_list)))
         t0 = time.perf_counter()
-        dfcfmid = sqlCFMID(mass, mass_error, mode)
+        #dfcfmid = sqlCFMID(mass, mass_error, mode)
+        dfcfmid = ms2_search_api(mass=mass, accuracy=mass_error, mode=mode, jobid=jobid)
         t1 = time.perf_counter()
         logger.critical("time for SQL query is :" + str(t1-t0))
         if not dfcfmid:
@@ -85,7 +87,7 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
         dfAE_total = pd.concat(dfAE_list)  # all energies scores for all matches
     return dfAE_total
     # dfAE_total.to_excel(filename+'_CFMID_results.xlsx',engine='xlsxwriter')
-
+    
 
 #  A SQL query to get all the corresponding info from the database
 def sqlCFMID(mass=None, mass_error=None, mode=None):
