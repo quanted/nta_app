@@ -10,8 +10,6 @@ logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
 
 DSSTOX_API = os.environ.get('UBERTOOL_REST_SERVER')
-DSSTOX_API = 'http://127.0.0.1:7777'
-
 
 def connect_to_mongoDB(address):
     mongo = pymongo.MongoClient(host=address)
