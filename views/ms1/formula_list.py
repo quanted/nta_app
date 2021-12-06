@@ -1,14 +1,22 @@
 import os
+import logging
+import requests
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from .. import links_left
+
 DSSTOX_API = os.environ.get('UBERTOOL_REST_SERVER')
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger("nta_app.views")
+logger.setLevel(logging.INFO)
 
 #@require_POST
 def formula_list_page(request, model='ms1', header='Download MS-ready formula list', jobid='00000000'):
-    model_html = '<div id="Download button"><input type="button" value="Download MS-ready formulas" onclick="window.open('download_my_pdf')">
-</div>'
-    html = references_page_html(header, model, model_html)
+    model_html = """<div id="Download button"><input type="button" value="Download MS-ready formulas" onclick="window.open('ms1/formulas/download/')">
+</div>"""
+    html = formula_list_html(header, model, model_html)
     response = HttpResponse()
     response.write(html)
     #print(html)
@@ -45,7 +53,7 @@ def formula_list_html(header, model, tables_html):
 
 def download_msready_formulas():
     logger.info("=========== calling DSSTOX REST API for formula list")
-    api_url = '{}/rest/ms1/list/'.format(DSSTOX_API, jobid)
+    api_url = '{}/rest/ms1/list/'.format(DSSTOX_API)
     logger.info(api_url)
     #http_headers = {'Content-Type': 'application/json'}
     return requests.get(api_url)
