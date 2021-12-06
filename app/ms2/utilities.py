@@ -5,6 +5,8 @@ import os
 import logging
 import json
 import requests
+import io
+import pandas as pd
 
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
@@ -37,6 +39,6 @@ def ms2_search_api(mass=None, accuracy=None, mode=None, jobid='00000'):
     http_headers = {'Content-Type': 'application/json'}
     response = requests.post(api_url, headers=http_headers, data=input_json)
     cfmid_search_json = io.StringIO(json.dumps(response.json()['results']))
-    cfmid_search_df = pd.read_json(dsstox_search_json, orient='split')
+    cfmid_search_df = pd.read_json(cfmid_search_json, orient='split')
     return cfmid_search_df
     
