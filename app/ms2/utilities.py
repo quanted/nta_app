@@ -29,11 +29,11 @@ def connect_to_mongo_gridfs(address):
 def ms2_search_api(mass=None, accuracy=None, mode=None, jobid='00000'):
     input_json = json.dumps({"mass": mass, "accuracy": accuracy, "mode": mode})  # assumes ppm
     logger.info("=========== calling MS2 CFMID REST API")
-    if "edap-cluster" in DSSTOX_API:
-        api_url = '{}/rest/ms2/{}'.format(DSSTOX_API, jobid)
-    else:
-        api_url = '{}/nta/rest/ms2/{}'.format(DSSTOX_API, jobid)
-    logger.info(api_url)
+    #if "edap-cluster" in DSSTOX_API:
+    api_url = '{}/rest/ms2/{}'.format(DSSTOX_API, jobid)
+    #else:
+    #    api_url = '{}/nta/rest/ms2/{}'.format(DSSTOX_API, jobid)
+    logger.info(" MS2 CFMID REST API address: {}".format(api_url))
     http_headers = {'Content-Type': 'application/json'}
     response = requests.post(api_url, headers=http_headers, data=input_json)
     cfmid_search_json = io.StringIO(json.dumps(response.json()['results']))
