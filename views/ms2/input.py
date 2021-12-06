@@ -14,7 +14,7 @@ from ...app.ms2.ms2_task import run_ms2_dask
 
 def input_page(request, form_data=None, form_files=None):
 
-    model = 'MS2'
+    model = 'ms2'
     header = "Run MS2 CFMID Tool"
     page = 'run_model'
     if (request.method == "POST"):

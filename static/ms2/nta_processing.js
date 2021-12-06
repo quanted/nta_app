@@ -8,12 +8,12 @@ $(document).ready(function(){
 
 
 var jobid = window.location.pathname.split("/").pop();
-var timeout = 5000; // Timeout length in milliseconds (1000 = 1 second)
+var timeout = 10000; // Timeout length in milliseconds (1000 = 1 second)
 var attemptCount = 0;
 var maxAttempts = 600;
 
 $(document).ready(function () {
-    setTimeout(checkJobStatus, 5000);
+    setTimeout(checkJobStatus, 10000);
 });
 
 

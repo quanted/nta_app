@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from .. import links_left
 
 #@require_POST
-def references_page(request, model='nta', header='NTA', jobid='00000000'):
+def references_page(request, model='ms2', header='NTA', jobid='00000000'):
     header = "NTA"
     model = "ms2"
     model_html = '<div id="soon">Coming soon...</div>'

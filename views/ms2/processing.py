@@ -7,7 +7,7 @@ from .. import links_left
 
 
 #@require_POST
-def processing_page(request, model='nta', header='NTA', jobid='00000000', email = ""):
+def processing_page(request, model='ms2', header='NTA', jobid='00000000', email = ""):
     header = "MS2 CFMID Tool"
     model = "ms2"
     model_output_html = '<div id="submitted>CFMID task successfully submitted.</div>'
