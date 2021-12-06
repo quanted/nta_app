@@ -7,7 +7,7 @@ from nta_app.views.ms1 import results_api as ms1_results_api
 from nta_app.views.ms1 import algorithms as ms1_algorithms
 from nta_app.views.ms1 import qaqc as ms1_qaqc
 from nta_app.views.ms1 import references as ms1_references
-from nta_app.views.ms1 import formulas as ms1_formulas
+from nta_app.views.ms1 import formula_list as ms1_formulas
 from nta_app.views.ms2 import input as ms2_input
 from nta_app.views.ms2 import output as ms2_output
 from nta_app.views.ms2 import algorithms as ms2_algorithms
