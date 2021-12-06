@@ -55,10 +55,10 @@ def api_search_masses(masses, accuracy, jobid = "00000"):
     #print("Sending {} masses".format(len(masses)))
     input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
     logger.info("=========== calling DSSTOX REST API")
-    if "edap-cluster" in DSSTOX_API:
-        api_url = '{}/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
-    else:
-        api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
+    #if "edap-cluster" in DSSTOX_API:
+    api_url = '{}/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
+    #else:
+    #    api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
     logger.info(api_url)
     http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json)

@@ -5,13 +5,13 @@ import os
 import logging
 import json
 import requests
+import io
+import pandas as pd
 
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
 
 DSSTOX_API = os.environ.get('UBERTOOL_REST_SERVER')
-DSSTOX_API = 'http://127.0.0.1:7777'
-
 
 def connect_to_mongoDB(address):
     mongo = pymongo.MongoClient(host=address)
@@ -29,16 +29,18 @@ def connect_to_mongo_gridfs(address):
     return fs
 
 def ms2_search_api(mass=None, accuracy=None, mode=None, jobid='00000'):
-    input_json = json.dumps({"mass": mass, "accuracy": accuracy, "mode": mode})  # assumes ppm
+    input_json = json.dumps({"mass": mass, "accuracy": accuracy, "mode": mode}) 
     logger.info("=========== calling MS2 CFMID REST API")
-    if "edap-cluster" in DSSTOX_API:
-        api_url = '{}/rest/ms2/{}'.format(DSSTOX_API, jobid)
-    else:
-        api_url = '{}/nta/rest/ms2/{}'.format(DSSTOX_API, jobid)
-    logger.info(api_url)
+    logger.info('mode: {}'.format(mode))
+    #if "edap-cluster" in DSSTOX_API:
+    api_url = '{}/rest/ms2/{}'.format(DSSTOX_API, jobid)
+    #else:
+    #    api_url = '{}/nta/rest/ms2/{}'.format(DSSTOX_API, jobid)
+    logger.info(" MS2 CFMID REST API address: {}".format(api_url))
     http_headers = {'Content-Type': 'application/json'}
     response = requests.post(api_url, headers=http_headers, data=input_json)
+    logger.info('Response: {}'.format(response.json()))
     cfmid_search_json = io.StringIO(json.dumps(response.json()['results']))
-    cfmid_search_df = pd.read_json(dsstox_search_json, orient='split')
+    cfmid_search_df = pd.read_json(cfmid_search_json, orient='split')
     return cfmid_search_df
     
