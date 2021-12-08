@@ -14,7 +14,7 @@ logger.setLevel(logging.INFO)
 
 #@require_POST
 def formula_list_page(request, model='ms1', header='Download MS-ready formula list', jobid='00000000'):
-    model_html = """<div id="Download button"><input type="button" value="Download MS-ready formulas" onclick="window.open('ms1/formulas/download/')">
+    model_html = """<div id="Download button"><input type="button" value="Download MS-ready formulas" onclick="window.open('download/')">
 </div>"""
     html = formula_list_html(header, model, model_html)
     response = HttpResponse()
