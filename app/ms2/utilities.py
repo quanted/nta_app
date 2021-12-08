@@ -39,7 +39,7 @@ def ms2_search_api(mass=None, accuracy=None, mode=None, jobid='00000'):
     logger.info(" MS2 CFMID REST API address: {}".format(api_url))
     http_headers = {'Content-Type': 'application/json'}
     response = requests.post(api_url, headers=http_headers, data=input_json)
-    logger.critical('Response: {}'.format(response.json()))
+    #logger.critical('Response: {}'.format(response.json()))
     if response.json()['results'] == "none":
         return None
     cfmid_search_json = io.StringIO(json.dumps(response.json()['results']))

@@ -64,11 +64,13 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
         if dfcfmid is None:
             logger.critical("No matches for this mass in CFMID library, consider changing the accuracy of the queried mass")
         else:
+            logger.critical('In the else')
             dfmgf = None
             df = None
             dfmgf = dfg[dfg['MASS'] == mass].reset_index()
             dfmgf.sort_values('MASS', ascending=True, inplace=True)
             t0 = time.perf_counter()
+            logger.critical('About to begin scoring')
             df = scoring.Score(dfcfmid, dfmgf, mass, fragment_error, filtering)
             t1 = time.perf_counter()
             logger.critical("time for scoring is :" + str(t1 - t0))

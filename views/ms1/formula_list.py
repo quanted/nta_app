@@ -1,7 +1,7 @@
 import os
 import logging
 import requests
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from .. import links_left
 
@@ -56,4 +56,5 @@ def download_msready_formulas(request):
     api_url = '{}/rest/ms1/list/'.format(DSSTOX_API)
     logger.info(api_url)
     #http_headers = {'Content-Type': 'application/json'}
-    return requests.get(api_url)
+    response_json = requests.get(api_url).json()
+    return JsonResponse(response_json)
