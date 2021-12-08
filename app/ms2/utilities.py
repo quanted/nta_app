@@ -40,6 +40,8 @@ def ms2_search_api(mass=None, accuracy=None, mode=None, jobid='00000'):
     http_headers = {'Content-Type': 'application/json'}
     response = requests.post(api_url, headers=http_headers, data=input_json)
     logger.info('Response: {}'.format(response.json()))
+    if response.json()['results'] == "none":
+        return None
     cfmid_search_json = io.StringIO(json.dumps(response.json()['results']))
     cfmid_search_df = pd.read_json(cfmid_search_json, orient='split')
     return cfmid_search_df
