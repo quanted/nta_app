@@ -14,7 +14,7 @@ logger.setLevel(logging.INFO)
 
 #@require_POST
 def formula_list_page(request, model='ms1', header='Download MS-ready formula list', jobid='00000000'):
-    model_html = """<div id="Download button"><input type="button" value="Download MS-ready formulas" onclick="window.open('download/')">
+    model_html = """<div id="Download button"><input type="button" value="Download MS-ready formulas" onclick="window.open('download')">
 </div>"""
     html = formula_list_html(header, model, model_html)
     response = HttpResponse()
@@ -51,7 +51,7 @@ def formula_list_html(header, model, tables_html):
     html += render_to_string('10epa_drupal_footer.html', {})
     return html
 
-def download_msready_formulas():
+def download_msready_formulas(request):
     logger.info("=========== calling DSSTOX REST API for formula list")
     api_url = '{}/rest/ms1/list/'.format(DSSTOX_API)
     logger.info(api_url)
