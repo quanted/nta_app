@@ -25,7 +25,7 @@ def formula_list_page(request, model='ms1', header='Download MS-ready formula li
 
 def formula_list_html(header, model, tables_html):
     """Generates HTML to fill '.articles_output' div on output page"""
-    page = 'references'
+    page = 'formula_list'
     #epa template header
     html = render_to_string('01epa_drupal_header.html', {
         'SITE_SKIN': os.environ['SITE_SKIN'],
