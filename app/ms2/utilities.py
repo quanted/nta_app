@@ -11,6 +11,7 @@ import pandas as pd
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
 
+CHUNK_SIZE = 1000
 DSSTOX_API = os.environ.get('UBERTOOL_REST_SERVER')
 
 def connect_to_mongoDB(address):
@@ -44,5 +45,6 @@ def ms2_search_api(mass=None, accuracy=None, mode=None, jobid='00000'):
         return None
     cfmid_search_json = io.StringIO(json.dumps(response.json()['results']))
     cfmid_search_df = pd.read_json(cfmid_search_json, orient='split')
-    return cfmid_search_df
+    cfmid_chunk_list = [cfmid_search_df[i:i+CHUNK_SIZE] for i in range(0,cfmid_search_df.shape[0],CHUNK_SIZE)]
+    return cfmid_chunk_list
     

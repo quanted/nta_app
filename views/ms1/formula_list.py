@@ -53,8 +53,9 @@ def formula_list_html(header, model, tables_html):
 
 def download_msready_formulas(request):
     logger.info("=========== calling DSSTOX REST API for formula list")
-    api_url = '{}/rest/ms1/list/'.format(DSSTOX_API)
+    api_url = '{}/rest/ms1/list'.format(DSSTOX_API)
     logger.info(api_url)
     #http_headers = {'Content-Type': 'application/json'}
-    response_json = requests.get(api_url).json()
+    response = requests.get(api_url)
+    response_json = response.json()
     return JsonResponse(response_json)
