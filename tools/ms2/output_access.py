@@ -52,6 +52,7 @@ class OutputServer:
             status = "Not found"
             time = "Not found"
             except_text = "Not found"
+            n_masses = "Not found"
         response_data = {'start_time': time, 'status': status, 'error_info': except_text,
                          'n_masses': n_masses, 'progress': progress}
         return JsonResponse(response_data)

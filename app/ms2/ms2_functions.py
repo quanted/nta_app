@@ -60,7 +60,8 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
         dfcfmid = ms2_search_api(mass=mass, accuracy=mass_error, mode=mode, jobid=jobid)
         t1 = time.perf_counter()
         logger.critical("time for SQL query is :" + str(t1-t0))
-        if not dfcfmid:
+       #logger.critical(dfcfmid)
+        if dfcfmid is None:
             logger.critical("No matches for this mass in CFMID library, consider changing the accuracy of the queried mass")
         else:
             dfmgf = None
@@ -68,6 +69,7 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
             dfmgf = dfg[dfg['MASS'] == mass].reset_index()
             dfmgf.sort_values('MASS', ascending=True, inplace=True)
             t0 = time.perf_counter()
+            logger.critical(dfcfmid)
             df = scoring.Score(dfcfmid, dfmgf, mass, fragment_error, filtering)
             t1 = time.perf_counter()
             logger.critical("time for scoring is :" + str(t1 - t0))
@@ -80,7 +82,7 @@ def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, fil
         set_job_status(mongo, jobid, status='Processing', progress=progress)
         #time.sleep(5)
 
-    if not dfAE_list:
+    if len(dfAE_list) < 1:
         logger.critical("No matches All Energies found")
         return None
     else:

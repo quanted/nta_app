@@ -11,6 +11,7 @@ import pandas as pd
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
 
+CHUNK_SIZE = 1000
 DSSTOX_API = os.environ.get('UBERTOOL_REST_SERVER')
 
 def connect_to_mongoDB(address):
@@ -30,7 +31,7 @@ def connect_to_mongo_gridfs(address):
 
 def ms2_search_api(mass=None, accuracy=None, mode=None, jobid='00000'):
     input_json = json.dumps({"mass": mass, "accuracy": accuracy, "mode": mode}) 
-    logger.info("=========== calling MS2 CFMID REST API")
+    logger.critical("=========== calling MS2 CFMID REST API")
     logger.info('mode: {}'.format(mode))
     #if "edap-cluster" in DSSTOX_API:
     api_url = '{}/rest/ms2/{}'.format(DSSTOX_API, jobid)
@@ -39,8 +40,16 @@ def ms2_search_api(mass=None, accuracy=None, mode=None, jobid='00000'):
     logger.info(" MS2 CFMID REST API address: {}".format(api_url))
     http_headers = {'Content-Type': 'application/json'}
     response = requests.post(api_url, headers=http_headers, data=input_json)
-    logger.info('Response: {}'.format(response.json()))
+    #logger.critical('Response: {}'.format(response.json()))
+    if response.json()['results'] == "none":
+        logger.critical('no results, returning None')
+        return None
     cfmid_search_json = io.StringIO(json.dumps(response.json()['results']))
     cfmid_search_df = pd.read_json(cfmid_search_json, orient='split')
-    return cfmid_search_df
+    cfmid_chunk_list = [cfmid_search_df[i:i+CHUNK_SIZE] for i in range(0,cfmid_search_df.shape[0],CHUNK_SIZE)]
+    logger.critical('Num of chunks: {}'.format(len(cfmid_chunk_list)))
+    if len(cfmid_chunk_list) == 0:
+        logger.critical('chunk list len 0, returning None')
+        return None
+    return cfmid_chunk_list
     

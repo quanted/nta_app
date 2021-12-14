@@ -1,14 +1,22 @@
 import os
-from django.http import HttpResponse
+import logging
+import requests
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from .. import links_left
+
 DSSTOX_API = os.environ.get('UBERTOOL_REST_SERVER')
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger("nta_app.views")
+logger.setLevel(logging.INFO)
 
 #@require_POST
 def formula_list_page(request, model='ms1', header='Download MS-ready formula list', jobid='00000000'):
-    model_html = '<div id="Download button"><input type="button" value="Download MS-ready formulas" onclick="window.open('download_my_pdf')">
-</div>'
-    html = references_page_html(header, model, model_html)
+    model_html = """<div id="Download button"><input type="button" value="Download MS-ready formulas" onclick="window.open('download')">
+</div>"""
+    html = formula_list_html(header, model, model_html)
     response = HttpResponse()
     response.write(html)
     #print(html)
@@ -17,7 +25,7 @@ def formula_list_page(request, model='ms1', header='Download MS-ready formula li
 
 def formula_list_html(header, model, tables_html):
     """Generates HTML to fill '.articles_output' div on output page"""
-    page = 'references'
+    page = 'formula_list'
     #epa template header
     html = render_to_string('01epa_drupal_header.html', {
         'SITE_SKIN': os.environ['SITE_SKIN'],
@@ -43,9 +51,11 @@ def formula_list_html(header, model, tables_html):
     html += render_to_string('10epa_drupal_footer.html', {})
     return html
 
-def download_msready_formulas():
+def download_msready_formulas(request):
     logger.info("=========== calling DSSTOX REST API for formula list")
-    api_url = '{}/rest/ms1/list/'.format(DSSTOX_API, jobid)
+    api_url = '{}/rest/ms1/list'.format(DSSTOX_API)
     logger.info(api_url)
     #http_headers = {'Content-Type': 'application/json'}
-    return requests.get(api_url)
+    response = requests.get(api_url)
+    response_json = response.json()
+    return JsonResponse(response_json)
