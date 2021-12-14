@@ -328,9 +328,9 @@ class NtaRun:
         #    self.mongo_save(self.search_results, FILENAMES['dashboard'])
         
     def search_hcd(self):
+        logging.info(f'Querying the HCD with DTXSID identifiers from: {self.search_results}')
         if len(self.search_results) > 0:
             dtxsid_list = self.search_results['DTXSID']
-            logging.info('Querying the HCD with {} DTXSID identifiers'.format(len(self.search_results)))
             hcd_results = api_search_hcd(dtxsid_list)
             self.search_results = self.search_results.merge(hcd_results, how = 'left', on = 'DTXSID')
     
