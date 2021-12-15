@@ -104,7 +104,7 @@ def api_search_hcd(dtxsid_list):
         for data in query_result:
             resultDict[dtxsid][f'{data["hazardName"]}_score'] = data['finalScore']
             resultDict[dtxsid][f'{data["hazardName"]}_authority'] = data['finalAuthority'] if 'finalAuthority' in data.keys() else ''
-    return pd.DataFrame(resultDict).transpose().reset_index().rename_columns(columns = {'index':'DTXSID'})
+    return pd.DataFrame(resultDict).transpose().reset_index().rename(columns = {'index':'DTXSID'})
             
 def format_tracer_file(df_in):
     df = df_in.copy()
