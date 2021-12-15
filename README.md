@@ -7,3 +7,4 @@ For running a development version locally:
 *  Requires a mongoDB instance running locally on default port (27017)
 *  Run this Django app from manage.py with DJANGO_SETTINGS_MODULE = "settings_local"
 *  Run the flask database api (flask_qed repo) using flask_qed/flask_cgi.py
+
