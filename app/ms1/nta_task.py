@@ -177,7 +177,9 @@ class NtaRun:
         self.step = "Searching dsstox database"
         self.search_dashboard()
         #self.iterate_searches()
+        logger.info("Debug_Verification1")  #MWB 12/14, delete after
         self.search_hcd()
+        logger.info("Debug_Verification2")  #MWB 12/14, delete after
         self.process_toxpi()
         if self.verbose:
             logger.info("Final result processed.")
