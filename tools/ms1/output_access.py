@@ -1,6 +1,11 @@
 import pandas as pd
 import json
 import os
+from importlib import metadata		#Remove once openpyxl added to requirements.txt
+import subprocess			#Remove once openpyxl added to requirements.txt
+distro_names = [x.metadata['Name'] for x in metadata.distributions()]	#Remove once openpyxl added to requirements.txt
+if 'openpyxl' not in distro_names: subprocess.call(['pip','install','openpyxl==3.0.9'])		#Remove once openpyxl added to requirements.txt
+#import openpyxl			#Remove comment when the above lines are removed and openpyxl added to requirements
 from datetime import datetime
 from io import StringIO, BytesIO
 from PIL import Image
@@ -43,8 +48,8 @@ class OutputServer:
         # self.names_combined = FILENAMES['combined']
         self.names_mpp_ready = FILENAMES['mpp_ready']
         # self.names_dashboard = FILENAMES['dashboard']
-        self.main_file_names = self.names_stats + self.names_mpp_ready + self.names_toxpi
-
+        #self.main_file_names = self.names_stats + self.names_mpp_ready + self.names_toxpi #Old code, remove after 12/21 MWB
+        self.main_file_names = [name for key in FILENAMES.keys() for name in FILENAMES[key]]
 
     def status(self):
         try:
@@ -63,44 +68,36 @@ class OutputServer:
         return JsonResponse(response_data)
 
     def final_result(self):
-        id = self.jobid + "_" + self.names_toxpi[1]
-        #id = self.jobid + "_" + self.names_duplicates[0]# TODO remove
-        #db_record = self.posts.find_one({'_id': id})
-        #json_string = json.dumps(db_record['data'])
-        db_record = self.gridfs.get(id)
-        json_string = db_record.read().decode('utf-8')
-        df = pd.read_json(json_string, orient='split')
-        #project_name = db_record['project_name']
-        project_name = db_record.project_name
-        if project_name:
-            filename = project_name.replace(" ", "_") + '_' + self.names_toxpi[1] + '.csv'
-            #filename = project_name.replace(" ", "_") + '_' + self.names_duplicates[0] + '.csv' # TODO remove
-        else:
-            filename = id + '.csv'
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename='+ filename
-        df.to_csv(path_or_buf=response, index = False)
+        in_memory_buffer = BytesIO()
+        with pd.ExcelWriter(in_memory_buffer, engine='openpyxl') as writer:
+            for name in self.main_file_names:
+                try:
+                    id = self.jobid + "_" + name
+                    db_record = self.gridfs.get(id)
+                    json_string = db_record.read().decode('utf-8')
+                    df = pd.read_json(json_string, orient='split')
+                    df.to_excel(writer, sheet_name=name)
+                except Exception as e:
+                    print(e)
+                    continue
+        response = HttpResponse(in_memory_buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=summary.xlsx'
         return response
 
     def all_files(self):
-        in_memory_zip = BytesIO()
-        #zip = ZipFile(in_memory_zip, 'w')
+        in_memory_zip = BytesIO()        
         with ZipFile(in_memory_zip, 'w', ZIP_DEFLATED) as zipf:
             for name in self.main_file_names:
                 try:
                     record_id = self.jobid + "_" + name
-                    #db_record = self.posts.find_one({'_id': record_id})
-                    #json_string = json.dumps(db_record['data'])
                     db_record = self.gridfs.get(record_id)
                     json_string = db_record.read().decode('utf-8')
                     df = pd.read_json(json_string, orient='split')
-                    #project_name = db_record['project_name']
                     project_name = db_record.project_name
                     if project_name:
                         filename = project_name.replace(" ", "_") + '_' + name + '.csv'
                     else:
                         filename = record_id + '.csv'
-                    #csv_string = StringIO()
                     csv_string = df.to_csv(index = False)
                     zipf.writestr(filename, csv_string)
 
@@ -111,18 +108,14 @@ class OutputServer:
             for name in self.names_tracers:
                 try:
                     tracer_id = self.jobid + "_" + name
-                    #db_record = self.posts.find_one({'_id': tracer_id})
-                    #json_string = json.dumps(db_record['data'])
                     db_record = self.gridfs.get(tracer_id)
                     json_string = db_record.read().decode('utf-8')
                     df = pd.read_json(json_string, orient='split')
-                    #project_name = db_record['project_name']
                     project_name = db_record.project_name
                     if project_name:
                         filename = project_name.replace(" ", "_") + '_' + name + '.csv'
                     else:
                         filename = tracer_id + '.csv'
-                    # csv_string = StringIO()
                     csv_string = df.to_csv(index=False)
                     zipf.writestr(filename, csv_string)
                 except (OperationFailure, TypeError, NoFile):
@@ -131,22 +124,16 @@ class OutputServer:
                 try:
                     tracer_id = self.jobid + "_" + name
                     db_record = self.gridfs.get(tracer_id)
-                    buffer = db_record.read()#.decode('utf-8')
-                    #stream.seek(0)
-                    #image = Image.open(stream)
-                    # project_name = db_record['project_name']
+                    buffer = db_record.read()
                     project_name = db_record.project_name
                     if project_name:
                         filename = project_name.replace(" ", "_") + '_' + name + '.png'
                     else:
                         filename = tracer_id + '.png'
-                    # csv_string = StringIO()
                     csv_string = df.to_csv(index=False)
-                    zipf.writestr(filename, buffer)#.getvalue())
+                    zipf.writestr(filename, buffer)
                 except (OperationFailure, TypeError, NoFile) as e:
                     break
-
-
         zip_filename = 'nta_results_' + self.jobid + '.zip'
         response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')
         response['Content-Disposition'] = 'attachment; filename=' + zip_filename

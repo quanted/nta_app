@@ -68,7 +68,8 @@ FILENAMES = {'stats': ['stats_pos', 'stats_neg'],
              #'flags': ['flags_pos', 'flags_neg'],
              #'combined': 'combined',
              'mpp_ready': ['for_stats_full', 'for_stats_reduced'],
-             #'dashboard': 'dashboard_search',
+             'dsstox': ['dsstox_search'],
+             'hcd': ['hcd_search'],
              'toxpi': ['final_output_full', 'final_output_reduced']
              }
 
@@ -91,6 +92,8 @@ class NtaRun:
         self.min_replicate_hits = float(parameters['min_replicate_hits'])
         self.max_replicate_cv = float(parameters['max_replicate_cv'])
         self.parent_ion_mass_accuracy = float(parameters['parent_ion_mass_accuracy'])
+        self.search_dsstox = parameters['search_dsstox'] == 'yes'
+        self.search_hcd = parameters['search_hcd'] == 'yes'
         self.search_mode = parameters['search_mode']
         self.top_result_only = parameters['top_result_only'] == 'yes'
         self.minimum_rt = float(parameters['minimum_rt']) # throw out features below this (void volume)
@@ -174,12 +177,13 @@ class NtaRun:
             #print(self.df_combined)
 
         # 7: search dashboard
-        self.step = "Searching dsstox database"
-        self.search_dashboard()
-        #self.iterate_searches()
-        logger.info("Debug_Verification1")  #MWB 12/14, delete after 12/16
-        self.search_hcd()
-        self.process_toxpi()
+        if self.search_dsstox:
+            self.step = "Searching dsstox database"
+            self.perform_dashboard_search()
+            #self.iterate_searches()
+            if self.search_hcd:
+                self.perform_hcd_search()
+            self.process_toxpi()
         if self.verbose:
             logger.info("Final result processed.")
         #self.clean_files()
@@ -302,7 +306,7 @@ class NtaRun:
                 logger.info("Download finished.")
             self.fix_overflows()
 
-    def search_dashboard(self, lower_index=0, upper_index=None, save = True):
+    def perform_dashboard_search(self, lower_index=0, upper_index=None, save = True):
         logging.info('Rows flagged for dashboard search: {} out of {}'.format(len(self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :]), len(self.df_combined)))
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
         if self.search_mode == 'mass':
@@ -324,15 +328,17 @@ class NtaRun:
             dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                             dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
+        self.mongo_save(dsstox_search_df, FILENAMES['dsstox'][0])
         self.search_results = dsstox_search_df
         #if save:                                                        
         #    self.mongo_save(self.search_results, FILENAMES['dashboard'])
         
-    def search_hcd(self):
+    def perform_hcd_search(self):
         logger.info(f'Querying the HCD with DTXSID identifiers from: {self.search_results}')
         if len(self.search_results) > 0:
             dtxsid_list = self.search_results['DTXSID']
             hcd_results = api_search_hcd(dtxsid_list)
+            self.mongo_save(hcd_results, FILENAMES['hcd'][0])
             self.search_results = self.search_results.merge(hcd_results, how = 'left', on = 'DTXSID')
     
 
@@ -371,7 +377,7 @@ class NtaRun:
         else:
             self.search_results.append(download_df)
         if save:
-            self.mongo_save(self.search_results, FILENAMES['dashboard'])
+            self.mongo_save(self.search_results, FILENAMES['dashboard'][0])
         return self.download_filenames[-1]
 
     def fix_overflows(self, filename=None):
