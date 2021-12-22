@@ -64,7 +64,8 @@ def download_msready_formulas(request):
     dl_date = datetime.now().strftime("%Y/%m/%d")
     in_memory_zip = BytesIO()
     with ZipFile(in_memory_zip, 'w', ZIP_DEFLATED) as zipf:
-        df = pd.read_json(response_json, orient='split')
+        #df = pd.read_json(response_json, orient='split')
+        df = pd.DataFrame(response_json)
         filename = 'msready-formula-list-{}.csv'.format(dl_date)
         csv_string = df.to_csv(index = False)
         zipf.writestr(filename, csv_string)
