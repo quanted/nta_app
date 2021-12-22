@@ -77,6 +77,14 @@ class NtaInputs(forms.Form):
         label='Discard features below this retention time (mins)',
         initial=0.00,
         validators=[MinValueValidator(0)])
+    search_dsstox = forms.ChoiceField(
+        label='Search DSSTox for possible structures',
+        choices=(('yes','yes'),('no','no'),),
+        initial='yes')
+    search_hcd = forms.ChoiceField(
+        label='Search Hazard Comparison Dashboard for toxicity data',
+        choices=(('yes','yes'),('no','no'),),
+        initial='yes')
     search_mode = forms.ChoiceField(
         label='Search dashboard by',
         choices=(('mass', 'mass'), ('formula', 'formula'),),

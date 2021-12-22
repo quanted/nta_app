@@ -95,7 +95,17 @@ def api_search_formulas(formulas, jobID = "00000"):
     http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json)
 
-
+def api_search_hcd(dtxsid_list):
+    resultDict = {}
+    for dtxsid in dtxsid_list:
+        resultDict[dtxsid] = {}
+        query = requests.get(f'https://hazard.sciencedataexperts.com/api/hazard?query={dtxsid}')
+        query_result = query.json()['hazardChemicals'][0]['scores']
+        for data in query_result:
+            resultDict[dtxsid][f'{data["hazardName"]}_score'] = data['finalScore']
+            resultDict[dtxsid][f'{data["hazardName"]}_authority'] = data['finalAuthority'] if 'finalAuthority' in data.keys() else ''
+    return pd.DataFrame(resultDict).transpose().reset_index().rename(columns = {'index':'DTXSID'})
+            
 def format_tracer_file(df_in):
     df = df_in.copy()
     df = df.drop(columns=['Compound', 'Score'])
