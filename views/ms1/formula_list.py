@@ -60,16 +60,19 @@ def download_msready_formulas(request):
     api_url = '{}/rest/ms1/list'.format(DSSTOX_API)
     logger.info(api_url)
     response = requests.get(api_url)
-    response_json = response.json()
+    response_json = response.json()['results']
     dl_date = datetime.now().strftime("%Y/%m/%d")
+    logger.info(response_json)
     in_memory_zip = BytesIO()
     with ZipFile(in_memory_zip, 'w', ZIP_DEFLATED) as zipf:
         #df = pd.read_json(response_json, orient='split')
         df = pd.DataFrame(response_json)
-        filename = 'msready-formula-list-{}.csv'.format(dl_date)
+        logger.info(df)
+        filename = 'msready_formula_list_{}.csv'.format(dl_date)
+        logger.info('filename: {}'.format(filename))
         csv_string = df.to_csv(index = False)
         zipf.writestr(filename, csv_string)
-    zip_filename = 'msready-formula-list-{}.zip'.format(dl_date)
+    zip_filename = 'msready_formula_list_{}.zip'.format(dl_date)
     response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename=' + zip_filename
     response['Content-length'] = in_memory_zip.tell()
