@@ -1,11 +1,8 @@
 import pandas as pd
 import json
 import os
-from importlib import metadata		#Remove once openpyxl added to requirements.txt
-import subprocess			#Remove once openpyxl added to requirements.txt
-distro_names = [x.metadata['Name'] for x in metadata.distributions()]	#Remove once openpyxl added to requirements.txt
-if 'openpyxl' not in distro_names: subprocess.call(['pip','install','openpyxl==3.0.9'])		#Remove once openpyxl added to requirements.txt
-#import openpyxl			#Remove comment when the above lines are removed and openpyxl added to requirements
+import openpyxl
+import time
 from datetime import datetime
 from io import StringIO, BytesIO
 from PIL import Image
@@ -68,20 +65,31 @@ class OutputServer:
         return JsonResponse(response_data)
 
     def final_result(self):
+        #
+        #This code and the output code need to be optimized to improve compute time to generete xlsx file and transfer time of file to client
+        #
+        initial = time.perf_counter()
         in_memory_buffer = BytesIO()
         with pd.ExcelWriter(in_memory_buffer, engine='openpyxl') as writer:
-            for name in self.main_file_names:
-                try:
+            for name in self.main_file_names:   
+                if 'final_output' in name:          #Added to skip including the 'full_ouput' data in the final results xlsx. Doubles file size and greatly increases
+                    continue                        #compute time to preapre the file and transfer time to get file to client. Need better solution down road (compression)
+                try:                                                        
+                    start = time.perf_counter()
                     id = self.jobid + "_" + name
                     db_record = self.gridfs.get(id)
                     json_string = db_record.read().decode('utf-8')
                     df = pd.read_json(json_string, orient='split')
                     df.to_excel(writer, sheet_name=name)
+                    stop = time.perf_counter()
+                    print(f'Time to construct {name}: {stop - start}')
                 except Exception as e:
                     print(e)
                     continue
         response = HttpResponse(in_memory_buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename=summary.xlsx'
+        end = time.perf_counter()
+        print(f'Time to get xlsx: {end - initial}')
         return response
 
     def all_files(self):

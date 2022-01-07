@@ -96,15 +96,20 @@ def api_search_formulas(formulas, jobID = "00000"):
     return requests.post(api_url, headers=http_headers, data=input_json)
 
 def api_search_hcd(dtxsid_list):
-    resultDict = {}
-    for dtxsid in dtxsid_list:
-        resultDict[dtxsid] = {}
-        query = requests.get(f'https://hazard.sciencedataexperts.com/api/hazard?query={dtxsid}')
-        query_result = query.json()['hazardChemicals'][0]['scores']
-        for data in query_result:
-            resultDict[dtxsid][f'{data["hazardName"]}_score'] = data['finalScore']
-            resultDict[dtxsid][f'{data["hazardName"]}_authority'] = data['finalAuthority'] if 'finalAuthority' in data.keys() else ''
-    return pd.DataFrame(resultDict).transpose().reset_index().rename(columns = {'index':'DTXSID'})
+    post_data = {"chemicals":[], "options": {"cts": None, "minSimilarity": 0.95, "analogsSearchType": None}}
+    headers = {'content-type': 'application/json'}
+    url = 'https://hazard.sciencedataexperts.com/api/hazard'
+    for dtxsid in dtxsid_list: post_data['chemicals'].append({'chemical': {'sid': dtxsid, "checked": True}, "properties": {}})
+    response = requests.post(url, data=json.dumps(post_data), headers=headers)
+    chem_data_list = json.loads(response.content)['hazardChemicals']
+    result_dict = {}
+    for chemical in chem_data_list:
+        chemical_id = chemical['chemicalId'].split('|')[0]
+        result_dict[chemical_id] = {}
+        for data in chemical['scores']:
+            result_dict[chemical_id][f'{data["hazardName"]}_score'] = data['finalScore']
+            result_dict[chemical_id][f'{data["hazardName"]}_authority'] = data['finalAuthority'] if 'finalAuthority' in data.keys() else ''
+    return pd.DataFrame(result_dict).transpose().reset_index().rename(columns = {'index':'DTXSID'})
             
 def format_tracer_file(df_in):
     df = df_in.copy()
