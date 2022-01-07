@@ -1,6 +1,10 @@
 import os
 import logging
 import requests
+import pandas as pd
+from datetime import datetime
+from io import StringIO, BytesIO
+from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from .. import links_left
@@ -55,7 +59,19 @@ def download_msready_formulas(request):
     logger.info("=========== calling DSSTOX REST API for formula list")
     api_url = '{}/rest/ms1/list'.format(DSSTOX_API)
     logger.info(api_url)
-    #http_headers = {'Content-Type': 'application/json'}
     response = requests.get(api_url)
-    response_json = response.json()
-    return JsonResponse(response_json)
+    response_json = response.json()['results']
+    dl_date = datetime.now().strftime("%Y_%m_%d")
+    in_memory_zip = BytesIO()
+    with ZipFile(in_memory_zip, 'w', ZIP_DEFLATED) as zipf:
+        #df = pd.DataFrame.from_dict(response_json, orient='split')
+        df = pd.DataFrame(**response_json).dropna()
+        filename = 'msready_formula_list_{}.csv'.format(dl_date)
+        logger.info('filename: {}'.format(filename))
+        csv_string = df.to_csv(index = False)
+        zipf.writestr(filename, csv_string)
+    zip_filename = 'msready_formula_list_{}.zip'.format(dl_date)
+    response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename=' + zip_filename
+    response['Content-length'] = in_memory_zip.tell()
+    return response
