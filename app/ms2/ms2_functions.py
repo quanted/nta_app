@@ -1,10 +1,6 @@
-#
-#
-
-
 import pandas as pd
 import os
-from . import scoring
+from ..feature.feature import *
 import psycopg2
 import time
 import logging
@@ -15,81 +11,6 @@ pw = os.environ.get('AURORA_PW')
 LOCAL = False
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
-
-def count_masses(df_in, POSMODE):
-    dfg = df_in
-    if POSMODE:
-        mode = 'ESI-MSMS-pos'
-        polarity = ['ESI+', 'Esi+']
-        #dfg['MASS'] = dfg.groupby('RETENTION TIME')['MASS'].transform(lambda x: (x - 1.0073)) #Comment out, redundant with compare_mfg_df
-        dfg['MASS'] = dfg['MASS'].round(6)
-    else:
-        mode = 'ESI-MSMS-neg'
-        polarity = ['ESI-', 'Esi-']
-        #dfg['MASS'] = dfg.groupby('RETENTION TIME')['MASS'].transform(lambda x: (x + 1.0073)) #Comment out, redundant with compare_mfg_df
-        dfg['MASS'] = dfg['MASS'].round(6)
-
-    mass_list = dfg['MASS'].unique().tolist()
-    return len(mass_list)
-
-#  Transforms positive or negative precursor ions to neutral mass. Then searches CFMID database for chemical candidates
-#  within a mass error window.
-def compare_mgf_df(df_in, mass_error, fragment_error, POSMODE, mongo, jobid, filtering=False, progress=0):
-    dfg = df_in
-    if POSMODE:
-        mode = 'ESI-MSMS-pos'
-        polarity = ['ESI+', 'Esi+']
-        dfg['MASS'] = dfg.groupby('RETENTION TIME')['MASS'].transform(lambda x: (x - 1.0073))
-        dfg['MASS'] = dfg['MASS'].round(6)
-    else:
-        mode = 'ESI-MSMS-neg'
-        polarity = ['ESI-', 'Esi-']
-        dfg['MASS'] = dfg.groupby('RETENTION TIME')['MASS'].transform(lambda x: (x + 1.0073))
-        dfg['MASS'] = dfg['MASS'].round(6)
-
-    mass_list = dfg['MASS'].unique().tolist()
-    print(mass_list)
-    print("Number of masses to search: " + str(len(mass_list)))
-    dfAE_list = list()
-    dfS_list = list()
-    for mass in mass_list:
-        index = mass_list.index(mass) + 1
-        logger.critical("searching mass " + str(mass) + " number " + str(index) + " of " + str(len(mass_list)))
-        t0 = time.perf_counter()
-        #dfcfmid = sqlCFMID(mass, mass_error, mode)
-        dfcfmid = ms2_search_api(mass=mass, accuracy=mass_error, mode=mode, jobid=jobid)
-        t1 = time.perf_counter()
-        logger.critical("time for SQL query is :" + str(t1-t0))
-       #logger.critical(dfcfmid)
-        if dfcfmid is None:
-            logger.critical("No matches for this mass in CFMID library, consider changing the accuracy of the queried mass")
-        else:
-            dfmgf = None
-            df = None
-            dfmgf = dfg[dfg['MASS'] == mass].reset_index()
-            dfmgf.sort_values('MASS', ascending=True, inplace=True)
-            t0 = time.perf_counter()
-            logger.critical(dfcfmid)
-            df = scoring.Score(dfcfmid, dfmgf, mass, fragment_error, filtering)
-            t1 = time.perf_counter()
-            logger.critical("time for scoring is :" + str(t1 - t0))
-            if mode == 'ESI-MSMS-pos':
-                df['MASS_in_MGF'] = mass + 1.0073
-            if mode == 'ESI-MSMS-neg':
-                df['MASS_in_MGF'] = mass - 1.0073
-            dfAE_list.append(df)  # all energies scores
-        progress = progress + 1
-        set_job_status(mongo, jobid, status='Processing', progress=progress)
-        #time.sleep(5)
-
-    if len(dfAE_list) < 1:
-        logger.critical("No matches All Energies found")
-        return None
-    else:
-        dfAE_total = pd.concat(dfAE_list)  # all energies scores for all matches
-    return dfAE_total
-    # dfAE_total.to_excel(filename+'_CFMID_results.xlsx',engine='xlsxwriter')
-    
 
 #  A SQL query to get all the corresponding info from the database
 def sqlCFMID(mass=None, mass_error=None, mode=None):
@@ -166,12 +87,17 @@ order by "DTXCID","ENERGY", "INTENSITY0C" desc;
     #print(query)
     # Decided to chunk the query results for speed optimization in post processing (spectral matching)
     #cur.execute(query)
-    chunks = list()
-    for chunk in pd.read_sql(query, db, chunksize=1000):
-        chunks.append(chunk)
+    #chunks = list()
+    #for chunk in pd.read_sql(query, db, chunksize=1000):
+    #    chunks.append(chunk)
+    sql_df = pd.read_sql(query, db)
     #cursor.close()
     db.close()
     db = None
-    logger.critical("num of chunks: {}".format(len(chunks)))
-    #logger.critical("first chunk: {}".format(chunks[0].head()))
-    return chunks
+    sql_df.rename(columns = {'PMASS_x':'FRAG_MASS', 'INTENSITY0C':'FRAG_INTENSITY'}, inplace = True)
+    formated_data_dict = sql_df.groupby(['DTXCID', 'FORMULA', 'MASS'])[['ENERGY','FRAG_MASS','FRAG_INTENSITY']]\
+        .apply(lambda x: x.groupby('ENERGY')[['FRAG_MASS','FRAG_INTENSITY']]\
+               .apply(lambda x: x.to_dict('list'))).to_dict('index')
+    #logger.critical('Num of chunks: {}'.format(len(cfmid_chunk_list)))
+    return formated_data_dict
+

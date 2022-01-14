@@ -9,12 +9,17 @@ import json
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 from django.urls import reverse
-from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs
-from .ms2_functions import compare_mgf_df, count_masses
+from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, ms2_search_api
+from .ms2_functions import sqlCFMID
+from ..feature.feature import FeatureList
+from ..feature.score_algo import SpectraScorer
 from ...tools.ms2.send_email import send_ms2_finished
+
 
 NO_DASK = False  # set this to True to run locally without dask (for debug purposes)
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
 logger = logging.getLogger("nta_app.ms2")
 logger.setLevel(logging.INFO)
 
@@ -65,14 +70,14 @@ class MS2Run:
     
     def __init__(self, parameters=None, input_dfs=None, mongo_address = None, jobid = "00000000",
                  results_link = None, verbose = True, in_docker = True):
+        logger.info('MS2Run initialize - started')
+        self.start = time.perf_counter()
         self.project_name = parameters['project_name']
         self.input_dfs = input_dfs
-        self.n_masses_pos = sum([count_masses(x, POSMODE=True) for x in self.input_dfs[0]])
-        self.n_masses_neg = sum([count_masses(x, POSMODE=False) for x in self.input_dfs[1]])
-        self.n_masses = self.n_masses_pos + self.n_masses_neg
-        print("Total job number of masses: {}".format(self.n_masses))
+        self.n_masses = 1
         self.progress = 0
         self.results_dfs = [[None],[None]]
+        self.features = {'pos' : [], 'neg' : []}
         #self.email = parameters['results_email']
         self.results_link = results_link
         self.precursor_mass_accuracy = float(parameters['precursor_mass_accuracy'])
@@ -86,25 +91,72 @@ class MS2Run:
         self.step = "Started"  # tracks the current step (for fail messages)
 
     def execute(self):
-        self.set_status('Processing', create = True)
-        if len(self.input_dfs[0]) > 0:  # if there is at least one pos file
-            self.results_dfs[0] = pd.concat([self.process_results(x, POSMODE=True) for x in self.input_dfs[0]])
-            self.mongo_save(self.results_dfs[0], step=FILENAMES['final_output'][0])
-        if len(self.input_dfs[1]) > 0:  # if there is at least one neg file
-            self.results_dfs[1] = pd.concat([self.process_results(x, POSMODE=False) for x in self.input_dfs[1]])
-            self.mongo_save(self.results_dfs[1], step=FILENAMES['final_output'][1])
-        self.set_status('Completed', progress=self.n_masses)
+
+        self.set_status('Reading Data', create= True)
+        self.construct_featurelist()
+                
+        self.set_status('Retrieving Reference Spectra')
+        self.get_CFMID_spectra();
+        
+        self.set_status('Preparing Results')
+        self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][0])   
+        self.mongo_save(self.features['neg'].to_df(), step=FILENAMES['final_output'][1])
+
+        self.set_status('Completed')
         #self.send_email()
         logger.critical('Run Finished')
+        logger.info(f'Run time: {time.perf_counter() - self.start}')
 
-    def process_results(self, input_df, POSMODE=True):
-        result = compare_mgf_df(input_df, self.precursor_mass_accuracy, self.fragment_mass_accuracy, POSMODE=POSMODE,
-                                mongo=self.mongo, jobid= self.jobid, progress=self.progress)
-        if POSMODE:
-            self.progress = self.progress + self.n_masses_pos
-        #self.set_status('Processing', progress=progress)
-        return result
+    def construct_featurelist(self):
+        """
+        Prepares pos- and neg-mode FeatureList object from the input dfs 
+        """
+        self.n_masses = len(self.input_dfs[0]) + len(self.input_dfs[1])
+        for idx, df in enumerate(self.input_dfs):
+            mode = 'pos' if idx == 0 else 'neg'
+            tmp_feature_list = FeatureList()
+            for data_block in df:
+                tmp_feature_list.update_feature_list(data_block, POSMODE = mode == 'pos')
+                self.update_progress()
+            self.features[mode] = tmp_feature_list
+    
 
+    def get_CFMID_spectra(self):
+        """
+        Instantiate pos_list and neg_list with tuples of unique masses in the FeatureList and corrsponding mode. Iterate through list
+        to get CFMID data. Returned spectra are appended to corresponding Features in the feature list using mass to join spectra.
+        """
+        pos_list = [(mass, 'ESI-MSMS-pos') for mass in self.features['pos'].get_masses(neutral = True)] if len(self.features['pos']) > 0 else [] 
+        neg_list = [(mass, 'ESI-MSMS-neg') for mass in self.features['neg'].get_masses(neutral = True)] if len(self.features['neg']) > 0 else []
+        self.n_masses = len(pos_list) + len(neg_list)
+        for index, (mass, mode) in enumerate(pos_list + neg_list):
+            logger.critical("Searching mass " + str(mass) + " number " + str(index) + " of " + str(len(pos_list + neg_list)))
+            cfmid_result_list = ms2_search_api(mass, self.precursor_mass_accuracy, mode, self.jobid)
+            self.update_progress()
+            if cfmid_result_list is None:
+                logger.critical(f'Found 0 structures for mass {mass}')
+                continue
+            logger.critical(f'Found {len(cfmid_result_list)} structures for mass {mass}')
+            if len(cfmid_result_list) > 0:
+                self.append_reference_spectra(mass, mode, cfmid_result_list)
+        
+    def append_reference_spectra(self, mass, mode, cfmid_result_list):
+        """
+        For each feature that corresponds to the input mass in the Feature List object, add a cfmid result
+        and calculate the similarity scores using a SpectraScorer object.
+        
+        :param mass: mass used to find corresponding ms2 features in feature list
+        :type mass: float
+        :param mode: Value used to set the mass accuracy (ppm)
+        :type mode: float, optional
+        :param cfmid_result_list: List of cfmid_results returned from the api query
+        :type cfmid_result_list: list of nested dictionaries
+        """
+        feature_mode = 'pos' if mode == 'ESI-MSMS-pos' else 'neg'
+        spectra_scorer = SpectraScorer()
+        for feature in self.features[feature_mode].get_features(mass, by='neutral_mass'):
+            feature.add_reference_spectra(cfmid_result_list)
+            feature.calc_similarity_scores(spectra_scorer)
 
     def send_email(self):
         try:
@@ -114,9 +166,11 @@ class MS2Run:
             logger.critical('email error')
             #logger.critical("Error sending email: {}".format(e.message))
         logger.critical('email end function')
+        
+        self.query_progress = 0
+        self.prepare_progress = 0
 
-
-    def set_status(self, status, progress=0, create = False):
+    def set_status(self, status, create = False):
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
         post_id = self.jobid + "_" + "status"
@@ -124,16 +178,26 @@ class MS2Run:
             posts.update_one({'_id': post_id},{'$set': {'_id': post_id,
                                                         'date': time_stamp,
                                                         'n_masses': str(self.n_masses),
-                                                        'progress': str(progress),
+                                                        'progress': str(self.progress),
                                                         'status': status,
                                                         'error_info': ''}},
                              upsert=True)
         else:
             posts.update_one({'_id': post_id}, {'$set': {'_id': post_id,
-                                                         'progress': str(progress),
+                                                         'n_masses': str(self.n_masses),
+                                                         'progress': str(self.progress),
                                                          'status': status}},
                              upsert=True)
 
+    def update_progress(self):
+        self.progress +=  1
+        posts = self.mongo.posts
+        post_id = self.jobid + "_" + "status"
+        posts.update_one({'_id': post_id}, {'$set': {'_id': post_id,
+                                                     'n_masses': str(self.n_masses),
+                                                     'progress': str(self.progress)}},
+                             upsert=True)
+        
     def set_except_message(self, e):
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()

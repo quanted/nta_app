@@ -33,7 +33,7 @@ function checkJobStatus(){
                     //window.location.href = outputUrl;
                     $(location).attr('href', outputUrl);
                 }
-                else if(data['status'] === "Not found"){
+                else if((data['status'] === "Not found")&&(attemptCount > 3)){
                     $('#status').html("Error: NTA task failed to start!");
                     $('#wait_gif').html("");
 

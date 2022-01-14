@@ -36,7 +36,6 @@ function checkJobStatus(){
                 else if(data['status'] === "Not found"){
                     $('#status').html("Error: NTA task failed to start!");
                     $('#wait_gif').html("");
-
                 }
                 else if(data['status'].startsWith("Failed")){
                     var message = data['status'];
@@ -45,7 +44,7 @@ function checkJobStatus(){
                     $('#wait_gif').html("");
                     $('#except_info').html("Error info: "+ error_info);
                 }
-                else {
+		else {
                     console.log("Status: " + data['status']);
                     var progress = parseInt(data['progress']);
                     var max_progress = parseInt(data['n_masses']);
@@ -55,7 +54,7 @@ function checkJobStatus(){
                     if(percent_done > 99){
                         percent_done = 99
                     }
-                    $('#status').html('Processing... '+ percent_done+'% completed');
+                    $('#status').html('Processing: \n'+ data['status'] + '...'+ percent_done+'% completed');
                     if(attemptCount<maxAttempts){
                         setTimeout(checkJobStatus, timeout);
                     }

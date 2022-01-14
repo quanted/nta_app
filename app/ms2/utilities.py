@@ -46,10 +46,25 @@ def ms2_search_api(mass=None, accuracy=None, mode=None, jobid='00000'):
         return None
     cfmid_search_json = io.StringIO(json.dumps(response.json()['results']))
     cfmid_search_df = pd.read_json(cfmid_search_json, orient='split')
-    cfmid_chunk_list = [cfmid_search_df[i:i+CHUNK_SIZE] for i in range(0,cfmid_search_df.shape[0],CHUNK_SIZE)]
-    logger.critical('Num of chunks: {}'.format(len(cfmid_chunk_list)))
-    if len(cfmid_chunk_list) == 0:
-        logger.critical('chunk list len 0, returning None')
-        return None
-    return cfmid_chunk_list
+    cfmid_search_df.rename(columns = {'PMASS_x':'FRAG_MASS', 'INTENSITY0C':'FRAG_INTENSITY'}, inplace = True)
+    formated_data_dict = cfmid_search_df.groupby(['DTXCID', 'FORMULA', 'MASS'])[['ENERGY','FRAG_MASS','FRAG_INTENSITY']]\
+        .apply(lambda x: x.groupby('ENERGY')[['FRAG_MASS','FRAG_INTENSITY']]\
+               .apply(lambda x: x.to_dict('list'))).to_dict('index')
+    #logger.critical('Num of chunks: {}'.format(len(cfmid_chunk_list)))
+    return formated_data_dict
+ 
+
     
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
