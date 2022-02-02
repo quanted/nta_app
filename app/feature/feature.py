@@ -157,7 +157,7 @@ class Feature_MS2(Feature):
                 score_dict['SINGLE_SCORES'].append(single_scores)
                 score_dict['SUM_SCORE'].append(sum(single_scores))
 
-        score_dict['Q-SCORE'] = [score/max(score_dict['SUM_SCORE']) for score in score_dict['SUM_SCORE']]
+        score_dict['Q-SCORE'] = [np.nan if max(score_dict['SUM_SCORE']) == 0 else score/max(score_dict['SUM_SCORE']) for score in score_dict['SUM_SCORE']]
         self.reference_scores = score_dict
             
     def __eq__(self, other):
@@ -262,9 +262,9 @@ class FeatureList:
         
         feature_dict = {'ID':[],'MASS_MGF':[],'MASS_NEUTRAL':[],'RT':[],
                       'DTXSID':[],'MASS':[],'FORMULA':[],
-                      'SINGLE_SCORES':[],'SUM_SCORE':[],'Q-SCORE':[],
-                      'PAR_FRAG_MASS':[], 'PAR_FRAG_INT':[],
-                      'REF_FRAG_MASS':[], 'REF_FRAG_INT':[]}
+                      'SINGLE_SCORES':[],'SUM_SCORE':[],'Q-SCORE':[]}   
+                      #'PAR_FRAG_MASS':[], 'PAR_FRAG_INT':[], #Uncomment to add to output
+                      #'REF_FRAG_MASS':[], 'REF_FRAG_INT':[]} #Uncomment to add to output
         for feature in self.feature_list:
             if feature.reference_scores:
                 for key in feature_dict.keys(): feature_dict[key].extend(feature.reference_scores.get(key, None))
