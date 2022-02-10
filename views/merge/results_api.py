@@ -1,9 +1,9 @@
-from ...tools.ms2.output_access import OutputServer
+from ...tools.merge.output_access import OutputServer
 
 
-def download_all(request, jobid = None):
+def download_merged(request, jobid = None):
     server = OutputServer(jobid)
-    response = server.all_files()
+    response = server.final_result()
     return response
 
 def check_status(request, jobid= None):

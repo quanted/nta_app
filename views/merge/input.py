@@ -8,32 +8,39 @@ from django.utils.encoding import iri_to_uri
 
 
 from .. import links_left
-from ...tools.ms2 import file_manager
-from .input_form import MS2Inputs
-from ...app.ms2.ms2_task import run_ms2_dask
+from ...tools.merge import file_manager
+from .input_form import MergeInputs
+from ...app.merge.merge_task import run_merge_dask
 
 def input_page(request, form_data=None, form_files=None):
 
-    model = 'MS2'
-    header = "Run MS2 CFMID Tool"
+    model = 'Merge'
+    header = "Merge MS1 and MS2 Outputs Tool"
     page = 'run_model'
     if (request.method == "POST"):
-        form = MS2Inputs(request.POST, request.FILES)
-        if (form.is_valid()):
+        form = MergeInputs(request.POST, request.FILES)
+        if form.is_valid():
             print("form is valid")
             parameters = request.POST
             parameters = parameters.dict()
             job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             print("job ID: " + job_id)
-            pos_input = request.FILES.getlist("pos_inputs")
-            neg_input = request.FILES.getlist("neg_inputs")
-            pos_input_list = pos_input if type(pos_input) in [list, tuple] else [pos_input]
-            neg_input_list = neg_input if type(neg_input) in [list, tuple] else [neg_input]
-            input_dfs = [None,None]
-            input_dfs[0] = [file_manager.parse_mgf(csv_file) for csv_file in pos_input_list if csv_file]
-            input_dfs[1] = [file_manager.parse_mgf(csv_file) for csv_file in neg_input_list if csv_file]
-            run_ms2_dask(parameters, input_dfs, job_id)
-            return redirect('/nta/ms2/processing/'+job_id, permanent=True)
+            fileParser = file_manager.FileParser()
+            input_data = {'MS1':None, 'MS2_pos': [], 'MS2_neg': []}
+            ms1_input = request.FILES.getlist("ms1_inputs")
+            input_data['MS1'] = fileParser.run(ms1_input[0])
+            if bool(request.FILES.get('ms2_pos_inputs', False)) == True:
+                ms2_pos_input = request.FILES.getlist("ms2_pos_inputs")
+                pos_input_list = ms2_pos_input if type(ms2_pos_input) in [list, tuple] else [ms2_pos_input]
+                input_data['MS2_pos'] = [{'file_name':file.name, 'file_df': fileParser.run(file)} for file in pos_input_list if file]
+                
+            if bool(request.FILES.get('ms2_neg_inputs', False)) == True:             
+                ms2_neg_input = request.FILES.getlist("ms2_neg_inputs")
+                neg_input_list = ms2_neg_input if type(ms2_neg_input) in [list, tuple] else [ms2_neg_input]
+                input_data['MS2_neg'] = [{'file_name':file.name, 'file_df': fileParser.run(file)} for file in neg_input_list if file]
+
+            run_merge_dask(parameters, input_data, job_id)
+            return redirect('/nta/merge/processing/'+job_id, permanent=True)
         else:
             form_data = request.POST
             form_files = request.FILES
@@ -46,14 +53,14 @@ def input_page(request, form_data=None, form_files=None):
     html += render_to_string('epa_drupal_section_title_nta.html', {})
 
     # function name example: 'sip_input_page'
-    html += render_to_string('ms2/nta_input_scripts.html')
-    html += render_to_string('ms2/nta_input_css.html')
-    html += render_to_string('ms2/ms2_input_start_drupal.html', {
+    html += render_to_string('merge/nta_input_scripts.html')
+    html += render_to_string('merge/nta_input_css.html')
+    html += render_to_string('merge/merge_input_start_drupal.html', {
         'MODEL': model,
         'TITLE': header},
          request=request)
 
-    html += str(MS2Inputs(form_data, form_files))
+    html += str(MergeInputs(form_data, form_files))
     html += render_to_string('04uberinput_end_drupal.html', {})
     html += render_to_string('04ubertext_end_drupal.html', {})
 

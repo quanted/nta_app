@@ -9,7 +9,7 @@ from .. import links_left
 #@require_POST
 def output_page(request, model='nta', header='NTA', jobid = '00000000'):
     header = "NTA"
-    model = "ms2"
+    model = "merge"
     model_output_html = "<h3> Job ID: " + jobid + "</h3> <br>"
 
     #this is where the func to generate output html will be called
@@ -43,7 +43,7 @@ def output_page_html(header, model, tables_html):
 
     #css and scripts
     html += render_to_string('09epa_drupal_pram_css.html', {})
-    html += render_to_string('ms2/nta_output_scripts.html', {})
+    html += render_to_string('merge/nta_output_scripts.html', {})
 
     #epa template footer
     html += render_to_string('10epa_drupal_footer.html', {})
@@ -53,7 +53,7 @@ def output_page_html(header, model, tables_html):
 def file_download_buttons(jobid):
     html =  """
         <div class="buttons">
-            <input type="button" value="Get results" onclick="window.open('/nta/ms2/results/{jobid}')">
+            <input type="button" value="Get results" onclick="window.open('/nta/merge/results/{jobid}')">
         </div>
     </div>
     """

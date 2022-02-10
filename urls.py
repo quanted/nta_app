@@ -64,7 +64,7 @@ urlpatterns = [
     path('merge/qaqc/', merge_qaqc.qaqcd_page),
     path('merge/references/', merge_references.references_page),
     path('merge/processing/<slug:jobid>', merge_processing.processing_page),
-    path('merge/results/<slug:jobid>', merge_results_api.download_all),
+    path('merge/results/<slug:jobid>', merge_results_api.download_merged),
     path('merge/status/<slug:jobid>', merge_results_api.check_status)
 ]
 

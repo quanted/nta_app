@@ -6,7 +6,7 @@ from django.forms.widgets import NumberInput
 class RangeInput(NumberInput):
     input_type = 'range'
 
-class MS2Inputs(forms.Form):
+class MergeInputs(forms.Form):
 
     project_name = forms.CharField(
         widget=forms.Textarea(attrs={'cols': 30, 'rows': 1}),
@@ -14,10 +14,9 @@ class MS2Inputs(forms.Form):
         required=True)
     ms1_inputs = forms.FileField(
         widget=forms.ClearableFileInput(attrs={'multiple': True}),
-        #label = 'Positive mode MS2 files (mgf)',
         label = 'NTA MS1 results file',
-        validators= [FileExtensionValidator(['csv'])],
-        required=False)
+        validators= [FileExtensionValidator(['csv', 'tsv', 'xlsx'])],
+        required=True)
     ms2_neg_inputs = forms.FileField(
         widget=forms.ClearableFileInput(attrs={'multiple': True}),
         label='NTA MS2 results file (negative mode)',
@@ -28,20 +27,7 @@ class MS2Inputs(forms.Form):
         label='NTA MS2 results file (positive mode)',
         validators= [FileExtensionValidator(['csv'])],
         required=False)
-    pcdl_neg_inputs = forms.FileField(
-        widget=forms.ClearableFileInput(attrs={'multiple': True}),
-        label='PCDL MS2 results file (negative mode)',
-        validators= [FileExtensionValidator(['csv'])],
-        required=False)
-    pcdl_pos_inputs = forms.FileField(
-        widget=forms.ClearableFileInput(attrs={'multiple': True}),
-        label='PCDL MS2 results file (negative mode)',
-        validators= [FileExtensionValidator(['csv'])],
-        required=False)
-    #mass_accuracy_units = forms.ChoiceField(
-    #    choices=(('ppm', 'ppm'), ('Da', 'Da'),),
-    #    label = 'Adduct mass accuracy units',
-    #    initial = 'ppm')
+
     mass_accuracy_tolerance = forms.FloatField(
         label='Mass acccuracy tolerance (ppm)',
         initial=10,
@@ -51,4 +37,10 @@ class MS2Inputs(forms.Form):
         label='Retention time tolerance (min)',
         initial=0.3,
         validators=[MinValueValidator(0)])
-
+    
+    def clean(self):
+        ms2_neg_clean = self.cleaned_data.get("ms2_neg_inputs")
+        ms2_pos_clean = self.cleaned_data.get("ms2_pos_inputs")
+        if not ms2_neg_clean and not ms2_pos_clean:
+            raise forms.ValidationError("No file entered for MS2 data")
+        return self.cleaned_data

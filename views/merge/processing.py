@@ -8,8 +8,8 @@ from .. import links_left
 
 #@require_POST
 def processing_page(request, model='nta', header='NTA', jobid='00000000', email = ""):
-    header = "MS2 CFMID Tool"
-    model = "ms2"
+    header = "Merge MS1 and MS2 Outputs Tool"
+    model = "Merge"
     model_output_html = '<div id="submitted>CFMID task successfully submitted.</div>'
     model_output_html += '<div id="jobid"> Job ID: {}</div>'.format(jobid)
     model_output_html += '<div id="status"> Processing... checking progress...</div>'.format(email)
@@ -44,7 +44,7 @@ def processing_page_html(header, model, tables_html):
     #css and scripts
     html += render_to_string('09epa_drupal_pram_css.html', {})
     html += render_to_string('09epa_drupal_pram_scripts.html', {})
-    html += render_to_string('ms2/nta_processing_scripts.html')
+    html += render_to_string('merge/nta_processing_scripts.html')
     #html += render_to_string('09epa_drupal_pram_scripts.html', {})
 
     #epa template footer
