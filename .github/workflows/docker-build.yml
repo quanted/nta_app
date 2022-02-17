@@ -46,6 +46,8 @@ jobs:
         with:
           repository: quanted/nta_kube
           token: ${{ secrets.NTA_ACTION_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.NTA_ACTION_TOKEN }}
       - name: Trigger nta-dask build
         run: |
           gh workflow run docker-build.yml --repo quanted/nta_kube
