@@ -61,18 +61,6 @@ def run_nta(parameters, input_dfs, tracer_df = None, mongo_address = None, jobid
     return True
 
 
-FILENAMES = {'stats': ['stats_pos', 'stats_neg'],
-             'tracers': ['tracers_pos', 'tracers_neg'],
-             'tracer_plots': ['tracer_plot_pos', 'tracer_plot_neg'],
-             #'cleaned': ['cleaned_pos', 'cleaned_neg'],
-             #'flags': ['flags_pos', 'flags_neg'],
-             #'combined': 'combined',
-             'mpp_ready': ['for_stats_full', 'for_stats_reduced'],
-             'dsstox': ['dsstox_search'],
-             'hcd': ['hcd_search'],
-             'toxpi': ['final_output_full', 'final_output_reduced']
-             }
-
 class NtaRun:
     
     def __init__(self, parameters=None, input_dfs=None, tracer_df=None, mongo_address = None, jobid = "00000000",
@@ -103,7 +91,6 @@ class NtaRun:
         self.mpp_ready = None
         self.search_results = None
         self.search = None
-        self.download_filenames = []
         self.jobid = jobid
         self.verbose = verbose
         self.in_docker = in_docker
@@ -111,6 +98,8 @@ class NtaRun:
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../../.."))
+        self.data_map = {}
+        self.tracer_map = {}
         #self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         #self.new_download_dir = os.path.join(self.data_dir, "new")
         self.step = "Started"  # tracks the current step (for fail messages)
@@ -189,8 +178,12 @@ class NtaRun:
         #self.clean_files()
         #if self.verbose:
         #    logger.info("Download files removed, processing complete.")
+        
+        # 8: Store data to MongoDB
+        self.step = "Storing data"
+        self.store_data()
 
-        # 8: set status to completed
+        # 9: set status to completed
         self.step = "Displaying results"
         self.set_status('Completed')
 
@@ -240,8 +233,8 @@ class NtaRun:
                                                  ionization='positive', id_start=1)
         self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
                                                  ionization='negative', id_start=len(self.dfs[0].index)+1)
-        self.mongo_save(self.dfs[0], FILENAMES['stats'][0])
-        self.mongo_save(self.dfs[1], FILENAMES['stats'][1])
+        self.data_map['stats_pos'] = self.dfs[0]
+        self.data_map['stats_neg'] = self.dfs[1]
         return
 
     def check_tracers(self):
@@ -254,10 +247,15 @@ class NtaRun:
         self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
         self.tracer_dfs_out = [format_tracer_file(df) for df in self.tracer_dfs_out]
         self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
-        self.mongo_save(self.tracer_dfs_out[0], FILENAMES['tracers'][0])
-        self.mongo_save(self.tracer_dfs_out[1], FILENAMES['tracers'][1])
-        self.mongo_save(self.tracer_plots_out[0], FILENAMES['tracer_plots'][0], df=False)
-        self.mongo_save(self.tracer_plots_out[1], FILENAMES['tracer_plots'][1], df=False)
+        
+        self.data_map['tracer_pos'] = self.tracer_dfs_out[0]
+        self.data_map['tracer_neg'] = self.tracer_dfs_out[1]
+        self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
+        self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
+         
+        self.gridfs.put("&&".join(self.tracer_map.keys()), _id=self.jobid + "_tracer_files", encoding='utf-8', project_name = self.project_name)
+        for key in self.tracer_map.keys():
+            self.mongo_save(self.tracer_map[key], step=key)
         return
 
     def clean_features(self):
@@ -277,8 +275,9 @@ class NtaRun:
         self.df_combined = fn.combine(self.dfs[0], self.dfs[1])
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
-        self.mongo_save(self.mpp_ready, FILENAMES['mpp_ready'][0])
-        self.mongo_save(reduced_file(self.mpp_ready), FILENAMES['mpp_ready'][1])  # save the reduced version
+        self.data_map['combined_stats_full'] = self.mpp_ready
+        self.data_map['combined_stats_reduced'] = reduced_file(self.mpp_ready)
+
 
     def iterate_searches(self):
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
@@ -328,19 +327,25 @@ class NtaRun:
             dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                             dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
-        self.mongo_save(dsstox_search_df, FILENAMES['dsstox'][0])
+        dsstox_search_df = self.mpp_ready[['Feature_ID','Mass', 'Retention_Time']].merge(dsstox_search_df, how = 'right', left_on = 'Mass', right_on = 'INPUT')
+        self.data_map['dsstox_search'] = dsstox_search_df
         self.search_results = dsstox_search_df
-        #if save:                                                        
-        #    self.mongo_save(self.search_results, FILENAMES['dashboard'])
+
         
     def perform_hcd_search(self):
         logger.info(f'Querying the HCD with DTXSID identifiers')
         if len(self.search_results) > 0:
-            dtxsid_list = self.search_results['DTXSID']
-            hcd_results = api_search_hcd(dtxsid_list)
-            self.mongo_save(hcd_results, FILENAMES['hcd'][0])
+            dtxsid_list = self.search_results['DTXSID'].unique()
+            hcd_results = batch_search_hcd(dtxsid_list)
             self.search_results = self.search_results.merge(hcd_results, how = 'left', on = 'DTXSID')
+            self.data_map['dsstox_search'] = dsstox_search_df
+            self.data_map['hcd_search'] = hcd_results
     
+    def store_data(self):
+        logger.info(f'Storing data files to MongoDB')
+        self.gridfs.put("&&".join(self.data_map.keys()), _id=self.jobid + "_file_names", encoding='utf-8', project_name = self.project_name)
+        for key in self.data_map.keys():
+            self.mongo_save(self.data_map[key], step=key)
 
     def download_finished(self, save = False):
         finished = False
@@ -415,18 +420,19 @@ class NtaRun:
         by_mass = self.search_mode == "mass"
         self.df_combined = toxpi.process_toxpi(self.df_combined, self.search_results,
                                                tophit=self.top_result_only, by_mass = by_mass)
-        self.mongo_save(self.df_combined, FILENAMES['toxpi'][0])
-        self.mongo_save(reduced_file(self.df_combined), FILENAMES['toxpi'][1])
+        self.data_map['final_full'] = self.df_combined
+        self.data_map['final_reduced'] = reduced_file(self.df_combined)
 
     def clean_files(self):
         shutil.rmtree(self.data_dir)  # remove data directory and all download files
         if self.verbose:
             logger.info("Cleaned up download file.")
 
-    def mongo_save(self, file, step="", df=True):
-        if df:
+    def mongo_save(self, file, step=""):
+        if isinstance(file, pd.DataFrame):
             to_save = file.to_json(orient='split')
         else:
             to_save = file
         id = self.jobid + "_" + step
+        
         self.gridfs.put(to_save, _id=id, encoding='utf-8', project_name = self.project_name)
