@@ -7,7 +7,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-dask:
+  build-django:
     runs-on: ubuntu-latest
     permissions:
       contents: read
