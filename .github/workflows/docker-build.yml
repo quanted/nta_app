@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: quanted/nta_kube
-          repo-token: ${{ secrets.NTA_ACTION_TOKEN }}
+          token: ${{ secrets.NTA_ACTION_TOKEN }}
       - name: Trigger nta-dask build
         run: |
           gh workflow run docker-build.yml --repo quanted/nta_kube
