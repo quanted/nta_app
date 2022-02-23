@@ -90,8 +90,10 @@ class Feature_MS2(Feature):
         self.total_signal = sum(self.ms2_spectrum.frag_intensity)
         self.feature_data = {'ID':self.feature_id,'MASS_MGF':self.mass,
                              'MASS_NEUTRAL':self.neutral_mass,'RT':self.rt}
-        self.reference_spectra = {}
-        self.reference_scores = None
+
+        self.reference_scores = {'ID':[],'MASS_MGF':[],'MASS_NEUTRAL':[],'RT':[],
+                      'DTXCID':[],'MASS':[],'FORMULA':[],
+                      'SINGLE_SCORES':[],'SUM_SCORE':[],'Q-SCORE':[]}
         
     def set_neutral_mass(self, is_neutral):
         if(is_neutral):
@@ -101,22 +103,8 @@ class Feature_MS2(Feature):
         
     def merge(self, other): #Implement later, consensus merge with fragment alignment
         return self
-    
-    def add_reference_spectra(self, spectra_dict):
-        """
-        Adds spectra_dict as items to self.reference_spectra dictionary. Necessary
-        step to assign reference spectra to a feature before calcualting similarity scores
-        
-        :param spectra_dict: Format of spectra_dict (from CFMID): 
-            {(DTXSID, FOMULA, MASS): 
-                 {ENERGY0: {'FRAG_MASS': [], 'FRAG_INTENSITY':[]}},
-                 {ENERGY1: {'FRAG_MASS': [], 'FRAG_INTENSITY':[]}},
-                 {ENERGY2: {'FRAG_MASS': [], 'FRAG_INTENSITY':[]}}}
-        :type spectra_dict: nested dictionary
-        """
-        self.reference_spectra.update(spectra_dict)
-    
-    def calc_similarity_scores(self, spectra_scorer = None):
+
+    def calc_similarity(self, spectra_dict, spectra_scorer = None):
         """
         Iterates through self.reference_spectra and calcualtes similarity 
         scores betwen the parent's MS2_Spectrum and reference spectra captued in parent 
@@ -125,6 +113,16 @@ class Feature_MS2(Feature):
         As scores are calculated, a dictionary is updated with corresponding data
         to be used as an output.
         
+        :param spectra_dict: Nested dictionary output from the utilities.dask_ms2_search_api search
+        represented by the following structure:
+            
+            {(DTXCID, FORMULA, MASS): 
+                 {'ENERGY1': MS2_Spectrum,
+                  'ENERGY2': MS2_Spectrum,
+                  'ENERGY3': MS2_Spectrum}
+                 },
+            }
+        
         :param spectra_scorer: SpectraScorer class object used to calcualte similarity (deafult None)
         :param type: SpectraScorer, optional
         """
@@ -132,33 +130,19 @@ class Feature_MS2(Feature):
         if spectra_scorer is None:
             spectra_scorer = SpectraScorer()
 
-        if len(self.reference_spectra) > 0:
-            score_dict = {'ID':[],'MASS_MGF':[],'MASS_NEUTRAL':[],'RT':[],
-                          'DTXSID':[],'MASS':[],'FORMULA':[],
-                          'SINGLE_SCORES':[],'SUM_SCORE':[],'Q-SCORE':[],
-                          'PAR_FRAG_MASS':[], 'PAR_FRAG_INT':[],
-                          'REF_FRAG_MASS':[], 'REF_FRAG_INT':[]}
-            
-            for identifiers, spectra in self.reference_spectra.items():
-                score_dict['ID'].append(self.feature_id)
-                score_dict['MASS_MGF'].append(self.mass)
-                score_dict['MASS_NEUTRAL'].append(self.neutral_mass)
-                score_dict['RT'].append(self.rt)
-                score_dict['DTXSID'].append(identifiers[0])
-                score_dict['FORMULA'].append(identifiers[1])
-                score_dict['MASS'].append(identifiers[2])
-                single_scores = [spectra_scorer.calc_score(self.ms2_spectrum, 
-                                                          MS2_Spectrum(spectrum['FRAG_MASS'], spectrum['FRAG_INTENSITY'])
-                                                          ) for energy, spectrum in spectra.items()]
-                score_dict['PAR_FRAG_MASS'].append(self.ms2_spectrum.spectrum_df['FRAGMENT_MASS'])
-                score_dict['PAR_FRAG_INT'].append(self.ms2_spectrum.spectrum_df['INTENSITY'])
-                score_dict['REF_FRAG_MASS'].append([spectrum['FRAG_MASS'] for spectrum in spectra.values()])
-                score_dict['REF_FRAG_INT'].append([spectrum['FRAG_INTENSITY'] for spectrum in spectra.values()])
-                score_dict['SINGLE_SCORES'].append(single_scores)
-                score_dict['SUM_SCORE'].append(sum(single_scores))
+        for identifiers, spectra in spectra_dict.items():
+            self.reference_scores['ID'].append(self.feature_id)
+            self.reference_scores['MASS_MGF'].append(self.mass)
+            self.reference_scores['MASS_NEUTRAL'].append(self.neutral_mass)
+            self.reference_scores['RT'].append(self.rt)
+            self.reference_scores['DTXCID'].append(identifiers[0])
+            self.reference_scores['FORMULA'].append(identifiers[1])
+            self.reference_scores['MASS'].append(identifiers[2])
+            single_scores = [spectra_scorer.calc_score(self.ms2_spectrum, spectrum) 
+                             for energy, spectrum in spectra.items()]
+            self.reference_scores['SINGLE_SCORES'].append(single_scores)
+            self.reference_scores['SUM_SCORE'].append(sum(single_scores))
 
-        score_dict['Q-SCORE'] = [np.nan if max(score_dict['SUM_SCORE']) == 0 else score/max(score_dict['SUM_SCORE']) for score in score_dict['SUM_SCORE']]
-        self.reference_scores = score_dict
             
     def __eq__(self, other):
         mass_equivalent = abs((other.mass - self.mass)/self.mass)*1000000 < self.mass
@@ -259,17 +243,25 @@ class FeatureList:
         
         :returns: datframe constructed from Feature data
         """
-        
+
         feature_dict = {'ID':[],'MASS_MGF':[],'MASS_NEUTRAL':[],'RT':[],
-                      'DTXSID':[],'MASS':[],'FORMULA':[],
+                      'DTXCID':[],'MASS':[],'FORMULA':[],
                       'SINGLE_SCORES':[],'SUM_SCORE':[],'Q-SCORE':[]}   
-                      #'PAR_FRAG_MASS':[], 'PAR_FRAG_INT':[], #Uncomment to add to output
-                      #'REF_FRAG_MASS':[], 'REF_FRAG_INT':[]} #Uncomment to add to output
+        
         for feature in self.feature_list:
-            if feature.reference_scores:
-                for key in feature_dict.keys(): feature_dict[key].extend(feature.reference_scores.get(key, None))
+            feature.reference_scores['Q-SCORE'] = [np.nan if max(feature.reference_scores['SUM_SCORE']) == 0 else 
+                                                score/max(feature.reference_scores['SUM_SCORE']) for score in feature.reference_scores['SUM_SCORE']]
+            for key in feature_dict.keys(): feature_dict[key].extend(feature.reference_scores.get(key, None))
             
         return pd.DataFrame.from_dict(feature_dict)
+    
+    def _remove_unnanotated_features(self):
+        self.feature_list[:] = [feature for feature in self.feature_list if len(feature.reference_spectra) > 0]
+    
+    def calc_similarity(self):
+        self._remove_unnanotated_features()
+        for feature in self.feature_list:
+            feature.calc_similarity_scores()             
 
     def __len__(self):
         return len(self.feature_list)

@@ -6,10 +6,12 @@ import logging
 import traceback
 import shutil
 import json
+import asyncio
+
 from datetime import datetime
-from dask.distributed import Client, LocalCluster, fire_and_forget
+from dask.distributed import Client, LocalCluster, fire_and_forget, as_completed, get_client, wait
 from django.urls import reverse
-from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, ms2_search_api
+from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, ms2_api_search
 from .ms2_functions import sqlCFMID
 from ..feature.feature import FeatureList
 from ..feature.score_algo import SpectraScorer
@@ -40,6 +42,7 @@ def run_ms2_dask(parameters, input_dfs, jobid = "00000000", verbose = True):
         dask_scheduler = os.environ.get("DASK_SCHEDULER")
         logger.info("Running in docker environment. Dask Scheduler: {}".format(dask_scheduler))
         dask_client = Client(dask_scheduler)
+        logger.info("Dask URL: {dask_client.dashboard_link}")
     dask_input_dfs = dask_client.scatter(input_dfs)
     logger.info("Submitting Nta ms2 Dask task")
     task = dask_client.submit(run_ms2, parameters, dask_input_dfs, mongo_address, jobid, results_link=link_address,
@@ -71,7 +74,6 @@ class MS2Run:
     def __init__(self, parameters=None, input_dfs=None, mongo_address = None, jobid = "00000000",
                  results_link = None, verbose = True, in_docker = True):
         logger.info('MS2Run initialize - started')
-        self.start = time.perf_counter()
         self.project_name = parameters['project_name']
         self.input_dfs = input_dfs
         self.n_masses = 1
@@ -89,24 +91,24 @@ class MS2Run:
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.step = "Started"  # tracks the current step (for fail messages)
+        self.time_log = {'step': [], 'start': []}
 
     def execute(self):
-
         self.set_status('Reading Data', create= True)
         self.construct_featurelist()
                 
         self.set_status('Retrieving Reference Spectra')
         self.get_CFMID_spectra();
+                
         
-        self.set_status('Preparing Results')
-        self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][0])   
-        self.mongo_save(self.features['neg'].to_df(), step=FILENAMES['final_output'][1])
+        self.set_status('Storing Scores')
+        self.save_data()
 
         self.set_status('Completed')
         #self.send_email()
         logger.critical('Run Finished')
-        logger.info(f'Run time: {time.perf_counter() - self.start}')
-
+        logger.info(self.report_time_logs())
+    
     def construct_featurelist(self):
         """
         Prepares pos- and neg-mode FeatureList object from the input dfs 
@@ -120,44 +122,49 @@ class MS2Run:
                 self.update_progress()
             self.features[mode] = tmp_feature_list
     
-
+    
     def get_CFMID_spectra(self):
         """
         Instantiate pos_list and neg_list with tuples of unique masses in the FeatureList and corrsponding mode. Iterate through list
         to get CFMID data. Returned spectra are appended to corresponding Features in the feature list using mass to join spectra.
         """
+        
+        self.n_masses = len(self.features['pos']) + len(self.features['neg'])
         pos_list = [(mass, 'ESI-MSMS-pos') for mass in self.features['pos'].get_masses(neutral = True)] if len(self.features['pos']) > 0 else [] 
         neg_list = [(mass, 'ESI-MSMS-neg') for mass in self.features['neg'].get_masses(neutral = True)] if len(self.features['neg']) > 0 else []
-        self.n_masses = len(pos_list) + len(neg_list)
-        for index, (mass, mode) in enumerate(pos_list + neg_list):
-            logger.critical("Searching mass " + str(mass) + " number " + str(index) + " of " + str(len(pos_list + neg_list)))
-            cfmid_result_list = ms2_search_api(mass, self.precursor_mass_accuracy, mode, self.jobid)
-            self.update_progress()
-            if cfmid_result_list is None:
-                logger.critical(f'Found 0 structures for mass {mass}')
-                continue
-            logger.critical(f'Found {len(cfmid_result_list)} structures for mass {mass}')
-            if len(cfmid_result_list) > 0:
-                self.append_reference_spectra(mass, mode, cfmid_result_list)
-        
-    def append_reference_spectra(self, mass, mode, cfmid_result_list):
-        """
-        For each feature that corresponds to the input mass in the Feature List object, add a cfmid result
-        and calculate the similarity scores using a SpectraScorer object.
-        
-        :param mass: mass used to find corresponding ms2 features in feature list
-        :type mass: float
-        :param mode: Value used to set the mass accuracy (ppm)
-        :type mode: float, optional
-        :param cfmid_result_list: List of cfmid_results returned from the api query
-        :type cfmid_result_list: list of nested dictionaries
-        """
-        feature_mode = 'pos' if mode == 'ESI-MSMS-pos' else 'neg'
-        spectra_scorer = SpectraScorer()
-        for feature in self.features[feature_mode].get_features(mass, by='neutral_mass'):
-            feature.add_reference_spectra(cfmid_result_list)
-            feature.calc_similarity_scores(spectra_scorer)
+        all_masses = pos_list + neg_list
+        chunk_size = 200
+        for idx in range(0, len(all_masses), chunk_size):
+            chunk = all_masses[idx : idx + chunk_size]
+            start = time.perf_counter()
+            cfmid_responses = []
+            asyncio.run(ms2_api_search(cfmid_responses, chunk, self.precursor_mass_accuracy, self.jobid))
+            logger.info(f'API search time: {time.perf_counter() - start} for {chunk_size} structures')
+            for response in cfmid_responses:
+                self.compare_reference_spectra(response)
+                self.update_progress()
+            
+    def save_data(self):         
+        self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][0])
+        self.mongo_save(self.features['neg'].to_df(), step=FILENAMES['final_output'][1])
 
+    def compare_reference_spectra(self, cfmid_response):
+        """
+        For each feature that corresponds to the input mass in the Feature List 
+        object then add a cfmid result.
+        
+        :param cfmid_response: nested dict returned from processing the results of a cfmid query
+        :type cfmid_response: dict
+
+        """
+        if cfmid_response['data'] is None:
+            logger.info(f'Found 0 structures for mass {cfmid_response["mass"]}')
+            return
+        logger.info(f'Found {len(cfmid_response["data"])} structures for mass {cfmid_response["mass"]}')
+        feature_mode = 'pos' if cfmid_response['mode'] == 'ESI-MSMS-pos' else 'neg'
+        for feature in self.features[feature_mode].get_features(cfmid_response['mass'], by='neutral_mass'):
+            feature.calc_similarity(cfmid_response['data'])
+        
     def send_email(self):
         try:
             #link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
@@ -170,7 +177,10 @@ class MS2Run:
         self.query_progress = 0
         self.prepare_progress = 0
 
+    
     def set_status(self, status, create = False):
+        self.step = status
+        self.log_time()
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
         post_id = self.jobid + "_" + "status"
@@ -188,9 +198,20 @@ class MS2Run:
                                                          'progress': str(self.progress),
                                                          'status': status}},
                              upsert=True)
-
-    def update_progress(self):
-        self.progress +=  1
+    
+    def log_time(self):
+        self.time_log['start'].append(time.perf_counter())
+        self.time_log['step'].append(self.get_step())
+    
+    def report_time_logs(self):
+        total_time = max(self.time_log['start']) - min(self.time_log['start'])
+        step_time = {}
+        for idx, step in enumerate(self.time_log['step'][:-1]):
+            step_time[step] = self.time_log['start'][idx + 1] - self.time_log['start'][idx]
+        return f"Total run time: {total_time} \n {json.dumps(step_time, indent = 6)}"
+    
+    def update_progress(self, step_size = 1):
+        self.progress +=  step_size
         posts = self.mongo.posts
         post_id = self.jobid + "_" + "status"
         posts.update_one({'_id': post_id}, {'$set': {'_id': post_id,

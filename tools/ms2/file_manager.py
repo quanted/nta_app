@@ -9,9 +9,9 @@ def parse_mgf(file_in):
     #NFile = file.rsplit('/', 1)[-1]
     #NewFile = NFile.rsplit('.', 1)[0] + ".csv"
     #with open(file) as f:
-    decoded_file = file_in.read().decode('utf-8')
-    io_string = io.StringIO(decoded_file)
-    with io_string as f:
+    #decoded_file = file_in.read().decode('utf-8')
+    #io_string = io.StringIO(decoded_file)
+    with Open_Input(file_in) as f:
     #print(file)
         RESULT = list()
         for line in f:
@@ -29,3 +29,19 @@ def parse_mgf(file_in):
                     result['FRAG_INTENSITY'].append(float(b))
                 RESULT.append(result)
     return RESULT
+
+class Open_Input(object):
+    def __init__(self, file_in):
+        if isinstance(file_in, str):
+            self.file_obj = open(file_in, "r")
+        else:
+            decoded_file = file_in.read().decode('utf-8')
+            self.file_obj = io.StringIO(decoded_file)
+    def __enter__(self):
+    	return self.file_obj
+    def __exit__(self, type, value, traceback):
+        self.file_obj.close()
+        return True
+	        
+
+
