@@ -247,7 +247,13 @@ def score(df):  # Get score from annotations.
 def clean_features(df, controls):  # a method that drops rows based on conditions
     Abundance=  df.columns[df.columns.str.contains(pat ='N_Abun_')].tolist()
     blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
-    Median = df.columns[df.columns.str.contains(pat ='Median_')].tolist()
+    Mean = df.columns[df.columns.str.contains(pat ='Mean_')].tolist()
+    Mean_samples = [md for md in Mean if not any(x in md for x in blanks)]
+    Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
+    Std = df.columns[df.columns.str.contains(pat ='STD_')].tolist()
+    Std_samples = [md for md in Std if not any(x in md for x in blanks)]
+    Std_MB = [md for md in Std if any(x in md for x in blanks)]
+    Median = df.columns[df.columns.str.contains(pat ='Median_')].tolist()    
     Median_Samples = [md for md in Median if not any(x in md for x in blanks)]
     Median_High = [md for md in Median if 'C' in md]
     Median_Mid = [md for md in Median if 'B' in md]
@@ -274,7 +280,9 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     cv_not_met.columns = m.columns
     df[Median_Samples] = m.mask(cv_not_met)
     #find the median of all samples and select features where median_samples/ median_blanks >= cutoff
+    #Updated to test sample mean > 3*STDblank + mean_blank
     df['Max_Median_ALLSamples'] = df[Median_Samples].max(axis=1,skipna=True).round(0)
     df['SampletoBlanks_ratio'] = df['Max_Median_ALLSamples'].astype('float')/df[Median_MB[0]].astype('float')
-    df = df[(df[N_Abun_MB[0]] == 0) | (df['SampletoBlanks_ratio'] >= controls[0])].copy()
+    df['BlankStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
+    df = df[(df[N_Abun_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlankStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
     return df

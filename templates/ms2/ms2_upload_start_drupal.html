@@ -9,10 +9,14 @@
       <div class="pane-content">
 {#        <div class="node node-page clearfix view-mode-full">#}
           <div class="model_inputs">
-          <form method="post" action="/nta/ms2/input/" name="input_table" enctype="multipart/form-data">
+          <form method="post" action="/nta/ms2/upload/" name="input_table" enctype="multipart/form-data">
               {% csrf_token %}
             <table class="nostripe input_table">
               <thead>
                 <tr><th scope="col">Input</th><th scope="col">Value</th></tr>
               </thead>
+              <tr>
+                <th>Job ID:</th>
+                <td><input type="text" id="jobID" name="jobID" value="" readonly="readonly"/></td>
+              </tr>
 <!--end 04uberinput_start-->

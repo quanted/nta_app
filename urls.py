@@ -8,12 +8,12 @@ from nta_app.views.ms1 import algorithms as ms1_algorithms
 from nta_app.views.ms1 import qaqc as ms1_qaqc
 from nta_app.views.ms1 import references as ms1_references
 from nta_app.views.ms1 import formula_list as ms1_formulas
-from nta_app.views.ms2 import input as ms2_input
+from nta_app.views.ms2 import upload as ms2_upload
+from nta_app.views.ms2 import processing as ms2_processing
 from nta_app.views.ms2 import output as ms2_output
 from nta_app.views.ms2 import algorithms as ms2_algorithms
 from nta_app.views.ms2 import qaqc as ms2_qaqc
 from nta_app.views.ms2 import references as ms2_references
-from nta_app.views.ms2 import processing as ms2_processing
 from nta_app.views.ms2 import results_api as ms2_results_api
 from nta_app.views.merge import input as merge_input
 from nta_app.views.merge import output as merge_output
@@ -22,6 +22,7 @@ from nta_app.views.merge import qaqc as merge_qaqc
 from nta_app.views.merge import references as merge_references
 from nta_app.views.merge import processing as merge_processing
 from nta_app.views.merge import results_api as merge_results_api
+from nta_app.views.data_handler import data_api as data_api
 from nta_app.views.misc import github
 import os
 
@@ -32,6 +33,7 @@ urlpatterns = [
     # ms1 tool
     path('', ms1_input.input_page),
     path('ms1', ms1_input.input_page),
+    path('ms1/', ms1_input.input_page),
     path('ms1/input/', ms1_input.input_page),
     path('ms1/processing/<slug:jobid>', ms1_processing.processing_page),
     path('ms1/output/<slug:jobid>', ms1_output.output_page),
@@ -46,8 +48,12 @@ urlpatterns = [
     path('github/', github),
     #
     # ms2 tool
-    path('ms2', ms2_input.input_page),
-    path('ms2/input/', ms2_input.input_page),
+    path('ms2', ms2_upload.upload_page),
+    path('ms2/', ms2_upload.upload_page),
+    path('ms2/<slug:jobid>', ms2_upload.upload_page_job),
+    path('ms2/upload', ms2_upload.upload_page),
+    path('ms2/upload/', ms2_upload.upload_page),
+    path('ms2/upload/<slug:jobid>', ms2_upload.upload_page_job),
     path('ms2/output/<slug:jobid>', ms2_output.output_page, name='ms2_results'),
     path('ms2/algorithms/', ms2_algorithms.algorithms_page),
     path('ms2/qaqc/', ms2_qaqc.qaqcd_page),
@@ -65,7 +71,13 @@ urlpatterns = [
     path('merge/references/', merge_references.references_page),
     path('merge/processing/<slug:jobid>', merge_processing.processing_page),
     path('merge/results/<slug:jobid>', merge_results_api.download_merged),
-    path('merge/status/<slug:jobid>', merge_results_api.check_status)
+    path('merge/status/<slug:jobid>', merge_results_api.check_status),
+    #
+    # file uploads
+    path('files', data_api.get_files),
+    path('upload', data_api.upload_api),
+    path('upload/', data_api.upload_api),
+    path('delete/', data_api.delete_api)
 ]
 
 urlpatterns = [path('nta/', include(urlpatterns))]

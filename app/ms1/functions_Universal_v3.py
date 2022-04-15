@@ -287,7 +287,8 @@ def flags(df): # a method to develop required flags
     df['Formula_Match'] = np.where(df.Score != df.Score,'0','1') #check if it does not have a score
     df['Formula_Match_Above90'] = np.where(df.Score >= SCORE,'1','0')
     df['X_NegMassDef_Below90'] = np.where(((df.Score < SCORE) & (df.Neg_Mass_Defect == '1') & (df.Halogen == '1')),'1','0')
-    df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '0')
+    #df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '0')
+    df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '1') #REMOVE THIS LINE AND UNCOMMENT ABOVE
     df.sort_values(['Formula_Match','For_Dashboard_Search','Formula_Match_Above90','X_NegMassDef_Below90'],ascending=[False,False,False,False],inplace=True)
     #df.to_csv('input-afterflag.csv', index=False)
     #print df1

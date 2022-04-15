@@ -9,6 +9,7 @@ import logging
 import json
 import math
 import requests
+import time
 import numpy as np
 import pandas as pd
 from .functions_Universal_v3 import parse_headers
@@ -50,11 +51,20 @@ def reduced_file(df_in):
     df.drop(to_drop, axis=1, inplace=True)
     return df
 
+def response_log_wrapper(api_name:str):
+    def api_log_decorator(request_func):
+        def wrapper(*args, **kwargs):
+            logger.info(f"============ calling REST API: {api_name}" )
+            start_time = time.perf_counter()
+            response = request_func(*args, **kwargs)
+            logger.info(f"Response: {response}   Run time: {time.perf_counter() - start_time}")
+            return response
+        return wrapper
+    return api_log_decorator
 
+@response_log_wrapper('DSSTOX')
 def api_search_masses(masses, accuracy, jobid = "00000"):
-    #print("Sending {} masses".format(len(masses)))
     input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
-    logger.info("=========== calling DSSTOX REST API")
     #if "edap-cluster" in DSSTOX_API:
     api_url = '{}/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
     #else:
@@ -72,7 +82,6 @@ def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
         if end > n_masses-1:
             end = n_masses-1
         response = api_search_masses(masses[i:end+1], accuracy, jobid)
-        logger.info(f"Response: {response}")
         dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
         if i == 0:
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
@@ -84,9 +93,9 @@ def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
     
     return dsstox_search_df
 
+@response_log_wrapper('DSSTOX')
 def api_search_formulas(formulas, jobID = "00000"):
     input_json = json.dumps({"search_by": "formula", "query": formulas})  # assumes ppm
-    logger.info("=========== calling DSSTOX REST API")
     if "edap-cluster" in DSSTOX_API:
         api_url = '{}/rest/ms1/batch/{}'.format(DSSTOX_API, jobID)
     else:
@@ -95,22 +104,30 @@ def api_search_formulas(formulas, jobID = "00000"):
     http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json)
 
+@response_log_wrapper('HCD')
 def api_search_hcd(dtxsid_list):
     post_data = {"chemicals":[], "options": {"cts": None, "minSimilarity": 0.95, "analogsSearchType": None}}
     headers = {'content-type': 'application/json'}
     url = 'https://hazard.sciencedataexperts.com/api/hazard'
-    for dtxsid in dtxsid_list: post_data['chemicals'].append({'chemical': {'sid': dtxsid, "checked": True}, "properties": {}})
-    response = requests.post(url, data=json.dumps(post_data), headers=headers)
-    chem_data_list = json.loads(response.content)['hazardChemicals']
-    result_dict = {}
-    for chemical in chem_data_list:
-        chemical_id = chemical['chemicalId'].split('|')[0]
-        result_dict[chemical_id] = {}
-        for data in chemical['scores']:
-            result_dict[chemical_id][f'{data["hazardName"]}_score'] = data['finalScore']
-            result_dict[chemical_id][f'{data["hazardName"]}_authority'] = data['finalAuthority'] if 'finalAuthority' in data.keys() else ''
-    return pd.DataFrame(result_dict).transpose().reset_index().rename(columns = {'index':'DTXSID'})
+    for dtxsid in dtxsid_list: 
+        post_data['chemicals'].append({'chemical': {'sid': dtxsid, "checked": True}, "properties": {}})
+    return requests.post(url, data=json.dumps(post_data), headers=headers)
             
+def batch_search_hcd(dtxsid_list, batchsize = 150):
+    result_dict = {}
+    logger.info(f"Search {len(dtxsid_list)} DTXSIDs in HCD")
+    for i in range(0, len(dtxsid_list), batchsize):
+        logger.info(f"HCD Query: {i//batchsize} of {len(dtxsid_list)//batchsize} batches")
+        response = api_search_hcd(dtxsid_list[i:i+batchsize])
+        chem_data_list = json.loads(response.content)['hazardChemicals']
+        for chemical in chem_data_list:
+            chemical_id = chemical['chemicalId'].split('|')[0]
+            result_dict[chemical_id] = {}
+            for data in chemical['scores']:
+                result_dict[chemical_id][f'{data["hazardName"]}_score'] = data['finalScore']
+                result_dict[chemical_id][f'{data["hazardName"]}_authority'] = data['finalAuthority'] if 'finalAuthority' in data.keys() else ''
+    return pd.DataFrame(result_dict).transpose().reset_index().rename(columns = {'index':'DTXSID'})
+
 def format_tracer_file(df_in):
     df = df_in.copy()
     df = df.drop(columns=['Compound', 'Score'])

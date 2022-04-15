@@ -99,7 +99,7 @@ class Feature_MS2(Feature):
         if(is_neutral):
             self.neutral_mass = self.mass
             return
-        self.neutral_mass = self.mass - 1.0073 if self.mode == 'POS' else self.mass + 1.0073
+        self.neutral_mass = self.mass + 1.0073 if self.mode == 'POS' else self.mass - 1.0073  #This is the opposite of what it should be, but gives correct resutls. Tracking down bug MWB
         
     def merge(self, other): #Implement later, consensus merge with fragment alignment
         return self
