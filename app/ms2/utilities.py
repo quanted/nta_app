@@ -69,7 +69,7 @@ async def ms2_api_search(output, feature_list, accuracy=None, jobid='00000'):
         }
     }
     """
-    api_url = validate_url('{}/rest/ms2/{}'.format(DSSTOX_API, jobid))
+    api_url = validate_url('{}/rest/ms2/{}'.format("https://qed-dev.edap-cluster.com/nta/flask_proxy", jobid))
 
     async def get_responses(output, feature_list, accuracy, jobid):
         async with aiohttp.ClientSession() as session:
