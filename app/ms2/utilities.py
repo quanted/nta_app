@@ -35,7 +35,7 @@ def connect_to_mongo_gridfs(address):
 def fetch_ms2_files(jobID):
     gridfs = connect_to_mongo_gridfs(os.environ.get('MONGO_SERVER'))
     file_ids = gridfs.find({'jobid': jobID, 'ms': 'ms2'}).distinct('_id')
-    return [(gridfs.get(_id), gridfs.get(_id).filetype)  for _id in file_ids]
+    return [gridfs.get(_id) for _id in file_ids]
         
 
 async def ms2_api_search(output, feature_list, accuracy=None, jobid='00000'):

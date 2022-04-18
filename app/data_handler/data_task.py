@@ -51,11 +51,11 @@ def handle_uploaded_file(file, filename, filetype, ms, mode, jobid):
     files = mongoDB.get_collection("fs.files")
     chunks = mongoDB.get_collection("fs.chunks")
 
-    files.create_index([("uploadDate", 1)], expireAfterSeconds=600)
+    files.create_index([("uploadDate", 1)], expireAfterSeconds=86400)   #Expires in 24h
     
     chunks.update_many({"files_id": file_id}, 
                        {"$set": {"uploadDate": datetime.datetime.utcnow()}})
-    chunks.create_index([("uploadDate", 1)], expireAfterSeconds=660)
+    chunks.create_index([("uploadDate", 1)], expireAfterSeconds=86460)  #Expires in 24h
     
     return file_id
     

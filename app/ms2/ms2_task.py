@@ -117,12 +117,11 @@ class MS2Run:
         Parse MGF file stored on mongo DB. Uses jobID to fetch relatd MS2 files before parse
         """
         grid_out = fetch_ms2_files(self.jobid)
-        for file, filetype in grid_out:
-            infile = io.BytesIO(file.read())
+        for file in grid_out:
             if file.mode == 'neg':
-                self.input_dfs['neg'].append(parse_mgf(infile))
+                self.input_dfs['neg'].append(parse_mgf(file))
             else:
-                self.input_dfs['pos'].append(parse_mgf(infile))
+                self.input_dfs['pos'].append(parse_mgf(file))
     
     def construct_featurelist(self):
         """
@@ -143,18 +142,18 @@ class MS2Run:
         to get CFMID data. Returned spectra are appended to corresponding Features in the feature list using mass to join spectra.
         """
         self.reset_progress()
-        self.n_masses = len(self.features['pos']) + len(self.features['neg'])
-        logger.info(f'Number of features in list: {self.n_masses}')
         pos_list = [(mass, 'ESI-MSMS-pos') for mass in self.features['pos'].get_masses(neutral = True)] if len(self.features['pos']) > 0 else [] 
         neg_list = [(mass, 'ESI-MSMS-neg') for mass in self.features['neg'].get_masses(neutral = True)] if len(self.features['neg']) > 0 else []
         all_masses = pos_list + neg_list
+        self.n_masses = len(all_masses)
+        logger.info(f'Number of features in list: {self.n_masses}')
         chunk_size = 200
-        for idx in range(0, len(all_masses), chunk_size):
-            chunk = all_masses[idx : idx + chunk_size]
+        for idx in range(0, self.n_masses, chunk_size):
+            chunk = all_masses[idx : min(idx + chunk_size, self.n_masses)]
             start = time.perf_counter()
             cfmid_responses = []
             asyncio.run(ms2_api_search(cfmid_responses, chunk, self.precursor_mass_accuracy, self.jobid))
-            logger.info(f'API search time: {time.perf_counter() - start} for {chunk_size} structures')
+            logger.info(f'API search time: {time.perf_counter() - start} for {len(chunk)} structures')
             for response in cfmid_responses:
                 self.compare_reference_spectra(response)
                 self.update_progress()
@@ -195,6 +194,7 @@ class MS2Run:
 
     
     def set_status(self, status, create = False):
+        logger.info(f'\n============= Starting Process: \n============= {status} \n============= ')
         self.step = status
         self.log_time()
         posts = self.mongo.posts
