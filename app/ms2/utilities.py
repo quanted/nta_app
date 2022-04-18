@@ -93,12 +93,12 @@ def process_response(*args):
 def cfmid_response_to_dict(response, mass, mode):
     if response['results'] == "none":
         return {'data': None, 'mass': mass, 'mode': mode}
-    cfmid_search_json = io.StringIO(json.dumps(response['results']))
-    cfmid_search_df = pd.read_json(cfmid_search_json, orient='split')
-    cfmid_search_df.rename(columns = {'PMASS_x':'FRAG_MASS', 'INTENSITY0C':'FRAG_INTENSITY'}, inplace = True)
-    formated_data_dict = cfmid_search_df.groupby(['DTXCID', 'FORMULA', 'MASS'])[['ENERGY','FRAG_MASS','FRAG_INTENSITY']]\
-        .apply(lambda x: x.groupby('ENERGY')[['FRAG_MASS','FRAG_INTENSITY']]\
-              .apply(lambda x: x.to_dict('list'))).to_dict('index')
+    with io.StringIO(json.dumps(response['results'])) as cfmid_search_json:
+        cfmid_search_df = pd.read_json(cfmid_search_json, orient='split')
+        cfmid_search_df.rename(columns = {'PMASS_x':'FRAG_MASS', 'INTENSITY0C':'FRAG_INTENSITY'}, inplace = True)
+        formated_data_dict = cfmid_search_df.groupby(['DTXCID', 'FORMULA', 'MASS'])[['ENERGY','FRAG_MASS','FRAG_INTENSITY']]\
+            .apply(lambda x: x.groupby('ENERGY')[['FRAG_MASS','FRAG_INTENSITY']]\
+                  .apply(lambda x: x.to_dict('list'))).to_dict('index')
     return {'data': formated_data_dict, 'mass':mass, 'mode':mode}
 
 def cfmid_response_to_spectra(cfmid_response_dict):
