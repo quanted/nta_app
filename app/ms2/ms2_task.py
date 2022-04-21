@@ -147,13 +147,14 @@ class MS2Run:
         all_masses = pos_list + neg_list
         self.n_masses = len(all_masses)
         logger.info(f'Number of features in list: {self.n_masses}')
-        chunk_size = 200
+        chunk_size = 10
         for idx in range(0, self.n_masses, chunk_size):
             chunk = all_masses[idx : min(idx + chunk_size, self.n_masses)]
             start = time.perf_counter()
             cfmid_responses = []
             asyncio.run(ms2_api_search(cfmid_responses, chunk, self.precursor_mass_accuracy, self.jobid))
             logger.info(f'API search time: {time.perf_counter() - start} for {len(chunk)} structures')
+            logger.info(f'\t\t\t Total Progress: {idx + len(chunk)} / {len(all_masses)} structures')
             for response in cfmid_responses:
                 self.compare_reference_spectra(response)
                 self.update_progress()
