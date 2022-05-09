@@ -33,6 +33,7 @@ class Feature:
         self.mass_accuracy = mass_accuracy
         self.rt = rt
         self.rt_accuracy = rt_accuracy
+        self.classification = {}
     
     def annotate(self, value):
         """
@@ -104,7 +105,39 @@ class Feature_MS2(Feature):
     def merge(self, other): #Implement later, consensus merge with fragment alignment
         return self
 
-    def calc_similarity(self, spectra_dict, spectra_scorer = None):
+    def append_reference_similarity(self, dtxcid, formula, mass, scores):
+        self.reference_scores['ID'].append(self.feature_id)
+        self.reference_scores['MASS_MGF'].append(self.mass)
+        self.reference_scores['MASS_NEUTRAL'].append(self.neutral_mass)
+        self.reference_scores['RT'].append(self.rt)
+        self.reference_scores['DTXCID'].append(dtxcid)
+        self.reference_scores['FORMULA'].append(formula)
+        self.reference_scores['MASS'].append(mass)
+        self.reference_scores['SINGLE_SCORES'].append(scores)
+        self.reference_scores['SUM_SCORE'].append(sum(scores))
+         
+    def dask_calc_similarity(self, spectra_dict):
+        
+        reference_scores = {'ID':[],'MASS_MGF':[],'MASS_NEUTRAL':[],'RT':[],
+                      'DTXCID':[],'MASS':[],'FORMULA':[],
+                      'SINGLE_SCORES':[],'SUM_SCORE':[],'Q-SCORE':[]}
+        
+        for identifiers, spectra in spectra_dict.items():
+            reference_scores['ID'].append(self.feature_id)
+            reference_scores['MASS_MGF'].append(self.mass)
+            reference_scores['MASS_NEUTRAL'].append(self.neutral_mass)
+            reference_scores['RT'].append(self.rt)
+            reference_scores['DTXCID'].append(identifiers[0])
+            reference_scores['FORMULA'].append(identifiers[1])
+            reference_scores['MASS'].append(identifiers[2])
+            single_scores = [SpectraScorer.calc_score(self.ms2_spectrum, spectrum) 
+                             for energy, spectrum in spectra.items()]
+            reference_scores['SINGLE_SCORES'].append(single_scores)
+            reference_scores['SUM_SCORE'].append(sum(single_scores))
+        
+        return reference_scores
+    
+    def calc_similarity(self, spectra_dict):
         """
         Iterates through self.reference_spectra and calcualtes similarity 
         scores betwen the parent's MS2_Spectrum and reference spectra captued in parent 
@@ -127,9 +160,6 @@ class Feature_MS2(Feature):
         :param type: SpectraScorer, optional
         """
         
-        if spectra_scorer is None:
-            spectra_scorer = SpectraScorer()
-
         for identifiers, spectra in spectra_dict.items():
             self.reference_scores['ID'].append(self.feature_id)
             self.reference_scores['MASS_MGF'].append(self.mass)
@@ -138,12 +168,11 @@ class Feature_MS2(Feature):
             self.reference_scores['DTXCID'].append(identifiers[0])
             self.reference_scores['FORMULA'].append(identifiers[1])
             self.reference_scores['MASS'].append(identifiers[2])
-            single_scores = [spectra_scorer.calc_score(self.ms2_spectrum, spectrum) 
+            single_scores = [SpectraScorer.calc_score(self.ms2_spectrum, spectrum) 
                              for energy, spectrum in spectra.items()]
             self.reference_scores['SINGLE_SCORES'].append(single_scores)
             self.reference_scores['SUM_SCORE'].append(sum(single_scores))
 
-            
     def __eq__(self, other):
         mass_equivalent = abs((other.mass - self.mass)/self.mass)*1000000 < self.mass
         rt_equivalent = abs(other.rt - self.rt) < self.rt_accuracy

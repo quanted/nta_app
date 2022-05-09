@@ -19,23 +19,26 @@ class SpectraScorer():
     Implmentations to code:
         1) SE (Spectral Entropy, Fiehn group)
     """
-    def calc_score(self, measured_spectrum, reference_spectrum, equation = 'COMPOSITE', **kwargs):
-        score = self._get_score_method(equation)
-        aligned_df = self._get_align_df(measured_spectrum, reference_spectrum)
+    
+    @classmethod
+    def calc_score(cls, measured_spectrum, reference_spectrum, algorithm = 'COMPOSITE', **kwargs):
+        score = cls._get_score_method(algorithm)
+        aligned_df = cls._get_align_df(measured_spectrum, reference_spectrum)
         return score(aligned_df, **kwargs)
     
-    def _get_score_method(self, equation):
+    @classmethod
+    def _get_score_method(cls, equation):
         if equation == 'DOT_PRODUCT':
-            return self._calc_dot_product
+            return cls._calc_dot_product
         elif equation == 'COMPOSITE':
-            return self._calc_composite
+            return cls._calc_composite
         else:
             raise ValueError(equation)
 
-    def _get_align_df(self, measured_spectrum, reference_spectrum):
+    def _get_align_df(measured_spectrum, reference_spectrum):
         return measured_spectrum.align(reference_spectrum, suffixes = ['_u', '_l'])
             
-    def _calc_dot_product(self, aligned_df, m = 0.5, n = 0.5):
+    def _calc_dot_product(aligned_df, m = 0.5, n = 0.5):
         
         aligned_df['weighted_u'] = (aligned_df['frag_mass_u']**n) * (aligned_df['intensity_u']**m)
         aligned_df['weighted_l'] = (aligned_df['frag_mass_l']**n) * (aligned_df['intensity_l']**m)
@@ -43,17 +46,18 @@ class SpectraScorer():
         denominator = sum(map(lambda x: x**2, aligned_df['weighted_u']))*sum(map(lambda x: x**2, aligned_df['weighted_l']))
         return numerator/denominator
     
-    def _calc_composite(self, aligned_df, m = 0.5, n = 0.5):
+    @classmethod
+    def _calc_composite(cls, aligned_df, m = 0.5, n = 0.5):
         
         N_u = sum(aligned_df['intensity_u'] > 0)
         N_lu = sum(aligned_df['mass_match'] == 1)
         if N_lu == 0:   
             return 0    #Returns a 0 for the score if no matches are present in the data
-        F_dot = self._calc_dot_product(aligned_df, m, n)
-        F_ratio = self._calc_ratio_pairs(aligned_df, N_lu)
+        F_dot = cls._calc_dot_product(aligned_df, m, n)
+        F_ratio = cls._calc_ratio_pairs(aligned_df, N_lu)
         return (N_u*F_dot + N_lu*F_ratio)/(N_u + N_lu)
     
-    def _calc_ratio_pairs(self, aligned_df, N_lu):
+    def _calc_ratio_pairs(aligned_df, N_lu):
         SUM = 0.0
         matched_df = aligned_df[aligned_df['mass_match'] == 1].reset_index(drop = True)
         for i in range(1, N_lu):

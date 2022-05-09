@@ -1,8 +1,3 @@
-import os
-import string, random
-import json
-
-from ...tools.ms2.file_manager import parse_mgf
 from ...app.data_handler.data_task import delete_data, get_filenames, get_grid_db, handle_uploaded_file
 from django import forms
 from django.http import HttpResponse

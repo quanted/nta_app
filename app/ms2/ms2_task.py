@@ -1,4 +1,5 @@
 import pandas as pd
+import dask
 import os
 import csv
 import time
@@ -9,14 +10,15 @@ import json
 import asyncio
 import io
 
+from dask.graph_manipulation import bind
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget, as_completed, get_client, wait
 from django.urls import reverse
 from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, ms2_api_search, fetch_ms2_files
 from .ms2_functions import sqlCFMID
-from ..feature.feature import FeatureList
+from ..feature.feature import FeatureList, MS2_Spectrum
 from ..feature.score_algo import SpectraScorer
-from ...tools.ms2.file_manager import parse_mgf
+from ...tools.ms2.file_manager import MS2_Parser
 from ...tools.ms2.send_email import send_ms2_finished
 
 
@@ -80,6 +82,7 @@ class MS2Run:
         self.progress = 0
         self.input_dfs = {'pos': [None], 'neg': [None]}
         self.features = {'pos' : [], 'neg' : []}
+        self.cfmid_responses = []
         #self.email = parameters['results_email']
         self.results_link = results_link
         self.precursor_mass_accuracy = float(parameters['precursor_mass_accuracy'])
@@ -103,8 +106,10 @@ class MS2Run:
         self.set_status('Retrieving Reference Spectra')
         self.get_CFMID_spectra();
                 
+        self.set_status('Calculating Similarity Scores')
+        self.calc_CFMID_similarity();        
         
-        self.set_status('Storing Scores')
+        self.set_status('Saving Data')
         self.save_data()
 
         self.set_status('Completed')
@@ -119,9 +124,9 @@ class MS2Run:
         grid_out = fetch_ms2_files(self.jobid)
         for file in grid_out:
             if file.mode == 'neg':
-                self.input_dfs['neg'].append(parse_mgf(file))
+                self.input_dfs['neg'].append(MS2_Parser.parse_file(file))
             else:
-                self.input_dfs['pos'].append(parse_mgf(file))
+                self.input_dfs['pos'].append(MS2_Parser.parse_file(file))
     
     def construct_featurelist(self):
         """
@@ -147,24 +152,19 @@ class MS2Run:
         all_masses = pos_list + neg_list
         self.n_masses = len(all_masses)
         logger.info(f'Number of features in list: {self.n_masses}')
-        chunk_size = 10
+        chunk_size = 100
         for idx in range(0, self.n_masses, chunk_size):
             chunk = all_masses[idx : min(idx + chunk_size, self.n_masses)]
             start = time.perf_counter()
             cfmid_responses = []
-            asyncio.run(ms2_api_search(cfmid_responses, chunk, self.precursor_mass_accuracy, self.jobid))
-            logger.info(f'API search time: {time.perf_counter() - start} for {len(chunk)} structures')
-            logger.info(f'\t\t\t Total Progress: {idx + len(chunk)} / {len(all_masses)} structures')
-            for response in cfmid_responses:
-                self.compare_reference_spectra(response)
-                self.update_progress()
-            self.reset_progress(idx + chunk_size)
+            logger.info(f'API search: {chunk_size} of {len(all_masses)} structures')
+            logger.info(f'\t\t\t Total count: {idx}')
+            asyncio.run(ms2_api_search(self.cfmid_responses, chunk, self.precursor_mass_accuracy, self.jobid))
             
-    def save_data(self):         
-        self.mongo_save(self.features['neg'].to_df(), step=FILENAMES['final_output'][0])
-        self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
+        logger.info(f'API search time: {time.perf_counter() - start} for {len(all_masses)} structures')
 
-    def compare_reference_spectra(self, cfmid_response):
+            
+    def calc_CFMID_similarity(self):
         """
         For each feature that corresponds to the input mass in the Feature List 
         object then add a cfmid result.
@@ -173,13 +173,85 @@ class MS2Run:
         :type cfmid_response: dict
 
         """
-        if cfmid_response['data'] is None:
-            logger.info(f'Found 0 structures for mass {cfmid_response["mass"]}')
-            return
-        logger.info(f'Found {len(cfmid_response["data"])} structures for mass {cfmid_response["mass"]}')
-        feature_mode = 'pos' if cfmid_response['mode'] == 'ESI-MSMS-pos' else 'neg'
-        for feature in self.features[feature_mode].get_features(cfmid_response['mass'], by='neutral_mass'):
-            feature.calc_similarity(cfmid_response['data'])
+        self.reset_progress()
+        dask_scheduler = os.environ.get("DASK_SCHEDULER")
+        dask_client = Client(dask_scheduler)
+        
+        
+        ### This version works, but not as efficient as queing all tasks
+        ### 
+        ###
+
+        for idx, cfmid_response in enumerate(self.cfmid_responses):
+            if cfmid_response['data'] is None:
+                logger.info(f'Found 0 structures for mass {cfmid_response["mass"]}')
+                self.update_progress()
+                continue
+            
+            logger.info(f'Found {len(cfmid_response["data"])} structures for mass {cfmid_response["mass"]}')
+            logger.info(f'\t\t\t Total Progress: {idx + 1} / {len(self.cfmid_responses)} structures')
+            
+            feature_mode = 'pos' if cfmid_response['mode'] == 'ESI-MSMS-pos' else 'neg'
+            matched_features = self.features[feature_mode].get_features(cfmid_response['mass'], by='neutral_mass')
+            
+            scattered_data = dask_client.scatter(cfmid_response['data'])
+            
+            task_list = []
+            feature_list = []
+            
+            for feature in matched_features:
+                task_list.append(dask_client.submit(feature.dask_calc_similarity, scattered_data))
+                feature_list.append(feature)
+
+            results = dask_client.gather(task_list)
+            for feature, result in zip(feature_list, results):
+                feature.reference_scores = result
+            self.update_progress()
+        
+        
+        ### This version crashes in the final for loop -> concurrent.futures._base.CancelledError
+        ### Tasks are being canceled at some point during the run, but unclear what the root cause is
+        ###
+        
+        # feature_list = []
+        # task_list = []
+        
+        # for idx, cfmid_response in enumerate(self.cfmid_responses):
+        #     if cfmid_response['data'] is None:
+        #         logger.info(f'Found 0 structures for mass {cfmid_response["mass"]}')
+        #         logger.info(f'\t\t\t Total Progress: {idx + 1} / {len(self.cfmid_responses)} structures')
+        #         self.update_progress()
+        #         continue
+            
+        #     logger.info(f'Found {len(cfmid_response["data"])} structures for mass {cfmid_response["mass"]}')
+        #     logger.info(f'\t\t\t Total Progress: {idx + 1} / {len(self.cfmid_responses)} structures')
+            
+        #     feature_mode = 'pos' if cfmid_response['mode'] == 'ESI-MSMS-pos' else 'neg'
+        #     matched_features = self.features[feature_mode].get_features(cfmid_response['mass'], by='neutral_mass')
+            
+        #     scattered_data = dask_client.scatter(cfmid_response['data'])
+                   
+        #     for feature in matched_features:
+        #         task_list.append(dask_client.submit(feature.dask_calc_similarity, scattered_data))
+        #         feature_list.append(feature)
+
+        # #results = dask_client.gather(task_list)
+        # for feature, task in zip(feature_list, task_list):
+        #     try:
+        #         result = task.result()
+        #     except Exception as e:
+        #         logger.info(f"Failed on feature: {feature}, {task}")
+        #         logger.info(f"Exception: {e}")
+        #         task_retry = dask_client.retry(task)        #This throws an error, taks are being cancelled at some point. Needs additional troubleshooting
+        #         result = task_retry.result()
+        #     feature.reference_scores = result
+        #     self.update_progress()
+        
+
+    def save_data(self):         
+        self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
+        self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
+
         
     def send_email(self):
         try:

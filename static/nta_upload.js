@@ -1,6 +1,21 @@
 $( document ).ready( function() {
     _('jobID').value = getID();
     populateData();
+    
+    _("PosFile").addEventListener("change", event => {
+        const files = event.target.files;
+        for(i = 0; i < files.length; i++){
+            uploadFile(files[i], 'pos');
+          }
+    });
+
+
+    _("NegFile").addEventListener("change", event => {
+        const files = event.target.files;
+        for(i = 0; i < files.length; i++){
+            uploadFile(files[i], 'neg');
+          }
+    });
 });
 
 function getCookie(name) {
@@ -37,7 +52,6 @@ function populateData(){
     formdata.append("ms", "ms2");
     var ajax = new XMLHttpRequest();
     ajax.addEventListener('load', function(event){
-        console.log("File name data:" + ajax.response);
         data = JSON.parse(ajax.response);
         console.log("Neg data:" + data['Neg'] + " Pos data:" + data['Pos']);
         data['Neg'].forEach( ele => addProgress(ele, "neg", true));
@@ -48,32 +62,13 @@ function populateData(){
     ajax.send(formdata);
 }
 
-/*function getFiles(){
-    var formdata = new FormData();
-    formdata.append("path", "");
-    var ajax = new XMLHttpRequest();
-    ajax.addEventListener('load', function(event){
-        console.log("File name data:" + ajax.response);
-        _('FileNames').innerHTML = ajax.response;
-        }, false);
-    ajax.open("POST", "/nta/files");
-    ajax.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
-    ajax.send(formdata);
-}*/
-
 function _(el) {
     return document.getElementById(el);
 }
 
-function uploadFile(obj) {
-    var mode = obj.classList.contains("PosInput") ? "pos" : "neg";
-    var file = _(obj.id).files[0];
+var uploadFile = (file, mode) => {
     var jobID = _("jobID").value;
-    reset(obj)
-    console.log("Mode:"+ mode + "  JobID: " + jobID + "  File: " + file.name + " Obj. Class: " + obj.className);
-    if(_(file.name)){
-        return false;
-    }
+    console.log("Mode:"+ mode + "  JobID: " + jobID + "  File: " + file.name);
     addProgress(file.name, mode);
     var progressBar = _(file.name+'/progbar');
     var status = _(file.name+'/status');
@@ -104,7 +99,7 @@ function uploadFile(obj) {
     ajax.open("POST", "/nta/upload");
     ajax.setRequestHeader("X-CSRFToken", getCookie("csrftoken"))
     ajax.send(formdata);
-}
+};
 
 function deleteFile(obj) {
     var mode = obj.classList.contains("PosInput") ? "pos" : "neg";

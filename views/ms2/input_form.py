@@ -54,5 +54,10 @@ class MS2ParametersInput(forms.Form):
         label='Fragment mass accuracy (Da)',
         initial=0.02,
         validators=[MinValueValidator(0)])
+    classification_file = forms.FileField(
+        widget=forms.ClearableFileInput(),
+        label = 'Fragment Classifications (csv)',
+        validators= [FileExtensionValidator(['csv'])],
+        required=False)
         
 

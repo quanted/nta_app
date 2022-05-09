@@ -38,7 +38,7 @@ def fetch_ms2_files(jobID):
     return [gridfs.get(_id) for _id in file_ids]
         
 
-async def ms2_api_search(output, feature_list, accuracy=None, jobid='00000'):
+async def ms2_api_search(output, feature_list, accuracy=10, jobid='00000'):
     """
     Parameters
     ----------
@@ -70,12 +70,12 @@ async def ms2_api_search(output, feature_list, accuracy=None, jobid='00000'):
     }
     """
     api_url = validate_url('{}/rest/ms2/{}'.format("https://qed-dev.edap-cluster.com/nta/flask_proxy", jobid))
-
+    
     async def get_responses(output, feature_list, accuracy, jobid):
         async with aiohttp.ClientSession() as session:
             tasks = []
             for (mass, mode) in feature_list:
-                tasks.append(ms2_post(session, mass, mode, 10, api_url, output))
+                tasks.append(ms2_post(session, mass, mode, accuracy, api_url, output))
             await asyncio.gather(*tasks)
             
     await get_responses(output, feature_list, accuracy, jobid)
@@ -83,7 +83,8 @@ async def ms2_api_search(output, feature_list, accuracy=None, jobid='00000'):
 async def ms2_post(session, mass, mode, accuracy, url, output):
     input_json = json.dumps({"mass": mass, "accuracy": accuracy, "mode": mode})
     http_headers = {'Content-Type': 'application/json'}
-    async with session.post(url, data = input_json, headers = http_headers) as response:
+    timeout = aiohttp.ClientTimeout(total=None)
+    async with session.post(url, data = input_json, headers = http_headers, timeout = timeout) as response:
         data = await response.json()
         output.append(process_response(data, mass, mode))
                 
