@@ -174,7 +174,7 @@ class Feature_MS2(Feature):
             self.reference_scores['SUM_SCORE'].append(sum(single_scores))
 
     def __eq__(self, other):
-        mass_equivalent = abs((other.mass - self.mass)/self.mass)*1000000 < self.mass
+        mass_equivalent = abs((other.mass - self.mass)/self.mass)*1000000 < self.mass_accuracy
         rt_equivalent = abs(other.rt - self.rt) < self.rt_accuracy
         return mass_equivalent and rt_equivalent
     
