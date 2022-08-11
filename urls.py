@@ -1,5 +1,6 @@
 from django.urls import path
 from django.conf.urls import include
+from django.conf import settings
 from nta_app.views.ms1 import input as ms1_input
 from nta_app.views.ms1 import processing as ms1_processing
 from nta_app.views.ms1 import output as ms1_output
@@ -24,6 +25,7 @@ from nta_app.views.merge import processing as merge_processing
 from nta_app.views.merge import results_api as merge_results_api
 from nta_app.views.data_handler import data_api as data_api
 from nta_app.views.misc import github
+import nta_app.login_middleware as login_middleware
 import os
 
 print('qed.nta_app.urls')
@@ -80,7 +82,14 @@ urlpatterns = [
     path('delete/', data_api.delete_api)
 ]
 
+# Login requirement set url
+if settings.LOGIN_REQUIRED:
+    urlpatterns.append(
+        path('login/', login_middleware.login)
+    )
+
 urlpatterns = [path('nta/', include(urlpatterns))]
+
 
 # 404 Error view (file not found)
 #handler404 = misc.file_not_found

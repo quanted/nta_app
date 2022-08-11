@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!--[if IEMobile 7]><html class="iem7 no-js" lang="en" dir="ltr"><![endif]-->
+<!--[if lt IE 7]><html class="lt-ie9 lt-ie8 lt-ie7 no-js" lang="en" dir="ltr"><![endif]-->
+<!--[if (IE 7)&(!IEMobile)]><html class="lt-ie9 lt-ie8 no-js" lang="en" dir="ltr"><![endif]-->
+<!--[if IE 8]><html class="lt-ie9 no-js" lang="en" dir="ltr"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)]><!--> <html class="no-js not-oldie" lang="en" dir="ltr"> <!--<![endif]-->
+{% load static %}
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="HandheldFriendly" content="true" />
+    <link rel="shortcut icon" href="https://www.epa.gov/sites/all/themes/epa/favicon.ico" type="image/vnd.microsoft.icon" />
+    <meta name="MobileOptimized" content="width" />
+    <meta http-equiv="cleartype" content="on" />
+    <meta http-equiv="ImageToolbar" content="false" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="version" content="20161218" />
+    <!--googleon: all-->
+    <meta name="DC.description" content="" />
+    <meta name="DC.title" content="" />
+    <title>{{title}} | Q.E.D.</title>
+    <!--googleoff: snippet-->
+    <meta name="keywords" content="" />
+    <link rel="shortlink" href="" />
+    <link rel="canonical" href="" />
+    <meta name="DC.creator" content="" />
+    <meta name="DC.language" content="en" />
+    <meta name="DC.Subject.epachannel" content="" />
+    <meta name="DC.type" content="" />
+    <meta name="DC.date.created" content="" />
+    <meta name="DC.date.modified" content="" />
+    <!--googleoff: all-->
+    <link type="text/css" rel="stylesheet" href="{% static 'login_page.css' %}" media="all" />
+</head>
+<body class="node-type-(web-area|page|document|webform) (microsite|resource-directory)" >
+<div class="body_div">
+    <div class="login_div">
+        <h2 class="login_title"> {{ TITLE }}</h2>
+        <div class="login_description">Enter NTA credentials to continue</div>
+        <div>
+            <form method="post" name="auth">
+                {% csrf_token %}
+                <table class="input_table">
+                    <caption class="input_message">{{TEXT|safe}}</caption>
+                    <tr>
+                        <th>Username:</th><td><input type="text" name="username" id="username"></td>
+                    </tr>
+                    <tr>
+                        <th>Password:</th><td><input type="password" name="password" id="password"></td>
+                    </tr>
+                </table>
+                <div class="input_nav">
+                    <input type="hidden" value="{{ next }}" name="next" id="'next">
+                    <div class="input_button_div">
+                        <input type="submit" class="input_button" value="Login">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
