@@ -68,9 +68,12 @@ class RequireLoginMiddleware:
             logger.warn("NTA login password as not set.")
             return
 
-        if not User.objects.filter(username=self.nta_username).exists():
-            _user = User.objects.create_user(self.nta_username, 'nta@nta.nta', nta_password)
-            _user.save()
+        try:
+            if not User.objects.filter(username=self.nta_username).exists():
+                _user = User.objects.create_user(self.nta_username, 'nta@nta.nta', nta_password)
+                _user.save()
+        except Exception:
+            logger.warn(f"User: {self.nta_username} already exists")
 
     def __call__(self, request):
         response = self.get_response(request)
