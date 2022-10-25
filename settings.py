@@ -1,5 +1,6 @@
 import os
 import logging
+import secrets
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +140,6 @@ os.environ.update({
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-SECRET_KEY = os.getenv('SECRET_KEY', "needtosetthesecretkey")
+SECRET_KEY = secrets.token_urlsafe()  # generated on startup
 
 WSGI_APPLICATION = 'wsgi.application'
