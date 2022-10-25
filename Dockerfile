@@ -1,6 +1,7 @@
 #FROM continuumio/miniconda3:4.10.3
 FROM daskdev/dask:2022.10.0-py3.9
 
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update --allow-releaseinfo-change -y
 RUN apt-get upgrade --fix-missing -y
 RUN apt-get install -y --fix-missing --no-install-recommends \
