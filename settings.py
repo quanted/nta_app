@@ -16,6 +16,8 @@ TEMPLATE_ROOT = os.path.join(PROJECT_ROOT, 'templates/')
 
 DEPLOY_ENV = os.getenv("DEPLOY_ENV", "kube-dev")
 
+SECRET_KEY = os.getenv("SECRET_KEY", "need-to-set-secret-key")
+
 # logger.info(f"PROJECT_ROOT: {PROJECT_ROOT}")
 logger.info(f"TEMPLATE_ROOT: {TEMPLATE_ROOT}")
 # logger.info(f"DEPLOY_ENV: {DEPLOY_ENV}")
@@ -139,7 +141,5 @@ os.environ.update({
 })
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-SECRET_KEY = secrets.token_urlsafe()  # generated on startup
 
 WSGI_APPLICATION = 'wsgi.application'

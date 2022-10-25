@@ -12,7 +12,7 @@ RUN apt-get install -y --fix-missing --no-install-recommends \
 WORKDIR /src/nta_app
 COPY . /src/nta_app
 
-RUN conda create --name pyenv python=3.9
+RUN conda create --name pyenv python=3.9.13
 RUN conda config --add channels conda-forge
 RUN conda run -n pyenv --no-capture-output pip install -r /src/nta_app/requirements.txt
 RUN conda install -n pyenv uwsgi
