@@ -84,7 +84,7 @@ class NtaInputs(forms.Form):
     search_hcd = forms.ChoiceField(
         label='Search Hazard Comparison Dashboard for toxicity data',
         choices=(('yes','yes'),('no','no'),),
-        initial='yes')
+        initial='no')
     search_mode = forms.ChoiceField(
         label='Search dashboard by',
         choices=(('mass', 'mass'), ('formula', 'formula'),),

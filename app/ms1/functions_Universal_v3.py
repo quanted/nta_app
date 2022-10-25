@@ -16,6 +16,7 @@ from operator import itemgetter
 from itertools import groupby
 from difflib import SequenceMatcher
 import dask.dataframe as dd
+pd.options.mode.chained_assignment = None  # suppress settingwithcopy warning
 
 #REP_NUM = 3
 HBR = 3.0 # High_Blank_Ratio condition
