@@ -90,7 +90,7 @@ if settings.LOGIN_REQUIRED:
 
 urlpatterns = [
     path('nta/', include(urlpatterns)),
-    path('/', ms1_input.input_page)]
+    path('', ms1_input.input_page)]  # this does not appear to be functional
 
 
 # 404 Error view (file not found)
