@@ -88,7 +88,9 @@ if settings.LOGIN_REQUIRED:
         path('login/', login_middleware.login)
     )
 
-urlpatterns = [path('nta/', include(urlpatterns))]
+urlpatterns = [
+    path('nta/', include(urlpatterns)),
+    path('', ms1_input.input_page)]
 
 
 # 404 Error view (file not found)
