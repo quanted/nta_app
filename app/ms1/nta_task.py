@@ -338,7 +338,7 @@ class NtaRun:
             dtxsid_list = self.search_results['DTXSID'].unique()
             hcd_results = batch_search_hcd(dtxsid_list)
             self.search_results = self.search_results.merge(hcd_results, how = 'left', on = 'DTXSID')
-            self.data_map['dsstox_search'] = dsstox_search_df
+            self.data_map['dsstox_search'] = self.search_results
             self.data_map['hcd_search'] = hcd_results
     
     def store_data(self):
