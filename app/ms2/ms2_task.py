@@ -15,7 +15,6 @@ from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget, as_completed, get_client, wait
 from django.urls import reverse
 from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, ms2_api_search, fetch_ms2_files
-from .ms2_functions import sqlCFMID
 from ..feature.feature import FeatureList, MS2_Spectrum
 from ..feature.score_algo import SpectraScorer
 from ...tools.ms2.file_manager import MS2_Parser
