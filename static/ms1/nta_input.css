@@ -1,0 +1,8 @@
+.slider_label {
+    margin: 0 15px;
+}
+
+input[type=checkbox]
+{
+  -webkit-appearance:checkbox;
+}

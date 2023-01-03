@@ -5,13 +5,15 @@ from collections import OrderedDict
 def ordered_list(model=None, page=None):
 
     link_dict = OrderedDict([
-        ('Model', OrderedDict([
-                ('NTA', 'nta'),
+        ('Tools', OrderedDict([
+                ('MS1 Tool', 'ms1'),
+                ('MS2 CFMID Tool', 'ms2'),
+                ('Merge MS1 and MS2 Data', 'merge')
             ])
          ),
         ('Documentation', OrderedDict([
                 # ('API Documentation', '/qedinternal.epa.gov/pisces/rest'),
-                ('Source Code', '/github.com/quanted/nta_app'),
+                ('Source Code', 'github'),
             ])
          )
     ])

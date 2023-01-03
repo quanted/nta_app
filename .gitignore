@@ -16,6 +16,10 @@ __pycache__/
 #
 .idea/*
 
+# Folders holding unused code from the original nta_analyzer program
+app/old_program_code
+
+
 # Folders for testing workflow
 Trial_Jeff
 Study_
@@ -116,3 +120,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# copied as a result of local code mounted development
+collected_static/

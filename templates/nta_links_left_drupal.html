@@ -1,0 +1,22 @@
+<!--start nta_links_left_drupal-->
+<div class="region-sidebar-first region-sidebar">
+  <div id="block-og-menu-og-single-menu-block" class="block block-og-menu">
+    <h2 class="element-invisible">&uuml;bertool Exposure Assessment Models</h2>
+    <ul class="menu">
+      {% for key, value in LINK_DICT.items %}
+        <h3 class="headerbar">{{ key|safe }}</h3>
+        {% for valueKey, valueValue in value.items %}<li class="menu-item{% if forloop.last %} menu-item-last{% endif %}"><a href="/nta/{{ valueValue }}" id="{{ valueValue }}" class="menu-link{% if MODEL == valueValue %} active-trail active{% endif %}" title="{{ valueKey|safe }}">{{ valueKey|safe }}</a>
+          {% if MODEL == valueValue %}<ul class="menu">
+            <li class="menu-item"><a href="/nta/{{ MODEL }}/" title="Run {{ valueKey|safe }}" class="menu-link{% if PAGE == "run_model" %} active-trail active{% endif %}">Run {{ valueKey|safe }}</a></li>
+            <li class="menu-item"><a href="/nta/{{ MODEL }}/algorithms" title="{{ valueKey|safe }} Algorithms" class="menu-link{% if PAGE == "algorithms" %} active-trail active{% endif %}">{{ valueKey|safe }} Algorithms</a></li>
+            <li class="menu-item"><a href="/nta/{{ MODEL }}/qaqc" title="{{ valueKey|safe }} QAQC" class="menu-link{% if PAGE == "qaqc" %} active-trail active{% endif %}">{{ valueKey|safe }} QA/QC</a></li>
+            <li class="menu-item"><a href="/nta/{{ MODEL }}/references" title="{{ valueKey|safe }} References" class="menu-link{% if PAGE == "references" %} active-trail active{% endif %}">{{ valueKey|safe }} References</a></li>
+            {% if MODEL == "ms1" %}
+              <li class="menu-item"><a href="/nta/{{ MODEL }}/formulas" title="Download MS-ready formula list" class="menu-link{% if PAGE == "formula_list" %} active-trail active{% endif %}">Download formula list</a></li>
+            {% endif %}
+          </ul>{% endif %}
+        </li>{% endfor %}
+      {% endfor %}</ul>
+  </div>
+</div>
+<!--end nta_links_left_drupal-->
