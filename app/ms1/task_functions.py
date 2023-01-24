@@ -282,7 +282,13 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     #find the median of all samples and select features where median_samples/ median_blanks >= cutoff
     #Updated to test sample mean > 3*STDblank + mean_blank
     df['Max_Median_ALLSamples'] = df[Median_Samples].max(axis=1,skipna=True).round(0)
-    df['SampletoBlanks_ratio'] = df['Max_Median_ALLSamples'].astype('float')/df[Median_MB[0]].astype('float')
-    df['BlankStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
-    df = df[(df[N_Abun_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlankStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
+    
+    # 1/6/2023 Comment out below line, sample to blanks ratio is deprecated
+    #df['SampletoBlanks_ratio'] = df['Max_Median_ALLSamples'].astype('float')/df[Median_MB[0]].astype('float')
+    
+    # 1/6/2023 Rename columns so as to not have "blank" in the name (all blank columns used for blank subtraction value)
+    #df['BlankStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
+    #df = df[(df[N_Abun_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlankStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
+    df['BlkStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
+    df = df[(df[N_Abun_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
     return df
