@@ -76,8 +76,8 @@ def api_search_masses(masses, accuracy, jobid = "00000"):
     return requests.post(api_url, headers=http_headers, data=input_json)
 
 def api_search_mass(mass, accuracy, jobid = "00000"):
-    mass_low = float(mass) - float(accuracy)
-    mass_high = float(mass) + float(accuracy)
+    mass_low = float(mass) - (float(mass) * float(accuracy) / 1000000)
+    mass_high = float(mass) + (float(mass) * float(accuracy) / 1000000)
     api_url = '{}/chemical/msready/search/by-mass/{}/{}'.format(CCD_API, mass_low, mass_high)
     logger.info(api_url)
     http_headers = {'x-api-key': CCD_API_KEY}
@@ -95,9 +95,10 @@ def api_get_metadata(dtxsid):
 
 def api_search_mass_list(masses, accuracy, jobid = "00000"):
     n_masses = len(masses)
-    logging.info("Sending {} masses in batches of 1".format(n_masses))
+    #logging.info("Sending {} masses in batches of 1".format(n_masses))
     results_dict = {}
-    for mass in masses:
+    for count, mass in enumerate(masses):
+        logger.info("Searching mass # {} out of {}".format(count+1, n_masses))
         candidate_list = list(api_search_mass(mass, accuracy))
         candidates_dict = {}
         for candidate in candidate_list:
