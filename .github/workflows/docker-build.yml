@@ -4,9 +4,8 @@ on: [push, pull_request, workflow_dispatch]
 
 env:
   REGISTRY: ghcr.io
-  DJANGO_IMAGE: ${{ github.repository }}
+  DJANGO_IMAGE: "quanted/nta-django"
   DASK_IMAGE: "quanted/nta-dask"
-  GITHUB_TOKEN: ${{ secrets.NTA_ACTION_TOKEN }}
 
 jobs:
   build-django:
