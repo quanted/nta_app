@@ -19,6 +19,8 @@ logger.setLevel(logging.INFO)
 
 DSSTOX_API = os.environ.get('UBERTOOL_REST_SERVER')
 #DSSTOX_API = 'http://127.0.0.1:7777'
+CCD_API = os.environ.get('CCD_API')
+CCD_API_KEY = os.environ.get('CCD_API_KEY')
 
 
 def connect_to_mongoDB(address):
@@ -73,25 +75,38 @@ def api_search_masses(masses, accuracy, jobid = "00000"):
     http_headers = {'Content-Type': 'application/json'}
     return requests.post(api_url, headers=http_headers, data=input_json)
 
-def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
+def api_search_mass(mass, accuracy, jobid = "00000"):
+    mass_low = mass - accuracy
+    mass_high = mass + accuracy
+    api_url = '{}/chemical/msready/search/by-mass/{}/{}'.format(CCD_API, mass_low, mass_high)
+    logger.info(api_url)
+    http_headers = {'x-api-key': CCD_API_KEY}
+    response = requests.get(api_url, headers=http_headers)
+    candidate_list = list(response.text())
+    return candidate_list
+
+def api_get_metadata(dtxsid):
+    http_headers = {'x-api-key': CCD_API_KEY}
+    chem_details_api = '{}/chemical/detail/search/by-dtxsid/{}'.format(CCD_API,dtxsid)
+    chem_details_response = requests.get(chem_details_api, headers=http_headers)
+    output_dict = {dtxsid: chem_details_response.json()}
+    logger.info('METADATA OUTPUT: {}'.format(output_dict))
+    return {dtxsid: chem_details_response.json()}
+
+def api_search_mass_list(masses, accuracy, jobid = "00000"):
     n_masses = len(masses)
-    logging.info("Sending {} masses in batches of {}".format(n_masses, batchsize))
-    i = 0
-    while i < n_masses:
-        end = i + batchsize-1
-        if end > n_masses-1:
-            end = n_masses-1
-        response = api_search_masses(masses[i:end+1], accuracy, jobid)
-        dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
-        if i == 0:
-            dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
-                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
-        else:
-            dsstox_search_df = dsstox_search_df.append(pd.read_json(dsstox_search_json, orient='split',
-                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'}), ignore_index = True) #Added ignore index, may not be needed 11/2 MWB
-        i = i + batchsize
-    
-    return dsstox_search_df
+    logging.info("Sending {} masses in batches of 1".format(n_masses))
+    results_dict = {}
+    for mass in masses:
+        candidate_list = list(api_search_mass(mass, accuracy))
+        candidates_dict = {}
+        for candidate in candidate_list:
+            candidate_metadata = api_get_metadata(candidate)
+            candidates_dict.update(candidate_metadata)
+        results_dict[mass] = candidates_dict
+    logging.info('api search final dict: {}'.format(results_dict))
+    results_df = pd.read_json(json.dumps(results_dict))
+    return results_df
 
 @response_log_wrapper('DSSTOX')
 def api_search_formulas(formulas, jobID = "00000"):
