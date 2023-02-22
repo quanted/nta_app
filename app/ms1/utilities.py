@@ -76,8 +76,8 @@ def api_search_masses(masses, accuracy, jobid = "00000"):
     return requests.post(api_url, headers=http_headers, data=input_json)
 
 def api_search_mass(mass, accuracy, jobid = "00000"):
-    mass_low = mass - accuracy
-    mass_high = mass + accuracy
+    mass_low = float(mass) - float(accuracy)
+    mass_high = float(mass) + float(accuracy)
     api_url = '{}/chemical/msready/search/by-mass/{}/{}'.format(CCD_API, mass_low, mass_high)
     logger.info(api_url)
     http_headers = {'x-api-key': CCD_API_KEY}
