@@ -5,6 +5,8 @@ RUN apt-get upgrade --fix-missing -y
 RUN apt-get install --no-install-recommends git build-essential python3-dev libpq-dev -y --fix-missing && \
     pip install -U pip
 
+LABEL org.opencontainers.image.source = "https://github.com/quanted/nta_app"
+
 WORKDIR /src/nta_app
 COPY . /src/nta_app
 
