@@ -82,7 +82,7 @@ def api_search_mass(mass, accuracy, jobid = "00000"):
     logger.info(api_url)
     http_headers = {'x-api-key': CCD_API_KEY}
     response = requests.get(api_url, headers=http_headers)
-    candidate_list = list(response.text())
+    candidate_list = list(response.json())
     return candidate_list
 
 def api_get_metadata(dtxsid):
