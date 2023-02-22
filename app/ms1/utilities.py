@@ -90,16 +90,17 @@ def api_get_metadata(dtxsid):
     chem_details_api = '{}/chemical/detail/search/by-dtxsid/{}'.format(CCD_API,dtxsid)
     chem_details_response = requests.get(chem_details_api, headers=http_headers)
     output_dict = {dtxsid: chem_details_response.json()}
-    logger.info('METADATA OUTPUT: {}'.format(output_dict))
+    #logger.info('METADATA OUTPUT: {}'.format(output_dict))
     return {dtxsid: chem_details_response.json()}
 
 def api_search_mass_list(masses, accuracy, jobid = "00000"):
     n_masses = len(masses)
-    #logging.info("Sending {} masses in batches of 1".format(n_masses))
+    logging.info("Sending {} masses in batches of 1".format(n_masses))
     results_dict = {}
     for count, mass in enumerate(masses):
         logger.info("Searching mass # {} out of {}".format(count+1, n_masses))
         candidate_list = list(api_search_mass(mass, accuracy))
+        logger.info("Mass: {} - num of candidates: {}".format(mass, len(candidate_list)))
         candidates_dict = {}
         for candidate in candidate_list:
             candidate_metadata = api_get_metadata(candidate)
