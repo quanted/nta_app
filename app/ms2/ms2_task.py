@@ -248,8 +248,11 @@ class MS2Run:
         
 
     def save_data(self):         
-        self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
-        self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
+        #self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
+        #self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
+        # 2/23/2023 Reverse the filenames index, currently pointing to the wrong file
+        self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][1])
+        self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][0])
 
         
     def send_email(self):
