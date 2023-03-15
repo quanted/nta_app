@@ -58,7 +58,7 @@ class NtaInputs(forms.Form):
         initial=3,
         validators=[MinValueValidator(0)])
     min_replicate_hits = forms.IntegerField(
-        widget = RangeInput(attrs={'max': '3', 'min':'1', 'class': 'slider_bar'}),
+        widget = RangeInput(attrs={'max': '20', 'min':'1', 'class': 'slider_bar'}),
         label='Min replicate hits',
         initial=2,
         validators=[MinValueValidator(0)])
