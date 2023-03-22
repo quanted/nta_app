@@ -184,7 +184,11 @@ def Blank_Subtract(df,index):
     blanks_str = BLANKS
     Abundance[index] = [item for sublist in Headers[index] for item in sublist if (len(sublist)>1) & (not any(x in item for x in blanks_str))]
     # On with the agony of subtracting the MB median from Samples
-    Blanks[index] = df.columns[(df.columns.str.contains(pat ='MB_|blank|blanks|BLANK|Blank')) &
+    # Lines below commented out to adjust for blank definition "MB" rather than "MB_"
+    # Blanks[index] = df.columns[(df.columns.str.contains(pat ='MB_|blank|blanks|BLANK|Blank')) &
+    #                           (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio') == False)].tolist()
+    
+    Blanks[index] = df.columns[(df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank')) &
                                (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio') == False)].tolist()
     Median[index] = df.columns[(df.columns.str.contains(pat ='Median_')==True) & (df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank')==False)].tolist()
     df['Median_ALLMB'] = df[Blanks[index]].median(axis=1,skipna=True).round(0).fillna(0)  # instead using median calc in statistics
