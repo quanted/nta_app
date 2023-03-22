@@ -52,14 +52,14 @@ class NtaInputs(forms.Form):
         label='Tracer retention time accuracy (mins)',
         initial=0.1,
         validators=[MinValueValidator(0)])
-    sample_to_blank = forms.FloatField(
-        widget=forms.NumberInput(attrs={'step': 0.5}),
-        label='Min sample:blank cutoff',
-        initial=3,
-        validators=[MinValueValidator(0)])
     min_replicate_hits = forms.IntegerField(
         widget = RangeInput(attrs={'max': '20', 'min':'1', 'class': 'slider_bar'}),
         label='Min replicate hits',
+        initial=2,
+        validators=[MinValueValidator(0)])
+    min_replicate_hits_blanks = forms.IntegerField(
+        widget = RangeInput(attrs={'max': '20', 'min':'1', 'class': 'slider_bar'}),
+        label='Min replicate hits in blanks',
         initial=2,
         validators=[MinValueValidator(0)])
     max_replicate_cv = forms.DecimalField(

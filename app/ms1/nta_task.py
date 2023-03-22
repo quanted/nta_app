@@ -76,8 +76,8 @@ class NtaRun:
         self.mass_accuracy_units_tr = parameters['mass_accuracy_units_tr']
         self.rt_accuracy_tr = float(parameters['rt_accuracy_tr'])
         self.entact = False #parameters['entact'] == "yes"
-        self.sample_to_blank = float(parameters['sample_to_blank'])
         self.min_replicate_hits = float(parameters['min_replicate_hits'])
+        self.min_replicate_hits_blanks = float(parameters['min_replicate_hits_blanks'])
         self.max_replicate_cv = float(parameters['max_replicate_cv'])
         self.parent_ion_mass_accuracy = float(parameters['parent_ion_mass_accuracy'])
         self.search_dsstox = parameters['search_dsstox'] == 'yes'
@@ -259,7 +259,7 @@ class NtaRun:
         return
 
     def clean_features(self):
-        controls = [self.sample_to_blank, self.min_replicate_hits, self.max_replicate_cv]
+        controls = [self.min_replicate_hits, self.max_replicate_cv, self.min_replicate_hits_blanks]
         self.dfs = [task_fun.clean_features(df, controls) for index, df in enumerate(self.dfs)]
         self.dfs = [fn.Blank_Subtract(df, index) for index, df in enumerate(self.dfs)]  # subtract blanks from medians
         #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])

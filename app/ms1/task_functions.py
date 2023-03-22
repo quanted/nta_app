@@ -255,6 +255,7 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
     Median = df.columns[df.columns.str.contains(pat ='Median_')].tolist()    
     Median_Samples = [md for md in Median if not any(x in md for x in blanks)]
+    Median_Blanks = [md for md in Median if any(x in md for x in blanks)]
     Median_High = [md for md in Median if 'C' in md]
     Median_Mid = [md for md in Median if 'B' in md]
     Median_Low = [md for md in Median if 'A' in md]
@@ -269,13 +270,18 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     df['AnySamplesDropped'] = np.nan
     for median,N in zip(Median_Samples,N_Abun_Samples):
         #print((str(median) + " , " +str(N)))
-        df.loc[df[N] < controls[1], median] = np.nan
-        df.loc[df[N] < controls[1], 'AnySamplesDropped'] = 1
+        df.loc[df[N] < controls[0], median] = np.nan
+        df.loc[df[N] < controls[0], 'AnySamplesDropped'] = 1
+    for mean,Std,median,N in zip(Mean_MB,Std_MB,Median_Blanks,N_Abun_MB):
+        #print((str(median) + " , " +str(N)))
+        df.loc[df[N] < controls[2], median] = np.nan
+        df.loc[df[N] < controls[2], mean] = 0
+        df.loc[df[N] < controls[2], Std] = 0
     # remove all features where the abundance is less than some cutoff in all samples
-    df.drop(df[(df[N_Abun_Samples] < controls[1]).all(axis=1)].index, inplace=True)
-    df.drop(df[(df[CV_Samples] > controls[2]).all(axis=1)].index, inplace=True)
+    df.drop(df[(df[N_Abun_Samples] < controls[0]).all(axis=1)].index, inplace=True)
+    df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True)
     # blank out samples that do not meet the CV cutoff
-    cv_not_met = df[CV_Samples] > controls[2]
+    cv_not_met = df[CV_Samples] > controls[1]
     m = df[Median_Samples].copy()
     cv_not_met.columns = m.columns
     df[Median_Samples] = m.mask(cv_not_met)
