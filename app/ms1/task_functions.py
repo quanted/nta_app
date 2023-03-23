@@ -296,6 +296,6 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     #df['BlankStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
     #df = df[(df[N_Abun_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlankStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
     df['BlkStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
-    df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(0) # In the case of a single blank replicate, no threshold can be calculated and it is empty; replace with zero threshold value
+    df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(df[Mean_MB[0]]) # In the case of a single blank replicate, the previous calculation is an empty value as it cannot calculate Std dev; replace with mean value
     df = df[(df[N_Abun_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
     return df
