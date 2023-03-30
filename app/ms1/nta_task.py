@@ -233,7 +233,8 @@ class NtaRun:
                                                  ionization='positive', id_start=1)
         self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
                                                  ionization='negative', id_start=len(self.dfs[0].index)+1)
-        self.data_map['stats_pos'] = self.dfs[0]
+        #self.data_map['stats_pos'] = self.dfs[0]
+        self.data_map['stats_pos_test'] = self.dfs[0] # Test renaming of sheets
         self.data_map['stats_neg'] = self.dfs[1]
         return
 
