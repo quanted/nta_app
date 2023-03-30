@@ -233,9 +233,8 @@ class NtaRun:
                                                  ionization='positive', id_start=1)
         self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
                                                  ionization='negative', id_start=len(self.dfs[0].index)+1)
-        #self.data_map['stats_pos'] = self.dfs[0]
-        self.data_map['stats_pos_test'] = self.dfs[0] # Test renaming of sheets
-        self.data_map['stats_neg'] = self.dfs[1]
+        self.data_map['Feature_statistics_positive'] = self.dfs[0]
+        self.data_map['Feature_statistics_negative'] = self.dfs[1]
         return
 
     def check_tracers(self):
@@ -249,8 +248,8 @@ class NtaRun:
         self.tracer_dfs_out = [format_tracer_file(df) for df in self.tracer_dfs_out]
         self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
         
-        self.data_map['tracer_pos'] = self.tracer_dfs_out[0]
-        self.data_map['tracer_neg'] = self.tracer_dfs_out[1]
+        self.data_map['Tracer_results_positive'] = self.tracer_dfs_out[0]
+        self.data_map['Tracer_results_negative'] = self.tracer_dfs_out[1]
         self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
         self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
          
@@ -276,8 +275,8 @@ class NtaRun:
         self.df_combined = fn.combine(self.dfs[0], self.dfs[1])
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
-        self.data_map['combined_stats_full'] = self.mpp_ready
-        self.data_map['combined_stats_reduced'] = reduced_file(self.mpp_ready)
+        self.data_map['Cleaned_feature_results_full'] = self.mpp_ready
+        self.data_map['Cleaned_feature_results_reduced'] = reduced_file(self.mpp_ready)
 
 
     def iterate_searches(self):
@@ -329,7 +328,7 @@ class NtaRun:
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                             dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
         dsstox_search_df = self.mpp_ready[['Feature_ID','Mass', 'Retention_Time']].merge(dsstox_search_df, how = 'right', left_on = 'Mass', right_on = 'INPUT')
-        self.data_map['dsstox_search'] = dsstox_search_df
+        self.data_map['chemical_results'] = dsstox_search_df
         self.search_results = dsstox_search_df
 
         
@@ -339,7 +338,7 @@ class NtaRun:
             dtxsid_list = self.search_results['DTXSID'].unique()
             hcd_results = batch_search_hcd(dtxsid_list)
             self.search_results = self.search_results.merge(hcd_results, how = 'left', on = 'DTXSID')
-            self.data_map['dsstox_search'] = self.search_results
+            self.data_map['chemical_results'] = self.search_results
             self.data_map['hcd_search'] = hcd_results
     
     def store_data(self):
