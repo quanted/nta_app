@@ -27,6 +27,15 @@ def input_page(request, form_data=None, form_files=None):
             form.fields['pos_input'].required = inputs_required
             form.fields['neg_input'].required = inputs_required
             print("Inputs required: {}".format(inputs_required))
+            if inputs_required:
+ 
+                form.fields['pos_input'].required = False
+                form.fields['neg_input'].required = False
+                if 'pos_input' in request.FILES.keys():
+                    form.fields['pos_input'].required = True
+                if 'neg_input' in request.FILES.keys():
+                    form.fields['neg_input'].required = True
+
             if (form.is_valid()):
                 print("form is valid")
                 parameters = request.POST
