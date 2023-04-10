@@ -49,15 +49,30 @@ def input_page(request, form_data=None, form_files=None):
                     tracer_file = os.path.join(example_data_dir, example_tracer_filename)
                     tracer_df = file_manager.tracer_handler(tracer_file)
                 else:
-                    pos_input = request.FILES["pos_input"]
-                    neg_input = request.FILES["neg_input"]
+                    if 'pos_input' in request.FILES.keys():
+                        pos_input = request.FILES["pos_input"]
+                    else:
+                        pos_input = None
+                    if 'neg_input' in request.FILES.keys():
+                        neg_input = request.FILES["neg_input"]
+                    else:
+                        neg_input = None
                     try:
                         tracer_file = request.FILES["tracer_input"]
                         tracer_df = file_manager.tracer_handler(tracer_file)
                     except Exception:
                         tracer_df = None
                 inputs = [pos_input, neg_input]
-                input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs)]
+                print("len(inputs)= ", len(inputs) )
+                input_dfs = []
+                for index, df in enumerate(inputs) :
+                    print('indx=',index)
+                    if df is not None:
+                        input_dfs.append(file_manager.input_handler(df, index))
+                    else:
+                        input_dfs.append(None)
+                # input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs) if df is not None]
+                print("len(input_dfs)= ", len(input_dfs) )
                 run_nta_dask(parameters, input_dfs, tracer_df, job_id)
                 return redirect('/nta/ms1/processing/'+job_id, permanent=True)
             else:

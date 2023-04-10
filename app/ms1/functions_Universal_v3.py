@@ -344,54 +344,25 @@ def common_substrings(ls=None):
 
 
 def combine(df1,df2):
-    #Headers = [[],[]]
-        #Headers[0] = parse_headers(df1,0)
-        #Headers[1] = parse_headers(df2,1)
-    #print("##############")
-    Abundance=[[],[]]
-    Abundance[0] = df1.columns.values.tolist()
-    Abundance[1] = df2.columns.values.tolist()
-    #diff = append_headers(Abundance[0],Abundance[1])
-    #print len(df1.columns.values.tolist())
-    #for i in range(len(Abundance[0])):
-    #    #print (Abundance[0][i],Abundance[1][i])
-    #    df1.rename(columns = {Abundance[0][i]:new_headers[i]},inplace=True)
-    #    df2.rename(columns = {Abundance[1][i]:new_headers[i]},inplace=True)
-    #print df1.columns.values.tolist()
-    #print(" ||||___|||| - - - - - - ")
-    #print df2.columns.values.tolist()
-    #df1[list(set(Abundance[0])-set(diff))]    = np.nan
-    #df2[list(set(Abundance[1])-set(diff))]    = np.nan
-    dfc = pd.concat([df1,df2], sort=True) #fixing pandas FutureWarning
-    dfc = dfc.reindex(columns = df1.columns)
+    if df1 is not None and df2 is not None:
+        dfc = pd.concat([df1,df2], sort=True) #fixing pandas FutureWarning
+        dfc = dfc.reindex(columns = df1.columns)
+    elif df1 is not None:
+        dfc = df1.copy()
+    else:
+        dfc = df2.copy()
     columns = dfc.columns.values.tolist()
-    #print((str(len(columns)) + " ##### " + str(len(df1.columns.values.tolist())) + " #### " + str(len(df2.columns.values.tolist()))))
-    dfc = pd.merge(dfc,df2,suffixes=['','_x'],on='Compound',how='left')
-    dfc = pd.merge(dfc,df1,suffixes=['','_y'],on='Compound',how='left')
 
     # create new flags
     dfc = dfc.drop_duplicates(subset=['Compound','Mass','Retention_Time','Score'])
-    dfc['Both_Modes'] = np.where(((abs(dfc.Mass_x-dfc.Mass_y)<=0.005) & (abs(dfc.Retention_Time_x-dfc.Retention_Time_y)<=1)),'1','0')
     dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
     Median_list =  dfc.columns[(dfc.columns.str.contains(pat ='Median_')==True)\
                  & (dfc.columns.str.contains(pat ='MB|blank|blanks|BlankSub|_x|_y')==False)].tolist()
     #print(Median_list)
     dfc['N_Abun_Samples'] = dfc[Median_list].count(axis=1,numeric_only=True)
     dfc['Median_Abun_Samples'] = dfc[Median_list].median(axis=1,skipna=True).round(0)
-    dfc['One_Mode_No_Isomers'] = np.where(((dfc.Both_Modes == '0') & (dfc.N_Compound_Hits == 1)),'1','0')
-    dfc['One_Mode_Isomers'] = np.where(((dfc.Both_Modes == '0') & (dfc.N_Compound_Hits > 1)),'1','0')
-    dfc['Two_Modes_No_Isomers'] = np.where(((dfc.Both_Modes == '1') & (dfc.N_Compound_Hits == 2)),'1','0')
-    dfc['Two_Modes_Isomers'] = np.where(((dfc.Both_Modes == '1') & (dfc.N_Compound_Hits > 2)),'1','0')
-    dfc['Est_Chem_Count'] = None #Default to non-type
-    dfc.loc[dfc['One_Mode_No_Isomers'] == '1','Est_Chem_Count'] = 1
-    dfc.loc[dfc['One_Mode_Isomers'] == '1','Est_Chem_Count'] = dfc['N_Compound_Hits']
-    dfc.loc[(dfc['Two_Modes_No_Isomers'] == '1') | (dfc['Two_Modes_Isomers'] == '1'),'Est_Chem_Count'] = dfc['N_Compound_Hits']/2
-    columns.extend(('Both_Modes','N_Compound_Hits','N_Abun_Samples','Median_Abun_Samples','One_Mode_No_Isomers','One_Mode_Isomers','Two_Modes_No_Isomers',
-            'Two_Modes_Isomers','Est_Chem_Count'))
-    dfc = dfc[columns].sort_values(['Compound'],ascending=[True])
 
-    #dft.reset_index() 
-    #dft.dropna(inplace=True)
+    dfc = dfc[columns].sort_values(['Compound'],ascending=[True])
     return dfc
 
 

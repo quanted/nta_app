@@ -38,7 +38,13 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
         dask_scheduler = os.environ.get("DASK_SCHEDULER")
         logger.info("Running in docker environment. Dask Scheduler: {}".format(dask_scheduler))
         dask_client = Client(dask_scheduler)
+
+    input_dfs_size= len(input_dfs)
+    logger.info("Before scatter input_dfs_size: {}".format(input_dfs_size))
     dask_input_dfs = dask_client.scatter(input_dfs)
+    dask_input_dfs_size= len(dask_input_dfs)
+    logger.info("After scatter dask_input_dfs_size: {}".format(dask_input_dfs_size))
+
     logger.info("Submitting Nta Dask task")
     task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, mongo_address, jobid, verbose,
                               in_docker = in_docker)
@@ -118,8 +124,11 @@ class NtaRun:
         self.filter_duplicates()
         if self.verbose:
             logger.info("Dropped duplicates.")
-            logger.info("POS df length: {}".format(len(self.dfs[0])))
-            logger.info("NEG df length: {}".format(len(self.dfs[1])))
+            logger.info("dfs.size(): {}".format(len(self.dfs)))
+            if self.dfs[0] is not None:
+                logger.info("POS df length: {}".format(len(self.dfs[0])))
+            if self.dfs[1] is not None:
+                logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
 
         # 2: statistics
@@ -127,8 +136,10 @@ class NtaRun:
         self.calc_statistics()
         if self.verbose:
             logger.info("Calculated statistics.")
-            logger.info("POS df length: {}".format(len(self.dfs[0])))
-            logger.info("NEG df length: {}".format(len(self.dfs[1])))
+            if self.dfs[0] is not None:
+                logger.info("POS df length: {}".format(len(self.dfs[0])))
+            if self.dfs[1] is not None:
+                logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
             #print(str(list(self.dfs[0])))
 
@@ -144,8 +155,10 @@ class NtaRun:
         self.clean_features()
         if self.verbose:
             logger.info("Cleaned features.")
-            logger.info("POS df length: {}".format(len(self.dfs[0])))
-            logger.info("NEG df length: {}".format(len(self.dfs[1])))
+            if self.dfs[0] is not None:
+                logger.info("POS df length: {}".format(len(self.dfs[0])))
+            if self.dfs[1] is not None:
+                logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
 
         # 5: create flags
@@ -153,8 +166,10 @@ class NtaRun:
         self.create_flags()
         if self.verbose:
             logger.info("Created flags.")
-            logger.info("POS df length: {}".format(len(self.dfs[0])))
-            logger.info("NEG df length: {}".format(len(self.dfs[1])))
+            if self.dfs[0] is not None:
+                logger.info("POS df length: {}".format(len(self.dfs[0])))
+            if self.dfs[1] is not None:
+                logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
 
         # 6: combine modes
@@ -215,26 +230,37 @@ class NtaRun:
         return self.step
 
     def filter_duplicates(self):
-        self.dfs = [task_fun.duplicates(df) for df in self.dfs]
-        #self.mongo_save(self.dfs[0], FILENAMES['duplicates'][0])
-        #self.mongo_save(self.dfs[1], FILENAMES['duplicates'][1])
+        # self.dfs = [task_fun.duplicates(df) for df in self.dfs if df is not None, None]
+        self.dfs = [task_fun.duplicates(df) if df is not None else None for df in self.dfs]
         return
 
     def filter_void_volume(self, min_rt):
-        self.dfs = [df.loc[df['Retention_Time'] > min_rt].copy() for index, df in enumerate(self.dfs)]
+        # self.dfs = [df.loc[df['Retention_Time'] > min_rt].copy() for index, df in enumerate(self.dfs) if df is not None, None]
+        self.dfs = [df.loc[df['Retention_Time'] > min_rt].copy() if df is not None else None for index, df in enumerate(self.dfs)]
         return
 
     def calc_statistics(self):
         ppm = self.mass_accuracy_units == 'ppm'
-        self.dfs = [task_fun.statistics(df) for df in self.dfs]
-        self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
-        self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
-        self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], self.mass_accuracy, self.rt_accuracy, ppm,
+        self.dfs = [task_fun.statistics(df) if df is not None else None for df in self.dfs]
+        if self.dfs[0] is not None and self.dfs[1] is not None:
+            self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
+            self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
+            self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], self.mass_accuracy, self.rt_accuracy, ppm,
                                                  ionization='positive', id_start=1)
-        self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
+            self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
                                                  ionization='negative', id_start=len(self.dfs[0].index)+1)
-        self.data_map['Feature_statistics_positive'] = self.dfs[0]
-        self.data_map['Feature_statistics_negative'] = self.dfs[1]
+            self.data_map['Feature_statistics_positive'] = self.dfs[0]
+            self.data_map['Feature_statistics_negative'] = self.dfs[1]
+        elif self.dfs[0] is not None:
+            self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
+            self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], self.mass_accuracy, self.rt_accuracy, ppm,
+                                                 ionization='positive', id_start=1)
+            self.data_map['Feature_statistics_positive'] = self.dfs[0]
+        else:
+            self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
+            self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
+                                                 ionization='negative', id_start=1)
+            self.data_map['Feature_statistics_negative'] = self.dfs[1]
         return
 
     def check_tracers(self):
@@ -260,14 +286,14 @@ class NtaRun:
 
     def clean_features(self):
         controls = [self.min_replicate_hits, self.max_replicate_cv, self.min_replicate_hits_blanks]
-        self.dfs = [task_fun.clean_features(df, controls) for index, df in enumerate(self.dfs)]
-        self.dfs = [fn.Blank_Subtract(df, index) for index, df in enumerate(self.dfs)]  # subtract blanks from medians
+        self.dfs = [task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]
+        self.dfs = [fn.Blank_Subtract(df, index) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
         #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
         #self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
         return
 
     def create_flags(self):
-        self.dfs = [fn.flags(df) for df in self.dfs]
+        self.dfs = [fn.flags(df) if df is not None else None for df in self.dfs]
         #self.mongo_save(self.dfs[0], FILENAMES['flags'][0])
         #self.mongo_save(self.dfs[1], FILENAMES['flags'][1])
 
