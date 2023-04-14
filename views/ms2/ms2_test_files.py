@@ -6,10 +6,8 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from .. import links_left
 
-
-example_pos_filename = 'pooled_blood_pos_MPP.csv'
-example_neg_filename = 'pooled_blood_pos_MPP.csv'
-example_tracer_filename = 'pooled_blood_tracers.csv'
+example_pos_filename = 'EntactEnv_Pos_MS1_Dust1IDA_01_Debug.mgf'
+example_neg_filename = 'EntactEnv_Neg_MS1_Dust1IDA_01_Debug.mgf'
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -17,8 +15,8 @@ logger = logging.getLogger("nta_app.views")
 logger.setLevel(logging.INFO)
 
 #@require_POST
-def test_files_page(request, model='ms1', header='Download MS1 test files', jobid='00000000'):
-    model_html = """<div id="Download button"><input type="button" value="Download MS1 Test Files" onclick="window.open('download')">
+def test_files_page(request, model='ms1', header='Download MS2 test files', jobid='00000000'):
+    model_html = """<div id="Download button"><input type="button" value="Download MS2 Test Files" onclick="window.open('download')">
 </div>"""
     html = formula_list_html(header, model, model_html)
     response = HttpResponse()
@@ -29,7 +27,7 @@ def test_files_page(request, model='ms1', header='Download MS1 test files', jobi
 
 def formula_list_html(header, model, tables_html):
     """Generates HTML to fill '.articles_output' div on output page"""
-    page = 'ms1_test_files'
+    page = 'ms2_test_files'
     #epa template header
     html = render_to_string('01epa_drupal_header.html', {
         'SITE_SKIN': os.environ['SITE_SKIN'],
@@ -57,7 +55,7 @@ def formula_list_html(header, model, tables_html):
 
 def download_test_files(request):
     """
-    Downloads MS1 test files from the code directory input/ms1 and returns them as a zip file in the response.
+    Downloads MS2 test files from the code directory input/ms2/mgf and returns them as a zip file in the response.
 
     Args:
         request (HttpRequest): The HTTP request object.
@@ -68,22 +66,20 @@ def download_test_files(request):
     """
 
     # Log the start of the function
-    logger.info("=========== returns ms1 test files from code directory input/ms1")
+    logger.info("=========== returns ms2 test files from code directory input/ms2/mgf")
 
     # create an absolute path to the 'example_data_dir' containing the test data files, then create
     # absolute paths to each test data file. Note the test data files are located in this code base.
-    example_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','input/ms1')
+    example_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','input/ms2/mgf')
     pos_input = os.path.join(example_data_dir, example_pos_filename)
     neg_input = os.path.join(example_data_dir, example_neg_filename)
-    tracer_file = os.path.join(example_data_dir, example_tracer_filename)
-
+ 
     # create filenames
-    filename1 = 'ms1_pos_input_test_data.csv'
-    filename2 = 'ms1_neg_input_test_data.csv'
-    filename3 = 'ms1_tracer_test_data.csv'
+    filename1 = 'ms2_pos_input_test_data.mgf'
+    filename2 = 'ms2_neg_input_test_data.mgf'
 
     # List of files to be zipped
-    files_to_zip = {filename1: pos_input, filename2: neg_input, filename3: tracer_file}
+    files_to_zip = {filename1: pos_input, filename2: neg_input}
 
     # Create an in-memory zip file
     in_memory_zip = BytesIO()
@@ -97,7 +93,7 @@ def download_test_files(request):
                 zipf.writestr(filename, file_content)
         # The ZipFile object is automatically closed when exiting the 'with' block
 
-    zip_filename = "ms1_test_data_files.zip"
+    zip_filename = "ms2_test_data_files.zip"
     # Create an HTTP response with the zip file attached for download
     response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename=' + zip_filename

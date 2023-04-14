@@ -10,6 +10,7 @@ from nta_app.views.ms1 import qaqc as ms1_qaqc
 from nta_app.views.ms1 import references as ms1_references
 from nta_app.views.ms1 import formula_list as ms1_formulas
 from nta_app.views.ms1 import ms1_test_files as ms1_test_files
+from nta_app.views.ms2 import ms2_test_files as ms2_test_files
 from nta_app.views.ms2 import upload as ms2_upload
 from nta_app.views.ms2 import processing as ms2_processing
 from nta_app.views.ms2 import output as ms2_output
@@ -66,6 +67,9 @@ urlpatterns = [
     path('ms2/processing/<slug:jobid>', ms2_processing.processing_page),
     path('ms2/results/<slug:jobid>', ms2_results_api.download_all),
     path('ms2/status/<slug:jobid>', ms2_results_api.check_status),
+    path('ms2/ms2_test_files/', ms2_test_files.test_files_page),
+    path('ms2/ms2_test_files', ms2_test_files.test_files_page),
+    path('ms2/ms2_test_files/download', ms2_test_files.download_test_files),
     #
     # merge tool
     path('merge', merge_input.input_page),
