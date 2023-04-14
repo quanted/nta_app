@@ -9,6 +9,7 @@ from nta_app.views.ms1 import algorithms as ms1_algorithms
 from nta_app.views.ms1 import qaqc as ms1_qaqc
 from nta_app.views.ms1 import references as ms1_references
 from nta_app.views.ms1 import formula_list as ms1_formulas
+from nta_app.views.ms1 import ms1_test_files as ms1_test_files
 from nta_app.views.ms2 import upload as ms2_upload
 from nta_app.views.ms2 import processing as ms2_processing
 from nta_app.views.ms2 import output as ms2_output
@@ -43,7 +44,9 @@ urlpatterns = [
     path('ms1/results/all/<slug:jobid>', ms1_results_api.download_all),
     path('ms1/status/<slug:jobid>', ms1_results_api.check_status),
     path('ms1/formulas/', ms1_formulas.formula_list_page),
+    path('ms1/ms1_test_files/', ms1_test_files.test_files_page),
     path('ms1/formulas/download', ms1_formulas.download_msready_formulas),
+    path('ms1/ms1_test_files/download', ms1_test_files.download_test_files),
     path('ms1/algorithms/', ms1_algorithms.algorithms_page),
     path('ms1/qaqc/', ms1_qaqc.qaqcd_page),
     path('ms1/references/', ms1_references.references_page),
