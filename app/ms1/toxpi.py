@@ -12,8 +12,9 @@ def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     dft = dft.rename(columns={'EXPOCAST_MEDIAN_EXPOSURE_PREDICTION_MG/KG-BW/DAY': 'EXPOCAST_MGKG_BWDAY'})
     # dft.drop(['TOXCAST_NUMBER_OF_ASSAYS/TOTAL'],axis=1)
     dft.columns = dft.columns.str.replace(' ', '_')
-    data_source_ratios = dft.groupby('INPUT')['DATA_SOURCES'].apply(lambda x: (x / x.max())).round(2)
-    dft['DATA_SOURCES_RATIO'] = dft.merge(data_source_ratios, how='left', left_on='INPUT', right_index=True)
+    data_source_ratios = dft.groupby('INPUT')['DATA_SOURCES'].apply(lambda x: (x / x.max())).round(2).rename(columns={'Result':'DATA_SOURCES_RATIO'})
+    print(data_source_ratios)
+    dft = dft.merge(data_source_ratios, how='left', left_on='INPUT', right_index=True)
     df.sort_values('Compound', ascending=True, inplace=True)
     # dft = dft.sort_values('DATA_SOURCES',ascending = False).drop_duplicates('Compound').sort_index()
     df['SEARCHED_MASS'] = df['Mass']
