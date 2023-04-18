@@ -87,8 +87,9 @@ def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                         dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
         else:
-            dsstox_search_df = pd.concat(dsstox_search_df, pd.read_json(dsstox_search_json, orient='split',
-                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'}), ignore_index = True) #Added ignore index, may not be needed 11/2 MWB
+            new_search_df = pd.read_json(dsstox_search_json, orient='split',
+                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
+            dsstox_search_df = pd.concat([dsstox_search_df, new_search_df], ignore_index = True) #Added ignore index, may not be needed 11/2 MWB
         i = i + batchsize
     
     return dsstox_search_df
