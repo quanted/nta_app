@@ -1,6 +1,8 @@
 aiohttp==3.8.1
 bokeh
 blosc==1.10.2
+dask==2023.4.0
+distributed==2023.4.0
 django==4.1.2
 django-cors-headers==3.13.0
 flask==2.0.2
