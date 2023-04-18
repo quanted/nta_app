@@ -184,13 +184,11 @@ class NtaRun:
         if self.search_dsstox:
             self.step = "Searching dsstox database"
             self.perform_dashboard_search()
-            #self.iterate_searches()
             if self.search_hcd:
                 self.perform_hcd_search()
             self.process_toxpi()
         if self.verbose:
             logger.info("Final result processed.")
-        #self.clean_files()
         #if self.verbose:
         #    logger.info("Download files removed, processing complete.")
         
@@ -304,33 +302,6 @@ class NtaRun:
         self.data_map['Cleaned_feature_results_full'] = self.mpp_ready
         self.data_map['Cleaned_feature_results_reduced'] = reduced_file(self.mpp_ready)
 
-
-    def iterate_searches(self):
-        to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
-        if self.search_mode == 'mass':
-            to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
-        else:
-            to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
-        n_search = len(to_search)  # number of fragments to search
-        logger.info("Total # of queries: {}".format(n_search))
-        max_search = 300 # the maximum number of fragments to search at a time
-        upper_index = 0
-        finished = False
-        while not finished:
-            lower_index = upper_index
-            upper_index = upper_index + max_search
-            if upper_index >= (n_search - 1):
-                upper_index = n_search - 1
-                finished = True
-            # finished = upper_index >= (n_search-1)
-            if self.verbose:
-                logger.info("Searching Dashboard for compounds {} - {}.".format(lower_index, upper_index))
-            self.search_dashboard(to_search, lower_index, upper_index)
-            self.download_finished(save=finished)
-            if self.verbose:
-                logger.info("Download finished.")
-            self.fix_overflows()
-
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save = True):
         logging.info('Rows flagged for dashboard search: {} out of {}'.format(len(self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :]), len(self.df_combined)))
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
@@ -373,86 +344,12 @@ class NtaRun:
         for key in self.data_map.keys():
             self.mongo_save(self.data_map[key], step=key)
 
-    def download_finished(self, save = False):
-        finished = False
-        tries = 0
-        while not finished and tries < 150:
-            for filename in os.listdir(self.new_download_dir):
-                if filename.startswith('ChemistryDashboard-Batch-Search') and not filename.endswith("part"):
-                        self.download_filenames.append(filename)
-                        copy_tries = 0
-                        source = os.path.join(self.new_download_dir, filename)
-                        destination = os.path.join(self.data_dir, filename)
-                        while copy_tries < 10:
-                            time.sleep(5)  # waiting a second to make sure data is copied from the partial dl file
-                            shutil.copy(source, destination)
-                            if os.path.exists(destination):
-                                if os.path.getsize(destination) > 0:
-                                    os.remove(source)
-                                    break
-                            copy_tries = copy_tries + 1
-                        finished = True
-            tries += 1
-            time.sleep(1)
-        if not finished:
-            logger.info("Download never finished")
-            self.search.close_driver()
-            raise Exception("Download from the CompTox Chemistry Dashboard failed!")
-        print("This is what was downloaded: " + self.download_filenames[-1])
-        self.search.close_driver()
-        results_path = os.path.join(self.data_dir,self.download_filenames[-1])
-        self.fix_overflows(self.download_filenames[-1])
-        download_df = pd.read_csv(results_path, sep='\t')
-        if self.search_results is None:
-            self.search_results = download_df
-        else:
-            self.search_results.append(download_df)
-        if save:
-            self.mongo_save(self.search_results, FILENAMES['dashboard'][0])
-        return self.download_filenames[-1]
-
-    def fix_overflows(self, filename=None):
-        """
-        This function fixes an error seen in some comptox dashboard results, where a newline character is inserted into
-        the middle of the chemical names, messing up the tsv file.
-        :return:
-        """
-        if  filename is not None:
-            results_path = os.path.join(self.data_dir, filename)
-            new_file = []
-            problems = []
-            row_len = []
-            correct_len = 19
-            with open(results_path, 'r') as file:
-                reader = csv.reader(file, delimiter = '\t')
-                for index, row in enumerate(reader):
-                    row_len.append(len(row))
-                    new_file.append(row)
-                    last_line = row_len[index - 1]
-                    if row_len[index] < correct_len and last_line < correct_len and row_len[index] + last_line == correct_len + 1:
-                        new_file[index - 1][len(new_file[index - 1]) - 1] = new_file[index - 1][
-                                                                                len(new_file[index - 1]) - 1] + \
-                                                                            new_file[index][0]
-                        new_file[index - 1] = new_file[index - 1] + new_file[index][1:]
-                        problems.append(index)
-            if problems: #check if list of problems is not empty
-                [new_file.pop(i) for i in reversed(problems)]
-
-            with open(results_path, 'w', newline = '') as file:
-                writer = csv.writer(file, delimiter = '\t')
-                writer.writerows(new_file)
-
     def process_toxpi(self):
         by_mass = self.search_mode == "mass"
         self.df_combined = toxpi.process_toxpi(self.df_combined, self.search_results,
                                                tophit=self.top_result_only, by_mass = by_mass)
         self.data_map['final_full'] = self.df_combined
         self.data_map['final_reduced'] = reduced_file(self.df_combined)
-
-    def clean_files(self):
-        shutil.rmtree(self.data_dir)  # remove data directory and all download files
-        if self.verbose:
-            logger.info("Cleaned up download file.")
 
     def mongo_save(self, file, step=""):
         if isinstance(file, pd.DataFrame):
