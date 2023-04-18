@@ -20,7 +20,7 @@ def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     dft.columns = dft.columns.str.replace(' ', '_')
     data_source_ratios = dft.groupby('INPUT')['DATA_SOURCES'].apply(lambda x: (x / x.max())).round(2).reset_index()
     logging.info(data_source_ratios)
-    dft['DATA_SOURCE_RATIO'] = data_source_ratios
+    dft['DATA_SOURCE_RATIO'] = data_source_ratios['DATA_SOURCES']
     #dft = dft.merge(data_source_ratios, how='left', left_on='INPUT', right_index=True)
     df.sort_values('Compound', ascending=True, inplace=True)
     # dft = dft.sort_values('DATA_SOURCES',ascending = False).drop_duplicates('Compound').sort_index()
