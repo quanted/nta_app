@@ -1,5 +1,11 @@
 import numpy as np
 import pandas as pd
+import logging
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger("nta_app.ms1")
+logger.setLevel(logging.INFO)
 
 def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     dft = search_df.copy()
@@ -13,7 +19,7 @@ def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     # dft.drop(['TOXCAST_NUMBER_OF_ASSAYS/TOTAL'],axis=1)
     dft.columns = dft.columns.str.replace(' ', '_')
     data_source_ratios = dft.groupby('INPUT')['DATA_SOURCES'].apply(lambda x: (x / x.max())).round(2).rename('DATA_SOURCES_RATIO')
-    print(data_source_ratios)
+    logging.info(data_source_ratios)
     dft = dft.merge(data_source_ratios, how='left', left_on='INPUT', right_index=True)
     df.sort_values('Compound', ascending=True, inplace=True)
     # dft = dft.sort_values('DATA_SOURCES',ascending = False).drop_duplicates('Compound').sort_index()
