@@ -459,7 +459,7 @@ def MPP_Ready(dft, directory='',file=''):
     #dft = dft.reindex(columns=Columns)
     #print dft
     #dft.to_csv(directory+'/'+file+'_MPP_Ready.csv', index=False)
-    dft = dft[['Feature_ID','Formula','Score', 'Mass','Retention_Time'] + raw_samples + blank_subtracted_medians]
+    dft = dft[['Feature_ID','Formula','Score', 'Mass','Retention_Time','Detection_Count','Detection_Count(%)'] + raw_samples + blank_subtracted_medians]
     #dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)
     return dft
 

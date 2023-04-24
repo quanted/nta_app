@@ -160,6 +160,8 @@ class NtaRun:
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
+        # counting occrrences of each feature after cleaning
+        self.dfs = [task_fun.cal_detection_count(df) if df is not None else None for df in self.dfs]
 
         # 5: create flags
         self.step = "Creating flags"

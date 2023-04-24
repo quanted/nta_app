@@ -223,6 +223,37 @@ def statistics(df_in):
     df['Rounded_Mass'] = df['Mass'].round(0)
     return df
 
+def cal_detection_count(df_in):
+
+    # make a working copy of the dataframe
+    df = df_in.copy()
+
+    # a list of lists of headers that contain abundance data
+    all_header_groups = parse_headers(df)
+    abundance = [item for sublist in all_header_groups for item in sublist if len(sublist) > 1]
+    filter_headers= ['Compound'] + abundance
+
+    # remove all items filter_headers containing string 'BlankSub_Median_' from list filter_headers
+    filter_headers = [item for item in filter_headers if 'BlankSub_Median_' not in item]
+
+    df = df[filter_headers].copy()
+
+    # calculate detection_Count
+    df['Detection_Count'] = df.count(axis=1)
+
+    # subtract 1 from detection_Count to account for the compound name
+    df['Detection_Count'] = df['Detection_Count'].apply(lambda x: x - 1)
+
+    # total number of samples (subtract 1 for the compound name)
+    total_samples = len(filter_headers) - 1
+
+    # calculate percentage of samples that have a value and store in new column 'detection_Count(%)'
+    df['Detection_Count(%)'] = (df['Detection_Count'] / total_samples) * 100
+
+    # merge new data into original dataframe
+    df_out = pd.merge(df_in, df[[ 'Compound','Detection_Count', 'Detection_Count(%)' ]], how='left', on=['Compound'])
+    return df_out
+
 
 def score(df):  # Get score from annotations.
     regex = "db=(.*?)[, \]].*"  # grab score from first match of db=(value) followed by a , ] or space
