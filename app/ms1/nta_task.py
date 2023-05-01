@@ -274,8 +274,9 @@ class NtaRun:
         self.tracer_dfs_out = [format_tracer_file(df) for df in self.tracer_dfs_out]
         self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
         
-        self.data_map['Tracer_results_positive'] = self.tracer_dfs_out[0]
-        self.data_map['Tracer_results_negative'] = self.tracer_dfs_out[1]
+        # implements part of NTAW-143
+        self.data_map['Tracer_Sample_Results'] = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
+        
         self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
         self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
          
