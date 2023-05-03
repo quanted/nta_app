@@ -13,7 +13,7 @@ from .input_form import NtaInputs
 from ...app.ms1.nta_task import run_nta_dask
 
 example_pos_filename = 'pooled_blood_pos_MPP.csv'
-example_neg_filename = 'pooled_blood_pos_MPP.csv'
+example_neg_filename = 'pooled_blood_neg_MPP.csv'
 example_tracer_filename = 'pooled_blood_tracers.csv'
 
 def input_page(request, form_data=None, form_files=None):
