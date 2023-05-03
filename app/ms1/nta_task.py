@@ -142,6 +142,7 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
             #print(str(list(self.dfs[0])))
+        self.dfs = [task_fun.cal_detection_count(df) if df is not None else None for df in self.dfs]
 
         # 3: check tracers (optional)
         self.step = "Checking tracers"
@@ -149,6 +150,7 @@ class NtaRun:
         if self.verbose:
             logger.info("Checked tracers.")
             #print(self.tracer_dfs_out)
+        # counting occrrences of each feature after cleaning
 
         # 4: clean features
         self.step = "Cleaning features"
@@ -160,8 +162,6 @@ class NtaRun:
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
-        # counting occrrences of each feature after cleaning
-        self.dfs = [task_fun.cal_detection_count(df) if df is not None else None for df in self.dfs]
 
         # 5: create flags
         self.step = "Creating flags"
@@ -275,7 +275,14 @@ class NtaRun:
         self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
         
         # implements part of NTAW-143
-        self.data_map['Tracer_Sample_Results'] = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
+        dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
+        self.data_map['Tracer_Sample_Results'] = dft
+
+        # create summary table
+        if 'DTXSID' not in dft.columns:
+            dft['DTXSID'] = ''
+        dft = dft[['Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 'Detection_Count','Detection_Count(%)']]
+        self.data_map['Tracers_Summary'] = dft
         
         self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
         self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]

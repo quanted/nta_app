@@ -221,6 +221,11 @@ def statistics(df_in):
                 break
     df.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
     df['Rounded_Mass'] = df['Mass'].round(0)
+
+    # Create a new dataframe column titled "Max_CV_across_sample" and populate it with the maximum CV value for each feature across all columns containing the string "CV_" in the header
+    # df=df.assign(Max_CV_across_sample=df.filter(regex='CV_').max(axis=1))
+    df['Max_CV_across_sample'] = df.filter(regex='CV_').max(axis=1)
+
     return df
 
 def cal_detection_count(df_in):
@@ -295,7 +300,9 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     N_Abun_MB = [N for N in Abundance if any(x in N for x in blanks)]
     N_Abun_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
     #N_Abun_MB= [N for N in Abundanceif 'MB' in N]
-    CV =  df.columns[df.columns.str.contains(pat ='CV_')].tolist()
+
+    CV = df.columns[df.columns.str.startswith('CV_')].tolist()
+
     CV_Samples= [C for C in CV if not any(x in C for x in blanks)]
     #set medians where feature abundance is less than some cutoff to nan
     df['AnySamplesDropped'] = np.nan
