@@ -8,7 +8,7 @@ from .. import links_left
 
 
 example_pos_filename = 'pooled_blood_pos_MPP.csv'
-example_neg_filename = 'pooled_blood_pos_MPP.csv'
+example_neg_filename = 'pooled_blood_neg_MPP.csv'
 example_tracer_filename = 'pooled_blood_tracers.csv'
 
 logging.basicConfig()
