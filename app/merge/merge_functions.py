@@ -25,6 +25,9 @@ logger.setLevel(logging.INFO)
 
 def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy = 10, rt_accuracy = 0.2):
     matched_df = ms1_data if isinstance(ms1_data, pd.DataFrame) else ms1_data['dsstox_search']
+    
+    matched_df.rename(columns = {'DTXCID_INDIVIDUAL_COMPONENT': 'DTXCID'}, inplace = True)
+    
     for ms2_data in ms2_data_list:
         filename = ms2_data['file_name']
         cfmid_df = ms2_data['file_df']
