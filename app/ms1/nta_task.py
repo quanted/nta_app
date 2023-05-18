@@ -14,6 +14,7 @@ from . import toxpi
 from .utilities import *  #connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
 
 from . import task_functions as task_fun
+from . WebApp_plotter import WebApp_plotter
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
@@ -111,6 +112,7 @@ class NtaRun:
         self.step = "Started"  # tracks the current step (for fail messages)
         #os.mkdir(self.data_dir)
         #os.mkdir(self.new_download_dir)
+        self.tracer_plots_out = []
 
 
     def execute(self):
@@ -270,9 +272,57 @@ class NtaRun:
         if self.verbose:
             logger.info("Tracer file found, checking tracers.")
         ppm = self.mass_accuracy_units_tr == 'ppm'
-        self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) for index, df in enumerate(self.dfs)]
-        self.tracer_dfs_out = [format_tracer_file(df) for df in self.tracer_dfs_out]
-        self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
+        self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) if df is not None else None for index, df in enumerate(self.dfs)]
+        self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
+        # self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
+
+        # declare plotter
+        df_WA = WebApp_plotter()
+
+        # logger.info("self.tracer_dfs_out[0].shape = {}".format(self.tracer_dfs_out[0].shape))
+        # logger.info("self.tracer_dfs_out[0].columns.values = {}".format(self.tracer_dfs_out[0].columns.values))
+
+        # plot
+        if self.tracer_dfs_out[0] is not None:
+            self.tracer_plots_out.append(df_WA.make_seq_scatter(
+                # data_path='./input/summary_tracer.xlsx',
+                df_in=self.tracer_dfs_out[0],                           
+                seq_csv=None,
+                ionization='pos',
+                y_scale='linear',
+                fit=False,
+                share_y=False,
+                y_fixed=False,
+                y_step=6,
+                same_frame=False,
+                legend=True,
+                chemical_names=None, 
+                # save_image=True, 
+                # image_title='./output02/slide_12-dark',
+                dark_mode=True))
+    
+        # declare plotter
+        df_WA = WebApp_plotter()
+
+        # plot
+        if self.tracer_dfs_out[1] is not None:
+            self.tracer_plots_out.append(df_WA.make_seq_scatter(
+                # data_path='./input/summary_tracer.xlsx',
+                df_in=self.tracer_dfs_out[1],                           
+                seq_csv=None,
+                ionization='neg',
+                y_scale='linear',
+                fit=False,
+                share_y=False,
+                y_fixed=False,
+                y_step=6,
+                same_frame=False,
+                legend=True,
+                chemical_names=None, 
+                # save_image=True, 
+                # image_title='./output02/slide_12-dark',
+                dark_mode=True))
+    
         
         # implements part of NTAW-143
         dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
@@ -284,8 +334,13 @@ class NtaRun:
         dft = dft[['Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 'Detection_Count','Detection_Count(%)']]
         self.data_map['Tracers_Summary'] = dft
         
-        self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
-        self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
+        # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
+        # self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
+
+        for i in range (len(self.tracer_plots_out[0])):
+            self.tracer_map['tracer_plot_pos_'+str(i+1)] = self.tracer_plots_out[0][i]
+        for i in range (len(self.tracer_plots_out[1])):
+            self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i]
          
         self.gridfs.put("&&".join(self.tracer_map.keys()), _id=self.jobid + "_tracer_files", encoding='utf-8', project_name = self.project_name)
         for key in self.tracer_map.keys():
@@ -362,6 +417,7 @@ class NtaRun:
         self.data_map['final_reduced'] = reduced_file(self.df_combined)
 
     def mongo_save(self, file, step=""):
+        
         if isinstance(file, pd.DataFrame):
             to_save = file.to_json(orient='split')
         else:
