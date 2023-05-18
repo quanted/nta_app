@@ -29,7 +29,12 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy = 10, rt_accuracy = 
         filename = ms2_data['file_name']
         cfmid_df = ms2_data['file_df']
         mass_col, rt_col, score_col = (f'MASS_MGF_{filename}', f'RT_{filename}', f'SUM_SCORE_{filename}')
-        cfmid_df.rename(columns = {'MASS_MGF': mass_col, 'RT': rt_col, 'SUM_SCORE' : score_col}, inplace = True)
+        #logger.info('mass_col, rt_col, score_col')
+        #logger.info(mass_col, rt_col, score_col)
+        
+        #cfmid_df.rename(columns = {'MASS_MGF': mass_col, 'RT': rt_col, 'SUM_SCORE' : score_col}, inplace = True)
+        cfmid_df.rename(columns = {'MASS_in_MGF': mass_col, 'RT': rt_col, 'energy_sum' : score_col}, inplace = True)
+        
         matched_df = matched_df.merge(cfmid_df[['DTXCID', f'MASS_MGF_{filename}', f'RT_{filename}', f'SUM_SCORE_{filename}']], how = 'left', on = 'DTXCID')
         matched_df['mass_diff'] = abs(matched_df['Mass'] - matched_df[f'MASS_MGF_{filename}'])
         matched_df['rt_diff'] = abs(matched_df['Retention_Time'] - matched_df[f'RT_{filename}'])
