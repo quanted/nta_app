@@ -15,6 +15,8 @@ from ...app.ms1.nta_task import run_nta_dask
 example_pos_filename = 'pooled_blood_pos_MPP.csv'
 example_neg_filename = 'pooled_blood_neg_MPP.csv'
 example_tracer_filename = 'pooled_blood_tracers.csv'
+example_run_sequence_pos_filename = 'pooled_blood_run_sequence_pos.csv'
+example_run_sequence_neg_filename = 'pooled_blood_run_sequence_neg.csv'
 
 def input_page(request, form_data=None, form_files=None):
 
@@ -48,6 +50,10 @@ def input_page(request, form_data=None, form_files=None):
                     neg_input = os.path.join(example_data_dir, example_neg_filename)
                     tracer_file = os.path.join(example_data_dir, example_tracer_filename)
                     tracer_df = file_manager.tracer_handler(tracer_file)
+                    run_sequence_pos_file = os.path.join(example_data_dir, example_run_sequence_pos_filename)
+                    run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
+                    run_sequence_neg_file = os.path.join(example_data_dir, example_run_sequence_neg_filename)
+                    run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
                 else:
                     if 'pos_input' in request.FILES.keys():
                         pos_input = request.FILES["pos_input"]
@@ -62,6 +68,16 @@ def input_page(request, form_data=None, form_files=None):
                         tracer_df = file_manager.tracer_handler(tracer_file)
                     except Exception:
                         tracer_df = None
+                    try:
+                        run_sequence_pos_file = request.FILES["run_sequence_pos_file"]
+                        run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
+                    except Exception:
+                        run_sequence_pos_df = None
+                    try:
+                        run_sequence_neg_file = request.FILES["run_sequence_neg_file"]
+                        run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
+                    except Exception:
+                        run_sequence_neg_df = None
                 inputs = [pos_input, neg_input]
                 print("len(inputs)= ", len(inputs) )
                 input_dfs = []
@@ -73,7 +89,7 @@ def input_page(request, form_data=None, form_files=None):
                         input_dfs.append(None)
                 # input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs) if df is not None]
                 print("len(input_dfs)= ", len(input_dfs) )
-                run_nta_dask(parameters, input_dfs, tracer_df, job_id)
+                run_nta_dask(parameters, input_dfs, tracer_df, run_sequence_pos_df, run_sequence_neg_df, job_id)
                 return redirect('/nta/ms1/processing/'+job_id, permanent=True)
             else:
                 form_data = request.POST

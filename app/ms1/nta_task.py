@@ -24,11 +24,11 @@ logging.getLogger().setLevel(logging.INFO)
 logger = logging.getLogger("nta_app.ms1")
 logger.setLevel(logging.INFO)
 
-def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", verbose = True):
+def run_nta_dask(parameters, input_dfs, tracer_df = None, run_sequence_pos_df = None, run_sequence_neg_df = None, jobid = "00000000", verbose = True):
     in_docker = os.environ.get("IN_DOCKER") != "False"
     mongo_address = os.environ.get('MONGO_SERVER')
     if NO_DASK:
-        run_nta(parameters, input_dfs, tracer_df, mongo_address, jobid, verbose, in_docker = in_docker)
+        run_nta(parameters, input_dfs, tracer_df, run_sequence_pos_df, run_sequence_neg_df, mongo_address, jobid, verbose, in_docker = in_docker)
         return
     if not in_docker:
         logger.info("Running in local development mode.")
@@ -47,14 +47,14 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, jobid = "00000000", ve
     logger.info("After scatter dask_input_dfs_size: {}".format(dask_input_dfs_size))
 
     logger.info("Submitting Nta Dask task")
-    task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, mongo_address, jobid, verbose,
+    task = dask_client.submit(run_nta, parameters, dask_input_dfs, tracer_df, run_sequence_pos_df, run_sequence_neg_df, mongo_address, jobid, verbose,
                               in_docker = in_docker)
     fire_and_forget(task)
 
 
-def run_nta(parameters, input_dfs, tracer_df = None, mongo_address = None, jobid = "00000000", verbose = True,
+def run_nta(parameters, input_dfs, tracer_df = None, run_sequence_pos_df = None, run_sequence_neg_df = None, mongo_address = None, jobid = "00000000", verbose = True,
             in_docker = True):
-    nta_run = NtaRun(parameters, input_dfs, tracer_df, mongo_address, jobid, verbose, in_docker = in_docker)
+    nta_run = NtaRun(parameters, input_dfs, tracer_df, run_sequence_pos_df, run_sequence_neg_df, mongo_address, jobid, verbose, in_docker = in_docker)
     try:
         nta_run.execute()
     except Exception as e:
@@ -70,7 +70,7 @@ def run_nta(parameters, input_dfs, tracer_df = None, mongo_address = None, jobid
 
 class NtaRun:
     
-    def __init__(self, parameters=None, input_dfs=None, tracer_df=None, mongo_address = None, jobid = "00000000",
+    def __init__(self, parameters=None, input_dfs=None, tracer_df=None, run_sequence_pos_df = None, run_sequence_neg_df = None, mongo_address = None, jobid = "00000000",
                  verbose = True, in_docker = True):
         logger.info("Initializing NtaRun Task")
         self.project_name = parameters['project_name']
@@ -79,6 +79,8 @@ class NtaRun:
         self.rt_accuracy = float(parameters['rt_accuracy'])
         self.tracer_df = tracer_df
         self.tracer_dfs_out = None
+        self.run_sequence_pos_df = run_sequence_pos_df
+        self.run_sequence_neg_df = run_sequence_neg_df
         self.mass_accuracy_tr = float(parameters['mass_accuracy_tr'])
         self.mass_accuracy_units_tr = parameters['mass_accuracy_units_tr']
         self.rt_accuracy_tr = float(parameters['rt_accuracy_tr'])

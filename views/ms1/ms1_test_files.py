@@ -10,6 +10,8 @@ from .. import links_left
 example_pos_filename = 'pooled_blood_pos_MPP.csv'
 example_neg_filename = 'pooled_blood_neg_MPP.csv'
 example_tracer_filename = 'pooled_blood_tracers.csv'
+example_run_sequence_pos_filename = 'pooled_blood_run_sequence_pos.csv'
+example_run_sequence_neg_filename = 'pooled_blood_run_sequence_neg.csv'
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -76,14 +78,18 @@ def download_test_files(request):
     pos_input = os.path.join(example_data_dir, example_pos_filename)
     neg_input = os.path.join(example_data_dir, example_neg_filename)
     tracer_file = os.path.join(example_data_dir, example_tracer_filename)
+    run_sequence_pos_file = os.path.join(example_data_dir, example_run_sequence_pos_filename)
+    run_sequence_neg_file = os.path.join(example_data_dir, example_run_sequence_neg_filename)
 
     # create filenames
     filename1 = 'ms1_pos_input_test_data.csv'
     filename2 = 'ms1_neg_input_test_data.csv'
     filename3 = 'ms1_tracer_test_data.csv'
+    filename4 = 'ms1_run_sequence_pos_test_data.csv'
+    filename5 = 'ms1_run_sequence_neg_test_data.csv'
 
     # List of files to be zipped
-    files_to_zip = {filename1: pos_input, filename2: neg_input, filename3: tracer_file}
+    files_to_zip = {filename1: pos_input, filename2: neg_input, filename3: tracer_file, filename4: run_sequence_pos_file, filename5: run_sequence_neg_file}
 
     # Create an in-memory zip file
     in_memory_zip = BytesIO()

@@ -37,6 +37,14 @@ class NtaInputs(forms.Form):
         label='Adduct retention time accuracy (mins)',
         initial=0.05,
         validators=[MinValueValidator(0)])
+    run_sequence_pos_file = forms.FileField(
+        label='Run sequence positive mode file (csv; optional)',
+        required=False,
+        validators= [FileExtensionValidator(['csv'])])
+    run_sequence_neg_file = forms.FileField(
+        label='Run sequence negative mode file (csv; optional)',
+        required=False,
+        validators= [FileExtensionValidator(['csv'])])
     tracer_input = forms.FileField(
         label='Tracer file (csv; optional)',
         required=False,
