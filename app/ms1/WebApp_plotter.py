@@ -392,7 +392,7 @@ class WebApp_plotter:
         if seq_csv is None:
             order_samples = False
         else:
-            df_loc_seq = pd.read_csv(seq_csv, header=None)
+            df_loc_seq = seq_csv
             order_samples = True
         if ionization == 'pos':
             ion_token = '+' 
@@ -434,16 +434,19 @@ class WebApp_plotter:
         ################################################
         
         # start by getting df with chemical names and abundance at each location in sequential order
-        # col_names = [x for x in df_loc_seq.iloc[:, 0]]
-        # col_names.insert(0, 'Chemical_Name')
-        # df = df_tracer[col_names].copy()
-
+        if order_samples:
+            col_names = [x for x in df_loc_seq.iloc[:, 0]]
+            # col_names.insert(0, 'Chemical_Name')
+            df = df_tracer[col_names].copy()
+        else:
+            headers = parse_headers(df_in, 0)
+            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
+            abundance.remove('Detection_Count')
+            abundance.remove('Detection_Count(%)')
+            df = df_in[abundance].copy()
+        
         # our list of final chemical names with appropriate capitalization
         chemical_names = df_in['Chemical_Name']
-
-        headers = parse_headers(df_in, 0)
-        abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-        df = df_in[abundance].copy()
     
         # # need to make a column for lower cased names for sorting alpha-numerically (ignoring case)
         # df['chem_name'] = df.loc[:, 'Chemical_Name'].str.lower().copy()
@@ -496,8 +499,10 @@ class WebApp_plotter:
         ####################################################        
 
         x_label = "Samples"     # label for plot
-        # n_seq = len(df_loc_seq)  # number of sequences
-        n_seq = len(abundance)  # number of samples
+        if order_samples:
+            n_seq = len(df_loc_seq)  # number of sequences
+        else:
+            n_seq = len(abundance)  # number of samples
     
         # plot each chemical in its respective subplot
         # start by iterating through your sublists of chemicals (in groups of 16 or less)
@@ -873,7 +878,7 @@ class WebApp_plotter:
             # iterate to the next figure
             sublist_index += 1
 
-        return listOfPNGs
+        return listOfPNGs, df
     
         
     def make_loc_plot(self, data_path, seq_csv, ionization, y_fixed=False, y_step=4, \

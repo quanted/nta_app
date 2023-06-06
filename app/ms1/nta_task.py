@@ -286,10 +286,10 @@ class NtaRun:
 
         # plot
         if self.tracer_dfs_out[0] is not None:
-            self.tracer_plots_out.append(df_WA.make_seq_scatter(
+            listOfPNGs,df_debug = df_WA.make_seq_scatter(
                 # data_path='./input/summary_tracer.xlsx',
-                df_in=self.tracer_dfs_out[0],                           
-                seq_csv=None,
+                df_in=self.tracer_dfs_out[0],   
+                seq_csv=self.run_sequence_pos_df,                        
                 ionization='pos',
                 y_scale='linear',
                 fit=False,
@@ -301,17 +301,23 @@ class NtaRun:
                 chemical_names=None, 
                 # save_image=True, 
                 # image_title='./output02/slide_12-dark',
-                dark_mode=True))
+                dark_mode=True)
+            
+            logger.info("df_debug= {}".format(df_debug.columns.values))
+
+            self.tracer_plots_out.append(listOfPNGs)
     
         # declare plotter
         df_WA = WebApp_plotter()
+        # df_WA,df_debug = WebApp_plotter()
+        # logger.info("df_debug= {}".format(df_debug.columns.values))
 
         # plot
         if self.tracer_dfs_out[1] is not None:
-            self.tracer_plots_out.append(df_WA.make_seq_scatter(
+            listOfPNGs, df_debug = df_WA.make_seq_scatter(
                 # data_path='./input/summary_tracer.xlsx',
                 df_in=self.tracer_dfs_out[1],                           
-                seq_csv=None,
+                seq_csv=self.run_sequence_neg_df,
                 ionization='neg',
                 y_scale='linear',
                 fit=False,
@@ -323,7 +329,11 @@ class NtaRun:
                 chemical_names=None, 
                 # save_image=True, 
                 # image_title='./output02/slide_12-dark',
-                dark_mode=True))
+                dark_mode=True)
+            
+            logger.info("df_debug= {}".format(df_debug.columns.values))
+
+            self.tracer_plots_out.append(listOfPNGs)
     
         
         # implements part of NTAW-143
