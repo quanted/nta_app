@@ -254,6 +254,8 @@ def cal_detection_count(df_in):
 
     # calculate percentage of samples that have a value and store in new column 'detection_Count(%)'
     df['Detection_Count(%)'] = (df['Detection_Count'] / total_samples) * 100
+    # round to whole number
+    df['Detection_Count(%)'] = df['Detection_Count(%)'].round(0)
 
     # merge new data into original dataframe
     df_out = pd.merge(df_in, df[[ 'Compound','Detection_Count', 'Detection_Count(%)' ]], how='left', on=['Compound'])
