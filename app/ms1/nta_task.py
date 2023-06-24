@@ -16,6 +16,7 @@ from .utilities import *  #connect_to_mongoDB, connect_to_mongo_gridfs, reduced_
 from . import task_functions as task_fun
 from . WebApp_plotter import WebApp_plotter
 
+
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
 
@@ -73,28 +74,12 @@ class NtaRun:
     def __init__(self, parameters=None, input_dfs=None, tracer_df=None, run_sequence_pos_df = None, run_sequence_neg_df = None, mongo_address = None, jobid = "00000000",
                  verbose = True, in_docker = True):
         logger.info("Initializing NtaRun Task")
-        self.project_name = parameters['project_name']
-        self.mass_accuracy = float(parameters['mass_accuracy'])
-        self.mass_accuracy_units = parameters['mass_accuracy_units']
-        self.rt_accuracy = float(parameters['rt_accuracy'])
+        logger.info("parameters= {}".format(parameters))
+        self.parameters = parameters
         self.tracer_df = tracer_df
         self.tracer_dfs_out = None
         self.run_sequence_pos_df = run_sequence_pos_df
         self.run_sequence_neg_df = run_sequence_neg_df
-        self.mass_accuracy_tr = float(parameters['mass_accuracy_tr'])
-        self.mass_accuracy_units_tr = parameters['mass_accuracy_units_tr']
-        self.rt_accuracy_tr = float(parameters['rt_accuracy_tr'])
-        self.entact = False #parameters['entact'] == "yes"
-        self.min_replicate_hits = float(parameters['min_replicate_hits'])
-        self.min_replicate_hits_blanks = float(parameters['min_replicate_hits_blanks'])
-        self.max_replicate_cv = float(parameters['max_replicate_cv'])
-        self.parent_ion_mass_accuracy = float(parameters['parent_ion_mass_accuracy'])
-        self.search_dsstox = parameters['search_dsstox'] == 'yes'
-        self.search_hcd = parameters['search_hcd'] == 'yes'
-        self.search_mode = parameters['search_mode']
-        self.top_result_only = parameters['top_result_only'] == 'yes'
-        self.minimum_rt = float(parameters['minimum_rt']) # throw out features below this (void volume)
-        self.api_batch_size = int(parameters['api_batch_size'])
         self.dfs = input_dfs
         self.df_combined = None
         self.mpp_ready = None
@@ -122,9 +107,12 @@ class NtaRun:
         # 0: create a status in mongo
         self.set_status('Processing', create = True)
 
+        #0: create an analysis_parameters sheet
+        self.create_analysis_parameters_sheet()
+
         # 1: drop duplicates and throw out void volume
         self.step = "Dropping duplicates"
-        self.filter_void_volume(self.minimum_rt)
+        self.filter_void_volume(float(self.parameters['minimum_rt'][1])) # throw out features below this (void volume)
         self.filter_duplicates()
         if self.verbose:
             logger.info("Dropped duplicates.")
@@ -187,10 +175,10 @@ class NtaRun:
             #print(self.df_combined)
 
         # 7: search dashboard
-        if self.search_dsstox:
+        if self.parameters['search_dsstox'][1] == 'yes':
             self.step = "Searching dsstox database"
             self.perform_dashboard_search()
-            if self.search_hcd:
+            if self.parameters['search_hcd'][1] == 'yes':
                 self.perform_hcd_search()
             self.process_toxpi()
         if self.verbose:
@@ -205,6 +193,26 @@ class NtaRun:
         # 9: set status to completed
         self.step = "Displaying results"
         self.set_status('Completed')
+
+
+    def create_analysis_parameters_sheet(self):
+        # logger.info("create_analysis_parameters_sheet: inputParameters: {} ".format(inputParameters))
+
+        # create a dataframe to store analysis parameters
+        columns = ['Parameter', 'Value']
+        df_analysis_parameters = pd.DataFrame(columns=columns)
+
+        # loop through keys in self.parameters and log them
+        for key in self.parameters:
+            logger.info("key: {}".format(key))
+            label = self.parameters[key][0]
+            value = self.parameters[key][1]
+            df_analysis_parameters.loc[len(df_analysis_parameters)] = [label, value]
+
+        # add the dataframe to the data_map with the sheet name of 'Analysis_Parameters'
+        self.data_map['Analysis_Parameters'] = df_analysis_parameters
+
+        return
 
     def set_status(self, status, create = False):
         posts = self.mongo.posts
@@ -244,25 +252,31 @@ class NtaRun:
         return
 
     def calc_statistics(self):
-        ppm = self.mass_accuracy_units == 'ppm'
+        ppm = self.parameters['mass_accuracy_units'][1]== 'ppm'
         self.dfs = [task_fun.statistics(df) if df is not None else None for df in self.dfs]
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
-            self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], self.mass_accuracy, self.rt_accuracy, ppm,
+            mass_accuracy = float(self.parameters['mass_accuracy'][1])
+            rt_accuracy = float(self.parameters['rt_accuracy'][1])
+            self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='positive', id_start=1)
-            self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
+            self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='negative', id_start=len(self.dfs[0].index)+1)
             self.data_map['Feature_statistics_positive'] = self.dfs[0]
             self.data_map['Feature_statistics_negative'] = self.dfs[1]
         elif self.dfs[0] is not None:
+            mass_accuracy = float(self.parameters['mass_accuracy'][1])
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
-            self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], self.mass_accuracy, self.rt_accuracy, ppm,
+            rt_accuracy = float(self.parameters['rt_accuracy'][1])
+            self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='positive', id_start=1)
             self.data_map['Feature_statistics_positive'] = self.dfs[0]
         else:
+            mass_accuracy = float(self.parameters['mass_accuracy'][1])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
-            self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], self.mass_accuracy, self.rt_accuracy, ppm,
+            rt_accuracy = float(self.parameters['rt_accuracy'][1])
+            self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='negative', id_start=1)
             self.data_map['Feature_statistics_negative'] = self.dfs[1]
         return
@@ -273,8 +287,9 @@ class NtaRun:
             return
         if self.verbose:
             logger.info("Tracer file found, checking tracers.")
-        ppm = self.mass_accuracy_units_tr == 'ppm'
-        self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, self.mass_accuracy_tr, self.rt_accuracy_tr, ppm) if df is not None else None for index, df in enumerate(self.dfs)]
+        ppm = self.parameters['mass_accuracy_units_tr'][1]== 'ppm'
+        mass_accuracy_tr = float(self.parameters['mass_accuracy_tr'][1])
+        self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, mass_accuracy_tr, float(self.parameters['rt_accuracy_tr'][1]), ppm) if df is not None else None for index, df in enumerate(self.dfs)]
         self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
         # self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
 
@@ -354,13 +369,14 @@ class NtaRun:
         for i in range (len(self.tracer_plots_out[1])):
             self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i]
          
-        self.gridfs.put("&&".join(self.tracer_map.keys()), _id=self.jobid + "_tracer_files", encoding='utf-8', project_name = self.project_name)
+        project_name = self.parameters['project_name'][1] 
+        self.gridfs.put("&&".join(self.tracer_map.keys()), _id=self.jobid + "_tracer_files", encoding='utf-8', project_name = project_name)
         for key in self.tracer_map.keys():
             self.mongo_save(self.tracer_map[key], step=key)
         return
 
     def clean_features(self):
-        controls = [self.min_replicate_hits, self.max_replicate_cv, self.min_replicate_hits_blanks]
+        controls = [float(self.parameters['min_replicate_hits'][1]), float(self.parameters['max_replicate_cv'][1]), float(self.parameters['min_replicate_hits_blanks'][1])]
         self.dfs = [task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]
         self.dfs = [fn.Blank_Subtract(df, index) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
         #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
@@ -382,7 +398,7 @@ class NtaRun:
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save = True):
         logging.info('Rows flagged for dashboard search: {} out of {}'.format(len(self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :]), len(self.df_combined)))
         to_search = self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :].copy()  # only rows flagged
-        if self.search_mode == 'mass':
+        if self.parameters['search_mode'][1] == 'mass':
             to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
         else:
             to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
@@ -391,10 +407,10 @@ class NtaRun:
         #max_search = 300  # the maximum number of fragments to search at a time
         #upper_index = 0
         to_search = to_search.iloc[lower_index:upper_index, :]
-        if self.search_mode == 'mass':
+        if self.parameters['search_mode'][1] == 'mass':
             mono_masses = task_fun.masses(to_search)
-            dsstox_search_df = api_search_masses_batch(mono_masses, self.parent_ion_mass_accuracy,
-                                                       batchsize=self.api_batch_size, jobid=self.jobid)
+            dsstox_search_df = api_search_masses_batch(mono_masses, float(self.parameters['parent_ion_mass_accuracy'][1]),
+                                                       batchsize=int(self.parameters['api_batch_size'][1]), jobid=self.jobid)
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)
@@ -417,14 +433,15 @@ class NtaRun:
     
     def store_data(self):
         logger.info(f'Storing data files to MongoDB')
-        self.gridfs.put("&&".join(self.data_map.keys()), _id=self.jobid + "_file_names", encoding='utf-8', project_name = self.project_name)
+        project_name = self.parameters['project_name'][1] 
+        self.gridfs.put("&&".join(self.data_map.keys()), _id=self.jobid + "_file_names", encoding='utf-8', project_name = project_name)
         for key in self.data_map.keys():
             self.mongo_save(self.data_map[key], step=key)
 
     def process_toxpi(self):
-        by_mass = self.search_mode == "mass"
+        by_mass = self.parameters['search_mode'][1] == "mass"
         self.df_combined = toxpi.process_toxpi(self.df_combined, self.search_results,
-                                               tophit=self.top_result_only, by_mass = by_mass)
+                                               tophit=(self.parameters['top_result_only'][1] == 'yes'), by_mass = by_mass)
         self.data_map['final_full'] = self.df_combined
         self.data_map['final_reduced'] = reduced_file(self.df_combined)
 
@@ -436,4 +453,5 @@ class NtaRun:
             to_save = file
         id = self.jobid + "_" + step
         
-        self.gridfs.put(to_save, _id=id, encoding='utf-8', project_name = self.project_name)
+        project_name = self.parameters['project_name'][1] 
+        self.gridfs.put(to_save, _id=id, encoding='utf-8', project_name = project_name)

@@ -7,7 +7,7 @@ import os
 import re
 import logging
 
-BLANKS = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank']
+#  BLANKS = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank']  NOT USED
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
