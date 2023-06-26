@@ -151,15 +151,16 @@ def input_page(request, form_data=None, form_files=None):
                     # handle case 2: the user has not selected to run the test files
                     if 'pos_input' in request.FILES.keys():
                         pos_input = request.FILES["pos_input"]
+
                         # save the name of the file to the inputParameters dictionary
-                        inputParameters['pos_input'][1] = pos_input
+                        inputParameters['pos_input'][1] = pos_input.name
                     else:
                         pos_input = None
 
                     if 'neg_input' in request.FILES.keys():
                         neg_input = request.FILES["neg_input"]
                          # save the name of the file to the inputParameters dictionary
-                        inputParameters['neg_input'][1] = neg_input
+                        inputParameters['neg_input'][1] = neg_input.name
                     else:
                         neg_input = None
 
@@ -167,7 +168,7 @@ def input_page(request, form_data=None, form_files=None):
                         tracer_file = request.FILES["tracer_input"]
                         tracer_df = file_manager.tracer_handler(tracer_file)
                         # save the name of the file to the inputParameters dictionary
-                        inputParameters['tracer_input'][1] = tracer_file
+                        inputParameters['tracer_input'][1] = tracer_file.name
                     except Exception:
                         tracer_df = None
 
@@ -175,7 +176,7 @@ def input_page(request, form_data=None, form_files=None):
                         run_sequence_pos_file = request.FILES["run_sequence_pos_file"]
                         run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
                         # save the name of the file to the inputParameters dictionary
-                        inputParameters['run_sequence_pos_file'][1] = run_sequence_pos_file
+                        inputParameters['run_sequence_pos_file'][1] = run_sequence_pos_file.name
                     except Exception:
                         run_sequence_pos_df = None
 
@@ -183,7 +184,7 @@ def input_page(request, form_data=None, form_files=None):
                         run_sequence_neg_file = request.FILES["run_sequence_neg_file"]
                         run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
                         # save the name of the file to the inputParameters dictionary
-                        inputParameters['run_sequence_neg_file'][1] = run_sequence_neg_file
+                        inputParameters['run_sequence_neg_file'][1] = run_sequence_neg_file.name
                     except Exception:
                         run_sequence_neg_df = None
 
