@@ -157,7 +157,12 @@ class OutputServer:
             excel_data = self.generate_excel()
             zipf.writestr('summary.xlsx', excel_data)
 
-            self.add_tracer_plots_to_zip(zipf, self.jobid)
+            #self.add_tracer_plots_to_zip(zipf, self.jobid)
+            
+            try:
+                self.add_tracer_plots_to_zip(zipf, self.jobid)
+            except (OperationFailure, TypeError, NoFile) as e:
+                break
 
         zip_filename = 'nta_results_' + self.jobid + '.zip'
         response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')
