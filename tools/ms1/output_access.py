@@ -162,7 +162,7 @@ class OutputServer:
             try:
                 self.add_tracer_plots_to_zip(zipf, self.jobid)
             except (OperationFailure, TypeError, NoFile) as e:
-                break
+                pass # do we want to do anything if no tracer file present?
 
         zip_filename = 'nta_results_' + self.jobid + '.zip'
         response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')
