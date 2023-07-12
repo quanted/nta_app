@@ -229,6 +229,7 @@ def statistics(df_in):
     return df
 
 def cal_detection_count(df_in):
+    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
 
     # make a working copy of the dataframe
     df = df_in.copy()
@@ -241,24 +242,49 @@ def cal_detection_count(df_in):
     # remove all items filter_headers containing string 'BlankSub_Median_' from list filter_headers
     filter_headers = [item for item in filter_headers if 'BlankSub_Median_' not in item]
 
+    filter_headers_nonblanks = [item for item in filter_headers if not any(x in item for x in blanks)]
+
+# Std_samples = [md for md in Std if not any(x in md for x in blanks)]
+
     df = df[filter_headers].copy()
+    df_nonblanks = df[filter_headers_nonblanks].copy()
 
     # calculate detection_Count
-    df['Detection_Count'] = df.count(axis=1)
+    df['Detection_Count(all_samples)'] = df.count(axis=1)
 
     # subtract 1 from detection_Count to account for the compound name
-    df['Detection_Count'] = df['Detection_Count'].apply(lambda x: x - 1)
+    df['Detection_Count(all_samples)'] = df['Detection_Count(all_samples)'].apply(lambda x: x - 1)
 
     # total number of samples (subtract 1 for the compound name)
     total_samples = len(filter_headers) - 1
 
-    # calculate percentage of samples that have a value and store in new column 'detection_Count(%)'
-    df['Detection_Count(%)'] = (df['Detection_Count'] / total_samples) * 100
+    # calculate percentage of samples that have a value and store in new column 'detection_Count(all_samples)(%)'
+    df['Detection_Count(all_samples)(%)'] = (df['Detection_Count(all_samples)'] / total_samples) * 100
     # round to whole number
-    df['Detection_Count(%)'] = df['Detection_Count(%)'].round(0)
+    df['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)'].round(0)
+
+
+
+
+    # calculate non-blank_samples
+    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks.count(axis=1)
+
+    # subtract 1 from non-blank_samples to account for the compound name
+    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks['Detection_Count(non-blank_samples)'].apply(lambda x: x - 1)
+
+    # total number of samples (subtract 1 for the compound name)
+    total_nonblank_samples = len(filter_headers_nonblanks) - 1
+
+    # calculate percentage of samples that have a value and store in new column 'detection_Count(non-blank_samples)(%)'
+    df_nonblanks['Detection_Count(non-blank_samples)(%)'] = (df_nonblanks['Detection_Count(non-blank_samples)'] / total_nonblank_samples) * 100
+    # round to whole number
+    df_nonblanks['Detection_Count(non-blank_samples)(%)'] = df_nonblanks['Detection_Count(non-blank_samples)(%)'].round(0)
+
+
 
     # merge new data into original dataframe
-    df_out = pd.merge(df_in, df[[ 'Compound','Detection_Count', 'Detection_Count(%)' ]], how='left', on=['Compound'])
+    df_out = pd.merge(df_in, df[[ 'Compound','Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Compound'])
+    df_out = pd.merge(df_out, df_nonblanks[[ 'Compound','Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Compound'])
     return df_out
 
 

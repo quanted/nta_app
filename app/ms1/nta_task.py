@@ -134,8 +134,21 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
             #print(str(list(self.dfs[0])))
+
+        logger.info("self.dfs.size(): {}".format(len(self.dfs)))
+        for df in self.dfs:
+            if df is not None:
+                logger.info("df = {}".format(df.to_string()))
+        # explanation of the following line:
+        # . self.dfs is a list of dataframes
+        # . the if statement is checking if the dataframe is not None
+        # . if the dataframe is not None, then the dataframe is passed to the function cal_detection_count
+        # . the result of the function is stored in the list
+        # . the list is assigned to self.dfs
         self.dfs = [task_fun.cal_detection_count(df) if df is not None else None for df in self.dfs]
 
+        logger.info("after task_fun.cal_detection_count self.dfs.size(): {}".format(len(self.dfs)))
+ 
         # 3: check tracers (optional)
         self.step = "Checking tracers"
         self.check_tracers()
@@ -350,15 +363,19 @@ class NtaRun:
 
             self.tracer_plots_out.append(listOfPNGs)
     
-        
         # implements part of NTAW-143
         dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
+
+        # remove the columns 'Detection_Count(non-blank_samples)' and 'Detection_Count(non-blank_samples)(%)'
+        dft = dft.drop(columns=['Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'])
+        
         self.data_map['Tracer_Sample_Results'] = dft
+
 
         # create summary table
         if 'DTXSID' not in dft.columns:
             dft['DTXSID'] = ''
-        dft = dft[['Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 'Detection_Count','Detection_Count(%)']]
+        dft = dft[['Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 'Detection_Count(all_samples)','Detection_Count(all_samples)(%)']]
         self.data_map['Tracers_Summary'] = dft
         
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
@@ -389,10 +406,11 @@ class NtaRun:
         #self.mongo_save(self.dfs[1], FILENAMES['flags'][1])
 
     def combine_modes(self):
+
         self.df_combined = fn.combine(self.dfs[0], self.dfs[1])
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
-        self.data_map['Cleaned_feature_results_full'] = self.mpp_ready
+        self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Detection_Count(all_samples)','Detection_Count(all_samples)(%)'])
         self.data_map['Cleaned_feature_results_reduced'] = reduced_file(self.mpp_ready)
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save = True):

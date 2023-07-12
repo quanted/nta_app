@@ -36,6 +36,12 @@ def connect_to_mongo_gridfs(address):
     fs = gridfs.GridFS(db)
     return fs
 
+# function to remove columns from a given dataframe, df_in. The columns to be removed are determined by the
+# a given list of strings.
+def remove_columns(df_in, list_of_columns2remove):
+    df = df_in.copy()
+    df.drop(list_of_columns2remove, axis=1, inplace=True)
+    return df
 
 def reduced_file(df_in):
     df = df_in.copy()
