@@ -34,9 +34,12 @@ function checkJobStatus(){
                     $(location).attr('href', outputUrl);
                 }
                 else if(data['status'] === "Not found"){
-                    $('#status').html("Error: NTA task failed to start!");
-                    $('#wait_gif').html("");
-
+                    if(attemptCount<3){
+                        setTimeout(checkJobStatus, timeout);
+                    }
+                    else{
+                        $('#status').html("Error: NTA task failed to start!");
+                        $('#wait_gif').html("");
                 }
                 else if(data['status'].startsWith("Failed")){
                     var message = data['status'];
