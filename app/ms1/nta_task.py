@@ -383,6 +383,9 @@ class NtaRun:
 
         for i in range (len(self.tracer_plots_out[0])):
             self.tracer_map['tracer_plot_pos_'+str(i+1)] = self.tracer_plots_out[0][i]
+            
+        logger.info(len(self.tracer_plots_out[1]))
+        
         for i in range (len(self.tracer_plots_out[1])):
             self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i]
          
