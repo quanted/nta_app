@@ -135,10 +135,10 @@ class NtaRun:
             #print(self.dfs[0])
             #print(str(list(self.dfs[0])))
 
-        logger.info("self.dfs.size(): {}".format(len(self.dfs)))
-        for df in self.dfs:
-            if df is not None:
-                logger.info("df = {}".format(df.to_string()))
+        #logger.info("self.dfs.size(): {}".format(len(self.dfs)))
+        #for df in self.dfs:
+        #    if df is not None:
+        #        logger.info("df = {}".format(df.to_string()))
         # explanation of the following line:
         # . self.dfs is a list of dataframes
         # . the if statement is checking if the dataframe is not None
