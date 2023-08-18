@@ -23,9 +23,30 @@ def upload_page(request, form_data=None, form_files=None):
     page = 'run_model'
     if (request.method == "POST"):
         form = MS2ParametersInput(request.POST)
+        # if request.POST['test_files'] == 'no':
+        #     print('no test files')
+        # else:
+        #     print('test files Selected')
+
         if form.is_valid():
+            if request.POST['test_files'] != 'no':
+                print('test files Selected')
+            else:
+                print('test files NOT Selected')
+
+
             parameters = request.POST
+            print('1. parameters: {}'.format(parameters))
             parameters = parameters.dict()
+            print('2. parameters: {}'.format(parameters))
+            print("3. request.FILES.keys: {}".format(request.FILES.keys()))
+            print("===>")
+            # loop over FILES.keys() and print each file name
+            for key in request.FILES.keys():
+                print("key: {}".format(key))
+                print("request.FILES[key]: {}".format(request.FILES[key]))
+                print("request.FILES[key].name: {}".format(request.FILES[key].name))
+                
             job_id = parameters['jobID']
             run_ms2_dask(parameters, job_id)
             return redirect('/nta/ms2/processing/'+job_id, permanent=True)
