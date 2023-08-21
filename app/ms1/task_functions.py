@@ -207,19 +207,45 @@ def statistics(df_in):
     df = score(df)
     filter_headers= ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + abundance
     df = df[filter_headers].copy()
+    
+    # # 8/16/2023 AC: Adjust code generating new statistics columns to avoid fragmented Dataframe / frame.insert messages
+    # for the_list in all_headers:
+    #     REP_NUM = len(the_list)
+    #     if REP_NUM > 1:
+    #         for i in range(0, REP_NUM):
+    #             # match finds the indices of the largest common substring between two strings
+    #             match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
+    #             df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(0)
+    #             df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0)
+    #             df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
+    #             df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(4)
+    #             df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
+    #             break
+            
     # 8/16/2023 AC: Adjust code generating new statistics columns to avoid fragmented Dataframe / frame.insert messages
     for the_list in all_headers:
         REP_NUM = len(the_list)
         if REP_NUM > 1:
+            
+            # 8/21/2023 Adding dictionary comprehension for performing/storing statistics functions on the dataframe to avoid "frame.insert"/dataframe fragmentation warning message leading to memory issues
+            stats_data = {}
+            
             for i in range(0, REP_NUM):
                 # match finds the indices of the largest common substring between two strings
                 match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
-                df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(0)
-                df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0)
-                df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
-                df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(4)
-                df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
+                
+                stats_data['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(0)
+                stats_data['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0)
+                stats_data['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
+                stats_data['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(4)
+                stats_data['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
                 break
+            
+            new_df = pd.concat(stats_data.values(), axis=1, ignore_index=True)
+            new_df.columns = stats_data.keys()  # since Python 3.7, order of insertion is preserved
+    
+    df = df.join(new_df)
+    
     # 8/16/2023 AC: New code generating new statistics columns to avoid fragmented Dataframe / frame.insert messages
     # new_columns = []
     # for the_list in all_headers:
