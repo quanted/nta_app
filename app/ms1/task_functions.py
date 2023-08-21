@@ -342,16 +342,16 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     Mean_samples = [md for md in Mean if not any(x in md for x in blanks)]
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
     Std = df.columns[df.columns.str.contains(pat ='STD_')].tolist()
-    Std_samples = [md for md in Std if not any(x in md for x in blanks)]
+    # Std_samples = [md for md in Std if not any(x in md for x in blanks)]
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
     Median = df.columns[df.columns.str.contains(pat ='Median_')].tolist()    
     Median_Samples = [md for md in Median if not any(x in md for x in blanks)]
     Median_Blanks = [md for md in Median if any(x in md for x in blanks)]
-    Median_High = [md for md in Median if 'C' in md]
-    Median_Mid = [md for md in Median if 'B' in md]
-    Median_Low = [md for md in Median if 'A' in md]
-    Median_MB = [md for md in Median if any(x in md for x in blanks)]
-    N_Abun_High = [N for N in Abundance if 'C' in N]
+    # Median_High = [md for md in Median if 'C' in md]
+    # Median_Mid = [md for md in Median if 'B' in md]
+    # Median_Low = [md for md in Median if 'A' in md]
+    # Median_MB = [md for md in Median if any(x in md for x in blanks)]
+    # N_Abun_High = [N for N in Abundance if 'C' in N]
     N_Abun_MB = [N for N in Abundance if any(x in N for x in blanks)]
     N_Abun_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
     #N_Abun_MB= [N for N in Abundanceif 'MB' in N]
@@ -381,13 +381,7 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     #find the median of all samples and select features where median_samples/ median_blanks >= cutoff
     #Updated to test sample mean > 3*STDblank + mean_blank
     df['Max_Median_ALLSamples'] = df[Median_Samples].max(axis=1,skipna=True).round(0)
-    
-    # 1/6/2023 Comment out below line, sample to blanks ratio is deprecated
-    #df['SampletoBlanks_ratio'] = df['Max_Median_ALLSamples'].astype('float')/df[Median_MB[0]].astype('float')
-    
-    # 1/6/2023 Rename columns so as to not have "blank" in the name (all blank columns used for blank subtraction value)
-    #df['BlankStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
-    #df = df[(df[N_Abun_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlankStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
+
     df['BlkStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
     df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(df[Mean_MB[0]]) # In the case of a single blank replicate, the previous calculation is an empty value as it cannot calculate Std dev; replace with mean value
     df = df[(df[N_Abun_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()

@@ -159,7 +159,7 @@ class NtaRun:
 
         if self.dfs[1] is not None:
             logger.info("Self.df columns: {}".format(self.dfs[1].columns.values))
-            logger.info("before clean_features self.dfs.size(): {}".format(len(self.dfs)))
+            logger.info("before clean_features self.dfs[1].shape {}".format(self.dfs[1].shape))
 
         # 4: clean features
         self.step = "Cleaning features"
