@@ -157,13 +157,19 @@ class NtaRun:
             #print(self.tracer_dfs_out)
         # counting occrrences of each feature after cleaning
 
-        if self.dfs[1] is not None:
-            logger.info("Self.df columns: {}".format(self.dfs[1].columns.values))
-            logger.info("before clean_features self.dfs[1].shape {}".format(self.dfs[1].shape))
+        # if self.dfs[1] is not None:
+        #     logger.info("Self.df columns: {}".format(self.dfs[1].columns.values))
+        #     logger.info("before clean_features self.dfs[1].shape {}".format(self.dfs[1].shape))
 
         # 4: clean features
         self.step = "Cleaning features"
         self.clean_features()
+        
+        if self.dfs[1] is not None:
+            logger.info("Self.df columns: {}".format(self.dfs[1].columns.values))
+            logger.info("after clean_features self.dfs[1].shape {}".format(self.dfs[1].shape))
+            logger.info("after clean_features first 5 columns {}".format(self.dfs[1].head(5)))
+        
         if self.verbose:
             logger.info("Cleaned features.")
             if self.dfs[0] is not None:
