@@ -228,9 +228,9 @@ def statistics(df_in):
             for i in range(0, REP_NUM):
                 # match finds the indices of the largest common substring between two strings
                 match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
-                
                 col_name = str(the_list[i])[match.a:match.a + match.size]
                 subset = df.iloc[:, i:i + REP_NUM]
+                logger.info("Subset:", subset)
                 mean_col = subset.mean(axis=1).round(0)
                 median_col = subset.median(axis=1, skipna=True).round(0)
                 std_col = subset.std(axis=1, skipna=True).round(0)
