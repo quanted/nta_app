@@ -397,7 +397,7 @@ class NtaRun:
         #logger.info(len(self.tracer_plots_out[1]))
         
         # Add an if statement below to account for: if only negative mode data is entered, and only a negative tracer file is submitted, tracer_plots_out will only have one entry at [0]
-        if len(self.tracer_dfs_out) > 1:
+        if len(self.tracer_plots_out) > 1:
             for i in range (len(self.tracer_plots_out[1])):
                 self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i]
          
