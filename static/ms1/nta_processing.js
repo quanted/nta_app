@@ -40,6 +40,7 @@ function checkJobStatus(){
                     else{
                         $('#status').html("Error: NTA task failed to start!");
                         $('#wait_gif').html("");
+                    }
                 }
                 else if(data['status'].startsWith("Failed")){
                     var message = data['status'];
