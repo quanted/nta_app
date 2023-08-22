@@ -369,7 +369,7 @@ class NtaRun:
                 # image_title='./output02/slide_12-dark',
                 dark_mode=True)
             
-            logger.info("df_debug= {}".format(df_debug.columns.values))
+            #logger.info("df_debug= {}".format(df_debug.columns.values))
 
             self.tracer_plots_out.append(listOfPNGs)
     
@@ -396,8 +396,10 @@ class NtaRun:
             
         #logger.info(len(self.tracer_plots_out[1]))
         
-        for i in range (len(self.tracer_plots_out[1])):
-            self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i]
+        # Add an if statement below to account for: if only negative mode data is entered, and only a negative tracer file is submitted, tracer_plots_out will only have one entry at [0]
+        if len(self.tracer_dfs_out) > 0:
+            for i in range (len(self.tracer_plots_out[1])):
+                self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i]
          
         project_name = self.parameters['project_name'][1] 
         self.gridfs.put("&&".join(self.tracer_map.keys()), _id=self.jobid + "_tracer_files", encoding='utf-8', project_name = project_name)
