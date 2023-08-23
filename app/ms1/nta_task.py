@@ -146,8 +146,6 @@ class NtaRun:
         # . the result of the function is stored in the list
         # . the list is assigned to self.dfs
         self.dfs = [task_fun.cal_detection_count(df) if df is not None else None for df in self.dfs]
-
-        logger.info("after task_fun.cal_detection_count self.dfs.size(): {}".format(len(self.dfs)))
  
         # 3: check tracers (optional)
         self.step = "Checking tracers"
@@ -157,18 +155,9 @@ class NtaRun:
             #print(self.tracer_dfs_out)
         # counting occrrences of each feature after cleaning
 
-        # if self.dfs[1] is not None:
-        #     logger.info("Self.df columns: {}".format(self.dfs[1].columns.values))
-        #     logger.info("before clean_features self.dfs[1].shape {}".format(self.dfs[1].shape))
-
         # 4: clean features
         self.step = "Cleaning features"
         self.clean_features()
-        
-        # if self.dfs[1] is not None:
-        #     logger.info("Self.df columns: {}".format(self.dfs[1].columns.values))
-        #     logger.info("after clean_features self.dfs[1].shape {}".format(self.dfs[1].shape))
-        #     logger.info("after clean_features first 5 columns {}".format(self.dfs[1].head(5)))
         
         if self.verbose:
             logger.info("Cleaned features.")
@@ -313,8 +302,13 @@ class NtaRun:
         ppm = self.parameters['mass_accuracy_units_tr'][1]== 'ppm'
         mass_accuracy_tr = float(self.parameters['mass_accuracy_tr'][1])
         self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, mass_accuracy_tr, float(self.parameters['rt_accuracy_tr'][1]), ppm) if df is not None else None for index, df in enumerate(self.dfs)]
+        
+        logger.info("self.tracer_dfs_out[0].shape = {}".format(self.tracer_dfs_out[0].shape))
+        
         self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
         # self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
+        
+        logger.info("self.tracer_dfs_out[0].shape = {}".format(self.tracer_dfs_out[0].shape))
 
         # declare plotter
         df_WA = WebApp_plotter()
