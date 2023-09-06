@@ -63,14 +63,14 @@ class NtaInputs(forms.Form):
         initial=0.1,
         validators=[MinValueValidator(0)])
     min_replicate_hits = forms.IntegerField(
-        widget = RangeInput(attrs={'max': '20', 'min':'1', 'class': 'slider_bar'}),
-        label='Min replicate hits',
-        initial=2,
+        widget = RangeInput(attrs={'max': '100', 'min':'1', 'class': 'slider_bar'}),
+        label='Min replicate hits(%)',
+        initial=66,
         validators=[MinValueValidator(0)])
     min_replicate_hits_blanks = forms.IntegerField(
-        widget = RangeInput(attrs={'max': '20', 'min':'1', 'class': 'slider_bar'}),
-        label='Min replicate hits in blanks',
-        initial=2,
+        widget = RangeInput(attrs={'max': '100', 'min':'1', 'class': 'slider_bar'}),
+        label='Min replicate hits in blanks(%)',
+        initial=66,
         validators=[MinValueValidator(0)])
     max_replicate_cv = forms.DecimalField(
         widget=forms.NumberInput(attrs={'step': 0.1}),
