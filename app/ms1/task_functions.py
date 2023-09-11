@@ -201,27 +201,40 @@ def statistics(df_in):
     :param df_in: the dataframe to calculate stats for
     :return: a new dataframe including the stats
     """
+    # make a copy of the input DataFrame, df_in, to avoid modifying the original DataFrame.
     df = df_in.copy()
+    # extract the headers (column names) from the input DataFrame by calling a function called parse_headers. The extracted headers are stored in the all_headers variable.
     all_headers = parse_headers(df)
+    # create a list called abundance by flattening the all_headers list and filtering out items with a length greater than 1. 
     abundance = [item for sublist in all_headers for item in sublist if len(sublist) > 1]
+    # call the score function to calculate the score for each feature in the input DataFrame. The score is stored in a new column called Score.
     df = score(df)
+    # create a list called filter_headers, which includes a predefined set of column names to keep in the DataFrame. 
     filter_headers= ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + abundance
+    # create a new DataFrame called df, which includes only the columns in the filter_headers list.
     df = df[filter_headers].copy()
     
-    # # 8/16/2023 AC: Adjust code generating new statistics columns to avoid fragmented Dataframe / frame.insert messages
+    # 8/16/2023 AC: Adjust code generating new statistics columns to avoid fragmented Dataframe / frame.insert messages
+    # For each list of replicates (the_list), it calculates statistics for each replicate by comparing them. Specifically, 
+    # it finds the longest common substring between the replicate names, and this common substring is used to create new 
+    # columns in the DataFrame to store the statistics (Mean, Median, STD, CV, N_Abun).
     for the_list in all_headers:
         REP_NUM = len(the_list)
         if REP_NUM > 1:
-            for i in range(0, REP_NUM):
-                # match finds the indices of the largest common substring between two strings
-                match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
-                df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(4)
-                df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(4)
-                df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(4)
-                df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(4)
-                df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
-                break
-            
+            i = 0
+            # match finds the indices of the largest common substring between two strings
+            match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
+            df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(4)
+            df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(4)
+            df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(4)
+            df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(4)
+            df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
+            # add column named 'Total_Abun_' for the total number of replicates for the sample group
+            df['Total_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = REP_NUM
+            Replicate_Percent = (df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Total_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]]).round(4)
+            df['Replicate_Percent_'+ str(the_list[i])[match.a:match.a +  match.size]] = Replicate_Percent * 100.0
+
+           
     # 8/21/2023 AC: Adjust code to dictionary comprehension to avoid Dataframe fragmentations
     # for the_list in all_headers:
     #     REP_NUM = len(the_list)
@@ -240,7 +253,9 @@ def statistics(df_in):
     #         new_df.columns = stats_data.keys()  # since Python 3.7, order of insertion is preserved
     # df = df.join(new_df)
     
+    # sort the DataFrame based on the 'Mass' and 'Retention_Time' columns in ascending order.
     df.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
+    # round the 'Mass' column to zero decimal places and stores the result in a new column called 'Rounded_Mass'.
     df['Rounded_Mass'] = df['Mass'].round(0)
 
     # Create a new dataframe column titled "Max_CV_across_sample" and populate it with the maximum CV value for each feature across all columns containing the string "CV_" in the header
@@ -310,6 +325,38 @@ def cal_detection_count(df_in):
 
 
 def score(df):  # Get score from annotations.
+    """
+The Python function score(df) appears to be used to extract a "Score" column from a Pandas DataFrame, df, 
+based on the contents of an "Annotations" column within the DataFrame. Here's a breakdown of how the function works:
+
+It defines a regular expression, regex, which is used to extract the score value from the "Annotations" 
+column. The regular expression captures the value following "db=" and ending with a comma, closing square bracket, or space.
+
+It first checks if the DataFrame df contains a column named "Annotations" using the condition "Annotations" in df.
+
+If the "Annotations" column exists, it checks whether the entire column is null (contains only NaN values) using 
+df.Annotations.isnull().all(). If the entire column is null, meaning there's no useful information in the "Annotations" 
+column, it sets the "Score" column in the DataFrame to None for all rows and returns the modified DataFrame.
+
+If the "Annotations" column is not entirely null and contains at least one string that contains "overall=", it 
+proceeds to extract the score values from the "Annotations" column.
+
+It uses df.Annotations.str.contains('overall=') to check if any of the strings in the "Annotations" column 
+contain the substring "overall=". If such strings are found, it attempts to extract the score values using the 
+regular expression defined earlier (df.Annotations.str.extract(regex, expand=True).astype('float64')), and 
+stores the extracted scores in a new "Score" column in the DataFrame. The scores are converted to floating-point 
+numbers (float64) during extraction.
+
+If an error occurs during the extraction (e.g., if the regular expression doesn't match), it sets the "Score" column to None for all rows.
+
+If the DataFrame does not contain an "Annotations" column and also does not have a "Score" column, it sets the "Score" column in the DataFrame to None for all rows.
+
+Finally, the function returns the modified DataFrame, which may include a new "Score" column based on the extraction process.
+
+This function essentially extracts a "Score" column from the "Annotations" column if certain conditions are met. 
+It handles cases where the "Annotations" column is entirely null, where the "Annotations" column contains relevant 
+score information, and where the DataFrame doesn't have an "Annotations" column at all.
+    """
     regex = "db=(.*?)[, \]].*"  # grab score from first match of db=(value) followed by a , ] or space
     if "Annotations" in df:
         if df.Annotations.isnull().all():  # make sure there isn't a totally blank Annotations column
@@ -324,13 +371,14 @@ def score(df):  # Get score from annotations.
         pass
     else:
         df['Score'] = None
-    #logging.info("List of scores: {}".format(df['Score']))
+    # logging.info("List of scores: {}".format(df['Score']))
     return df
 
 
 # not yet unit tested
 def clean_features(df, controls):  # a method that drops rows based on conditions
-    Abundance=  df.columns[df.columns.str.contains(pat ='N_Abun_')].tolist()
+    # Abundance=  df.columns[df.columns.str.contains(pat ='N_Abun_')].tolist()
+    Abundance=  df.columns[df.columns.str.contains(pat ='Replicate_Percent_')].tolist()
     blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
     Mean = df.columns[df.columns.str.contains(pat ='Mean_')].tolist()
     Mean_samples = [md for md in Mean if not any(x in md for x in blanks)]
@@ -346,8 +394,10 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     # Median_Low = [md for md in Median if 'A' in md]
     # Median_MB = [md for md in Median if any(x in md for x in blanks)]
     # N_Abun_High = [N for N in Abundance if 'C' in N]
-    N_Abun_MB = [N for N in Abundance if any(x in N for x in blanks)]
-    N_Abun_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
+    # N_Abun_MB = [N for N in Abundance if any(x in N for x in blanks)]
+    # N_Abun_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
+    Replicate_Percent_MB = [N for N in Abundance if any(x in N for x in blanks)]
+    Replicate_Percent_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
     #N_Abun_MB= [N for N in Abundanceif 'MB' in N]
 
     CV = df.columns[df.columns.str.startswith('CV_')].tolist()
@@ -355,17 +405,17 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     CV_Samples= [C for C in CV if not any(x in C for x in blanks)]
     #set medians where feature abundance is less than some cutoff to nan
     df['AnySamplesDropped'] = np.nan
-    for median,N in zip(Median_Samples,N_Abun_Samples):
+    for median,N in zip(Median_Samples,Replicate_Percent_Samples):
         #print((str(median) + " , " +str(N)))
         df.loc[df[N] < controls[0], median] = np.nan
         df.loc[df[N] < controls[0], 'AnySamplesDropped'] = 1
-    for mean,Std,median,N in zip(Mean_MB,Std_MB,Median_Blanks,N_Abun_MB):
+    for mean,Std,median,N in zip(Mean_MB,Std_MB,Median_Blanks,Replicate_Percent_MB):
         #print((str(median) + " , " +str(N)))
         df.loc[df[N] < controls[2], median] = np.nan
         df.loc[df[N] < controls[2], mean] = 0
         df.loc[df[N] < controls[2], Std] = 0
     # remove all features where the abundance is less than some cutoff in all samples
-    df.drop(df[(df[N_Abun_Samples] < controls[0]).all(axis=1)].index, inplace=True)
+    df.drop(df[(df[Replicate_Percent_Samples] < controls[0]).all(axis=1)].index, inplace=True)
     df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True)
     # blank out samples that do not meet the CV cutoff
     cv_not_met = df[CV_Samples] > controls[1]
@@ -378,6 +428,6 @@ def clean_features(df, controls):  # a method that drops rows based on condition
 
     df['BlkStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
     df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(df[Mean_MB[0]]) # In the case of a single blank replicate, the previous calculation is an empty value as it cannot calculate Std dev; replace with mean value
-    df = df[(df[N_Abun_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
+    df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
     
     return df
