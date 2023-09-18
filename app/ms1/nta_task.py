@@ -339,6 +339,10 @@ class NtaRun:
 
             self.tracer_plots_out.append(listOfPNGs)
     
+        else:
+            self.tracer_plots_out.append(None)
+    
+    
         # declare plotter
         df_WA = WebApp_plotter()
         # df_WA,df_debug = WebApp_plotter()
@@ -366,7 +370,9 @@ class NtaRun:
             #logger.info("df_debug= {}".format(df_debug.columns.values))
 
             self.tracer_plots_out.append(listOfPNGs)
-    
+        else:
+            self.tracer_plots_out.append(None)
+        
         # implements part of NTAW-143
         dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
 
@@ -385,15 +391,17 @@ class NtaRun:
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
         # self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
 
-        for i in range (len(self.tracer_plots_out[0])):
-            self.tracer_map['tracer_plot_pos_'+str(i+1)] = self.tracer_plots_out[0][i]
+        if self.tracer_plots_out[0] is not None:
+            for i in range (len(self.tracer_plots_out[0])):
+                self.tracer_map['tracer_plot_pos_'+str(i+1)] = self.tracer_plots_out[0][i]
             
         #logger.info(len(self.tracer_plots_out[1]))
         
         # Add an if statement below to account for: if only negative mode data is entered, and only a negative tracer file is submitted, tracer_plots_out will only have one entry at [0]
         if len(self.tracer_plots_out) > 1:
-            for i in range (len(self.tracer_plots_out[1])):
-                self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i]
+            if self.tracer_plots_out[1] is not None:
+                for i in range (len(self.tracer_plots_out[1])):
+                    self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i]
          
         project_name = self.parameters['project_name'][1] 
         self.gridfs.put("&&".join(self.tracer_map.keys()), _id=self.jobid + "_tracer_files", encoding='utf-8', project_name = project_name)
