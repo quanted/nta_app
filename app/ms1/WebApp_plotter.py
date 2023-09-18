@@ -1306,7 +1306,7 @@ def make_subplots(chem_names, y_max=None, y_min=None, y_steps=4, share_y=True, y
     # rcParams must be set before any plt objects are created!
     # Now set parameters that are needed for dark_mode=True
     if dark_mode == True:
-        # axes params
+        # es params
         plt.rcParams.update({'axes.facecolor': '#0d0d0d', 
                              'axes.edgecolor': '#fff',
                              'axes.titlecolor': '#fff'})
