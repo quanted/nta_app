@@ -210,7 +210,7 @@ def statistics(df_in):
     # call the score function to calculate the score for each feature in the input DataFrame. The score is stored in a new column called Score.
     df = score(df)
     # create a list called filter_headers, which includes a predefined set of column names to keep in the DataFrame. 
-    filter_headers= ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + abundance
+    filter_headers= ['Compound','Ionization_Mode','Score','Mass','Retention_Time'] + abundance
     # create a new DataFrame called df, which includes only the columns in the filter_headers list.
     df = df[filter_headers].copy()
     

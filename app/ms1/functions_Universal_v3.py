@@ -149,7 +149,7 @@ def statistics(df,index): # calculate Mean,Median,STD,CV for every feature in a 
         Abundance[index] = [item for sublist in Headers[index] for item in sublist if len(sublist) > 1]
         df = score(df)
     # Do some statistical acrobatics
-        headers[index] = ['Compound','Ionization_Mode','Score','Mass','Retention_Time','Frequency'] + Abundance[index]
+        headers[index] = ['Compound','Ionization_Mode','Score','Mass','Retention_Time'] + Abundance[index]
         df = df[headers[index]].copy()
         #print((Headers[index])) #stopped here before my optometrist appointment
         for the_list in Headers[index]:
