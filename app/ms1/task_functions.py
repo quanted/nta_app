@@ -193,7 +193,7 @@ def duplicates(df, mass_cutoff=0.005, rt_cutoff=0.05):
     to_keep = to_keep.drop(['all_sample_mean'], axis=1).copy()
     return to_keep
 
-
+'''
 #untested
 def statistics(df_in):
     """
@@ -263,6 +263,43 @@ def statistics(df_in):
     df['Max_CV_across_sample'] = df.filter(regex='CV_').max(axis=1)
 
     return df
+    '''
+    
+def calc_statistics(df_in):
+    #tracemalloc.start()
+    #start = time.perf_counter()
+    df = df_in.copy()
+
+    all_headers = parse_headers(df_in) 
+    sam_headers = [i for i in all_headers if len(i) > 1]
+    
+    mean_cols = ['Mean_' + i[0][:-1] for i in sam_headers]
+    med_cols = ['Median_' + i[0][:-1] for i in sam_headers]
+    std_cols = ['STD_' + i[0][:-1] for i in sam_headers]
+    cv_cols = ['CV_' + i[0][:-1] for i in sam_headers]
+    nabun_cols = ['N_Abun_' + i[0][:-1] for i in sam_headers]
+    #tabun_cols = ['Total_Abun_' + i[0][:-1] for i in sam_headers]
+    rper_cols = ['Replicate_Percent_' + i[0][:-1] for i in sam_headers]
+
+    #attrs = pd.concat([df[x] for x in attr], axis=1)
+    means = pd.concat([df[x].mean(axis=1).round(4).rename(col) for x, col in zip(sam_headers, mean_cols)], axis=1)
+    medians = pd.concat([df[x].median(axis=1, skipna=True).round(4).rename(col) for x, col in zip(sam_headers, med_cols)], axis=1)
+    stds = pd.concat([df[x].std(axis=1, skipna=True).round(4).rename(col) for x, col in zip(sam_headers, std_cols)], axis=1)
+    cvs = pd.concat([(stds[scol]/means[mcol]).round(4).rename(col) for mcol, scol, col in zip(mean_cols, std_cols, cv_cols)], axis=1)
+    nabuns = pd.concat([df[x].count(axis=1).round(0).rename(col) for x, col in zip(sam_headers, nabun_cols)], axis=1)
+    #tabuns = pd.concat([pd.Series(len(x), index = df.index(), name=col) for x, col in zip(sam_headers, tabun_cols)], axis=1)
+    rpers = pd.concat([((nabuns[ncol]/len(x)).round(4)*100).rename(col) for x, ncol, col in zip(sam_headers, nabun_cols, rper_cols)], axis=1)
+
+    output = pd.concat([df, means, medians, stds, cvs, nabuns, rpers], axis=1)
+    
+    #finish = time.perf_counter()
+    #print(f'Finished in {finish-start} seconds.')
+    
+    #print(tracemalloc.get_traced_memory())
+    #tracemalloc.stop()
+    
+    return output
+
 
 def cal_detection_count(df_in):
     blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
