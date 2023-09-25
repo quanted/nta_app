@@ -370,6 +370,7 @@ class NtaRun:
             #logger.info("df_debug= {}".format(df_debug.columns.values))
 
             self.tracer_plots_out.append(listOfPNGs)
+            logger.info("df_debug.head(5)= {}".format(df_debug.head(5)))
         else:
             self.tracer_plots_out.append(None)
         

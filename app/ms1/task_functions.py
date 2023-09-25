@@ -265,7 +265,7 @@ def statistics(df_in):
     return df
     '''
     
-def calc_statistics(df_in):
+def statistics(df_in):
     #tracemalloc.start()
     #start = time.perf_counter()
     df = df_in.copy()
