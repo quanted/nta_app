@@ -292,6 +292,10 @@ def statistics(df_in):
 
     output = pd.concat([df, means, medians, stds, cvs, nabuns, rpers], axis=1)
     
+    output.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
+    output['Rounded_Mass'] = output['Mass'].round(0)
+    output['Max_CV_across_sample'] = output.filter(regex='CV_').max(axis=1)
+    
     #finish = time.perf_counter()
     #print(f'Finished in {finish-start} seconds.')
     
