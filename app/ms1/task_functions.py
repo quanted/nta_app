@@ -269,7 +269,6 @@ def statistics(df_in):
     #tracemalloc.start()
     #start = time.perf_counter()
     df = df_in.copy()
-    df = score(df)
 
     all_headers = parse_headers(df_in) 
     sam_headers = [i for i in all_headers if len(i) > 1]
@@ -293,10 +292,6 @@ def statistics(df_in):
 
     output = pd.concat([df, means, medians, stds, cvs, nabuns, rpers], axis=1)
     
-    output.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
-    output['Rounded_Mass'] = output['Mass'].round(0)
-    output['Max_CV_across_sample'] = output.filter(regex='CV_').max(axis=1)
-    
     #finish = time.perf_counter()
     #print(f'Finished in {finish-start} seconds.')
     
@@ -304,7 +299,31 @@ def statistics(df_in):
     #tracemalloc.stop()
     
     return output
+    
+    
+def chunk_stats(df_in):
+    # Create copy
+    df=df_in.copy()
+    # Calculate 'score'
+    df = score(df)
+    # Set chunk size (i.e., # rows)
+    n = 5000
+    # Create list of Data.Frame chunks
+    list_df = [df[i:i+n] for i in range(0,df.shape[0],n)]
+    # Instantiate empty list
+    li=[]
+    # iterate through list_df, calculating 'statistics' on chunks and appending to li
+    for df in list_df:
+        li.append(statistics(df))
+    
+    # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max_CV_across_sample'
+    output = pd.concat(li, axis=1)
+    output.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
+    output['Rounded_Mass'] = output['Mass'].round(0)
+    output['Max_CV_across_sample'] = output.filter(regex='CV_').max(axis=1)
 
+    return output
+    
 
 def cal_detection_count(df_in):
     blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']

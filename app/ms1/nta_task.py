@@ -265,7 +265,7 @@ class NtaRun:
 
     def calc_statistics(self):
         ppm = self.parameters['mass_accuracy_units'][1]== 'ppm'
-        self.dfs = [task_fun.statistics(df) if df is not None else None for df in self.dfs]
+        self.dfs = [task_fun.chunk_stats(df) if df is not None else None for df in self.dfs]
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
