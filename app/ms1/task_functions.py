@@ -269,6 +269,7 @@ def statistics(df_in):
     #tracemalloc.start()
     #start = time.perf_counter()
     df = df_in.copy()
+    df = score(df)
 
     all_headers = parse_headers(df_in) 
     sam_headers = [i for i in all_headers if len(i) > 1]
