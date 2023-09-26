@@ -302,6 +302,7 @@ def statistics(df_in):
     
     
 def chunk_stats(df_in):
+    logger.info("Starting chunk stats.")
     # Create copy
     df=df_in.copy()
     # Calculate 'score'
@@ -312,16 +313,21 @@ def chunk_stats(df_in):
     list_df = [df[i:i+n] for i in range(0,df.shape[0],n)]
     # Instantiate empty list
     li=[]
+    
+    logger.info("Starting stats loop.")
     # iterate through list_df, calculating 'statistics' on chunks and appending to li
     for df in list_df:
         li.append(statistics(df))
+        logger.info("In stats loop.")
     
+    logger.info("Finished stats loop.")
     # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max_CV_across_sample'
     output = pd.concat(li, axis=1)
     output.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
     output['Rounded_Mass'] = output['Mass'].round(0)
     output['Max_CV_across_sample'] = output.filter(regex='CV_').max(axis=1)
-
+    
+    logger.info("Finished chunk stats.")
     return output
     
 
