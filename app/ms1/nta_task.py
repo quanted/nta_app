@@ -21,13 +21,9 @@ from . WebApp_plotter import WebApp_plotter
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
 
 logging.basicConfig()
-logger.info("Checkpoint 1")
 logging.getLogger().setLevel(logging.INFO)
-logger.info("Checkpoint 2")
 logger = logging.getLogger("nta_app.ms1")
-logger.info("Checkpoint 3")
 logger.setLevel(logging.INFO)
-logger.info("Checkpoint 4")
 
 def run_nta_dask(parameters, input_dfs, tracer_df = None, run_sequence_pos_df = None, run_sequence_neg_df = None, jobid = "00000000", verbose = True):
     in_docker = os.environ.get("IN_DOCKER") != "False"
@@ -79,12 +75,16 @@ class NtaRun:
                  verbose = True, in_docker = True):
         logger.info("Initializing NtaRun Task")
         logger.info("parameters= {}".format(parameters))
+        logger.info("Checkpoint 1")
         self.parameters = parameters
         self.tracer_df = tracer_df
         self.tracer_dfs_out = None
+        logger.info("Checkpoint 2")
         self.run_sequence_pos_df = run_sequence_pos_df
         self.run_sequence_neg_df = run_sequence_neg_df
+        logger.info("Checkpoint 3")
         self.dfs = input_dfs
+        logger.info("Checkpoint 4")
         self.df_combined = None
         self.mpp_ready = None
         self.search_results = None
