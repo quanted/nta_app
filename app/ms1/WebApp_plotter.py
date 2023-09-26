@@ -513,7 +513,7 @@ class WebApp_plotter:
             fig, ax, shape, subtitle = figs_axes[sublist_index][0], figs_axes[sublist_index][1], \
                                        figs_axes[sublist_index][2], figs_axes[sublist_index][3]
             # Add padding to fix issue of cropping on edge of figure - AC 9/25/2023
-            fig.tight_layout(pad=2)
+            fig.tight_layout(pad=2.5)
                                        
             # set x and y labels, and plot title
             fig.text(0.5, -0.035, x_label, ha='center', va='center', fontsize=28)
