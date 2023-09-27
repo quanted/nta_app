@@ -163,34 +163,25 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
 
 # Called within the 'duplicates' function - takes a filtered 'to_test' df, does matrix math, returns 'passed'
 def dup_matrix(df_in, mass_cutoff, rt_cutoff):
-    logger.info("Checkpoint i")
     # Create matrices from df_in
     mass = df_in['Mass'].to_numpy()
     rts = df_in['Retention_Time'].to_numpy()
-    logger.info("Checkpoint ii")
     # Reshape matrices
     masses_matrix = np.reshape(mass, (len(mass), 1))
     rts_matrix = np.reshape(rts, (len(rts), 1))
-    logger.info("Checkpoint iii")
     # Perform matrix transposition
     diff_matrix_mass = masses_matrix - masses_matrix.transpose()
     diff_matrix_rt = rts_matrix - rts_matrix.transpose()
-    logger.info("Checkpoint iv")
     # Find indices where differences are less than 'mass_cutoff' and 'rt_cutoff'
     duplicates_matrix = np.where((abs(diff_matrix_mass) <= mass_cutoff) & (abs(diff_matrix_rt) <= rt_cutoff),1,0)
     np.fill_diagonal(duplicates_matrix, 0)
-    logger.info("Checkpoint v")
     # Find # of duplicates for each row
     row_sums = np.sum(duplicates_matrix, axis=1)
-    logger.info("Checkpoint vi")
     # Calculate lower triangle of matrix
     duplicates_matrix_lower = np.tril(duplicates_matrix)
-    logger.info("Checkpoint vii")
     lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
-    logger.info("Checkpoint viii")
     # Store features with no duplicates in 'passed'
     passed = df_in[(row_sums == 0) | (lower_row_sums == 0)].copy()
-    logger.info("Checkpoint ix")
     
     return passed
     
@@ -198,34 +189,29 @@ def dup_matrix(df_in, mass_cutoff, rt_cutoff):
 def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.05):
     #tracemalloc.start()
     #start = time.perf_counter()
-    logger.info("Checkpoint a")
+
     # Copy the dataframe
     df = df_in.copy()
     # Parse headers to find sample columns
     all_headers = parse_headers(df) 
     sam_headers = [item for sublist in all_headers for item in sublist if len(sublist) > 1]
-    logger.info("Checkpoint b")
     # Create 'Rounded Mass' and 'Rounded RT' columns
     df['Rounded Mass'] = df['Mass'].round(2)
     df['Rounded RT'] = df['Retention_Time'].round(1)
-    logger.info("Checkpoint c")
     # Calculate 'all_sample_mean', sort df by 'all_sample_mean', reset index
     df['all_sample_mean'] = df[sam_headers].mean(axis=1)  # mean intensity across all samples
     df.sort_values(by=['all_sample_mean'], inplace=True, ascending=False)
     df.reset_index(drop=True, inplace=True)
-    logger.info("Checkpoint d")
     # Filter df into 'to_keep' (all uniques), and 'to_test' (df indices not in 'to_keep')
     to_keep = df.drop_duplicates(subset=['Rounded Mass', 'Rounded RT'], keep =False)
     to_test = df[~df.index.isin(to_keep.index)]
-    logger.info("Checkpoint 5")
     # Concatenate 'to_keep' and output of 'dup_matrix' function (see above)
     output = pd.concat([to_keep, dup_matrix(to_test, mass_cutoff, rt_cutoff)], axis=0)
-    logger.info("Checkpoint e")
     # Sort output by 'Mass', reset the index, drop 'all_sample_mean'
     output.sort_values(by=['Mass'], inplace=True)
     output.reset_index(drop=True, inplace=True)
     #output.drop(['all_sample_mean'], axis=1, inplace=True)
-    logger.info("Checkpoint f")
+    
     #finish = time.perf_counter()
     #print(f'Finished in {finish-start} seconds.')
 

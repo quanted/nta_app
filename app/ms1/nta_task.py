@@ -103,20 +103,15 @@ class NtaRun:
 
 
     def execute(self):
-        logger.info("Checkpoint 1")
 
         # 0: create a status in mongo
         self.set_status('Processing', create = True)
-        logger.info("Checkpoint 2")
-        #0: create an analysis_parameters sheet
+        # 0: create an analysis_parameters sheet
         self.create_analysis_parameters_sheet()
-        logger.info("Checkpoint 3")
         # 1: drop duplicates and throw out void volume
         self.step = "Dropping duplicates"
         self.filter_void_volume(float(self.parameters['minimum_rt'][1])) # throw out features below this (void volume)
-        logger.info("Checkpoint 4")
         self.filter_duplicates()
-        logger.info("Checkpoint 5")
         if self.verbose:
             logger.info("Dropped duplicates.")
             logger.info("dfs.size(): {}".format(len(self.dfs)))
