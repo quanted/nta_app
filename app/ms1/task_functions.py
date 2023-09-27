@@ -207,7 +207,7 @@ def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.05):
     logger.info("Checkpoint b")
     # Create 'Rounded Mass' and 'Rounded RT' columns
     df['Rounded Mass'] = df['Mass'].round(2)
-    df['Rounded RT'] = df['Retention Time'].round(1)
+    df['Rounded RT'] = df['Retention_Time'].round(1)
     logger.info("Checkpoint c")
     # Calculate 'all_sample_mean', sort df by 'all_sample_mean', reset index
     df['all_sample_mean'] = df[sam_headers].mean(axis=1)  # mean intensity across all samples
