@@ -166,7 +166,7 @@ def dup_matrix(df_in, mass_cutoff, rt_cutoff):
     logger.info("Checkpoint i")
     # Create matrices from df_in
     mass = df_in['Mass'].to_numpy()
-    rts = df_in['Retention Time'].to_numpy()
+    rts = df_in['Retention_Time'].to_numpy()
     logger.info("Checkpoint ii")
     # Reshape matrices
     masses_matrix = np.reshape(mass, (len(mass), 1))
