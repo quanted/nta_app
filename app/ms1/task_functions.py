@@ -203,7 +203,7 @@ def dup_matrix(df_in, mass_cutoff, rt_cutoff):
     return passed
     
     
-def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.05):
+def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
     #tracemalloc.start()
     #start = time.perf_counter()
 
