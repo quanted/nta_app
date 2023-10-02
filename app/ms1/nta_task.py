@@ -263,16 +263,22 @@ class NtaRun:
 
     def calc_statistics(self):
         ppm = self.parameters['mass_accuracy_units'][1]== 'ppm'
+        logger.info("Checkpoint 1")
         self.dfs = [task_fun.chunk_stats(df) if df is not None else None for df in self.dfs]
+        logger.info("Checkpoint 2")
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
+            logger.info("Checkpoint 3")
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
+            logger.info("Checkpoint 4")
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='positive', id_start=1)
+            logger.info("Checkpoint 5")
             self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='negative', id_start=len(self.dfs[0].index)+1)
+            logger.info("Checkpoint 6")
             self.data_map['Feature_statistics_positive'] = self.dfs[0]
             self.data_map['Feature_statistics_negative'] = self.dfs[1]
         elif self.dfs[0] is not None:

@@ -105,12 +105,16 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     :return: A Dataframe where adduct info is given in three new columns.
     """
     df = df_in.copy()
+    logger.info("Checkpoint a")
     mass = df['Mass'].to_numpy()
     rts = df['Retention_Time'].to_numpy()
+    logger.info("Checkpoint b")
     masses_matrix = np.reshape(mass, (len(mass), 1))
     rts_matrix = np.reshape(rts, (len(rts),1))
+    logger.info("Checkpoint c")
     diff_matrix_mass = masses_matrix - masses_matrix.transpose()
     diff_matrix_rt = rts_matrix - rts_matrix.transpose()
+    logger.info("Checkpoint d")
     pos_adduct_deltas = {'Na': 22.989218, 'K': 38.963158, 'NH4': 18.033823}
     neg_adduct_deltas = {'Cl': 34.969402, 'Br': 78.918885, 'HCO2': 44.998201, 'CH3CO2': 59.013851, 'CF3CO2': 112.985586}
     neutral_loss_deltas= {'H2O': -18.010565, 'CO2': -43.989829}
@@ -126,38 +130,51 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     df['Is_Adduct_or_Loss'] = 0
     df['Adduct_or_Loss_Info'] = ""
     unique_adduct_number = np.zeros(len(df.index))
+    logger.info("Checkpoint e")
     for a_name, delta in sorted(possible_adduct_deltas.items()):
         is_adduct_diff = abs(diff_matrix_mass - delta)
         has_adduct_diff = abs(diff_matrix_mass + delta)
+        logger.info("Checkpoint i")
         if ppm:
             is_adduct_diff = (is_adduct_diff/masses_matrix)*10**6
             has_adduct_diff = (has_adduct_diff/masses_matrix)*10**6
+            logger.info("Checkpoint ii")
         is_adduct_matrix = np.where((is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
         has_adduct_matrix = np.where((has_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
+        logger.info("Checkpoint iii")
         np.fill_diagonal(is_adduct_matrix, 0)  # remove self matches
         np.fill_diagonal(has_adduct_matrix, 0)  # remove self matches
+        logger.info("Checkpoint iv")
         row_num = len(mass)
-        is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start
-        has_id_matrix = is_id_matrix.transpose()
+        is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start #don't need to do the reshape if we pass a tuple: np.tile(np.arange(row_num), (row_num, row_num))
+        logger.info("Checkpoint v")
+        #has_id_matrix = is_id_matrix.transpose()
         is_adduct_number = is_adduct_matrix * is_id_matrix
-        is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row
-        is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0)
+        logger.info("Checkpoint vi")
+        is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row; unlikely to happen?
+        is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0) # should this be '- id_start' ? --> maybe get rid of '- 1', but need to test this
+        logger.info("Checkpoint vii")
         is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
                                        (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
         is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
+        logger.info("Checkpoint viii")
         has_adduct_number = has_adduct_matrix * is_id_matrix
         has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
-        unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat).astype(int)
+        logger.info("Checkpoint ix")
+        unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat).astype(int) # preferentially stores having an adduct over being an adduct
         #unique_adduct_number = np.where(unique_adduct_number == 0, unique_adduct_number_new, unique_adduct_number)
+        logger.info("Checkpoint x")
         df['Has_Adduct_or_Loss'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
-                                            df['Has_Adduct_or_Loss']+1, df['Has_Adduct_or_Loss'])
+                                            df['Has_Adduct_or_Loss']+1, df['Has_Adduct_or_Loss'])                # this is labeled as a binary, but is actually a count!
         df['Is_Adduct_or_Loss'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0), 1, df['Is_Adduct_or_Loss'])
         # new_cols = ['unique_{}_number'.format(a_name), 'has_{}_adduct'.format(a_name), 'is_{}_adduct'.format(a_name)]
         #unique_adduct_number_str =
+        logger.info("Checkpoint xi")
         df['Adduct_or_Loss_Info'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
                                              df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
         df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
                                              df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
+    logger.info("Checkpoint f")
     return df
 
 
