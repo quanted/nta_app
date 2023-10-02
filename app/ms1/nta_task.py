@@ -104,6 +104,8 @@ class NtaRun:
 
     def execute(self):
 
+        # 0: check existence of "Ionization mode" column
+        self.check_existence_of_ionization_mode_column(self.dfs)  
         # 0: create a status in mongo
         self.set_status('Processing', create = True)
         # 0: create an analysis_parameters sheet
@@ -204,6 +206,38 @@ class NtaRun:
         self.step = "Displaying results"
         self.set_status('Completed')
 
+    def check_existence_of_ionization_mode_column(self, input_dfs):
+        """
+        Check and ensure the existence of the 'Ionization_Mode' column in a list of DataFrames.
+
+        This function iterates through a list of DataFrames, typically representing positive and negative ionization modes,
+        and checks if the 'Ionization_Mode' column is present. If not found, it adds the column to the DataFrame with
+        predefined values based on the mode.
+
+        Args:
+            self: The instance of the class (typically associated with object-oriented programming).
+            input_dfs (list of pandas.DataFrame): A list of pandas DataFrames to check and modify.
+
+        Returns:
+            None: This function operates in place and modifies the input DataFrames.
+
+        Example:
+            input_dfs = [positive_mode_df, negative_mode_df]
+            checker = IonizationModeChecker()
+            checker.check_existence_of_ionization_mode_column(input_dfs)
+            # The 'Ionization_Mode' column will be added to DataFrames if missing, with values 'Esi+' for positive mode
+            # and 'Esi-' for negative mode.
+        """        
+        # the zeroth element of input_dfs is the positive mode dataframe
+        ionizationMode = "Esi+"
+        for df in input_dfs:
+            if df is not None:
+                if 'Ionization_Mode' not in df.columns:
+                    # create a new column with the header of "Ionization_Mode" and values of ionizationMode
+                    df['Ionization_Mode'] = ionizationMode
+            # the first element of input_dfs is the negative mode dataframe
+            ionizationMode = "Esi-"
+        return
 
     def create_analysis_parameters_sheet(self):
         # logger.info("create_analysis_parameters_sheet: inputParameters: {} ".format(inputParameters))
