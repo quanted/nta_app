@@ -167,7 +167,7 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
 def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start):
     # 'Mass' to matrix, 'Retention Time' to matrix
     mass = df['Mass'].to_numpy()
-    rts = df['Retention Time'].to_numpy()
+    rts = df['Retention_Time'].to_numpy()
     # Reshape 'masses' and 'rts'
     masses_matrix = np.reshape(mass, (len(mass), 1))
     rts_matrix = np.reshape(rts, (len(rts),1))
@@ -247,7 +247,7 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
         dum = adduct_matrix(x, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
         li.append(dum)
     
-    output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention Time'], keep = 'last')
+    output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'last')
     
     return output
 
@@ -258,10 +258,10 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
 def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 0):
     
     # Copy df_in, only need 'Mass' and 'Retention Time'
-    df = df_in[['Mass', 'Retention Time']].copy()
+    df = df_in[['Mass', 'Retention_Time']].copy()
     # Round columns
     df['Rounded Mass'] = df['Mass'].round(2)
-    df['Rounded RT'] = df['Retention Time'].round(1)
+    df['Rounded RT'] = df['Retention_Time'].round(1)
     # Create tuple of 'Rounded RT' and 'Rounded Mass'
     df['Rounded_RT_Mass_Pair'] = list(zip(df['Rounded RT'], df['Rounded Mass'])) 
     # Define pos/neg/neutral adduct dictionaries, proton
@@ -309,13 +309,10 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
         to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
     
     # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
-    df_in = pd.merge(df_in, to_test[['Mass', 'Retention Time', 'Has_Adduct_or_Loss','Is_Adduct_or_Loss','Adduct_or_Loss_Info']],
-                  how = 'left', on = ['Mass', 'Retention Time'])
+    df_in = pd.merge(df_in, to_test[['Mass', 'Retention_Time', 'Has_Adduct_or_Loss','Is_Adduct_or_Loss','Adduct_or_Loss_Info']],
+                  how = 'left', on = ['Mass', 'Retention_Time'])
     
     return df_in
-
-
-
 
 
 # Called within the 'duplicates' function - takes a filtered 'to_test' df, does matrix math, returns 'passed'
