@@ -164,7 +164,7 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
 '''
 
 # Modified version of Jeff's 'adduct_identifier' function. This is the matrix portion.
-def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start = 1):
+def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start):
     # 'Mass' to matrix, 'Retention Time' to matrix
     mass = df['Mass'].to_numpy()
     rts = df['Retention Time'].to_numpy()
@@ -236,7 +236,7 @@ def window_size(df_in, mass_diff_mass = 112.985586):
 
 # Function that takes the input data, chunks it based on window size, then loops through chunks
 # and sends them to 'adduct_matrix' for calculation
-def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm):
+def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start):
     
     df=df_in.copy()    
     to_test_list = [df[i:i+n] for i in range(0, df.shape[0], step)]
@@ -244,7 +244,7 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
         
     li=[]
     for x in to_test_list:
-        dum = adduct_matrix(x, a_name, delta, Mass_Difference, Retention_Difference, ppm)
+        dum = adduct_matrix(x, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
         li.append(dum)
     
     output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention Time'], keep = 'last')
@@ -255,7 +255,7 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
 # Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
 # features that are near to adduct distance from another feature. This shortened dataframe is used to 
 # calculate a window size, then loop through possible adducts, passing to 'chunk_adducts'
-def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization):
+def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 0):
     
     # Copy df_in, only need 'Mass' and 'Retention Time'
     df = df_in[['Mass', 'Retention Time']].copy()
@@ -306,7 +306,7 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     step = n - window_size(to_test)
     # Loop through possible adducts, perform 'adduct_matrix'
     for a_name, delta in possible_adduct_deltas.items():
-        to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm)
+        to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
     
     # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
     df_in = pd.merge(df_in, to_test[['Mass', 'Retention Time', 'Has_Adduct_or_Loss','Is_Adduct_or_Loss','Adduct_or_Loss_Info']],
