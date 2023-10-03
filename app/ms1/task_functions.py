@@ -89,6 +89,7 @@ def parse_headers(df_in):
     return new_headers_list
 
 
+'''
 def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 1):  # TODO optimize memory usage
     """
     Label features which could have adduct or loss products in the feature list, or may be adduct of loss products of
@@ -105,16 +106,12 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     :return: A Dataframe where adduct info is given in three new columns.
     """
     df = df_in.copy()
-    logger.info("Checkpoint a")
     mass = df['Mass'].to_numpy()
     rts = df['Retention_Time'].to_numpy()
-    logger.info("Checkpoint b")
     masses_matrix = np.reshape(mass, (len(mass), 1))
     rts_matrix = np.reshape(rts, (len(rts),1))
-    logger.info("Checkpoint c")
     diff_matrix_mass = masses_matrix - masses_matrix.transpose()
     diff_matrix_rt = rts_matrix - rts_matrix.transpose()
-    logger.info("Checkpoint d")
     pos_adduct_deltas = {'Na': 22.989218, 'K': 38.963158, 'NH4': 18.033823}
     neg_adduct_deltas = {'Cl': 34.969402, 'Br': 78.918885, 'HCO2': 44.998201, 'CH3CO2': 59.013851, 'CF3CO2': 112.985586}
     neutral_loss_deltas= {'H2O': -18.010565, 'CO2': -43.989829}
@@ -130,40 +127,29 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     df['Is_Adduct_or_Loss'] = 0
     df['Adduct_or_Loss_Info'] = ""
     unique_adduct_number = np.zeros(len(df.index))
-    logger.info("Checkpoint e")
     for a_name, delta in sorted(possible_adduct_deltas.items()):
         is_adduct_diff = abs(diff_matrix_mass - delta)
         has_adduct_diff = abs(diff_matrix_mass + delta)
-        logger.info("Checkpoint i")
         if ppm:
             is_adduct_diff = (is_adduct_diff/masses_matrix)*10**6
             has_adduct_diff = (has_adduct_diff/masses_matrix)*10**6
-            logger.info("Checkpoint ii")
         is_adduct_matrix = np.where((is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
         has_adduct_matrix = np.where((has_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
-        logger.info("Checkpoint iii")
         np.fill_diagonal(is_adduct_matrix, 0)  # remove self matches
         np.fill_diagonal(has_adduct_matrix, 0)  # remove self matches
-        logger.info("Checkpoint iv")
         row_num = len(mass)
         is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start #don't need to do the reshape if we pass a tuple: np.tile(np.arange(row_num), (row_num, row_num))
-        logger.info("Checkpoint v")
         #has_id_matrix = is_id_matrix.transpose()
         is_adduct_number = is_adduct_matrix * is_id_matrix
-        logger.info("Checkpoint vi")
         is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row; unlikely to happen?
         is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0) # should this be '- id_start' ? --> maybe get rid of '- 1', but need to test this
-        logger.info("Checkpoint vii")
         is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
                                        (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
         is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
-        logger.info("Checkpoint viii")
         has_adduct_number = has_adduct_matrix * is_id_matrix
         has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
-        logger.info("Checkpoint ix")
         unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat).astype(int) # preferentially stores having an adduct over being an adduct
         #unique_adduct_number = np.where(unique_adduct_number == 0, unique_adduct_number_new, unique_adduct_number)
-        logger.info("Checkpoint x")
         df['Has_Adduct_or_Loss'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
                                             df['Has_Adduct_or_Loss']+1, df['Has_Adduct_or_Loss'])                # this is labeled as a binary, but is actually a count!
         df['Is_Adduct_or_Loss'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0), 1, df['Is_Adduct_or_Loss'])
@@ -174,8 +160,162 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
                                              df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
         df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
                                              df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
-    logger.info("Checkpoint f")
     return df
+'''
+
+# Modified version of Jeff's 'adduct_identifier' function. This is the matrix portion.
+def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start = 1):
+    # 'Mass' to matrix, 'Retention Time' to matrix
+    mass = df['Mass'].to_numpy()
+    rts = df['Retention Time'].to_numpy()
+    # Reshape 'masses' and 'rts'
+    masses_matrix = np.reshape(mass, (len(mass), 1))
+    rts_matrix = np.reshape(rts, (len(rts),1))
+    # Create difference matrices
+    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
+    diff_matrix_rt = rts_matrix - rts_matrix.transpose() 
+    # Create array of 0s   
+    unique_adduct_number = np.zeros(len(df.index))
+    # Add 'diff_mass_matrix' by 'delta' (adduct mass)
+    is_adduct_diff = abs(diff_matrix_mass - delta)
+    has_adduct_diff = abs(diff_matrix_mass + delta)
+    # Adjust matrix if units are 'ppm'
+    if ppm:
+        has_adduct_diff = (has_adduct_diff/masses_matrix)*10**6
+        is_adduct_diff = (is_adduct_diff/masses_matrix)*10**6
+    
+    # Replace cells in 'has_adduct_diff' below 'Mass_Difference' and 'Retention_Difference' with 1, else 0
+    is_adduct_matrix = np.where((is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
+    has_adduct_matrix = np.where((has_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
+    # Remove self matches
+    np.fill_diagonal(is_adduct_matrix, 0)
+    np.fill_diagonal(has_adduct_matrix, 0)
+    # Define 'row_num', 'is_id_matrix'
+    row_num = len(mass)
+    is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start
+    # Matrix multiplication, keep highest # row if multiple adducts
+    is_adduct_number = is_adduct_matrix * is_id_matrix
+    is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row
+    #is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0)
+    #is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
+    #                               (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
+    #is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
+    has_adduct_number = has_adduct_matrix * is_id_matrix
+    has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
+    unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat).astype(int)
+    # Edit 'df['Has_Adduct_or_Loss']' column
+    df['Has_Adduct_or_Loss'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
+                                        df['Has_Adduct_or_Loss']+1, df['Has_Adduct_or_Loss'])
+    # Edit 'df['Is_Adduct_or_Loss']' column
+    df['Is_Adduct_or_Loss'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0), 1, df['Is_Adduct_or_Loss'])
+    # Edit 'df['Adduct_or_Loss_Info']' column
+    df['Adduct_or_Loss_Info'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
+                                         df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
+    # Edit 'df['Adduct_or_Loss_Info']' column
+    df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
+                                         df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
+    
+    return df
+
+
+# Estimate a window size from the input data by finding the maximum distance between indices differing by 'mass_diff_mass'
+def window_size(df_in, mass_diff_mass = 112.985586):
+    df = df_in.copy()
+    masses = df['Mass'].tolist()    
+    li=[]
+    for i in range(len(masses)-1):
+        val = masses[i] + mass_diff_mass
+        if df['Mass'].max() > val:
+            ind = df.index[df['Mass'] > val].tolist()[0]
+            li.append(ind - i)
+    window_size = pd.Series(li)
+    val = window_size.max()
+    
+    return val
+
+
+# Function that takes the input data, chunks it based on window size, then loops through chunks
+# and sends them to 'adduct_matrix' for calculation
+def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm):
+    
+    df=df_in.copy()    
+    to_test_list = [df[i:i+n] for i in range(0, df.shape[0], step)]
+    to_test_list = [i for i in to_test_list if (i.shape[0] > n/2)]
+        
+    li=[]
+    for x in to_test_list:
+        dum = adduct_matrix(x, a_name, delta, Mass_Difference, Retention_Difference, ppm)
+        li.append(dum)
+    
+    output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention Time'], keep = 'last')
+    
+    return output
+
+
+# Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
+# features that are near to adduct distance from another feature. This shortened dataframe is used to 
+# calculate a window size, then loop through possible adducts, passing to 'chunk_adducts'
+def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization):
+    
+    # Copy df_in, only need 'Mass' and 'Retention Time'
+    df = df_in[['Mass', 'Retention Time']].copy()
+    # Round columns
+    df['Rounded Mass'] = df['Mass'].round(2)
+    df['Rounded RT'] = df['Retention Time'].round(1)
+    # Create tuple of 'Rounded RT' and 'Rounded Mass'
+    df['Rounded_RT_Mass_Pair'] = list(zip(df['Rounded RT'], df['Rounded Mass'])) 
+    # Define pos/neg/neutral adduct dictionaries, proton
+    pos_adduct_deltas = {'Na': 22.989218, 'K': 38.963158, 'NH4': 18.033823}
+    neg_adduct_deltas = {'Cl': 34.969402, 'Br': 78.918885, 'HCO2': 44.998201, 'CH3CO2': 59.013851, 'CF3CO2': 112.985586}
+    neutral_loss_deltas= {'H2O': -18.010565, 'CO2': -43.989829}
+    proton_mass = 1.007276
+    # Determine possible adduct dictionary according to ionization
+    if ionization == "positive":
+        # we observe Mass+(H+) and Mass+(Adduct)
+        possible_adduct_deltas = {k: v - proton_mass for (k,v) in pos_adduct_deltas.items()}
+    else:
+        # we observe Mass-(H+) and Mass+(Adduct)
+        possible_adduct_deltas = {k: v + proton_mass for (k,v) in neg_adduct_deltas.items()}
+        # add neutral loss adducts
+        possible_adduct_deltas.update(neutral_loss_deltas)  
+
+    list_of_mass_shifts_RT_pairs = []
+    # Loop through possible adducts, add/subtract adduct mass from each feature, append
+    # 'Rounded RT', 'Rounded Mass' tuples to 'list_of_mass_shifts_RT_pairs' for both addition
+    # and subtraction.
+    for (k,v) in possible_adduct_deltas.items():
+        col1 = 'Mass - '+k
+        col2 = 'Mass + '+k
+        df[col1] = (df['Mass'] - v).round(2)
+        df[col2] = (df['Mass'] + v).round(2)
+        list_of_mass_shifts_RT_pairs.append(list(zip(df['Rounded RT'], df[col1])))
+        list_of_mass_shifts_RT_pairs.append(list(zip(df['Rounded RT'], df[col2])))
+    # Extend list  
+    list_of_mass_shifts_RT_pairs = [item for sublist in list_of_mass_shifts_RT_pairs for item in sublist]
+    # Remove duplicate tuples (sets don't carry duplicates)
+    list_of_mass_shifts_RT_pairs = list(set(list_of_mass_shifts_RT_pairs))
+    # Filter df for features to check for adducts
+    to_test = df[df['Rounded_RT_Mass_Pair'].isin(list_of_mass_shifts_RT_pairs)]
+    to_test = to_test.sort_values('Mass', ignore_index=True) 
+    # Add columns to be changed by 'adduct_matrix'
+    to_test['Has_Adduct_or_Loss'] = 0
+    to_test['Is_Adduct_or_Loss'] = 0
+    to_test['Adduct_or_Loss_Info'] = ""
+    
+    n = 12000    
+    step = n - window_size(to_test)
+    # Loop through possible adducts, perform 'adduct_matrix'
+    for a_name, delta in possible_adduct_deltas.items():
+        to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm)
+    
+    # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
+    df_in = pd.merge(df_in, to_test[['Mass', 'Retention Time', 'Has_Adduct_or_Loss','Is_Adduct_or_Loss','Adduct_or_Loss_Info']],
+                  how = 'left', on = ['Mass', 'Retention Time'])
+    
+    return df_in
+
+
+
 
 
 # Called within the 'duplicates' function - takes a filtered 'to_test' df, does matrix math, returns 'passed'
