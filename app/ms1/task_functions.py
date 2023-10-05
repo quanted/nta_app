@@ -302,11 +302,20 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     to_test['Is_Adduct_or_Loss'] = 0
     to_test['Adduct_or_Loss_Info'] = ""
     
-    n = 12000    
-    step = n - window_size(to_test)
-    # Loop through possible adducts, perform 'adduct_matrix'
-    for a_name, delta in possible_adduct_deltas.items():
-        to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
+    # Set 'n' to tested memory capacity of WebApp for number of features in 'adduct_matrix'
+    n = 12000
+    
+    # If 'to_test' is less than n, send it straight to 'adduct_matrix'
+    if to_test.shape[0] < n:
+        for a_name, delta in possible_adduct_deltas.items():
+            to_test = adduct_matrix(to_test, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
+    
+    # Else, calculate the moving window size and send 'to_test' to 'chunk_adducts'
+    else:  
+        step = n - window_size(to_test)
+        # Loop through possible adducts, perform 'adduct_matrix'
+        for a_name, delta in possible_adduct_deltas.items():
+            to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
     
     # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
     df_in = pd.merge(df_in, to_test[['Mass', 'Retention_Time', 'Has_Adduct_or_Loss','Is_Adduct_or_Loss','Adduct_or_Loss_Info']],
