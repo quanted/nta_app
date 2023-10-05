@@ -306,7 +306,7 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     n = 12000
     
     # If 'to_test' is less than n, send it straight to 'adduct_matrix'
-    if to_test.shape[0] < n:
+    if to_test.shape[0] <= n:
         for a_name, delta in possible_adduct_deltas.items():
             to_test = adduct_matrix(to_test, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
     
