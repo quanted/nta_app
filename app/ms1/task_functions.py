@@ -324,6 +324,27 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     return df_in
 
 
+# Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix'
+def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff):
+    # Create copy of df)in
+    df=df_in.copy()
+    # Chunk df based on n (# of features WebApp can handle) and step
+    to_test_list = [df[i:i+n] for i in range(0, df.shape[0], step)]
+    # Remove small remainder tail, if present
+    to_test_list = [i for i in to_test_list if (i.shape[0] > n/2)]
+        
+    li=[]
+    # Pass list to 'dup_matrix'
+    for x in to_test_list:
+        print("On chunk loop")
+        dum = dup_matrix(x, mass_cutoff, rt_cutoff)
+        li.append(dum)
+    # Concatenate results, drop duplicates from overlap
+    output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'first')
+    
+    return output
+
+
 # Called within the 'duplicates' function - takes a filtered 'to_test' df, does matrix math, returns 'passed'
 def dup_matrix(df_in, mass_cutoff, rt_cutoff):
     # Create matrices from df_in
@@ -347,39 +368,31 @@ def dup_matrix(df_in, mass_cutoff, rt_cutoff):
     passed = df_in[(row_sums == 0) | (lower_row_sums == 0)].copy()
     
     return passed
-    
-    
-def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
-    #tracemalloc.start()
-    #start = time.perf_counter()
 
+
+# Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff    
+def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
     # Copy the dataframe
     df = df_in.copy()
     # Parse headers to find sample columns
     all_headers = parse_headers(df) 
     sam_headers = [item for sublist in all_headers for item in sublist if len(sublist) > 1]
-    # Create 'Rounded Mass' and 'Rounded RT' columns
-    df['Rounded Mass'] = df['Mass'].round(2)
-    df['Rounded RT'] = df['Retention_Time'].round(1)
     # Calculate 'all_sample_mean', sort df by 'all_sample_mean', reset index
     df['all_sample_mean'] = df[sam_headers].mean(axis=1)  # mean intensity across all samples
     df.sort_values(by=['all_sample_mean'], inplace=True, ascending=False)
     df.reset_index(drop=True, inplace=True)
-    # Filter df into 'to_keep' (all uniques), and 'to_test' (df indices not in 'to_keep')
-    to_keep = df.drop_duplicates(subset=['Rounded Mass', 'Rounded RT'], keep =False)
-    to_test = df[~df.index.isin(to_keep.index)]
-    # Concatenate 'to_keep' and output of 'dup_matrix' function (see above)
-    output = pd.concat([to_keep, dup_matrix(to_test, mass_cutoff, rt_cutoff)], axis=0)
+    # Define feature limit of WebApp
+    n=12000
+    step=6000
+    # 'if' statement for chunker: if no chunks needed, send to 'dup_matrix', else send to 'chunk_duplicates'
+    if df.shape[0] <= n:
+        output = dup_matrix(df, mass_cutoff, rt_cutoff)   
+    else:
+        output = chunk_duplicates(df, n, step, mass_cutoff, rt_cutoff)
     # Sort output by 'Mass', reset the index, drop 'all_sample_mean'
     output.sort_values(by=['Mass'], inplace=True)
     output.reset_index(drop=True, inplace=True)
-    #output.drop(['all_sample_mean'], axis=1, inplace=True)
-    
-    #finish = time.perf_counter()
-    #print(f'Finished in {finish-start} seconds.')
-
-    #print(tracemalloc.get_traced_memory())
-    #tracemalloc.stop()
+    output.drop(['all_sample_mean'], axis=1, inplace=True)
     
     return output
 
