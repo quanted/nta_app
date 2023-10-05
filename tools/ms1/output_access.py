@@ -125,7 +125,7 @@ class OutputServer:
         file_names = self.gridfs.get(f'{self.jobid}_file_names').read().decode('utf-8').split("&&")
         print(f'file_names: {file_names}')
         in_memory_buffer = BytesIO()
-        with pd.ExcelWriter(in_memory_buffer, engine='openpyxl') as writer:
+        with pd.ExcelWriter(in_memory_buffer, engine='xlsxwriter') as writer:
             for name in file_names:
                 if 'final_' in name:
                     continue
