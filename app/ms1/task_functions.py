@@ -190,30 +190,37 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm,
     # Remove self matches
     np.fill_diagonal(is_adduct_matrix, 0)
     np.fill_diagonal(has_adduct_matrix, 0)
-    # Define 'row_num', 'is_id_matrix'
-    row_num = len(mass)
-    is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start
-    # Matrix multiplication, keep highest # row if multiple adducts
-    is_adduct_number = is_adduct_matrix * is_id_matrix
-    is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row
-    #is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0)
-    #is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
-    #                               (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
-    #is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
-    has_adduct_number = has_adduct_matrix * is_id_matrix
-    has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
-    unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat).astype(int)
-    # Edit 'df['Has_Adduct_or_Loss']' column
-    df['Has_Adduct_or_Loss'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
-                                        df['Has_Adduct_or_Loss']+1, df['Has_Adduct_or_Loss'])
-    # Edit 'df['Is_Adduct_or_Loss']' column
-    df['Is_Adduct_or_Loss'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0), 1, df['Is_Adduct_or_Loss'])
-    # Edit 'df['Adduct_or_Loss_Info']' column
-    df['Adduct_or_Loss_Info'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
-                                         df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
-    # Edit 'df['Adduct_or_Loss_Info']' column
-    df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
-                                         df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
+    # check if all values in is_adduct_matrix are 0
+    if np.all(is_adduct_matrix == 0):
+        # create empty columns with no value named 'Is_Adduct_or_Loss', 'Has_Adduct_or_Loss', 'Adduct_or_Loss_Info' 
+        df['Is_Adduct_or_Loss'] = ''
+        df['Has_Adduct_or_Loss'] = ''
+        df['Adduct_or_Loss_Info'] = ''
+    else:
+        # Define 'row_num', 'is_id_matrix'
+        row_num = len(mass)
+        is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start
+        # Matrix multiplication, keep highest # row if multiple adducts
+        is_adduct_number = is_adduct_matrix * is_id_matrix
+        is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row
+        #is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0)
+        #is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
+        #                               (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
+        #is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
+        has_adduct_number = has_adduct_matrix * is_id_matrix
+        has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
+        unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat).astype(int)
+        # Edit 'df['Has_Adduct_or_Loss']' column
+        df['Has_Adduct_or_Loss'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
+                                            df['Has_Adduct_or_Loss']+1, df['Has_Adduct_or_Loss'])
+        # Edit 'df['Is_Adduct_or_Loss']' column
+        df['Is_Adduct_or_Loss'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0), 1, df['Is_Adduct_or_Loss'])
+        # Edit 'df['Adduct_or_Loss_Info']' column
+        df['Adduct_or_Loss_Info'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
+                                            df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
+        # Edit 'df['Adduct_or_Loss_Info']' column
+        df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
+                                            df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
     
     return df
 

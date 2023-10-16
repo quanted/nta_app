@@ -106,6 +106,8 @@ class NtaRun:
 
         # 0: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)  
+        # 0: check existence of 'mass column'
+        self.check_existence_of_mass_column(self.dfs)
         # 0: create a status in mongo
         self.set_status('Processing', create = True)
         # 0: create an analysis_parameters sheet
@@ -237,6 +239,48 @@ class NtaRun:
                     df['Ionization_Mode'] = ionizationMode
             # the first element of input_dfs is the negative mode dataframe
             ionizationMode = "Esi-"
+        return
+
+    def check_existence_of_mass_column(self, input_dfs):
+        """
+        Check the existence of a 'Mass' or 'm/z' column in input dataframes and handle it accordingly.
+
+        Args:
+            input_dfs (list of pandas DataFrames): A list of dataframes to check.
+
+        This function checks each dataframe in the input list for the presence of a 'Mass' or 'm/z' column. If either of these columns is found, it takes appropriate action based on the ionization mode. If neither column exists, it raises a ValueError.
+
+        Note:
+            - If 'Mass' already exists, no action is taken.
+            - If 'm/z' exists, a 'Mass' column is created by subtracting 1.0073 for "Esi+" mode and adding 1.0073 for "Esi-" mode.
+
+        Raises:
+            ValueError: If neither 'Mass' nor 'm/z' columns are present in the input dataframe.
+
+        Returns:
+            None
+        """
+        ionizationMode = "Esi+"
+
+        # Iterate through two dataframes (assumes there are two in the input)
+        for i in range(0, 2):
+            df = input_dfs[i]
+
+            # If it's the second iteration, change the ionization mode to "Esi-"
+            if i == 1:
+                ionizationMode = "Esi-"
+
+            if df is not None:
+                if 'Mass' in df.columns:
+                    pass  # 'Mass' column already exists, no action needed
+                elif 'm/z' in df.columns:
+                    if ionizationMode == "Esi+":
+                        df['Mass'] = df['m/z'] - 1.0073
+                    elif ionizationMode == "Esi-":
+                        df['Mass'] = df['m/z'] + 1.0073
+                else:
+                    raise ValueError("Either Mass or m/z column must be in the input file.")
+
         return
 
     def create_analysis_parameters_sheet(self):
