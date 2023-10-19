@@ -108,6 +108,8 @@ class NtaRun:
         self.check_existence_of_ionization_mode_column(self.dfs)  
         # 0: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
+        # 0: sort dataframe columns alphabetically
+        self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
         # 0: create a status in mongo
         self.set_status('Processing', create = True)
         # 0: create an analysis_parameters sheet
