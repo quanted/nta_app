@@ -192,10 +192,9 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm,
     np.fill_diagonal(has_adduct_matrix, 0)
     # check if all values in is_adduct_matrix are 0
     if np.all(is_adduct_matrix == 0):
-        # create empty columns with no value named 'Is_Adduct_or_Loss', 'Has_Adduct_or_Loss', 'Adduct_or_Loss_Info' 
-        df['Is_Adduct_or_Loss'] = ''
-        df['Has_Adduct_or_Loss'] = ''
-        df['Adduct_or_Loss_Info'] = ''
+        # skip matrix math if no adduct matches 
+        pass
+    
     else:
         # Define 'row_num', 'is_id_matrix'
         row_num = len(mass)
