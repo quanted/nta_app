@@ -198,7 +198,7 @@ class NtaRun:
             self.perform_dashboard_search()
             if self.parameters['search_hcd'][1] == 'yes':
                 self.perform_hcd_search()
-            self.process_toxpi()
+            #self.process_toxpi() # currently deprecated
         if self.verbose:
             logger.info("Final result processed.")
         #if self.verbose:
@@ -536,6 +536,8 @@ class NtaRun:
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)
+            if not response.ok: # check if we got a successful response
+                raise requests.exceptions.HTTPError("Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off.")
             dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                             dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
