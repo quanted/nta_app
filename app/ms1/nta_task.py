@@ -81,6 +81,8 @@ class NtaRun:
         self.run_sequence_pos_df = run_sequence_pos_df
         self.run_sequence_neg_df = run_sequence_neg_df
         self.dfs = input_dfs
+        self.dupes = None
+        self.docs = None
         self.df_combined = None
         self.mpp_ready = None
         self.search_results = None

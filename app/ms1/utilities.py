@@ -89,7 +89,7 @@ def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
             end = n_masses-1
         response = api_search_masses(masses[i:end+1], accuracy, jobid)
         if not response.ok: # check if we got a successful response
-            raise requests.exceptions.HTTPError("Unable to access DSSTOX API. Please contact an administrator.")
+            raise requests.exceptions.HTTPError("Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off.")
         dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
         # try: # catch cases where API returns 'Null' for no hits
         #     dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
