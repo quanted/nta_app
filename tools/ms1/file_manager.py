@@ -32,7 +32,8 @@ def fix_names(df,index): # parse the Dataframe into a numpy array
         #df.columns = df.columns.str.replace(': Log2','') #log specific code
         df.columns = df.columns.str.replace(' ','_')
         df.columns = df.columns.str.replace('\([^)]*\)','')
-        df['Compound'] = df['Compound'].str.replace("\ Esi.*$","")
+        # NTAW-94 comment out the following line. Compound is no longer being used
+        # df['Compound'] = df['Compound'].str.replace("\ Esi.*$","")
         if 'Ionization_mode' in df.columns:
             df.rename(columns = {'Ionization_mode':'Ionization_Mode'},inplace=True)
         #df.drop(['CompositeSpectrum','Compound_Name'],axis=1)

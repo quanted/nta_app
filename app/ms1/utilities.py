@@ -137,7 +137,8 @@ def batch_search_hcd(dtxsid_list, batchsize = 150):
 
 def format_tracer_file(df_in):
     df = df_in.copy()
-    df = df.drop(columns=['Compound', 'Score'])
+    # NTAW-94 comment out the following line. Compound is no longer being used
+    # df = df.drop(columns=['Compound', 'Score'])
     rt_diff = df['Observed_Retention_Time'] - df['Retention_Time']
     mass_diff = ((df['Observed_Mass'] - df['Monoisotopic_Mass']) / df['Monoisotopic_Mass']) * 1000000
     df.insert(7, 'Mass_Error_PPM', mass_diff)
