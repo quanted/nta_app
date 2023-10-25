@@ -88,7 +88,9 @@ def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
         if end > n_masses-1:
             end = n_masses-1
         response = api_search_masses(masses[i:end+1], accuracy, jobid)
-        dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
+        if not response.ok: # check if we got a successful response
+            raise requests.exceptions.HTTPError("Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off.")
+        dsstox_search_json = io.StringIO(json.dumps(response.json()['results'])) # can be an empty string if no hits
         if i == 0:
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                         dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})

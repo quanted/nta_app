@@ -81,6 +81,8 @@ class NtaRun:
         self.run_sequence_pos_df = run_sequence_pos_df
         self.run_sequence_neg_df = run_sequence_neg_df
         self.dfs = input_dfs
+        self.dupes = None
+        self.docs = None
         self.df_combined = None
         self.mpp_ready = None
         self.search_results = None
@@ -543,6 +545,8 @@ class NtaRun:
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)
+            if not response.ok: # check if we got a successful response
+                raise requests.exceptions.HTTPError("Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off.")
             dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                             dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
