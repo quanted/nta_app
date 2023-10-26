@@ -18,9 +18,11 @@ class NtaInputs(forms.Form):
         initial='no')
     pos_input = forms.FileField(
         label = 'Positive MPP file (csv)',
+        required=False,
         validators= [FileExtensionValidator(['csv'])])
     neg_input = forms.FileField(
         label='Negative MPP file (csv)',
+        required=False,
         validators= [FileExtensionValidator(['csv'])])
     mass_accuracy_units = forms.ChoiceField(
         choices=(('ppm', 'ppm'), ('Da', 'Da'),),
@@ -35,6 +37,14 @@ class NtaInputs(forms.Form):
         label='Adduct retention time accuracy (mins)',
         initial=0.05,
         validators=[MinValueValidator(0)])
+    run_sequence_pos_file = forms.FileField(
+        label='Run sequence positive mode file (csv; optional)',
+        required=False,
+        validators= [FileExtensionValidator(['csv'])])
+    run_sequence_neg_file = forms.FileField(
+        label='Run sequence negative mode file (csv; optional)',
+        required=False,
+        validators= [FileExtensionValidator(['csv'])])
     tracer_input = forms.FileField(
         label='Tracer file (csv; optional)',
         required=False,
@@ -52,15 +62,15 @@ class NtaInputs(forms.Form):
         label='Tracer retention time accuracy (mins)',
         initial=0.1,
         validators=[MinValueValidator(0)])
-    sample_to_blank = forms.FloatField(
-        widget=forms.NumberInput(attrs={'step': 0.5}),
-        label='Min sample:blank cutoff',
-        initial=3,
-        validators=[MinValueValidator(0)])
     min_replicate_hits = forms.IntegerField(
-        widget = RangeInput(attrs={'max': '3', 'min':'1', 'class': 'slider_bar'}),
-        label='Min replicate hits',
-        initial=2,
+        widget = RangeInput(attrs={'max': '100', 'min':'1', 'class': 'slider_bar'}),
+        label='Min replicate hits(%)',
+        initial=66,
+        validators=[MinValueValidator(0)])
+    min_replicate_hits_blanks = forms.IntegerField(
+        widget = RangeInput(attrs={'max': '100', 'min':'1', 'class': 'slider_bar'}),
+        label='Min replicate hits in blanks(%)',
+        initial=66,
         validators=[MinValueValidator(0)])
     max_replicate_cv = forms.DecimalField(
         widget=forms.NumberInput(attrs={'step': 0.1}),

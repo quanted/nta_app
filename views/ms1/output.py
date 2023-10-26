@@ -57,11 +57,6 @@ def file_download_buttons(jobid):
         <div class="buttons">
             <input type="button" value="Final results" onclick="window.open('/nta/ms1/results/toxpi/{jobid}')">
         </div>
-    """
-    html +=  """
-        <div class="buttons">
-            <input type="button" value="All files" onclick="window.open('/nta/ms1/results/all/{jobid}')">
-        </div>
     </div>
     """
     return html.format(jobid = jobid)

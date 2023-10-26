@@ -100,7 +100,8 @@ class Feature_MS2(Feature):
         if(is_neutral):
             self.neutral_mass = self.mass
             return
-        self.neutral_mass = self.mass + 1.0073 if self.mode == 'POS' else self.mass - 1.0073  #This is the opposite of what it should be, but gives correct resutls. Tracking down bug MWB
+        #self.neutral_mass = self.mass + 1.0073 if self.mode == 'POS' else self.mass - 1.0073  #This is the opposite of what it should be, but gives correct resutls. Tracking down bug MWB
+        self.neutral_mass = self.mass - 1.0073 if self.mode == 'POS' else self.mass + 1.0073  #2/23/2023 Flip this to correct this (in addition to adjusting save_data function in ms2_task to fix Jira issue NTAW-68)
         
     def merge(self, other): #Implement later, consensus merge with fragment alignment
         return self

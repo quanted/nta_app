@@ -12,7 +12,11 @@
             <li class="menu-item"><a href="/nta/{{ MODEL }}/qaqc" title="{{ valueKey|safe }} QAQC" class="menu-link{% if PAGE == "qaqc" %} active-trail active{% endif %}">{{ valueKey|safe }} QA/QC</a></li>
             <li class="menu-item"><a href="/nta/{{ MODEL }}/references" title="{{ valueKey|safe }} References" class="menu-link{% if PAGE == "references" %} active-trail active{% endif %}">{{ valueKey|safe }} References</a></li>
             {% if MODEL == "ms1" %}
+              <li class="menu-item"><a href="/nta/{{ MODEL }}/ms1_test_files" title="{{ valueKey|safe }} Download Test Files" class="menu-link{% if PAGE == "ms1_test_files" %} active-trail active{% endif %}">{{ valueKey|safe }} Download Test Files</a></li>
               <li class="menu-item"><a href="/nta/{{ MODEL }}/formulas" title="Download MS-ready formula list" class="menu-link{% if PAGE == "formula_list" %} active-trail active{% endif %}">Download formula list</a></li>
+            {% endif %}
+            {% if MODEL == "ms2" %}
+              <li class="menu-item"><a href="/nta/{{ MODEL }}/ms2_test_files/" title="{{ valueKey|safe }} Download Test Files" class="menu-link{% if PAGE == "ms2_test_files" %} active-trail active{% endif %}">{{ valueKey|safe }} Download Test Files</a></li>
             {% endif %}
           </ul>{% endif %}
         </li>{% endfor %}

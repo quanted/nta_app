@@ -1,5 +1,11 @@
 import numpy as np
 import pandas as pd
+import logging
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger("nta_app.ms1")
+logger.setLevel(logging.INFO)
 
 def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     dft = search_df.copy()
@@ -12,7 +18,8 @@ def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     dft = dft.rename(columns={'EXPOCAST_MEDIAN_EXPOSURE_PREDICTION_MG/KG-BW/DAY': 'EXPOCAST_MGKG_BWDAY'})
     # dft.drop(['TOXCAST_NUMBER_OF_ASSAYS/TOTAL'],axis=1)
     dft.columns = dft.columns.str.replace(' ', '_')
-    dft['DATA_SOURCES_RATIO'] = dft.groupby('INPUT')['DATA_SOURCES'].apply(lambda x: (x / x.max())).round(2)
+    data_source_ratios = dft.groupby('INPUT')['DATA_SOURCES'].apply(lambda x: (x / x.max())).round(2).droplevel(0)
+    dft['DATA_SOURCE_RATIO'] = data_source_ratios
     df.sort_values('Compound', ascending=True, inplace=True)
     # dft = dft.sort_values('DATA_SOURCES',ascending = False).drop_duplicates('Compound').sort_index()
     df['SEARCHED_MASS'] = df['Mass']
@@ -43,7 +50,8 @@ def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     dfe.insert(5, 'Rounded_Mass', dfe.pop('Rounded_Mass'))
     dfe.insert(8, 'AnySamplesDropped', dfe.pop('AnySamplesDropped'))
     last_stats_col = dfe.columns.get_loc('Neg_Mass_Defect')
-    dfe.insert(last_stats_col-1, 'SampletoBlanks_ratio', dfe.pop('SampletoBlanks_ratio'))
+    # 2/23/2023 Comment out below line, sample to blanks ratio is deprecated
+    #dfe.insert(last_stats_col-1, 'SampletoBlanks_ratio', dfe.pop('SampletoBlanks_ratio'))
     dfe.insert(last_stats_col-1, 'Has_Adduct_or_Loss', dfe.pop('Has_Adduct_or_Loss'))
     dfe.insert(last_stats_col-1, 'Is_Adduct_or_Loss', dfe.pop('Is_Adduct_or_Loss'))
     dfe.insert(last_stats_col-1, 'Adduct_or_Loss_Info', dfe.pop('Adduct_or_Loss_Info'))

@@ -36,6 +36,12 @@ def connect_to_mongo_gridfs(address):
     fs = gridfs.GridFS(db)
     return fs
 
+# function to remove columns from a given dataframe, df_in. The columns to be removed are determined by the
+# a given list of strings.
+def remove_columns(df_in, list_of_columns2remove):
+    df = df_in.copy()
+    df.drop(list_of_columns2remove, axis=1, inplace=True)
+    return df
 
 def reduced_file(df_in):
     df = df_in.copy()
@@ -82,13 +88,16 @@ def api_search_masses_batch(masses, accuracy, batchsize = 50, jobid = "00000"):
         if end > n_masses-1:
             end = n_masses-1
         response = api_search_masses(masses[i:end+1], accuracy, jobid)
-        dsstox_search_json = io.StringIO(json.dumps(response.json()['results']))
+        if not response.ok: # check if we got a successful response
+            raise requests.exceptions.HTTPError("Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off.")
+        dsstox_search_json = io.StringIO(json.dumps(response.json()['results'])) # can be an empty string if no hits
         if i == 0:
             dsstox_search_df = pd.read_json(dsstox_search_json, orient='split',
                                         dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
         else:
-            dsstox_search_df = dsstox_search_df.append(pd.read_json(dsstox_search_json, orient='split',
-                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'}), ignore_index = True) #Added ignore index, may not be needed 11/2 MWB
+            new_search_df = pd.read_json(dsstox_search_json, orient='split',
+                                        dtype={'TOXCAST_NUMBER_OF_ASSAYS/TOTAL': 'object'})
+            dsstox_search_df = pd.concat([dsstox_search_df, new_search_df], ignore_index = True) #Added ignore index, may not be needed 11/2 MWB
         i = i + batchsize
     
     return dsstox_search_df
@@ -130,7 +139,8 @@ def batch_search_hcd(dtxsid_list, batchsize = 150):
 
 def format_tracer_file(df_in):
     df = df_in.copy()
-    df = df.drop(columns=['Compound', 'Score'])
+    # NTAW-94 comment out the following line. Compound is no longer being used
+    # df = df.drop(columns=['Compound', 'Score'])
     rt_diff = df['Observed_Retention_Time'] - df['Retention_Time']
     mass_diff = ((df['Observed_Mass'] - df['Monoisotopic_Mass']) / df['Monoisotopic_Mass']) * 1000000
     df.insert(7, 'Mass_Error_PPM', mass_diff)

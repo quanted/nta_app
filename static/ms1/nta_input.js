@@ -29,6 +29,8 @@ function define_functions(){
 $(document).ready(function(){
     $("#id_min_replicate_hits").before("<p>");
     $("#id_min_replicate_hits").after("<span  class='slider_label'></span></p>");
+    $("#id_min_replicate_hits_blanks").before("<p>");
+    $("#id_min_replicate_hits_blanks").after("<span  class='slider_label'></span></p>");
     $("#id_parent_ion_mass_accuracy").before("<p>");
     $("#id_parent_ion_mass_accuracy").after("<span  class='slider_label'></span></p>");
     define_functions();
