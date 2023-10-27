@@ -14,6 +14,9 @@ logging.getLogger().setLevel(logging.INFO)
 logger = logging.getLogger("nta_app.ms1")
 logger.setLevel(logging.INFO)
 
+
+'''UTILITY FUNCTIONS'''
+
 def assign_feature_id(df_in, start = 1):
     """
     A function to assign unique feature ids to a nta dataset
@@ -89,79 +92,58 @@ def parse_headers(df_in):
     return new_headers_list
 
 
-'''
-def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 1):  # TODO optimize memory usage
+def score(df):  # Get score from annotations.
     """
-    Label features which could have adduct or loss products in the feature list, or may be adduct of loss products of
-    other features. This information is added to the dataframe in three columns, Has_Adduct_or_Loss - true/false,
-    Is_Adduct_or_Loss - true/false, and Adduct_or_Less_Info which points to the feature number of the associated
-    adduct/loss or parent feature and gives the type of adduct/loss.
-    :param df_in: A dataframe of MS features
-    :param Mass_Difference: Mass differences below this number are possible duplicates. Units of ppm or Da based on the
-    ppm parameter.
-    :param Retention_Difference: Retention time differences below this number are possible duplicates. Units of mins.
-    :param ppm: True if mass differences are given in ppm, otherwise False and units are Da.
-    :param ionization: 'positive' if data are from positive ionization mode, otherwise 'negative'.
-    :param id_start: The first feature id in the dataset (defaults to 1)
-    :return: A Dataframe where adduct info is given in three new columns.
+The Python function score(df) appears to be used to extract a "Score" column from a Pandas DataFrame, df, 
+based on the contents of an "Annotations" column within the DataFrame. Here's a breakdown of how the function works:
+
+It defines a regular expression, regex, which is used to extract the score value from the "Annotations" 
+column. The regular expression captures the value following "db=" and ending with a comma, closing square bracket, or space.
+
+It first checks if the DataFrame df contains a column named "Annotations" using the condition "Annotations" in df.
+
+If the "Annotations" column exists, it checks whether the entire column is null (contains only NaN values) using 
+df.Annotations.isnull().all(). If the entire column is null, meaning there's no useful information in the "Annotations" 
+column, it sets the "Score" column in the DataFrame to None for all rows and returns the modified DataFrame.
+
+If the "Annotations" column is not entirely null and contains at least one string that contains "overall=", it 
+proceeds to extract the score values from the "Annotations" column.
+
+It uses df.Annotations.str.contains('overall=') to check if any of the strings in the "Annotations" column 
+contain the substring "overall=". If such strings are found, it attempts to extract the score values using the 
+regular expression defined earlier (df.Annotations.str.extract(regex, expand=True).astype('float64')), and 
+stores the extracted scores in a new "Score" column in the DataFrame. The scores are converted to floating-point 
+numbers (float64) during extraction.
+
+If an error occurs during the extraction (e.g., if the regular expression doesn't match), it sets the "Score" column to None for all rows.
+
+If the DataFrame does not contain an "Annotations" column and also does not have a "Score" column, it sets the "Score" column in the DataFrame to None for all rows.
+
+Finally, the function returns the modified DataFrame, which may include a new "Score" column based on the extraction process.
+
+This function essentially extracts a "Score" column from the "Annotations" column if certain conditions are met. 
+It handles cases where the "Annotations" column is entirely null, where the "Annotations" column contains relevant 
+score information, and where the DataFrame doesn't have an "Annotations" column at all.
     """
-    df = df_in.copy()
-    mass = df['Mass'].to_numpy()
-    rts = df['Retention_Time'].to_numpy()
-    masses_matrix = np.reshape(mass, (len(mass), 1))
-    rts_matrix = np.reshape(rts, (len(rts),1))
-    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
-    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
-    pos_adduct_deltas = {'Na': 22.989218, 'K': 38.963158, 'NH4': 18.033823}
-    neg_adduct_deltas = {'Cl': 34.969402, 'Br': 78.918885, 'HCO2': 44.998201, 'CH3CO2': 59.013851, 'CF3CO2': 112.985586}
-    neutral_loss_deltas= {'H2O': -18.010565, 'CO2': -43.989829}
-    proton_mass = 1.007276
-    if ionization == "positive":
-        # we observe Mass+(H+) and Mass+(Adduct)
-        possible_adduct_deltas = {k: v - proton_mass for (k,v) in pos_adduct_deltas.items()}
+    regex = "db=(.*?)[, \]].*"  # grab score from first match of db=(value) followed by a , ] or space
+    if "Annotations" in df:
+        if df.Annotations.isnull().all():  # make sure there isn't a totally blank Annotations column
+            df['Score'] = None
+            return df
+        if df.Annotations.str.contains('overall=').any():
+            try:
+                df['Score'] = df.Annotations.str.extract(regex, expand=True).astype('float64')
+            except ValueError:
+                df['Score'] = None
+    elif "Score" in df:
+        pass
     else:
-        # we observe Mass-(H+) and Mass+(Adduct)
-        possible_adduct_deltas = {k: v + proton_mass for (k,v) in neg_adduct_deltas.items()}
-    possible_adduct_deltas.update(neutral_loss_deltas)  # add our neutral losses
-    df['Has_Adduct_or_Loss'] = 0
-    df['Is_Adduct_or_Loss'] = 0
-    df['Adduct_or_Loss_Info'] = ""
-    unique_adduct_number = np.zeros(len(df.index))
-    for a_name, delta in sorted(possible_adduct_deltas.items()):
-        is_adduct_diff = abs(diff_matrix_mass - delta)
-        has_adduct_diff = abs(diff_matrix_mass + delta)
-        if ppm:
-            is_adduct_diff = (is_adduct_diff/masses_matrix)*10**6
-            has_adduct_diff = (has_adduct_diff/masses_matrix)*10**6
-        is_adduct_matrix = np.where((is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
-        has_adduct_matrix = np.where((has_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
-        np.fill_diagonal(is_adduct_matrix, 0)  # remove self matches
-        np.fill_diagonal(has_adduct_matrix, 0)  # remove self matches
-        row_num = len(mass)
-        is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start #don't need to do the reshape if we pass a tuple: np.tile(np.arange(row_num), (row_num, row_num))
-        #has_id_matrix = is_id_matrix.transpose()
-        is_adduct_number = is_adduct_matrix * is_id_matrix
-        is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row; unlikely to happen?
-        is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0) # should this be '- id_start' ? --> maybe get rid of '- 1', but need to test this
-        is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
-                                       (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
-        is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
-        has_adduct_number = has_adduct_matrix * is_id_matrix
-        has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
-        unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat).astype(int) # preferentially stores having an adduct over being an adduct
-        #unique_adduct_number = np.where(unique_adduct_number == 0, unique_adduct_number_new, unique_adduct_number)
-        df['Has_Adduct_or_Loss'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
-                                            df['Has_Adduct_or_Loss']+1, df['Has_Adduct_or_Loss'])                # this is labeled as a binary, but is actually a count!
-        df['Is_Adduct_or_Loss'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0), 1, df['Is_Adduct_or_Loss'])
-        # new_cols = ['unique_{}_number'.format(a_name), 'has_{}_adduct'.format(a_name), 'is_{}_adduct'.format(a_name)]
-        #unique_adduct_number_str =
-        logger.info("Checkpoint xi")
-        df['Adduct_or_Loss_Info'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
-                                             df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
-        df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
-                                             df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
+        df['Score'] = None
+    # logging.info("List of scores: {}".format(df['Score']))
     return df
-'''
+
+
+'''ADDUCT IDENTIFICATION FUNCTIONS'''
 
 # Modified version of Jeff's 'adduct_identifier' function. This is the matrix portion.
 def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start):
@@ -183,7 +165,6 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm,
     if ppm:
         has_adduct_diff = (has_adduct_diff/masses_matrix)*10**6
         is_adduct_diff = (is_adduct_diff/masses_matrix)*10**6
-    
     # Replace cells in 'has_adduct_diff' below 'Mass_Difference' and 'Retention_Difference' with 1, else 0
     is_adduct_matrix = np.where((is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
     has_adduct_matrix = np.where((has_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
@@ -194,7 +175,6 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm,
     if np.all(is_adduct_matrix == 0):
         # skip matrix math if no adduct matches 
         pass
-    
     else:
         # Define 'row_num', 'is_id_matrix'
         row_num = len(mass)
@@ -243,16 +223,17 @@ def window_size(df_in, mass_diff_mass = 112.985586):
 # Function that takes the input data, chunks it based on window size, then loops through chunks
 # and sends them to 'adduct_matrix' for calculation
 def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start):
-    
-    df=df_in.copy()    
+    # Create copy
+    df=df_in.copy()
+    # Create chunks of df based on how much Web App can handle (n) and step size that captures all adducts (step)
     to_test_list = [df[i:i+n] for i in range(0, df.shape[0], step)]
     to_test_list = [i for i in to_test_list if (i.shape[0] > n/2)]
-        
+    # Create list, iterate through df chunks and append results to list   
     li=[]
     for x in to_test_list:
         dum = adduct_matrix(x, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
         li.append(dum)
-    
+    # Concatenate results together, removing overlapping sections
     output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'last')
     
     return output
@@ -262,7 +243,6 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
 # features that are near to adduct distance from another feature. This shortened dataframe is used to 
 # calculate a window size, then loop through possible adducts, passing to 'chunk_adducts'
 def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 0):
-    
     # Copy df_in, only need 'Mass' and 'Retention Time'
     df = df_in[['Mass', 'Retention_Time']].copy()
     # Round columns
@@ -283,8 +263,8 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
         # we observe Mass-(H+) and Mass+(Adduct)
         possible_adduct_deltas = {k: v + proton_mass for (k,v) in neg_adduct_deltas.items()}
         # add neutral loss adducts
-        possible_adduct_deltas.update(neutral_loss_deltas)  
-
+        possible_adduct_deltas.update(neutral_loss_deltas)
+    # Create empty list to hold mass shift/RT tuples
     list_of_mass_shifts_RT_pairs = []
     # Loop through possible adducts, add/subtract adduct mass from each feature, append
     # 'Rounded RT', 'Rounded Mass' tuples to 'list_of_mass_shifts_RT_pairs' for both addition
@@ -307,28 +287,26 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     to_test['Has_Adduct_or_Loss'] = 0
     to_test['Is_Adduct_or_Loss'] = 0
     to_test['Adduct_or_Loss_Info'] = ""
-    
     # Set 'n' to tested memory capacity of WebApp for number of features in 'adduct_matrix'
     n = 12000
-    
     # If 'to_test' is less than n, send it straight to 'adduct_matrix'
     if to_test.shape[0] <= n:
         for a_name, delta in possible_adduct_deltas.items():
             to_test = adduct_matrix(to_test, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
-    
     # Else, calculate the moving window size and send 'to_test' to 'chunk_adducts'
     else:  
         step = n - window_size(to_test)
         # Loop through possible adducts, perform 'adduct_matrix'
         for a_name, delta in possible_adduct_deltas.items():
             to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start)
-    
     # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
     df_in = pd.merge(df_in, to_test[['Mass', 'Retention_Time', 'Has_Adduct_or_Loss','Is_Adduct_or_Loss','Adduct_or_Loss_Info']],
                   how = 'left', on = ['Mass', 'Retention_Time'])
     
     return df_in
 
+
+'''DUPLICATE REMOVAL FUNCTIONS'''
 
 # Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix'
 def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff):
@@ -403,114 +381,8 @@ def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
     return output
 
 
-'''
-#untested
-def duplicates(df, mass_cutoff=0.005, rt_cutoff=0.05):
-    """
-    Drop features that are deemed to be duplicates. Duplicates are defined as two features whose differences in
-    both mass and retention time are less than the defined cutoffs.
-    :param df: A dataframe of MS feature data
-    :param mass_cutoff: Mass differences below this number are possible duplicates. Units of Da.
-    :param rt_cutoff: Retention time differences below this number are possible duplicates. Units of mins.
-    :return: A dataframe with duplicates removed
-    """
-    df_new = df.copy()
-    samples_df = df.filter(like='Sample', axis=1)
-    df_new['all_sample_mean'] = samples_df.mean(axis=1)  # mean intensity across all samples
-    df_new.sort_values(by=['all_sample_mean'], inplace=True, ascending=False)
-    df_new.reset_index(drop=True, inplace=True)
-    mass = df_new['Mass'].to_numpy()
-    rts = df_new['Retention_Time'].to_numpy()
-    masses_matrix = np.reshape(mass, (len(mass), 1))
-    rts_matrix = np.reshape(rts, (len(rts), 1))
-    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
-    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
-    duplicates_matrix = np.where((abs(diff_matrix_mass) <= mass_cutoff) & (abs(diff_matrix_rt) <= rt_cutoff),1,0)
-    np.fill_diagonal(duplicates_matrix, 0)
-    row_sums = np.sum(duplicates_matrix, axis=1)  # gives number of duplicates for each df row
-    duplicates_matrix_lower = np.tril(duplicates_matrix)  # lower triangle of matrix
-    lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
-    to_keep = df_new[(row_sums == 0) | (lower_row_sums == 0)].copy()
-    to_keep.sort_values(by=['Mass'], inplace=True)
-    to_keep.reset_index(drop=True, inplace=True)
-    to_keep = to_keep.drop(['all_sample_mean'], axis=1).copy()
-    return to_keep
-'''
-
-
-
-'''
-#untested
-def statistics(df_in):
-    """
-    # Calculate Mean,Median,STD,CV for every feature in a sample of multiple replicates
-    :param df_in: the dataframe to calculate stats for
-    :return: a new dataframe including the stats
-    """
-    # make a copy of the input DataFrame, df_in, to avoid modifying the original DataFrame.
-    df = df_in.copy()
-    # extract the headers (column names) from the input DataFrame by calling a function called parse_headers. The extracted headers are stored in the all_headers variable.
-    all_headers = parse_headers(df)
-    # create a list called abundance by flattening the all_headers list and filtering out items with a length greater than 1. 
-    abundance = [item for sublist in all_headers for item in sublist if len(sublist) > 1]
-    # call the score function to calculate the score for each feature in the input DataFrame. The score is stored in a new column called Score.
-    df = score(df)
-    # create a list called filter_headers, which includes a predefined set of column names to keep in the DataFrame. 
-    filter_headers= ['Compound','Ionization_Mode','Score','Mass','Retention_Time'] + abundance
-    # create a new DataFrame called df, which includes only the columns in the filter_headers list.
-    df = df[filter_headers].copy()
-    
-    # 8/16/2023 AC: Adjust code generating new statistics columns to avoid fragmented Dataframe / frame.insert messages
-    # For each list of replicates (the_list), it calculates statistics for each replicate by comparing them. Specifically, 
-    # it finds the longest common substring between the replicate names, and this common substring is used to create new 
-    # columns in the DataFrame to store the statistics (Mean, Median, STD, CV, N_Abun).
-    for the_list in all_headers:
-        REP_NUM = len(the_list)
-        if REP_NUM > 1:
-            i = 0
-            # match finds the indices of the largest common substring between two strings
-            match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
-            df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(4)
-            df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(4)
-            df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(4)
-            df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(4)
-            df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
-            # add column named 'Total_Abun_' for the total number of replicates for the sample group
-            df['Total_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = REP_NUM
-            Replicate_Percent = (df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Total_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]]).round(4)
-            df['Replicate_Percent_'+ str(the_list[i])[match.a:match.a +  match.size]] = Replicate_Percent * 100.0
-
-           
-    # 8/21/2023 AC: Adjust code to dictionary comprehension to avoid Dataframe fragmentations
-    # for the_list in all_headers:
-    #     REP_NUM = len(the_list)
-    #     if REP_NUM > 1:
-    #         stats_data = {}
-    #         for i in range(0, REP_NUM):
-    #             # match finds the indices of the largest common substring between two strings
-    #             match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
-    #             stats_data['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(0)
-    #             stats_data['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0)
-    #             stats_data['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
-    #             stats_data['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (stats_data['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/stats_data['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]]).round(4)
-    #             stats_data['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
-    #             break
-    #         new_df = pd.concat(stats_data.values(), axis=1, ignore_index=True)
-    #         new_df.columns = stats_data.keys()  # since Python 3.7, order of insertion is preserved
-    # df = df.join(new_df)
-    
-    # sort the DataFrame based on the 'Mass' and 'Retention_Time' columns in ascending order.
-    df.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
-    # round the 'Mass' column to zero decimal places and stores the result in a new column called 'Rounded_Mass'.
-    df['Rounded_Mass'] = df['Mass'].round(0)
-
-    # Create a new dataframe column titled "Max_CV_across_sample" and populate it with the maximum CV value for each feature across all columns containing the string "CV_" in the header
-    # df=df.assign(Max_CV_across_sample=df.filter(regex='CV_').max(axis=1))
-    df['Max_CV_across_sample'] = df.filter(regex='CV_').max(axis=1)
-
-    return df
-    '''
-    
+'''CALCULATE STATISTICS FUNCTIONS'''
+ 
 def statistics(df_in):
     #tracemalloc.start()
     #start = time.perf_counter()
@@ -637,56 +509,8 @@ def cal_detection_count(df_in):
     return df_out
 
 
-def score(df):  # Get score from annotations.
-    """
-The Python function score(df) appears to be used to extract a "Score" column from a Pandas DataFrame, df, 
-based on the contents of an "Annotations" column within the DataFrame. Here's a breakdown of how the function works:
 
-It defines a regular expression, regex, which is used to extract the score value from the "Annotations" 
-column. The regular expression captures the value following "db=" and ending with a comma, closing square bracket, or space.
-
-It first checks if the DataFrame df contains a column named "Annotations" using the condition "Annotations" in df.
-
-If the "Annotations" column exists, it checks whether the entire column is null (contains only NaN values) using 
-df.Annotations.isnull().all(). If the entire column is null, meaning there's no useful information in the "Annotations" 
-column, it sets the "Score" column in the DataFrame to None for all rows and returns the modified DataFrame.
-
-If the "Annotations" column is not entirely null and contains at least one string that contains "overall=", it 
-proceeds to extract the score values from the "Annotations" column.
-
-It uses df.Annotations.str.contains('overall=') to check if any of the strings in the "Annotations" column 
-contain the substring "overall=". If such strings are found, it attempts to extract the score values using the 
-regular expression defined earlier (df.Annotations.str.extract(regex, expand=True).astype('float64')), and 
-stores the extracted scores in a new "Score" column in the DataFrame. The scores are converted to floating-point 
-numbers (float64) during extraction.
-
-If an error occurs during the extraction (e.g., if the regular expression doesn't match), it sets the "Score" column to None for all rows.
-
-If the DataFrame does not contain an "Annotations" column and also does not have a "Score" column, it sets the "Score" column in the DataFrame to None for all rows.
-
-Finally, the function returns the modified DataFrame, which may include a new "Score" column based on the extraction process.
-
-This function essentially extracts a "Score" column from the "Annotations" column if certain conditions are met. 
-It handles cases where the "Annotations" column is entirely null, where the "Annotations" column contains relevant 
-score information, and where the DataFrame doesn't have an "Annotations" column at all.
-    """
-    regex = "db=(.*?)[, \]].*"  # grab score from first match of db=(value) followed by a , ] or space
-    if "Annotations" in df:
-        if df.Annotations.isnull().all():  # make sure there isn't a totally blank Annotations column
-            df['Score'] = None
-            return df
-        if df.Annotations.str.contains('overall=').any():
-            try:
-                df['Score'] = df.Annotations.str.extract(regex, expand=True).astype('float64')
-            except ValueError:
-                df['Score'] = None
-    elif "Score" in df:
-        pass
-    else:
-        df['Score'] = None
-    # logging.info("List of scores: {}".format(df['Score']))
-    return df
-
+'''FUNCTION FOR CLEANING FEATURES'''
 
 # not yet unit tested
 def clean_features(df, controls):  # a method that drops rows based on conditions
@@ -744,3 +568,195 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
     
     return df
+    
+  
+  
+  
+  
+  
+'''OLD VERSIONS OF FUNCTIONS -- NEED TO MOVE OR DELETE''' 
+ 
+ 
+'''
+def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 1):  # TODO optimize memory usage
+    """
+    Label features which could have adduct or loss products in the feature list, or may be adduct of loss products of
+    other features. This information is added to the dataframe in three columns, Has_Adduct_or_Loss - true/false,
+    Is_Adduct_or_Loss - true/false, and Adduct_or_Less_Info which points to the feature number of the associated
+    adduct/loss or parent feature and gives the type of adduct/loss.
+    :param df_in: A dataframe of MS features
+    :param Mass_Difference: Mass differences below this number are possible duplicates. Units of ppm or Da based on the
+    ppm parameter.
+    :param Retention_Difference: Retention time differences below this number are possible duplicates. Units of mins.
+    :param ppm: True if mass differences are given in ppm, otherwise False and units are Da.
+    :param ionization: 'positive' if data are from positive ionization mode, otherwise 'negative'.
+    :param id_start: The first feature id in the dataset (defaults to 1)
+    :return: A Dataframe where adduct info is given in three new columns.
+    """
+    df = df_in.copy()
+    mass = df['Mass'].to_numpy()
+    rts = df['Retention_Time'].to_numpy()
+    masses_matrix = np.reshape(mass, (len(mass), 1))
+    rts_matrix = np.reshape(rts, (len(rts),1))
+    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
+    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
+    pos_adduct_deltas = {'Na': 22.989218, 'K': 38.963158, 'NH4': 18.033823}
+    neg_adduct_deltas = {'Cl': 34.969402, 'Br': 78.918885, 'HCO2': 44.998201, 'CH3CO2': 59.013851, 'CF3CO2': 112.985586}
+    neutral_loss_deltas= {'H2O': -18.010565, 'CO2': -43.989829}
+    proton_mass = 1.007276
+    if ionization == "positive":
+        # we observe Mass+(H+) and Mass+(Adduct)
+        possible_adduct_deltas = {k: v - proton_mass for (k,v) in pos_adduct_deltas.items()}
+    else:
+        # we observe Mass-(H+) and Mass+(Adduct)
+        possible_adduct_deltas = {k: v + proton_mass for (k,v) in neg_adduct_deltas.items()}
+    possible_adduct_deltas.update(neutral_loss_deltas)  # add our neutral losses
+    df['Has_Adduct_or_Loss'] = 0
+    df['Is_Adduct_or_Loss'] = 0
+    df['Adduct_or_Loss_Info'] = ""
+    unique_adduct_number = np.zeros(len(df.index))
+    for a_name, delta in sorted(possible_adduct_deltas.items()):
+        is_adduct_diff = abs(diff_matrix_mass - delta)
+        has_adduct_diff = abs(diff_matrix_mass + delta)
+        if ppm:
+            is_adduct_diff = (is_adduct_diff/masses_matrix)*10**6
+            has_adduct_diff = (has_adduct_diff/masses_matrix)*10**6
+        is_adduct_matrix = np.where((is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
+        has_adduct_matrix = np.where((has_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
+        np.fill_diagonal(is_adduct_matrix, 0)  # remove self matches
+        np.fill_diagonal(has_adduct_matrix, 0)  # remove self matches
+        row_num = len(mass)
+        is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start #don't need to do the reshape if we pass a tuple: np.tile(np.arange(row_num), (row_num, row_num))
+        #has_id_matrix = is_id_matrix.transpose()
+        is_adduct_number = is_adduct_matrix * is_id_matrix
+        is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row; unlikely to happen?
+        is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0) # should this be '- id_start' ? --> maybe get rid of '- 1', but need to test this
+        is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
+                                       (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
+        is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
+        has_adduct_number = has_adduct_matrix * is_id_matrix
+        has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
+        unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat).astype(int) # preferentially stores having an adduct over being an adduct
+        #unique_adduct_number = np.where(unique_adduct_number == 0, unique_adduct_number_new, unique_adduct_number)
+        df['Has_Adduct_or_Loss'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
+                                            df['Has_Adduct_or_Loss']+1, df['Has_Adduct_or_Loss'])                # this is labeled as a binary, but is actually a count!
+        df['Is_Adduct_or_Loss'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0), 1, df['Is_Adduct_or_Loss'])
+        # new_cols = ['unique_{}_number'.format(a_name), 'has_{}_adduct'.format(a_name), 'is_{}_adduct'.format(a_name)]
+        #unique_adduct_number_str =
+        logger.info("Checkpoint xi")
+        df['Adduct_or_Loss_Info'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
+                                             df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
+        df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
+                                             df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
+    return df
+'''
+
+
+'''
+#untested
+def duplicates(df, mass_cutoff=0.005, rt_cutoff=0.05):
+    """
+    Drop features that are deemed to be duplicates. Duplicates are defined as two features whose differences in
+    both mass and retention time are less than the defined cutoffs.
+    :param df: A dataframe of MS feature data
+    :param mass_cutoff: Mass differences below this number are possible duplicates. Units of Da.
+    :param rt_cutoff: Retention time differences below this number are possible duplicates. Units of mins.
+    :return: A dataframe with duplicates removed
+    """
+    df_new = df.copy()
+    samples_df = df.filter(like='Sample', axis=1)
+    df_new['all_sample_mean'] = samples_df.mean(axis=1)  # mean intensity across all samples
+    df_new.sort_values(by=['all_sample_mean'], inplace=True, ascending=False)
+    df_new.reset_index(drop=True, inplace=True)
+    mass = df_new['Mass'].to_numpy()
+    rts = df_new['Retention_Time'].to_numpy()
+    masses_matrix = np.reshape(mass, (len(mass), 1))
+    rts_matrix = np.reshape(rts, (len(rts), 1))
+    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
+    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
+    duplicates_matrix = np.where((abs(diff_matrix_mass) <= mass_cutoff) & (abs(diff_matrix_rt) <= rt_cutoff),1,0)
+    np.fill_diagonal(duplicates_matrix, 0)
+    row_sums = np.sum(duplicates_matrix, axis=1)  # gives number of duplicates for each df row
+    duplicates_matrix_lower = np.tril(duplicates_matrix)  # lower triangle of matrix
+    lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
+    to_keep = df_new[(row_sums == 0) | (lower_row_sums == 0)].copy()
+    to_keep.sort_values(by=['Mass'], inplace=True)
+    to_keep.reset_index(drop=True, inplace=True)
+    to_keep = to_keep.drop(['all_sample_mean'], axis=1).copy()
+    return to_keep
+'''
+
+
+
+'''
+#untested
+def statistics(df_in):
+    """
+    # Calculate Mean,Median,STD,CV for every feature in a sample of multiple replicates
+    :param df_in: the dataframe to calculate stats for
+    :return: a new dataframe including the stats
+    """
+    # make a copy of the input DataFrame, df_in, to avoid modifying the original DataFrame.
+    df = df_in.copy()
+    # extract the headers (column names) from the input DataFrame by calling a function called parse_headers. The extracted headers are stored in the all_headers variable.
+    all_headers = parse_headers(df)
+    # create a list called abundance by flattening the all_headers list and filtering out items with a length greater than 1. 
+    abundance = [item for sublist in all_headers for item in sublist if len(sublist) > 1]
+    # call the score function to calculate the score for each feature in the input DataFrame. The score is stored in a new column called Score.
+    df = score(df)
+    # create a list called filter_headers, which includes a predefined set of column names to keep in the DataFrame. 
+    filter_headers= ['Compound','Ionization_Mode','Score','Mass','Retention_Time'] + abundance
+    # create a new DataFrame called df, which includes only the columns in the filter_headers list.
+    df = df[filter_headers].copy()
+    
+    # 8/16/2023 AC: Adjust code generating new statistics columns to avoid fragmented Dataframe / frame.insert messages
+    # For each list of replicates (the_list), it calculates statistics for each replicate by comparing them. Specifically, 
+    # it finds the longest common substring between the replicate names, and this common substring is used to create new 
+    # columns in the DataFrame to store the statistics (Mean, Median, STD, CV, N_Abun).
+    for the_list in all_headers:
+        REP_NUM = len(the_list)
+        if REP_NUM > 1:
+            i = 0
+            # match finds the indices of the largest common substring between two strings
+            match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
+            df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(4)
+            df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(4)
+            df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(4)
+            df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(4)
+            df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
+            # add column named 'Total_Abun_' for the total number of replicates for the sample group
+            df['Total_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = REP_NUM
+            Replicate_Percent = (df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Total_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]]).round(4)
+            df['Replicate_Percent_'+ str(the_list[i])[match.a:match.a +  match.size]] = Replicate_Percent * 100.0
+
+           
+    # 8/21/2023 AC: Adjust code to dictionary comprehension to avoid Dataframe fragmentations
+    # for the_list in all_headers:
+    #     REP_NUM = len(the_list)
+    #     if REP_NUM > 1:
+    #         stats_data = {}
+    #         for i in range(0, REP_NUM):
+    #             # match finds the indices of the largest common substring between two strings
+    #             match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
+    #             stats_data['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(0)
+    #             stats_data['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0)
+    #             stats_data['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
+    #             stats_data['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (stats_data['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/stats_data['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]]).round(4)
+    #             stats_data['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
+    #             break
+    #         new_df = pd.concat(stats_data.values(), axis=1, ignore_index=True)
+    #         new_df.columns = stats_data.keys()  # since Python 3.7, order of insertion is preserved
+    # df = df.join(new_df)
+    
+    # sort the DataFrame based on the 'Mass' and 'Retention_Time' columns in ascending order.
+    df.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
+    # round the 'Mass' column to zero decimal places and stores the result in a new column called 'Rounded_Mass'.
+    df['Rounded_Mass'] = df['Mass'].round(0)
+
+    # Create a new dataframe column titled "Max_CV_across_sample" and populate it with the maximum CV value for each feature across all columns containing the string "CV_" in the header
+    # df=df.assign(Max_CV_across_sample=df.filter(regex='CV_').max(axis=1))
+    df['Max_CV_across_sample'] = df.filter(regex='CV_').max(axis=1)
+
+    return df
+'''
+   
