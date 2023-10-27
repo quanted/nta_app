@@ -148,7 +148,7 @@ score information, and where the DataFrame doesn't have an "Annotations" column 
 
 '''ADDUCT IDENTIFICATION FUNCTIONS'''
 
-# Modified version of Jeff's 'adduct_identifier' function. This is the matrix portion.
+# Modified version of Jeff's 'adduct_identifier' function. This is the matrix portion. TMF 10/27/23
 def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start):
     # 'Mass' to matrix, 'Retention Time' to matrix
     mass = df['Mass'].to_numpy()
@@ -207,7 +207,7 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm,
     return df
 
 
-# Estimate a window size from the input data by finding the maximum distance between indices differing by 'mass_diff_mass'
+# Estimate a window size from the input data by finding the maximum distance between indices differing by 'mass_diff_mass'. TMF 10/27/23
 def window_size(df_in, mass_diff_mass = 112.985586):
     df = df_in.copy()
     masses = df['Mass'].tolist()    
@@ -224,7 +224,7 @@ def window_size(df_in, mass_diff_mass = 112.985586):
 
 
 # Function that takes the input data, chunks it based on window size, then loops through chunks
-# and sends them to 'adduct_matrix' for calculation
+# and sends them to 'adduct_matrix' for calculation. TMF 10/27/23
 def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start):
     # Create copy
     df=df_in.copy()
@@ -244,7 +244,7 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
 
 # Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
 # features that are near to adduct distance from another feature. This shortened dataframe is used to 
-# calculate a window size, then loop through possible adducts, passing to 'chunk_adducts'
+# calculate a window size, then loop through possible adducts, passing to 'chunk_adducts'. TMF 10/27/23
 def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 0):
     # Copy df_in, only need 'Mass' and 'Retention Time'
     df = df_in[['Mass', 'Retention_Time']].copy()
@@ -311,7 +311,7 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
 
 '''DUPLICATE REMOVAL FUNCTIONS'''
 
-# Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix'
+# Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix'. TMF 10/27/23
 def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff):
     # Create copy of df)in
     df=df_in.copy()
@@ -332,7 +332,7 @@ def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff):
     return output
 
 
-# Called within the 'duplicates' function - takes a filtered 'to_test' df, does matrix math, returns 'passed'
+# Called within the 'duplicates' function - takes a filtered 'to_test' df, does matrix math, returns 'passed'. TMF 10/27/23
 def dup_matrix(df_in, mass_cutoff, rt_cutoff):
     # Create matrices from df_in
     mass = df_in['Mass'].to_numpy()
@@ -357,7 +357,7 @@ def dup_matrix(df_in, mass_cutoff, rt_cutoff):
     return passed
 
 
-# Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff    
+# Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff. TMF 10/27/23    
 def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
     # Copy the dataframe
     df = df_in.copy()
@@ -385,45 +385,35 @@ def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
 
 
 '''CALCULATE STATISTICS FUNCTIONS'''
- 
+# TMF 10/27/23
 def statistics(df_in):
-    #tracemalloc.start()
-    #start = time.perf_counter()
+    # Create copy
     df = df_in.copy()
-
+    # Parse headers, get sample headers
     all_headers = parse_headers(df_in) 
     sam_headers = [i for i in all_headers if len(i) > 1]
-    
+    # Create column names for each statistics from sam_headers
     mean_cols = ['Mean_' + i[0][:-1] for i in sam_headers]
     med_cols = ['Median_' + i[0][:-1] for i in sam_headers]
     std_cols = ['STD_' + i[0][:-1] for i in sam_headers]
     cv_cols = ['CV_' + i[0][:-1] for i in sam_headers]
     nabun_cols = ['N_Abun_' + i[0][:-1] for i in sam_headers]
-    #tabun_cols = ['Total_Abun_' + i[0][:-1] for i in sam_headers]
     rper_cols = ['Replicate_Percent_' + i[0][:-1] for i in sam_headers]
-
-    #attrs = pd.concat([df[x] for x in attr], axis=1)
+    # Concatenate list comprehensions to calculate each statistic for each sample
     means = pd.concat([df[x].mean(axis=1).round(4).rename(col) for x, col in zip(sam_headers, mean_cols)], axis=1)
     medians = pd.concat([df[x].median(axis=1, skipna=True).round(4).rename(col) for x, col in zip(sam_headers, med_cols)], axis=1)
     stds = pd.concat([df[x].std(axis=1, skipna=True).round(4).rename(col) for x, col in zip(sam_headers, std_cols)], axis=1)
     cvs = pd.concat([(stds[scol]/means[mcol]).round(4).rename(col) for mcol, scol, col in zip(mean_cols, std_cols, cv_cols)], axis=1)
     nabuns = pd.concat([df[x].count(axis=1).round(0).rename(col) for x, col in zip(sam_headers, nabun_cols)], axis=1)
-    #tabuns = pd.concat([pd.Series(len(x), index = df.index(), name=col) for x, col in zip(sam_headers, tabun_cols)], axis=1)
     rpers = pd.concat([((nabuns[ncol]/len(x)).round(4)*100).rename(col) for x, ncol, col in zip(sam_headers, nabun_cols, rper_cols)], axis=1)
-
+    # Concatenate all statistics together
     output = pd.concat([df, means, medians, stds, cvs, nabuns, rpers], axis=1)
     
-    #finish = time.perf_counter()
-    #print(f'Finished in {finish-start} seconds.')
-    
-    #print(tracemalloc.get_traced_memory())
-    #tracemalloc.stop()
-    
     return output
+   
     
-    
+# TMF 10/27/23    
 def chunk_stats(df_in):
-    logger.info("Starting chunk stats.")
     # Create copy
     df=df_in.copy()
     # Calculate 'score'
@@ -434,21 +424,15 @@ def chunk_stats(df_in):
     list_df = [df[i:i+n] for i in range(0,df.shape[0],n)]
     # Instantiate empty list
     li=[]
-    
-    logger.info("Starting stats loop.")
     # iterate through list_df, calculating 'statistics' on chunks and appending to li
     for df in list_df:
         li.append(statistics(df))
-        logger.info("In stats loop.")
-    
-    logger.info("Finished stats loop.")
     # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max_CV_across_sample'
     output = pd.concat(li, axis=0)
     output.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
     output['Rounded_Mass'] = output['Mass'].round(0)
     output['Max_CV_across_sample'] = output.filter(regex='CV_').max(axis=1)
     
-    logger.info("Finished chunk stats.")
     return output
     
 
@@ -519,6 +503,117 @@ def cal_detection_count(df_in):
 
 
 '''FUNCTION FOR CLEANING FEATURES'''
+
+''' NEW FUNCTION FOR CLEANING FEATURES THAT ALSO DOCUMENTS FLAGS IN A SEPARATE DATAFRAME - DETECTION COUNT IS MIGRATING TO THIS FUNCTION
+    TMF 10/27/23
+    
+def clean_features(df_in, controls):  # a method that drops rows based on conditions
+    # Make dataframe copy, create docs in df's image
+    df = df_in.copy()
+    docs = pd.DataFrame().reindex_like(df)
+    docs['Mass'] = df['Mass']
+    docs['Retention Time'] = df['Retention Time']   
+    # Define lists
+    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
+    Abundance=  df.columns[df.columns.str.contains(pat ='Replicate_Percent_')].tolist()
+    Replicate_Percent_MB = [N for N in Abundance if any(x in N for x in blanks)]
+    Replicate_Percent_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
+    Mean = df.columns[df.columns.str.contains(pat ='Mean_')].tolist()
+    Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+    Mean_MB = [md for md in Mean if any(x in md for x in blanks)]   
+    Std = df.columns[df.columns.str.contains(pat ='STD_')].tolist()
+    Std_MB = [md for md in Std if any(x in md for x in blanks)]   
+    Median = df.columns[df.columns.str.contains(pat ='Median_')].tolist()    
+    Median_Samples = [md for md in Median if not any(x in md for x in blanks)]
+    Median_Blanks = [md for md in Median if any(x in md for x in blanks)]
+    CV = df.columns[df.columns.str.startswith('CV_')].tolist()
+    CV_Samples= [C for C in CV if not any(x in C for x in blanks)]
+    
+    ## REPLICATE FLAG
+    # Set medians where feature presence is less than some replicate percentage cutoff to nan
+    df['AnySamplesDropped'] = np.nan
+    for median,N in zip(Median_Samples,Replicate_Percent_Samples):
+        df.loc[df[N] < controls[0], median] = np.nan
+        docs.loc[df[N] < controls[0], median] = 'R'
+        df.loc[df[N] < controls[0], 'AnySamplesDropped'] = 1
+    for mean,Std,median,N in zip(Mean_MB,Std_MB,Median_Blanks,Replicate_Percent_MB):
+        df.loc[df[N] < controls[2], median] = np.nan
+        df.loc[df[N] < controls[2], mean] = 0
+        df.loc[df[N] < controls[2], Std] = 0
+        docs.loc[df[N] < controls[2], median] = 'R'
+        docs.loc[df[N] < controls[2], mean] = 'R'
+        docs.loc[df[N] < controls[2], Std] = 'R'  
+    # update docs with 'AnySamplesDropped' column
+    docs['AnySamplesDropped'] = df['AnySamplesDropped']
+    
+    ## CV FLAG
+    # Create a mask for df based on sample-level CV threshold 
+    cv_not_met = df[CV_Samples] > controls[1]
+    m = df[Median_Samples].copy()
+    cv_not_met.columns = m.columns
+    # Blank out sample medians where occurrence does not meet CV cutoff
+    df[Median_Samples] = m.mask(cv_not_met)     
+    # Create empty cell mask from documentation dataframe
+    cell_empty = docs[Median_Samples].isnull()    
+    # append CV flag (CV > threshold) to documentation dataframe
+    docs[Median_Samples] = np.where(cv_not_met & cell_empty, 'CV', docs[Median_Samples])
+    docs[Median_Samples] = np.where(cv_not_met & ~cell_empty, docs[Median_Samples]+', CV', docs[Median_Samples])
+    
+    ## MDL CALCULATION/MASKS
+    # Calculate feature MDL
+    df['BlkStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
+    df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(df[Mean_MB[0]]) # In the case of a single blank replicate, the previous calculation is an empty value as it cannot calculate Std dev; replace with mean value
+    df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(0)
+    docs['BlkStd_cutoff'] = df['BlkStd_cutoff']  
+    # Create a mask for docs based on sample-level MDL threshold 
+    # Median Masks
+    MDL_all_mask = pd.DataFrame().reindex_like(df[Median])  
+    for x,y in zip(Median, Mean):
+        MDL_all_mask[x] = df[y] > df['BlkStd_cutoff']   
+    MDL_sample_mask = pd.DataFrame().reindex_like(df[Median_Samples])  
+    for x,y in zip(Median_Samples, Mean_Samples):
+        MDL_sample_mask[x] = df[y] > df['BlkStd_cutoff']  
+
+    ## CALCULATE DETECTION COUNTS
+    # Calculate Detection_Count
+    df['Detection_Count(all_samples)'] = MDL_all_mask.sum(axis=1)
+    df['Detection_Count(non-blank_samples)'] = MDL_sample_mask.sum(axis=1)
+    # total number of samples (subtract 1 for the compound name)
+    med_total = len(Median)
+    med_samples = len(Median_Samples)
+    # calculate percentage of samples that have a value and store in new column 'detection_Count(all_samples)(%)'
+    df['Detection_Count(all_samples)(%)'] = (df['Detection_Count(all_samples)'] / med_total) * 100
+    df['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)'].round(1)
+    # calculate percentage of samples that have a value and store in new column 'detection_Count(non-blank_samples)(%)'
+    df['Detection_Count(non-blank_samples)(%)'] = (df['Detection_Count(non-blank_samples)'] / med_samples) * 100
+    df['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)'].round(1)
+    # Assign to docs
+    docs['Detection_Count(all_samples)'] = df['Detection_Count(all_samples)']
+    docs['Detection_Count(non-blank_samples)'] = df['Detection_Count(non-blank_samples)']
+    docs['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)']
+    docs['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)']
+        
+    ## MDL/ND FLAG
+    # Create updated empty cell mask from documentation dataframe
+    cell_empty = docs[Median_Samples].isnull()
+    # append ND flag (occurrence < MDL) to documentation dataframe
+    docs[Median_Samples] = np.where(~MDL_sample_mask & cell_empty, 'ND', docs[Median_Samples])
+    docs[Median_Samples] = np.where(~MDL_sample_mask & ~cell_empty, docs[Median_Samples]+', ND', docs[Median_Samples])
+    
+    ## ADD VALUES TO DOC
+    # Mask, add values back to doc
+    values = docs[Median_Samples].isnull()
+    docs[Median_Samples] = np.where(values, df[Median_Samples], docs[Median_Samples])
+    
+    ## DROP FEATURES FROM DF
+    # remove all features where the abundance is less than some cutoff in all samples
+    df.drop(df[(df[Replicate_Percent_Samples] < controls[0]).all(axis=1)].index, inplace=True)
+    df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True) 
+    # Keep samples where the feature doesn't exist in the blank OR at least one sample mean exceeds MDL
+    df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
+    
+    return df, docs
+'''
 
 # not yet unit tested
 def clean_features(df, controls):  # a method that drops rows based on conditions
