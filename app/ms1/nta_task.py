@@ -83,6 +83,7 @@ class NtaRun:
         self.dfs = input_dfs
         self.dupes = None
         self.docs = None
+        self.doc_combined = None
         self.df_combined = None
         self.mpp_ready = None
         self.search_results = None
@@ -343,6 +344,7 @@ class NtaRun:
     def filter_duplicates(self):
         # self.dfs = [task_fun.duplicates(df) for df in self.dfs if df is not None, None]
         self.dfs = [task_fun.duplicates(df) if df is not None else None for df in self.dfs]
+        # self.dfs, self.dupes = map(list, zip(*[task_fun.duplicates(df) if df is not None else None for df in self.dfs]))
         return
 
     def filter_void_volume(self, min_rt):
@@ -353,6 +355,7 @@ class NtaRun:
     def calc_statistics(self):
         ppm = self.parameters['mass_accuracy_units'][1]== 'ppm'
         self.dfs = [task_fun.chunk_stats(df) if df is not None else None for df in self.dfs]
+        #self.dupes = [task_fun.chunk_stats(df) if df is not None else None for df in self.dupes]
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
@@ -500,6 +503,7 @@ class NtaRun:
     def clean_features(self):
         controls = [float(self.parameters['min_replicate_hits'][1]), float(self.parameters['max_replicate_cv'][1]), float(self.parameters['min_replicate_hits_blanks'][1])]
         self.dfs = [task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]
+        #self.dfs, self.docs = map(list, zip(*[task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]))
         self.dfs = [fn.Blank_Subtract(df, index) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
         #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
         #self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
@@ -513,6 +517,7 @@ class NtaRun:
     def combine_modes(self):
 
         self.df_combined = fn.combine(self.dfs[0], self.dfs[1])
+        # self.doc_combined = pd.concat([combine_doc(doc, dupe) for doc, dupe in zip(self.docs, self.dupes)])
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
         self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Detection_Count(all_samples)','Detection_Count(all_samples)(%)'])

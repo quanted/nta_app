@@ -321,15 +321,18 @@ def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff):
     to_test_list = [i for i in to_test_list if (i.shape[0] > n/2)]
         
     li=[]
+    # dupe_li = []
     # Pass list to 'dup_matrix'
     for x in to_test_list:
-        print("On chunk loop")
         dum = dup_matrix(x, mass_cutoff, rt_cutoff)
+        #dum, dupes = dup_matrix(x, mass_cutoff, rt_cutoff)
         li.append(dum)
+        #dupe_li.append(dupes)
     # Concatenate results, drop duplicates from overlap
     output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'first')
+    #dupe_df = pd.concat(dupe_li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'first')
     
-    return output
+    return output #, dupe_df
 
 
 # Called within the 'duplicates' function - takes a filtered 'to_test' df, does matrix math, returns 'passed'. TMF 10/27/23
@@ -353,8 +356,10 @@ def dup_matrix(df_in, mass_cutoff, rt_cutoff):
     lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
     # Store features with no duplicates in 'passed'
     passed = df_in[(row_sums == 0) | (lower_row_sums == 0)].copy()
+    # Flag duplicates as 'D'
+    #dupes = df_in.loc[df_in[(row_sums!=0) & (lower_row_sums != 0)].index,:]
     
-    return passed
+    return passed #, dupes
 
 
 # Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff. TMF 10/27/23    
@@ -373,15 +378,17 @@ def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
     step=6000
     # 'if' statement for chunker: if no chunks needed, send to 'dup_matrix', else send to 'chunk_duplicates'
     if df.shape[0] <= n:
-        output = dup_matrix(df, mass_cutoff, rt_cutoff)   
+        output = dup_matrix(df, mass_cutoff, rt_cutoff)
+        #output, dupe_df = dup_matrix(df, mass_cutoff, rt_cutoff) 
     else:
         output = chunk_duplicates(df, n, step, mass_cutoff, rt_cutoff)
+        #output, dupe_df = chunk_duplicates(df, n, step, mass_cutoff, rt_cutoff)
     # Sort output by 'Mass', reset the index, drop 'all_sample_mean'
     output.sort_values(by=['Mass'], inplace=True)
     output.reset_index(drop=True, inplace=True)
     output.drop(['all_sample_mean'], axis=1, inplace=True)
     
-    return output
+    return output #, dupe_df
 
 
 '''CALCULATE STATISTICS FUNCTIONS'''
