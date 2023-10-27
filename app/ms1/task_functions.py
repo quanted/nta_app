@@ -42,8 +42,11 @@ def differences(s1, s2):
 
 
 def formulas(df):
-    df.drop_duplicates(subset='Compound',keep='first',inplace=True)
-    formulas = df.loc[df['For_Dashboard_Search'] == '1','Compound'].values
+    # changed for NTAW094
+    # df.drop_duplicates(subset='Compound',keep='first',inplace=True)
+    # formulas = df.loc[df['For_Dashboard_Search'] == '1','Compound'].values
+    df.drop_duplicates(subset='Formula',keep='first',inplace=True)
+    formulas = df.loc[df['For_Dashboard_Search'] == '1','Formula'].values
     formulas_list = [str(i) for i in formulas]
     return formulas_list
 
@@ -458,7 +461,9 @@ def cal_detection_count(df_in):
     # a list of lists of headers that contain abundance data
     all_header_groups = parse_headers(df)
     abundance = [item for sublist in all_header_groups for item in sublist if len(sublist) > 1]
-    filter_headers= ['Compound'] + abundance
+    # NTAW-94 remove 'Compound' from list of abundance
+    # filter_headers= ['Compound'] + abundance
+    filter_headers= ['Mass', "Retention_Time"] + abundance
 
     # remove all items filter_headers containing string 'BlankSub_Median_' from list filter_headers
     filter_headers = [item for item in filter_headers if 'BlankSub_Median_' not in item]
@@ -473,11 +478,11 @@ def cal_detection_count(df_in):
     # calculate detection_Count
     df['Detection_Count(all_samples)'] = df.count(axis=1)
 
-    # subtract 1 from detection_Count to account for the compound name
-    df['Detection_Count(all_samples)'] = df['Detection_Count(all_samples)'].apply(lambda x: x - 1)
+    # subtract 2 from detection_Count to account for the 'Mass', "Retention_Time"
+    df['Detection_Count(all_samples)'] = df['Detection_Count(all_samples)'].apply(lambda x: x - 2)
 
-    # total number of samples (subtract 1 for the compound name)
-    total_samples = len(filter_headers) - 1
+    # total number of samples (subtract 2 for the 'Mass', "Retention_Time")
+    total_samples = len(filter_headers) - 2
 
     # calculate percentage of samples that have a value and store in new column 'detection_Count(all_samples)(%)'
     df['Detection_Count(all_samples)(%)'] = (df['Detection_Count(all_samples)'] / total_samples) * 100
@@ -490,11 +495,11 @@ def cal_detection_count(df_in):
     # calculate non-blank_samples
     df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks.count(axis=1)
 
-    # subtract 1 from non-blank_samples to account for the compound name
-    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks['Detection_Count(non-blank_samples)'].apply(lambda x: x - 1)
+    # subtract 2 from non-blank_samples to account for the 'Mass', "Retention_Time"
+    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks['Detection_Count(non-blank_samples)'].apply(lambda x: x - 2)
 
-    # total number of samples (subtract 1 for the compound name)
-    total_nonblank_samples = len(filter_headers_nonblanks) - 1
+    # total number of samples (subtract 2 for the 'Mass', "Retention_Time")
+    total_nonblank_samples = len(filter_headers_nonblanks) - 2
 
     # calculate percentage of samples that have a value and store in new column 'detection_Count(non-blank_samples)(%)'
     df_nonblanks['Detection_Count(non-blank_samples)(%)'] = (df_nonblanks['Detection_Count(non-blank_samples)'] / total_nonblank_samples) * 100
@@ -504,8 +509,11 @@ def cal_detection_count(df_in):
 
 
     # merge new data into original dataframe
-    df_out = pd.merge(df_in, df[[ 'Compound','Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Compound'])
-    df_out = pd.merge(df_out, df_nonblanks[[ 'Compound','Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Compound'])
+    # NYAW-94
+    # df_out = pd.merge(df_in, df[[ 'Compound','Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Compound'])
+    # df_out = pd.merge(df_out, df_nonblanks[[ 'Compound','Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Compound'])
+    df_out = pd.merge(df_in, df[[ 'Mass', "Retention_Time",'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Mass', "Retention_Time"])
+    df_out = pd.merge(df_out, df_nonblanks[[ 'Mass', "Retention_Time",'Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Mass', "Retention_Time"])
     return df_out
 
 

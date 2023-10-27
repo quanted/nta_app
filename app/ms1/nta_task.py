@@ -173,16 +173,22 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
 
-        # 5: create flags
-        self.step = "Creating flags"
-        self.create_flags()
+        # commented out for NTAW-94
+        # # 5: create flags
+        # self.step = "Creating flags"
+        # self.create_flags()
         if self.verbose:
             logger.info("Created flags.")
             if self.dfs[0] is not None:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
+                # NTAW-94 set flag for dashboard search
+                self.dfs[0]['For_Dashboard_Search'] = '1'
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
+                # NTAW-94 set flag for dashboard search
+                self.dfs[1]['For_Dashboard_Search'] = '1'
             #print(self.dfs[0])
+        # hardcoded to search all features against dsstox
 
         # 6: combine modes
         self.step = "Combining modes"
@@ -198,7 +204,8 @@ class NtaRun:
             self.perform_dashboard_search()
             if self.parameters['search_hcd'][1] == 'yes':
                 self.perform_hcd_search()
-            #self.process_toxpi() # currently deprecated
+            # NTAW-94 comment out the following line. toxpi is no longer being used
+            # self.process_toxpi()
         if self.verbose:
             logger.info("Final result processed.")
         #if self.verbose:
@@ -517,7 +524,9 @@ class NtaRun:
         if self.parameters['search_mode'][1] == 'mass':
             to_search.drop_duplicates(subset='Mass', keep='first', inplace=True)
         else:
-            to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
+            # NTAW-94 rename compound to formula
+            #to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
+            to_search.drop_duplicates(subset='Formula', keep='first', inplace=True)
         n_search = len(to_search)  # number of fragments to search
         logger.info("Total # of queries: {}".format(n_search))
         #max_search = 300  # the maximum number of fragments to search at a time

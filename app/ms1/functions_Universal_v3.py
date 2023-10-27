@@ -358,15 +358,21 @@ def combine(df1,df2):
     columns = dfc.columns.values.tolist()
 
     # create new flags
-    dfc = dfc.drop_duplicates(subset=['Compound','Mass','Retention_Time','Score'])
-    dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
+    # NTAW-94
+    # dfc = dfc.drop_duplicates(subset=['Compound','Mass','Retention_Time','Score'])
+    # dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
+    dfc = dfc.drop_duplicates(subset=['Mass','Retention_Time'])
+    # dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
+
     Median_list =  dfc.columns[(dfc.columns.str.contains(pat ='Median_')==True)\
                  & (dfc.columns.str.contains(pat ='MB|blank|blanks|BlankSub|_x|_y')==False)].tolist()
     #print(Median_list)
     dfc['N_Abun_Samples'] = dfc[Median_list].count(axis=1,numeric_only=True)
     dfc['Median_Abun_Samples'] = dfc[Median_list].median(axis=1,skipna=True).round(0)
 
-    dfc = dfc[columns].sort_values(['Compound'],ascending=[True])
+    # NTAW-94
+    # dfc = dfc[columns].sort_values(['Compound'],ascending=[True])
+    dfc = dfc[columns].sort_values(['Mass','Retention_Time'],ascending=[True,True])
     return dfc
 
 
@@ -450,7 +456,8 @@ def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):
 def MPP_Ready(dft, directory='',file=''):
     #dft = dft.rename(columns = {'Compound':'Formula','Retention_Time':'RT'})
     #dft['Compound Name'] = dft['Formula']
-    dft = dft.rename(columns = {'Compound':'Formula'})
+    # NTAW-94
+    # dft = dft.rename(columns = {'Compound':'Formula'})
     Headers = parse_headers(dft,0)
     raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
     blank_subtracted_medians = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
@@ -463,7 +470,13 @@ def MPP_Ready(dft, directory='',file=''):
     #dft = dft.reindex(columns=Columns)
     #print dft
     #dft.to_csv(directory+'/'+file+'_MPP_Ready.csv', index=False)
-    dft = dft[['Feature_ID','Formula','Score', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_medians]
+    # NTAW-94
+    # dft = dft[['Feature_ID','Formula','Score', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_medians]
+    # if dft contains 'Formula'
+    if 'Formula' in dft.columns:
+        dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_medians]
+    else:
+        dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_medians]
     #dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)
     return dft
 
