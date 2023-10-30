@@ -342,19 +342,26 @@ class NtaRun:
 
     def get_step(self):
         return self.step
-
+    
+    def assign_id(self):
+        if self.dfs[0] is not None and self.dfs[1] is not None:
+            self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
+            self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
+        elif self.dfs[0] is not None:
+            self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
+        else:
+            self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
+        return
+    
+    def filter_void_volume(self, min_rt):
+        self.dfs = [df.loc[df['Retention_Time'] > min_rt].copy() if df is not None else None for index, df in enumerate(self.dfs)]
+        return
+    
     def filter_duplicates(self):
-        # self.dfs = [task_fun.duplicates(df) for df in self.dfs if df is not None, None]
         #self.dfs = [task_fun.duplicates(df) if df is not None else None for df in self.dfs] # Deprecated 10/30/23 -- TMF
         #self.dfs, self.dupes = map(list, zip(*[task_fun.duplicates(df) if df is not None else None for df in self.dfs]))
         self.dupes = [task_fun.duplicates(df)[1] if df is not None else None for df in self.dfs]
         self.dfs = [task_fun.duplicates(df)[0] if df is not None else None for df in self.dfs]
-        
-        return
-
-    def filter_void_volume(self, min_rt):
-        # self.dfs = [df.loc[df['Retention_Time'] > min_rt].copy() for index, df in enumerate(self.dfs) if df is not None, None]
-        self.dfs = [df.loc[df['Retention_Time'] > min_rt].copy() if df is not None else None for index, df in enumerate(self.dfs)]
         return
 
     def calc_statistics(self):
@@ -362,8 +369,6 @@ class NtaRun:
         self.dfs = [task_fun.chunk_stats(df) if df is not None else None for df in self.dfs]
         self.dupes = [task_fun.chunk_stats(df) if df is not None else None for df in self.dupes]
         if self.dfs[0] is not None and self.dfs[1] is not None:
-            self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
-            self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], mass_accuracy, rt_accuracy, ppm,
@@ -374,14 +379,12 @@ class NtaRun:
             self.data_map['Feature_statistics_negative'] = self.dfs[1]
         elif self.dfs[0] is not None:
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
-            self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='positive', id_start=1)
             self.data_map['Feature_statistics_positive'] = self.dfs[0]
         else:
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
-            self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='negative', id_start=1)
