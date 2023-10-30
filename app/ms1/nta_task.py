@@ -524,6 +524,7 @@ class NtaRun:
 
         self.df_combined = task_fun.combine(self.dfs[0], self.dfs[1])
         self.doc_combined = pd.concat([task_fun.combine_doc(doc, dupe) for doc, dupe in zip(self.docs, self.dupes)])
+        self.data_map['Filter_documentation'] = self.doc_combined
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
         self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Detection_Count(all_samples)','Detection_Count(all_samples)(%)'])
