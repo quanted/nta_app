@@ -361,8 +361,8 @@ class NtaRun:
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
-            self.dupes[0] = task_fun.assign_feature_id(self.dupes[0])
-            self.dupes[1] = task_fun.assign_feature_id(self.dupes[1], start=len(self.dupes[0].index)+1)
+            #self.dupes[0] = task_fun.assign_feature_id(self.dupes[0])
+            #self.dupes[1] = task_fun.assign_feature_id(self.dupes[1], start=len(self.dupes[0].index)+1)
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], mass_accuracy, rt_accuracy, ppm,
@@ -374,7 +374,7 @@ class NtaRun:
         elif self.dfs[0] is not None:
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
-            self.dupes[0] = task_fun.assign_feature_id(self.dupes[0])
+            #self.dupes[0] = task_fun.assign_feature_id(self.dupes[0])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='positive', id_start=1)
@@ -382,7 +382,7 @@ class NtaRun:
         else:
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
-            self.dupes[1] = task_fun.assign_feature_id(self.dupes[1])
+            #self.dupes[1] = task_fun.assign_feature_id(self.dupes[1])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='negative', id_start=1)
