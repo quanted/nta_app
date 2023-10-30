@@ -313,7 +313,7 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
 
 # Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix'. TMF 10/27/23
 def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff):
-    # Create copy of df)in
+    # Create copy of df_in
     df=df_in.copy()
     # Chunk df based on n (# of features WebApp can handle) and step
     to_test_list = [df[i:i+n] for i in range(0, df.shape[0], step)]
@@ -321,18 +321,18 @@ def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff):
     to_test_list = [i for i in to_test_list if (i.shape[0] > n/2)]
         
     li=[]
-    # dupe_li = []
+    dupe_li = []
     # Pass list to 'dup_matrix'
     for x in to_test_list:
-        dum = dup_matrix(x, mass_cutoff, rt_cutoff)
-        #dum, dupes = dup_matrix(x, mass_cutoff, rt_cutoff)
+        #dum = dup_matrix(x, mass_cutoff, rt_cutoff) # Deprecated 10/30/23 -- TMF
+        dum, dupes = dup_matrix(x, mass_cutoff, rt_cutoff)
         li.append(dum)
-        #dupe_li.append(dupes)
+        dupe_li.append(dupes)
     # Concatenate results, drop duplicates from overlap
     output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'first')
-    #dupe_df = pd.concat(dupe_li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'first')
+    dupe_df = pd.concat(dupe_li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'first')
     
-    return output #, dupe_df
+    return output, dupe_df
 
 
 # Called within the 'duplicates' function - takes a filtered 'to_test' df, does matrix math, returns 'passed'. TMF 10/27/23
@@ -357,9 +357,9 @@ def dup_matrix(df_in, mass_cutoff, rt_cutoff):
     # Store features with no duplicates in 'passed'
     passed = df_in[(row_sums == 0) | (lower_row_sums == 0)].copy()
     # Flag duplicates as 'D'
-    #dupes = df_in.loc[df_in[(row_sums!=0) & (lower_row_sums != 0)].index,:]
+    dupes = df_in.loc[df_in[(row_sums!=0) & (lower_row_sums != 0)].index,:]
     
-    return passed #, dupes
+    return passed, dupes
 
 
 # Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff. TMF 10/27/23    
@@ -378,17 +378,18 @@ def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
     step=6000
     # 'if' statement for chunker: if no chunks needed, send to 'dup_matrix', else send to 'chunk_duplicates'
     if df.shape[0] <= n:
-        output = dup_matrix(df, mass_cutoff, rt_cutoff)
-        #output, dupe_df = dup_matrix(df, mass_cutoff, rt_cutoff) 
+        #output = dup_matrix(df, mass_cutoff, rt_cutoff) # Deprecated 10/30/23 -- TMF
+        output, dupe_df = dup_matrix(df, mass_cutoff, rt_cutoff) 
     else:
-        output = chunk_duplicates(df, n, step, mass_cutoff, rt_cutoff)
-        #output, dupe_df = chunk_duplicates(df, n, step, mass_cutoff, rt_cutoff)
+        #output = chunk_duplicates(df, n, step, mass_cutoff, rt_cutoff) # Deprecated 10/30/23 -- TMF
+        output, dupe_df = chunk_duplicates(df, n, step, mass_cutoff, rt_cutoff)
     # Sort output by 'Mass', reset the index, drop 'all_sample_mean'
     output.sort_values(by=['Mass'], inplace=True)
     output.reset_index(drop=True, inplace=True)
     output.drop(['all_sample_mean'], axis=1, inplace=True)
+    dupe_df.drop(['all_sample_mean'], axis=1, inplace=True)
     
-    return output #, dupe_df
+    return output, dupe_df
 
 
 '''CALCULATE STATISTICS FUNCTIONS'''
@@ -443,76 +444,10 @@ def chunk_stats(df_in):
     return output
     
 
-def cal_detection_count(df_in):
-    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
-
-    # make a working copy of the dataframe
-    df = df_in.copy()
-
-    # a list of lists of headers that contain abundance data
-    all_header_groups = parse_headers(df)
-    abundance = [item for sublist in all_header_groups for item in sublist if len(sublist) > 1]
-    # NTAW-94 remove 'Compound' from list of abundance
-    # filter_headers= ['Compound'] + abundance
-    filter_headers= ['Mass', "Retention_Time"] + abundance
-
-    # remove all items filter_headers containing string 'BlankSub_Median_' from list filter_headers
-    filter_headers = [item for item in filter_headers if 'BlankSub_Median_' not in item]
-
-    filter_headers_nonblanks = [item for item in filter_headers if not any(x in item for x in blanks)]
-
-# Std_samples = [md for md in Std if not any(x in md for x in blanks)]
-
-    df = df[filter_headers].copy()
-    df_nonblanks = df[filter_headers_nonblanks].copy()
-
-    # calculate detection_Count
-    df['Detection_Count(all_samples)'] = df.count(axis=1)
-
-    # subtract 2 from detection_Count to account for the 'Mass', "Retention_Time"
-    df['Detection_Count(all_samples)'] = df['Detection_Count(all_samples)'].apply(lambda x: x - 2)
-
-    # total number of samples (subtract 2 for the 'Mass', "Retention_Time")
-    total_samples = len(filter_headers) - 2
-
-    # calculate percentage of samples that have a value and store in new column 'detection_Count(all_samples)(%)'
-    df['Detection_Count(all_samples)(%)'] = (df['Detection_Count(all_samples)'] / total_samples) * 100
-    # round to whole number
-    df['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)'].round(0)
-
-
-
-
-    # calculate non-blank_samples
-    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks.count(axis=1)
-
-    # subtract 2 from non-blank_samples to account for the 'Mass', "Retention_Time"
-    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks['Detection_Count(non-blank_samples)'].apply(lambda x: x - 2)
-
-    # total number of samples (subtract 2 for the 'Mass', "Retention_Time")
-    total_nonblank_samples = len(filter_headers_nonblanks) - 2
-
-    # calculate percentage of samples that have a value and store in new column 'detection_Count(non-blank_samples)(%)'
-    df_nonblanks['Detection_Count(non-blank_samples)(%)'] = (df_nonblanks['Detection_Count(non-blank_samples)'] / total_nonblank_samples) * 100
-    # round to whole number
-    df_nonblanks['Detection_Count(non-blank_samples)(%)'] = df_nonblanks['Detection_Count(non-blank_samples)(%)'].round(0)
-
-
-
-    # merge new data into original dataframe
-    # NYAW-94
-    # df_out = pd.merge(df_in, df[[ 'Compound','Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Compound'])
-    # df_out = pd.merge(df_out, df_nonblanks[[ 'Compound','Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Compound'])
-    df_out = pd.merge(df_in, df[[ 'Mass', "Retention_Time",'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Mass', "Retention_Time"])
-    df_out = pd.merge(df_out, df_nonblanks[[ 'Mass', "Retention_Time",'Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Mass', "Retention_Time"])
-    return df_out
-
-
-
 '''FUNCTION FOR CLEANING FEATURES'''
 
 ''' NEW FUNCTION FOR CLEANING FEATURES THAT ALSO DOCUMENTS FLAGS IN A SEPARATE DATAFRAME - DETECTION COUNT IS MIGRATING TO THIS FUNCTION
-    TMF 10/27/23
+    TMF 10/27/23 '''
     
 def clean_features(df_in, controls):  # a method that drops rows based on conditions
     # Make dataframe copy, create docs in df's image
@@ -620,8 +555,129 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
     
     return df, docs
+
+
+'''FUNCTIONS FOR COMBINING DATAFRAMES'''
+
+# Combine function for the self.dfs
+def combine(df1,df2):
+    if df1 is not None and df2 is not None:
+        dfc = pd.concat([df1,df2], sort=True) #fixing pandas FutureWarning
+        dfc = dfc.reindex(columns = df1.columns)
+    elif df1 is not None:
+        dfc = df1.copy()
+    else:
+        dfc = df2.copy()
+    columns = dfc.columns.values.tolist()
+
+    # create new flags
+    # NTAW-94
+    # dfc = dfc.drop_duplicates(subset=['Compound','Mass','Retention_Time','Score'])
+    # dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
+    dfc = dfc.drop_duplicates(subset=['Mass','Retention_Time'])
+    # dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
+
+    Median_list =  dfc.columns[(dfc.columns.str.contains(pat ='Median_')==True)\
+                 & (dfc.columns.str.contains(pat ='MB|blank|blanks|BlankSub|_x|_y')==False)].tolist()
+    #print(Median_list)
+    dfc['N_Abun_Samples'] = dfc[Median_list].count(axis=1,numeric_only=True)
+    dfc['Median_Abun_Samples'] = dfc[Median_list].median(axis=1,skipna=True).round(0)
+
+    # NTAW-94
+    # dfc = dfc[columns].sort_values(['Compound'],ascending=[True])
+    dfc = dfc[columns].sort_values(['Mass','Retention_Time'],ascending=[True,True])
+    return dfc
+    
+
+# Combine function for the self.docs and self.dupes
+def combine_doc(doc,dupe):
+    
+    Median = doc.columns[doc.columns.str.contains(pat ='Median_')].tolist()
+    # Median = doc.columns[doc.columns.str.contains(pat = 'BlankSub_')].tolist()
+    
+    if doc is not None and dupe is not None:
+        dupe.loc[:, Median] = 'D'
+        dfc = pd.concat([doc,dupe], sort=True) #fixing pandas FutureWarning
+        dfc = dfc.reindex(columns = doc.columns)
+    elif doc is not None:
+        dfc = doc.copy()
+    else:
+        dfc = dupe.copy()
+  
+    to_keep = ['Compound', 'Mass', 'Retention Time', 'BlkStd_cutoff'] + Median 
+    dfc = dfc[to_keep]
+    
+    return dfc
+
+
+
+'''
+def cal_detection_count(df_in):
+    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
+
+    # make a working copy of the dataframe
+    df = df_in.copy()
+
+    # a list of lists of headers that contain abundance data
+    all_header_groups = parse_headers(df)
+    abundance = [item for sublist in all_header_groups for item in sublist if len(sublist) > 1]
+    # NTAW-94 remove 'Compound' from list of abundance
+    # filter_headers= ['Compound'] + abundance
+    filter_headers= ['Mass', "Retention_Time"] + abundance
+
+    # remove all items filter_headers containing string 'BlankSub_Median_' from list filter_headers
+    filter_headers = [item for item in filter_headers if 'BlankSub_Median_' not in item]
+
+    filter_headers_nonblanks = [item for item in filter_headers if not any(x in item for x in blanks)]
+
+# Std_samples = [md for md in Std if not any(x in md for x in blanks)]
+
+    df = df[filter_headers].copy()
+    df_nonblanks = df[filter_headers_nonblanks].copy()
+
+    # calculate detection_Count
+    df['Detection_Count(all_samples)'] = df.count(axis=1)
+
+    # subtract 2 from detection_Count to account for the 'Mass', "Retention_Time"
+    df['Detection_Count(all_samples)'] = df['Detection_Count(all_samples)'].apply(lambda x: x - 2)
+
+    # total number of samples (subtract 2 for the 'Mass', "Retention_Time")
+    total_samples = len(filter_headers) - 2
+
+    # calculate percentage of samples that have a value and store in new column 'detection_Count(all_samples)(%)'
+    df['Detection_Count(all_samples)(%)'] = (df['Detection_Count(all_samples)'] / total_samples) * 100
+    # round to whole number
+    df['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)'].round(0)
+
+
+
+
+    # calculate non-blank_samples
+    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks.count(axis=1)
+
+    # subtract 2 from non-blank_samples to account for the 'Mass', "Retention_Time"
+    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks['Detection_Count(non-blank_samples)'].apply(lambda x: x - 2)
+
+    # total number of samples (subtract 2 for the 'Mass', "Retention_Time")
+    total_nonblank_samples = len(filter_headers_nonblanks) - 2
+
+    # calculate percentage of samples that have a value and store in new column 'detection_Count(non-blank_samples)(%)'
+    df_nonblanks['Detection_Count(non-blank_samples)(%)'] = (df_nonblanks['Detection_Count(non-blank_samples)'] / total_nonblank_samples) * 100
+    # round to whole number
+    df_nonblanks['Detection_Count(non-blank_samples)(%)'] = df_nonblanks['Detection_Count(non-blank_samples)(%)'].round(0)
+
+
+
+    # merge new data into original dataframe
+    # NYAW-94
+    # df_out = pd.merge(df_in, df[[ 'Compound','Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Compound'])
+    # df_out = pd.merge(df_out, df_nonblanks[[ 'Compound','Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Compound'])
+    df_out = pd.merge(df_in, df[[ 'Mass', "Retention_Time",'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Mass', "Retention_Time"])
+    df_out = pd.merge(df_out, df_nonblanks[[ 'Mass', "Retention_Time",'Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Mass', "Retention_Time"])
+    return df_out
 '''
 
+'''
 # not yet unit tested
 def clean_features(df, controls):  # a method that drops rows based on conditions
     # Abundance=  df.columns[df.columns.str.contains(pat ='N_Abun_')].tolist()
@@ -678,7 +734,7 @@ def clean_features(df, controls):  # a method that drops rows based on condition
     df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
     
     return df
-    
+  '''  
   
   
   

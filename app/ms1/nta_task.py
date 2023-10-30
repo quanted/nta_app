@@ -152,7 +152,9 @@ class NtaRun:
         # . if the dataframe is not None, then the dataframe is passed to the function cal_detection_count
         # . the result of the function is stored in the list
         # . the list is assigned to self.dfs
-        self.dfs = [task_fun.cal_detection_count(df) if df is not None else None for df in self.dfs]
+        
+        # 10/30/23 Calculating detection counts now happens in the 'Clean Features' step -- TMF
+        #self.dfs = [task_fun.cal_detection_count(df) if df is not None else None for df in self.dfs]
  
         # 3: check tracers (optional)
         self.step = "Checking tracers"
@@ -343,8 +345,8 @@ class NtaRun:
 
     def filter_duplicates(self):
         # self.dfs = [task_fun.duplicates(df) for df in self.dfs if df is not None, None]
-        self.dfs = [task_fun.duplicates(df) if df is not None else None for df in self.dfs]
-        # self.dfs, self.dupes = map(list, zip(*[task_fun.duplicates(df) if df is not None else None for df in self.dfs]))
+        #self.dfs = [task_fun.duplicates(df) if df is not None else None for df in self.dfs] # Deprecated 10/30/23 -- TMF
+        self.dfs, self.dupes = map(list, zip(*[task_fun.duplicates(df) if df is not None else None for df in self.dfs]))
         return
 
     def filter_void_volume(self, min_rt):
@@ -355,10 +357,12 @@ class NtaRun:
     def calc_statistics(self):
         ppm = self.parameters['mass_accuracy_units'][1]== 'ppm'
         self.dfs = [task_fun.chunk_stats(df) if df is not None else None for df in self.dfs]
-        #self.dupes = [task_fun.chunk_stats(df) if df is not None else None for df in self.dupes]
+        self.dupes = [task_fun.chunk_stats(df) if df is not None else None for df in self.dupes]
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index)+1)
+            self.dupes[0] = task_fun.assign_feature_id(self.dupes[0])
+            self.dupes[1] = task_fun.assign_feature_id(self.dupes[1], start=len(self.dupes[0].index)+1)
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], mass_accuracy, rt_accuracy, ppm,
@@ -370,6 +374,7 @@ class NtaRun:
         elif self.dfs[0] is not None:
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
+            self.dupes[0] = task_fun.assign_feature_id(self.dupes[0])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[0] = task_fun.adduct_identifier(self.dfs[0], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='positive', id_start=1)
@@ -377,6 +382,7 @@ class NtaRun:
         else:
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
+            self.dupes[1] = task_fun.assign_feature_id(self.dupes[1])
             rt_accuracy = float(self.parameters['rt_accuracy'][1])
             self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='negative', id_start=1)
@@ -502,8 +508,8 @@ class NtaRun:
 
     def clean_features(self):
         controls = [float(self.parameters['min_replicate_hits'][1]), float(self.parameters['max_replicate_cv'][1]), float(self.parameters['min_replicate_hits_blanks'][1])]
-        self.dfs = [task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]
-        #self.dfs, self.docs = map(list, zip(*[task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]))
+        #self.dfs = [task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)] # Deprecated 10/30/23 -- TMF
+        self.dfs, self.docs = map(list, zip(*[task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]))
         self.dfs = [fn.Blank_Subtract(df, index) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
         #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
         #self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
@@ -516,8 +522,8 @@ class NtaRun:
 
     def combine_modes(self):
 
-        self.df_combined = fn.combine(self.dfs[0], self.dfs[1])
-        # self.doc_combined = pd.concat([combine_doc(doc, dupe) for doc, dupe in zip(self.docs, self.dupes)])
+        self.df_combined = task_fun.combine(self.dfs[0], self.dfs[1])
+        self.doc_combined = pd.concat([task_fun.combine_doc(doc, dupe) for doc, dupe in zip(self.docs, self.dupes)])
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined)
         self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Detection_Count(all_samples)','Detection_Count(all_samples)(%)'])
