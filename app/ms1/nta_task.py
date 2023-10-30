@@ -526,7 +526,7 @@ class NtaRun:
     def combine_modes(self):
 
         self.df_combined = task_fun.combine(self.dfs[0], self.dfs[1])
-        self.doc_combined = [task_fun.combine_doc(doc, dupe) for doc, dupe in zip(self.docs, self.dupes)]
+        self.doc_combined = [task_fun.combine_doc(doc, dupe) if doc is not None else None for doc, dupe in zip(self.docs, self.dupes)]
         if self.doc_combined[0] is not None and self.doc_combined[1] is not None:
             self.doc_combined = pd.concat([self.doc_combined[0], self.doc_combined[1]], axis=0)
         elif self.doc_combined[0] is not None:
