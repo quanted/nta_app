@@ -602,6 +602,7 @@ def combine_doc(doc,dupe):
     elif doc is not None:
         dfc = doc.copy()
     else:
+        dupe.loc[:, Median] = 'D'
         dfc = dupe.copy()
   
     to_keep = ['Compound', 'Mass', 'Retention_Time', 'BlkStd_cutoff'] + Median 
