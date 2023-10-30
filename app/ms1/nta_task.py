@@ -474,7 +474,7 @@ class NtaRun:
         dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
 
         # remove the columns 'Detection_Count(non-blank_samples)' and 'Detection_Count(non-blank_samples)(%)'
-        dft = dft.drop(columns=['Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'])
+        #dft = dft.drop(columns=['Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'])
         
         self.data_map['Tracer_Sample_Results'] = dft
 
@@ -482,7 +482,7 @@ class NtaRun:
         # create summary table
         if 'DTXSID' not in dft.columns:
             dft['DTXSID'] = ''
-        dft = dft[['Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 'Detection_Count(all_samples)','Detection_Count(all_samples)(%)']]
+        dft = dft[['Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
         self.data_map['Tracers_Summary'] = dft
         
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
