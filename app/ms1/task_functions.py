@@ -454,7 +454,7 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     df = df_in.copy()
     docs = pd.DataFrame().reindex_like(df)
     docs['Mass'] = df['Mass']
-    docs['Retention Time'] = df['Retention Time']   
+    docs['Retention_Time'] = df['Retention_Time']   
     # Define lists
     blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
     Abundance=  df.columns[df.columns.str.contains(pat ='Replicate_Percent_')].tolist()
@@ -604,7 +604,7 @@ def combine_doc(doc,dupe):
     else:
         dfc = dupe.copy()
   
-    to_keep = ['Compound', 'Mass', 'Retention Time', 'BlkStd_cutoff'] + Median 
+    to_keep = ['Compound', 'Mass', 'Retention_Time', 'BlkStd_cutoff'] + Median 
     dfc = dfc[to_keep]
     
     return dfc
