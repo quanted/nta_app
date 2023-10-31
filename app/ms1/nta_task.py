@@ -119,6 +119,7 @@ class NtaRun:
         self.create_analysis_parameters_sheet()
         # 1: drop duplicates and throw out void volume
         self.step = "Dropping duplicates"
+        self.assign_id()
         self.filter_void_volume(float(self.parameters['minimum_rt'][1])) # throw out features below this (void volume)
         self.filter_duplicates()
         if self.verbose:
