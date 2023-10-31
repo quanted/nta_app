@@ -454,7 +454,8 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     df = df_in.copy()
     docs = pd.DataFrame().reindex_like(df)
     docs['Mass'] = df['Mass']
-    docs['Retention_Time'] = df['Retention_Time']   
+    docs['Retention_Time'] = df['Retention_Time']
+    docs['Feature_ID'] = df['Feature_ID']
     # Define lists
     blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
     Abundance=  df.columns[df.columns.str.contains(pat ='Replicate_Percent_')].tolist()
