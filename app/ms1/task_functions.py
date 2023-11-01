@@ -548,9 +548,18 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     values = docs[Median_Samples].isnull()
     docs[Median_Samples] = np.where(values, df[Median_Samples], docs[Median_Samples])
     
+    ## DOCUMENT DROP FEATURES FROM DF
+    # Features dropped because all samples are below replicate threshold
+    docs['Feature_removed'] = np.where((df[Replicate_Percent_Samples] < controls[0]).all(axis=1), 'y', np.nan)
+    # Features dropped because all samples are below CV threshold
+    docs['Feature_removed'] = np.where((df[CV_Samples] > controls[1]).all(axis=1), 'y', docs['Feature_removed'])
+    # Features dropped because no sample is above the detection limit
+    docs['Feature_removed'] = np.where((df[Replicate_Percent_MB[0]] != 0) & (df[Mean_Samples].max(axis=1, skipna=True) < df['BlkStd_cutoff']), 'y', docs['Feature_removed'])
+    
     ## DROP FEATURES FROM DF
-    # remove all features where the abundance is less than some cutoff in all samples
+    # Remove features where all sample abundances are below replicate threshold
     df.drop(df[(df[Replicate_Percent_Samples] < controls[0]).all(axis=1)].index, inplace=True)
+    # Remove features where all sample abundances are below CV threshold
     df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True) 
     # Keep samples where the feature doesn't exist in the blank OR at least one sample mean exceeds MDL
     df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
