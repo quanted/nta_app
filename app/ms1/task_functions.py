@@ -615,7 +615,7 @@ def combine_doc(doc,dupe):
         dupe.loc[:, Median] = 'D'
         dfc = dupe.copy()
   
-    to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff'] + Median 
+    to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed'] + Median 
     dfc = dfc[to_keep]
     
     return dfc
