@@ -473,11 +473,11 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     CV_Samples= [C for C in CV if not any(x in C for x in blanks)]
     
     ## REPLICATE FLAG
-    # Set medians where feature presence is less than some replicate percentage cutoff to nan
+    # Set medians (means in docs) where feature presence is less than some replicate percentage cutoff to nan
     df['AnySamplesDropped'] = np.nan
-    for median,N in zip(Median_Samples,Replicate_Percent_Samples):
+    for median,mean,N in zip(Median_Samples,Mean_Samples,Replicate_Percent_Samples):
         df.loc[df[N] < controls[0], median] = np.nan
-        docs.loc[df[N] < controls[0], median] = 'R'
+        docs.loc[df[N] < controls[0], mean] = 'R'
         df.loc[df[N] < controls[0], 'AnySamplesDropped'] = 1
     for mean,Std,median,N in zip(Mean_MB,Std_MB,Median_Blanks,Replicate_Percent_MB):
         df.loc[df[N] < controls[2], median] = np.nan
@@ -497,10 +497,10 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     # Blank out sample medians where occurrence does not meet CV cutoff
     df[Median_Samples] = m.mask(cv_not_met)     
     # Create empty cell mask from documentation dataframe
-    cell_empty = docs[Median_Samples].isnull()    
+    cell_empty = docs[Mean_Samples].isnull()    
     # append CV flag (CV > threshold) to documentation dataframe
-    docs[Median_Samples] = np.where(cv_not_met & cell_empty, 'CV', docs[Median_Samples])
-    docs[Median_Samples] = np.where(cv_not_met & ~cell_empty, docs[Median_Samples]+', CV', docs[Median_Samples])
+    docs[Mean_Samples] = np.where(cv_not_met & cell_empty, 'CV', docs[Mean_Samples])
+    docs[Mean_Samples] = np.where(cv_not_met & ~cell_empty, docs[Mean_Samples]+', CV', docs[Mean_Samples])
     
     ## MDL CALCULATION/MASKS
     # Calculate feature MDL
@@ -510,25 +510,25 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     docs['BlkStd_cutoff'] = df['BlkStd_cutoff']  
     # Create a mask for docs based on sample-level MDL threshold 
     # Median Masks
-    MDL_all_mask = pd.DataFrame().reindex_like(df[Median])  
-    for x,y in zip(Median, Mean):
-        MDL_all_mask[x] = df[y] > df['BlkStd_cutoff']   
-    MDL_sample_mask = pd.DataFrame().reindex_like(df[Median_Samples])  
-    for x,y in zip(Median_Samples, Mean_Samples):
-        MDL_sample_mask[x] = df[y] > df['BlkStd_cutoff']  
+    MDL_all_mask = pd.DataFrame().reindex_like(df[Mean])  
+    for x in Mean:
+        MDL_all_mask[x] = df[x] > df['BlkStd_cutoff']   
+    MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
+    for x in Mean_Samples:
+        MDL_sample_mask[x] = df[x] > df['BlkStd_cutoff']  
 
     ## CALCULATE DETECTION COUNTS
     # Calculate Detection_Count
     df['Detection_Count(all_samples)'] = MDL_all_mask.sum(axis=1)
     df['Detection_Count(non-blank_samples)'] = MDL_sample_mask.sum(axis=1)
     # total number of samples (subtract 1 for the compound name)
-    med_total = len(Median)
-    med_samples = len(Median_Samples)
+    mean_total = len(Mean)
+    mean_samples = len(Mean_Samples)
     # calculate percentage of samples that have a value and store in new column 'detection_Count(all_samples)(%)'
-    df['Detection_Count(all_samples)(%)'] = (df['Detection_Count(all_samples)'] / med_total) * 100
+    df['Detection_Count(all_samples)(%)'] = (df['Detection_Count(all_samples)'] / mean_total) * 100
     df['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)'].round(1)
     # calculate percentage of samples that have a value and store in new column 'detection_Count(non-blank_samples)(%)'
-    df['Detection_Count(non-blank_samples)(%)'] = (df['Detection_Count(non-blank_samples)'] / med_samples) * 100
+    df['Detection_Count(non-blank_samples)(%)'] = (df['Detection_Count(non-blank_samples)'] / mean_samples) * 100
     df['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)'].round(1)
     # Assign to docs
     docs['Detection_Count(all_samples)'] = df['Detection_Count(all_samples)']
@@ -538,15 +538,15 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
         
     ## MDL/ND FLAG
     # Create updated empty cell mask from documentation dataframe
-    cell_empty = docs[Median_Samples].isnull()
+    cell_empty = docs[Mean_Samples].isnull()
     # append ND flag (occurrence < MDL) to documentation dataframe
-    docs[Median_Samples] = np.where(~MDL_sample_mask & cell_empty, 'ND', docs[Median_Samples])
-    docs[Median_Samples] = np.where(~MDL_sample_mask & ~cell_empty, docs[Median_Samples]+', ND', docs[Median_Samples])
+    docs[Mean_Samples] = np.where(~MDL_sample_mask & cell_empty, 'ND', docs[Mean_Samples])
+    docs[Mean_Samples] = np.where(~MDL_sample_mask & ~cell_empty, docs[Mean_Samples]+', ND', docs[Mean_Samples])
     
     ## ADD VALUES TO DOC
     # Mask, add values back to doc
-    values = docs[Median_Samples].isnull()
-    docs[Median_Samples] = np.where(values, df[Median_Samples], docs[Median_Samples])
+    values = docs[Mean_Samples].isnull()
+    docs[Mean_Samples] = np.where(values, df[Mean_Samples], docs[Mean_Samples])
     
     ## DOCUMENT DROP FEATURES FROM DF
     # Features dropped because all samples are below replicate threshold
@@ -615,8 +615,9 @@ def combine_doc(doc,dupe):
         dupe.loc[:, Median] = 'D'
         dfc = dupe.copy()
   
-    to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed'] + Median 
+    to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed'] + Median
     dfc = dfc[to_keep]
+    dfc.rename({'BlkStd_cutoff':'MRL'}, axis=1, inplace=True)
     
     return dfc
 
