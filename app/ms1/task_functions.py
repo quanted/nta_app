@@ -492,8 +492,8 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     ## CV FLAG
     # Create a mask for df based on sample-level CV threshold
     #CV masks
-    cv_not_met_df = pd.Dataframe().reindex_like(df[Median_Samples])
-    cv_not_met_doc = pd.Dataframe().reindex_like(df[Mean_Samples])
+    cv_not_met_df = pd.DataFrame().reindex_like(df[Median_Samples])
+    cv_not_met_doc = pd.DataFrame().reindex_like(df[Mean_Samples])
     for x,y,z in zip(Median_Samples, Mean_Samples, CV_Samples):
         cv_not_met_df[x] = df[z] > controls[1]
         cv_not_met_doc[y] = df[z] > controls[1]
