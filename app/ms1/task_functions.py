@@ -556,11 +556,11 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     
     ## DOCUMENT DROP FEATURES FROM DF
     # Features dropped because all samples are below replicate threshold
-    docs['Feature_removed'] = np.where((df[Replicate_Percent_Samples] < controls[0]).all(axis=1), 'y', np.nan)
+    docs['Feature_removed'] = np.where((df[Replicate_Percent_Samples] < controls[0]).all(axis=1), 'R', np.nan)
     # Features dropped because all samples are below CV threshold
-    docs['Feature_removed'] = np.where((df[CV_Samples] > controls[1]).all(axis=1), 'y', docs['Feature_removed'])
+    docs['Feature_removed'] = np.where((df[CV_Samples] > controls[1]).all(axis=1), 'CV', docs['Feature_removed'])
     # Features dropped because no sample is above the detection limit
-    docs['Feature_removed'] = np.where((df[Replicate_Percent_MB[0]] != 0) & (df[Mean_Samples].max(axis=1, skipna=True) < df['BlkStd_cutoff']), 'y', docs['Feature_removed'])
+    docs['Feature_removed'] = np.where((df[Replicate_Percent_MB[0]] != 0) & (df[Mean_Samples].max(axis=1, skipna=True) < df['BlkStd_cutoff']), 'BLK', docs['Feature_removed'])
     
     ## DROP FEATURES FROM DF
     # Remove features where all sample abundances are below replicate threshold

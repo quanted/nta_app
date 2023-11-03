@@ -155,7 +155,27 @@ class OutputServer:
             
         with ZipFile(in_memory_zip, 'w', ZIP_DEFLATED) as zipf:
             excel_data = self.generate_excel()
-            zipf.writestr('summary.xlsx', excel_data)
+            
+            
+            # Update Excel file name to be named after project name and if not present, after Job ID
+            try:
+                #tracer_id = jobid + "_" + name
+                db_record = self.gridfs.get(self.jobid)
+                buffer = db_record.read()
+                project_name = db_record.project_name
+                if project_name:
+                    filename = project_name.replace(" ", "_") + '_NTA_WebApp_results.xlsx'
+                else:
+                    filename = self.jobid + '_NTA_WebApp_results.xlsx'
+                zipf.writestr(filename, buffer)
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass
+
+            
+            
+            #excel_filename = self.parameters['project_name'][1] + '_' + self.jobid + '.xlsx'
+            #zipf.writestr('summary.xlsx', excel_data)
+            zipf.writestr(filename, excel_data)
 
             #self.add_tracer_plots_to_zip(zipf, self.jobid)
             
