@@ -428,15 +428,20 @@ def chunk_stats(df_in):
     df = score(df)
     # Set chunk size (i.e., # rows)
     n = 5000
-    # Create list of Data.Frame chunks
-    list_df = [df[i:i+n] for i in range(0,df.shape[0],n)]
-    # Instantiate empty list
-    li=[]
-    # iterate through list_df, calculating 'statistics' on chunks and appending to li
-    for df in list_df:
-        li.append(statistics(df))
-    # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max_CV_across_sample'
-    output = pd.concat(li, axis=0)
+    # 'if' statement for chunks: if no chunks needed, send to 'statistics', else chunk and iterate
+    if df.shape[0] < n:
+        output = statistics(df)
+    else:
+        # Create list of Data.Frame chunks
+        list_df = [df[i:i+n] for i in range(0,df.shape[0],n)]
+        # Instantiate empty list
+        li=[]
+        # iterate through list_df, calculating 'statistics' on chunks and appending to li
+        for df in list_df:
+            li.append(statistics(df))
+        # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max_CV_across_sample'
+        output = pd.concat(li, axis=0)
+    # Sort output mass and add two new columns
     output.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
     output['Rounded_Mass'] = output['Mass'].round(0)
     output['Max_CV_across_sample'] = output.filter(regex='CV_').max(axis=1)
