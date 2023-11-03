@@ -158,18 +158,18 @@ class OutputServer:
             
             
             # Update Excel file name to be named after project name and if not present, after Job ID
-            try:
-                #tracer_id = jobid + "_" + name
-                db_record = self.gridfs.get(self.jobid)
-                buffer = db_record.read()
-                project_name = db_record.project_name
-                if project_name:
-                    filename = project_name.replace(" ", "_") + '_NTA_WebApp_results.xlsx'
-                else:
-                    filename = self.jobid + '_NTA_WebApp_results.xlsx'
-                zipf.writestr(filename, buffer)
-            except (OperationFailure, TypeError, NoFile) as e:
-                pass
+            #try:
+            #tracer_id = jobid + "_" + name
+            db_record = self.gridfs.get(self.jobid)
+            buffer = db_record.read()
+            project_name = db_record.project_name
+            if project_name:
+                filename = project_name.replace(" ", "_") + '_NTA_WebApp_results.xlsx'
+            else:
+                filename = self.jobid + '_NTA_WebApp_results.xlsx'
+
+            #except (OperationFailure, TypeError, NoFile) #as e:
+            #    pass
 
             
             
