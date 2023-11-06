@@ -172,7 +172,7 @@ def statistics(df,index): # calculate Mean,Median,STD,CV for every feature in a 
 
 
 
-def Blank_Subtract(df,index):
+def Blank_Subtract_Median(df,index):
     """
     Calculate the median blank intensity for each feature and subtract that value from each sample's median value for
     that feature
@@ -199,6 +199,36 @@ def Blank_Subtract(df,index):
         df["BlankSub_"+str(median)] = df["BlankSub_"+str(median)].clip(lower=0).replace({0:np.nan})
     #df[Abundance[index]] = df[Abundance[index]].clip(lower=0).replace({0:np.nan})
     return df
+
+
+def Blank_Subtract_Mean(df,index):
+    """
+    Calculate the mean blank intensity for each feature and subtract that value from each sample's mean value for
+    that feature
+    """
+    Abundance = [[],[]]
+    Headers = [0,0]
+    Blanks = [[],[]]
+    Mean = [[],[]]
+    Headers[index] = parse_headers(df,index)
+    blanks_str = BLANKS
+    Abundance[index] = [item for sublist in Headers[index] for item in sublist if (len(sublist)>1) & (not any(x in item for x in blanks_str))]
+    # On with the agony of subtracting the MB median from Samples
+    # Lines below commented out to adjust for blank definition "MB" rather than "MB_"
+    # Blanks[index] = df.columns[(df.columns.str.contains(pat ='MB_|blank|blanks|BLANK|Blank')) &
+    #                           (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio') == False)].tolist()
+    
+    Blanks[index] = df.columns[(df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank')) &
+                               (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio') == False)].tolist()
+    Mean[index] = df.columns[(df.columns.str.contains(pat ='Mean_')==True) & (df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank')==False)].tolist()
+    df['Mean_ALLMB'] = df[Blanks[index]].mean(axis=1,skipna=True).round(0).fillna(0)  # instead using mean calc in statistics
+    #df[Abundance[index]] = df[Abundance[index]].sub(df['Mean_ALLMB'],axis=0)
+    for mean in Mean[index]:
+        df["BlankSub_"+str(mean)] = df[mean].sub(df['Mean_ALLMB'],axis=0)
+        df["BlankSub_"+str(mean)] = df["BlankSub_"+str(mean)].clip(lower=0).replace({0:np.nan})
+    #df[Abundance[index]] = df[Abundance[index]].clip(lower=0).replace({0:np.nan})
+    return df
+
 
 def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm): #a method to query and save the features with tracers criteria
     df1 = df.copy()
