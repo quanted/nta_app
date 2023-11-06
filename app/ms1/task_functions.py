@@ -607,11 +607,11 @@ def combine(df1,df2):
     dfc = dfc.drop_duplicates(subset=['Mass','Retention_Time'])
     # dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
 
-    Median_list =  dfc.columns[(dfc.columns.str.contains(pat ='Median_')==True)\
+    Mean_list =  dfc.columns[(dfc.columns.str.contains(pat ='Mean_')==True)\
                  & (dfc.columns.str.contains(pat ='MB|blank|blanks|BlankSub|_x|_y')==False)].tolist()
     #print(Median_list)
-    dfc['N_Abun_Samples'] = dfc[Median_list].count(axis=1,numeric_only=True)
-    dfc['Median_Abun_Samples'] = dfc[Median_list].median(axis=1,skipna=True).round(0)
+    dfc['N_Abun_Samples'] = dfc[Mean_list].count(axis=1,numeric_only=True)
+    dfc['Mean_Abun_Samples'] = dfc[Mean_list].median(axis=1,skipna=True).round(0)
 
     # NTAW-94
     # dfc = dfc[columns].sort_values(['Compound'],ascending=[True])

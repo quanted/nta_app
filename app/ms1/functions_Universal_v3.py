@@ -490,7 +490,7 @@ def MPP_Ready(dft, directory='',file=''):
     # dft = dft.rename(columns = {'Compound':'Formula'})
     Headers = parse_headers(dft,0)
     raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
-    blank_subtracted_medians = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
+    blank_subtracted_means = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
     #Blanks = dft.columns[dft.columns.str.contains(pat ='MB_')].tolist()
     #Samples = [x for x in Abundance if x not in Blanks]
     #NewSamples = common_substrings(Samples)
@@ -504,9 +504,9 @@ def MPP_Ready(dft, directory='',file=''):
     # dft = dft[['Feature_ID','Formula','Score', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_medians]
     # if dft contains 'Formula'
     if 'Formula' in dft.columns:
-        dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_medians]
+        dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_means]
     else:
-        dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_medians]
+        dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_means]
     #dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)
     return dft
 
