@@ -457,6 +457,7 @@ def chunk_stats(df_in):
 def clean_features(df_in, controls):  # a method that drops rows based on conditions
     # Make dataframe copy, create docs in df's image
     df = df_in.copy()
+    df['AnySamplesDropped'] = np.nan
     docs = pd.DataFrame().reindex_like(df)
     docs['Mass'] = df['Mass']
     docs['Retention_Time'] = df['Retention_Time']
@@ -477,12 +478,12 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     CV = df.columns[df.columns.str.startswith('CV_')].tolist()
     CV_Samples= [C for C in CV if not any(x in C for x in blanks)]
     
-    ## REPLICATE FLAG
+    '''REPLICATE FLAG'''
     # Set medians (means in docs) where feature presence is less than some replicate percentage cutoff to nan
-    df['AnySamplesDropped'] = np.nan
-    for median,mean,N in zip(Median_Samples,Mean_Samples,Replicate_Percent_Samples):
-        df.loc[df[N] < controls[0], median] = np.nan
-        docs.loc[df[N] < controls[0], mean] = 'R'
+    
+    for mean,N in zip(Mean_Samples,Replicate_Percent_Samples):
+        docs.loc[((df[N] < controls[0]) & (~df[mean].isnull())), mean] = 'R'
+        df.loc[df[N] < controls[0], mean] = np.nan
         df.loc[df[N] < controls[0], 'AnySamplesDropped'] = 1
     for mean,Std,median,N in zip(Mean_MB,Std_MB,Median_Blanks,Replicate_Percent_MB):
         df.loc[df[N] < controls[2], median] = np.nan
@@ -494,26 +495,24 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     # update docs with 'AnySamplesDropped' column
     docs['AnySamplesDropped'] = df['AnySamplesDropped']
     
-    ## CV FLAG
+    '''CV FLAG'''
     # Create a mask for df based on sample-level CV threshold
     #CV masks
-    cv_not_met_df = pd.DataFrame().reindex_like(df[Median_Samples])
-    cv_not_met_doc = pd.DataFrame().reindex_like(df[Mean_Samples])
-    for x,y,z in zip(Median_Samples, Mean_Samples, CV_Samples):
-        cv_not_met_df[x] = df[z] > controls[1]
-        cv_not_met_doc[y] = df[z] > controls[1]
-        
-    # Create df[Median_Samples] copy
-    m = df[Median_Samples].copy()
-    # Blank out sample medians where occurrence does not meet CV cutoff
-    df[Median_Samples] = m.mask(cv_not_met_df)     
-    # Create empty cell mask from documentation dataframe
-    cell_empty = docs[Mean_Samples].isnull()    
+    cv_not_met = pd.DataFrame().reindex_like(df[Mean_Samples])
+    for mean,CV in zip(Mean_Samples, CV_Samples):
+        cv_not_met[mean] = df[CV] > controls[1]
+    # Create empty cell masks from the docs and df dataframes
+    cell_empty = docs[Mean_Samples].isnull()
+    cell_empty_df = df[Mean_Samples].isnull()  
     # append CV flag (CV > threshold) to documentation dataframe
-    docs[Mean_Samples] = np.where(cv_not_met_doc & cell_empty, 'CV', docs[Mean_Samples])
-    docs[Mean_Samples] = np.where(cv_not_met_doc & ~cell_empty, docs[Mean_Samples]+', CV', docs[Mean_Samples])
+    docs[Mean_Samples] = np.where(cv_not_met & cell_empty & ~cell_empty_df, 'CV', docs[Mean_Samples])
+    docs[Mean_Samples] = np.where(cv_not_met & ~cell_empty & ~cell_empty_df, docs[Mean_Samples]+', CV', docs[Mean_Samples])
+    # Create df[Median_Samples] copy
+    m = df[Mean_Samples].copy()
+    # Blank out sample medians where occurrence does not meet CV cutoff
+    df[Mean_Samples] = m.mask(cv_not_met)  
     
-    ## MDL CALCULATION/MASKS
+    '''MDL CALCULATION/MASKS'''
     # Calculate feature MDL
     df['BlkStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
     df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(df[Mean_MB[0]]) # In the case of a single blank replicate, the previous calculation is an empty value as it cannot calculate Std dev; replace with mean value
@@ -528,7 +527,7 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     for x in Mean_Samples:
         MDL_sample_mask[x] = df[x] > df['BlkStd_cutoff']  
 
-    ## CALCULATE DETECTION COUNTS
+    '''CALCULATE DETECTION COUNTS'''
     # Calculate Detection_Count
     df['Detection_Count(all_samples)'] = MDL_all_mask.sum(axis=1)
     df['Detection_Count(non-blank_samples)'] = MDL_sample_mask.sum(axis=1)
@@ -547,19 +546,20 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     docs['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)']
     docs['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)']
         
-    ## MDL/ND FLAG
-    # Create updated empty cell mask from documentation dataframe
+    '''MDL/ND FLAG'''
+    # Update empty cell masks from the docs and df dataframes
     cell_empty = docs[Mean_Samples].isnull()
+    cell_empty_df = df[Mean_Samples].isnull() 
     # append ND flag (occurrence < MDL) to documentation dataframe
-    docs[Mean_Samples] = np.where(~MDL_sample_mask & cell_empty, 'ND', docs[Mean_Samples])
-    docs[Mean_Samples] = np.where(~MDL_sample_mask & ~cell_empty, docs[Mean_Samples]+', ND', docs[Mean_Samples])
+    docs[Mean_Samples] = np.where(~MDL_sample_mask & cell_empty & ~cell_empty_df, 'ND', docs[Mean_Samples])
+    docs[Mean_Samples] = np.where(~MDL_sample_mask & ~cell_empty & ~cell_empty_df, docs[Mean_Samples]+', ND', docs[Mean_Samples])
     
-    ## ADD VALUES TO DOC
+    '''ADD VALUES TO DOC'''
     # Mask, add values back to doc
     values = docs[Mean_Samples].isnull()
     docs[Mean_Samples] = np.where(values, df[Mean_Samples], docs[Mean_Samples])
     
-    ## DOCUMENT DROP FEATURES FROM DF
+    '''DOCUMENT DROP FEATURES FROM DF'''
     # Features dropped because all samples are below replicate threshold
     # docs['Feature_removed'] = np.where((df[Replicate_Percent_Samples] < controls[0]).all(axis=1), 'R', np.nan)
     # # Features dropped because all samples are below CV threshold
@@ -576,7 +576,7 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     docs['Feature_removed'] = np.where((df[Replicate_Percent_Samples] < controls[0]).all(axis=1), 'R', docs['Feature_removed'])
     
     
-    ## DROP FEATURES FROM DF
+    '''DROP FEATURES FROM DF'''
     # Remove features where all sample abundances are below replicate threshold
     df.drop(df[(df[Replicate_Percent_Samples] < controls[0]).all(axis=1)].index, inplace=True)
     # Remove features where all sample abundances are below CV threshold
