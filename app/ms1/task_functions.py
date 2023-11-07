@@ -569,7 +569,7 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     
     # AC 11/3/2023: Reversing the order of documenting drop features from DF (in cases of overwriting flags, this will match the numbers from the logic tree in theory)
     # Features dropped because no sample is above the detection limit
-    docs['Feature_removed'] = np.where((df[Replicate_Percent_MB[0]] != 0) & (df[Mean_Samples].max(axis=1, skipna=True) < df['BlkStd_cutoff']), 'BLK', np.nan)   
+    docs['Feature_removed'] = np.where((df[Replicate_Percent_MB[0]] != 0) & (df[Mean_Samples].max(axis=1, skipna=True) < df['BlkStd_cutoff']), 'BLK', '')   
     # Features dropped because all samples are below CV threshold
     docs['Feature_removed'] = np.where((df[CV_Samples] > controls[1]).all(axis=1), 'CV', docs['Feature_removed'])
     # Features dropped because all samples are below replicate threshold
