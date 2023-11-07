@@ -49,7 +49,7 @@ def reduced_file(df_in):
     keeps_str = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank', 'Mean', 'Sub']
     to_drop = [item for sublist in headers for item in sublist if
                         (len(sublist) > 1) & (not any(x in item for x in keeps_str))]
-    to_drop.extend(df.columns[(df.columns.str.contains(pat ='CV_|N_Abun_|Mean_|STD_')==True)].tolist())
+    to_drop.extend(df.columns[(df.columns.str.contains(pat ='CV_|N_Abun_|Median_|STD_')==True)].tolist())
     to_drop.extend(df.columns[(df.columns.str.contains(pat ='Mean_') == True) &
                               (df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank|Sub')==False)].tolist())
     if 'Mean_ALLMB' in df.columns.values.tolist():
