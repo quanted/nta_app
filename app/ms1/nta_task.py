@@ -85,6 +85,7 @@ class NtaRun:
         self.docs = None
         self.doc_combined = None
         self.df_combined = None
+        self.pass_through = None
         self.mpp_ready = None
         self.search_results = None
         self.search = None
@@ -120,6 +121,7 @@ class NtaRun:
         # 1: drop duplicates and throw out void volume
         self.step = "Dropping duplicates"
         self.assign_id()
+        self.pass_through_cols()
         self.filter_void_volume(float(self.parameters['minimum_rt'][1])) # throw out features below this (void volume)
         self.filter_duplicates()
         if self.verbose:
@@ -352,6 +354,10 @@ class NtaRun:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
         else:
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
+        return
+    
+    def pass_through_cols(self):
+        self.pass_through = [task_fun.passthrucol(df) if df is not None else None for df in self.dfs]
         return
     
     def filter_void_volume(self, min_rt):

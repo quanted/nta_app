@@ -145,6 +145,23 @@ score information, and where the DataFrame doesn't have an "Annotations" column 
     # logging.info("List of scores: {}".format(df['Score']))
     return df
 
+'''PASS THROUGH COLUMNS'''
+
+# Find all columns in dfs that aren't necessary and store for the output
+def passthrucol(df_in):
+    # Make a copy of the input df
+    df=df_in.copy()
+    # Parse headers
+    all_headers = parse_headers(df)
+    # Define active_cols: Keep 'Feature_ID' in pt_headers to merge later
+    active_cols = ['Compound Name', 'Retention_Time', 'Mass', 'Ionization mode']
+    # Create list of pass through headers that are not in the active columns
+    pt_headers = [item for sublist in all_headers for item in sublist if len(sublist) == 1 and not any(x in sublist for x in active_cols)]
+    # Save pass through columns in df
+    df_pt = df[pt_headers]
+    
+    return df_pt
+
 
 '''ADDUCT IDENTIFICATION FUNCTIONS'''
 
