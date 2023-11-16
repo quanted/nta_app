@@ -406,8 +406,8 @@ class NtaRun:
             logger.info("Tracer file found, checking tracers.")
         ppm = self.parameters['mass_accuracy_units_tr'][1]== 'ppm'
         mass_accuracy_tr = float(self.parameters['mass_accuracy_tr'][1])
-        self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, mass_accuracy_tr, float(self.parameters['rt_accuracy_tr'][1]), ppm) if df is not None else None for index, df in enumerate(self.dfs)]
-        
+        self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, mass_accuracy_tr, float(self.parameters['rt_accuracy_tr'][1]), ppm)[0] if df is not None else None for index, df in enumerate(self.dfs)]
+        self.dfs = [fn.check_feature_tracers(df, self.tracer_df, mass_accuracy_tr, float(self.parameters['rt_accuracy_tr'][1]), ppm)[1] if df is not None else None for index, df in enumerate(self.dfs)]
         #logger.info("self.tracer_dfs_out[0].shape = {}".format(self.tracer_dfs_out[0].shape))
         
         self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
