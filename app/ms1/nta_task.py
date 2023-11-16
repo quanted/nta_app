@@ -485,7 +485,7 @@ class NtaRun:
         # create summary table
         if 'DTXSID' not in dft.columns:
             dft['DTXSID'] = ''
-        dft = dft[['Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
+        dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
         self.data_map['Tracers_Summary'] = dft
         
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
