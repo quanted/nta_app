@@ -479,6 +479,7 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     docs['Mass'] = df['Mass']
     docs['Retention_Time'] = df['Retention_Time']
     docs['Feature_ID'] = df['Feature_ID']
+    docs['Tracer_chemical_match'] = df['Tracer_chemical_match']
     # Define lists
     blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
     Abundance=  df.columns[df.columns.str.contains(pat ='Replicate_Percent_')].tolist()
@@ -652,7 +653,7 @@ def combine_doc(doc,dupe):
         dupe.loc[:, Mean] = 'D'
         dfc = dupe.copy()
   
-    to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed'] + Mean
+    to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed', 'Tracer_chemical_match'] + Mean
     dfc = dfc[to_keep]
     dfc.rename({'BlkStd_cutoff':'MRL'}, axis=1, inplace=True)
     

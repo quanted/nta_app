@@ -441,8 +441,8 @@ class WebApp_plotter:
         else:
             headers = parse_headers(df_in, 0)
             abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-            abundance.remove('Detection_Count(all_samples)')
-            abundance.remove('Detection_Count(all_samples)(%)')
+            #abundance.remove('Detection_Count(all_samples)')
+            #abundance.remove('Detection_Count(all_samples)(%)')
             df = df_in[abundance].copy()
         
         # our list of final chemical names with appropriate capitalization
