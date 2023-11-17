@@ -237,7 +237,7 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
     df2['Rounded_Mass'] = df2['Monoisotopic_Mass'].round(0)
     #df2['Rounded_RT'] = df2['Retention_Time'].round(0)
     df1.rename(columns = {'Mass':'Observed_Mass','Retention_Time':'Observed_Retention_Time'},inplace=True)
-    #df1['Rounded_Mass'] = df1['Observed_Mass'].round(0)
+    df1['Rounded_Mass'] = df1['Observed_Mass'].round(0)
     #df['Rounded_RT'] = df['Observed_Retention_Time'].round(0)
     dft = pd.merge(df2,df1,how='left',on=['Rounded_Mass','Ionization_Mode'])
     if ppm:
