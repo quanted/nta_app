@@ -471,7 +471,7 @@ def chunk_stats(df_in):
 ''' NEW FUNCTION FOR CLEANING FEATURES THAT ALSO DOCUMENTS FLAGS IN A SEPARATE DATAFRAME - DETECTION COUNT IS MIGRATING TO THIS FUNCTION
     TMF 10/27/23 '''
     
-def clean_features(df_in, controls):  # a method that drops rows based on conditions
+def clean_features(df_in, controls, tracer_df=False):  # a method that drops rows based on conditions
     # Make dataframe copy, create docs in df's image
     df = df_in.copy()
     df['AnySamplesDropped'] = np.nan
@@ -479,7 +479,8 @@ def clean_features(df_in, controls):  # a method that drops rows based on condit
     docs['Mass'] = df['Mass']
     docs['Retention_Time'] = df['Retention_Time']
     docs['Feature_ID'] = df['Feature_ID']
-    docs['Tracer_chemical_match'] = df['Tracer_chemical_match']
+    if tracer_df:
+        docs['Tracer_chemical_match'] = df['Tracer_chemical_match']
     # Define lists
     blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
     Abundance=  df.columns[df.columns.str.contains(pat ='Replicate_Percent_')].tolist()
