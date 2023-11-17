@@ -517,6 +517,7 @@ class NtaRun:
 
     def clean_features(self):
         controls = [float(self.parameters['min_replicate_hits'][1]), float(self.parameters['max_replicate_cv'][1]), float(self.parameters['min_replicate_hits_blanks'][1])]
+        tracer_df_bool=False
         if self.tracer_df is not None:
             tracer_df_bool=True
         self.docs = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[1] if df is not None else None for index, df in enumerate(self.dfs)]
