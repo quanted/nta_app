@@ -639,7 +639,7 @@ def combine(df1,df2):
     
 
 # Combine function for the self.docs and self.dupes
-def combine_doc(doc,dupe):
+def combine_doc(doc, dupe, tracer_df=False):
     
     Mean = doc.columns[doc.columns.str.contains(pat ='Mean_')].tolist()
     # Median = doc.columns[doc.columns.str.contains(pat = 'BlankSub_')].tolist()
@@ -653,8 +653,12 @@ def combine_doc(doc,dupe):
     else:
         dupe.loc[:, Mean] = 'D'
         dfc = dupe.copy()
-  
-    to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed', 'Tracer_chemical_match'] + Mean
+    
+    if tracer_df:
+        to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed', 'Tracer_chemical_match'] + Mean
+    else:
+        to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed'] + Mean
+    
     dfc = dfc[to_keep]
     dfc.rename({'BlkStd_cutoff':'MRL'}, axis=1, inplace=True)
     
