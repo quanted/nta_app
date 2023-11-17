@@ -246,12 +246,12 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
         dft['Matches'] = np.where((abs(dft['Monoisotopic_Mass']-dft['Observed_Mass'])<=Mass_Difference) & (abs(dft['Retention_Time']-dft['Observed_Retention_Time'])<=Retention_Difference) ,1,0)
     dft = dft[dft['Matches']==1]
     # Get 'Matches' info into main df
-    df1 = pd.merge(df1, dft, how='left', on=['Observed_Mass', 'Observed_Retention_Time'])
-    df1.rename(columns = {'Observed_Mass':'Mass','Observed_Retention_Time':'Retention_Time', 'Matches':'Tracer_chemical_match'},inplace=True)
+    dfc = pd.merge(df1, dft, how='left', on=['Observed_Mass', 'Observed_Retention_Time'])
+    dfc.rename(columns = {'Observed_Mass':'Mass','Observed_Retention_Time':'Retention_Time', 'Matches':'Tracer_chemical_match'},inplace=True)
     
     dft.drop(['Rounded_Mass','Matches'],axis=1,inplace=True)
     
-    return dft, df1
+    return dft, dfc
 
 
 
