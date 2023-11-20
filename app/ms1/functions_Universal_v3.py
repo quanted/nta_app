@@ -488,7 +488,7 @@ def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):
     return to_keep
 
 
-def MPP_Ready(dft, directory='',file=''):
+def MPP_Ready(dft, tracer_df=False, directory='',file=''):
     #dft = dft.rename(columns = {'Compound':'Formula','Retention_Time':'RT'})
     #dft['Compound Name'] = dft['Formula']
     # NTAW-94
@@ -509,9 +509,15 @@ def MPP_Ready(dft, directory='',file=''):
     # dft = dft[['Feature_ID','Formula','Score', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_medians]
     # if dft contains 'Formula'
     if 'Formula' in dft.columns:
-        dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_means]
+        if tracer_df:
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + raw_samples + blank_subtracted_means]
+        else:
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_means]
     else:
-        dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + raw_samples + blank_subtracted_means]
+        if tracer_df:
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + raw_samples + blank_subtracted_means]
+        else:
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_means]
     #dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)
     return dft
 
