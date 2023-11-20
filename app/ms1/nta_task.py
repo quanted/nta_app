@@ -357,7 +357,8 @@ class NtaRun:
         return
     
     def pass_through_cols(self):
-        self.pass_through = [task_fun.passthrucol(df) if df is not None else None for df in self.dfs]
+        self.pass_through = [task_fun.passthrucol(df)[0] if df is not None else None for df in self.dfs]
+        self.dfs = [task_fun.passthrucol(df)[1] if df is not None else None for df in self.dfs]
         return
     
     def filter_void_volume(self, min_rt):
