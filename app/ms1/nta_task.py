@@ -486,7 +486,7 @@ class NtaRun:
         # remove the columns 'Detection_Count(non-blank_samples)' and 'Detection_Count(non-blank_samples)(%)'
         #dft = dft.drop(columns=['Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'])
         
-        self.data_map['Tracer_Sample_Results'] = dft
+        self.data_map['Tracer_Sample_Results'] = task_fun.column_sort_TSR(dft)
 
 
         # create summary table

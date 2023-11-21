@@ -502,6 +502,25 @@ def column_sort_DFS(df_in):
     return df_reorg
 
 
+# Sort columns for tracer sample results
+def column_sort_TSR(df_in):
+    df = df_in.copy()
+    all_cols = df.columns.tolist()
+    # Create list of prefixes to remove non-samples
+    prefixes = ['Feature_ID', 'Mass', 'Retention_Time']   
+    # Isolate sample_groups from prefixes columns   
+    back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
+    
+    # Organize front matter
+    front_matter = ['Feature_ID', 'Monoisotopic_Mass', 'Retention_Time',
+                    'Mass_Error_PPM', 'Retention_Time_Difference']
+
+    new_col_org = front_matter + back_matter
+    df_reorg = df[new_col_org]
+    
+    return df_reorg
+
+
 '''FUNCTION FOR CLEANING FEATURES'''
 
 ''' NEW FUNCTION FOR CLEANING FEATURES THAT ALSO DOCUMENTS FLAGS IN A SEPARATE DATAFRAME - DETECTION COUNT IS MIGRATING TO THIS FUNCTION
