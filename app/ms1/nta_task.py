@@ -548,7 +548,7 @@ class NtaRun:
             self.doc_combined = self.doc_combined[1]
         self.data_map['Filter_documentation'] = self.doc_combined
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
-        self.mpp_ready = fn.MPP_Ready(self.df_combined, tracer_df_bool)
+        self.mpp_ready = fn.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool)
         self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Detection_Count(all_samples)','Detection_Count(all_samples)(%)'])
         self.data_map['Cleaned_feature_results_reduced'] = reduced_file(self.mpp_ready)
 

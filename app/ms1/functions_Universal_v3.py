@@ -488,11 +488,21 @@ def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):
     return to_keep
 
 
-def MPP_Ready(dft, tracer_df=False, directory='',file=''):
+def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
     #dft = dft.rename(columns = {'Compound':'Formula','Retention_Time':'RT'})
     #dft['Compound Name'] = dft['Formula']
     # NTAW-94
     # dft = dft.rename(columns = {'Compound':'Formula'})
+    
+    if pts[0] is not None and pts[1] is not None:
+            dft = pd.merge(dft, pts[0], how='left', on=['Feature_ID'])
+            dft = pd.merge(dft, pts[1], how='left', on=['Feature_ID'])
+        elif pts[0] is not None:
+            dft = pd.merge(dft, pts[0], how='left', on=['Feature_ID'])
+        else:
+            dft = pd.merge(dft, pts[1], how='left', on=['Feature_ID'])
+            
+    
     Headers = parse_headers(dft,0)
     raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
     blank_subtracted_means = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
