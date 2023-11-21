@@ -383,7 +383,8 @@ class NtaRun:
                                                  ionization='positive', id_start=1)
             self.dfs[1] = task_fun.adduct_identifier(self.dfs[1], mass_accuracy, rt_accuracy, ppm,
                                                  ionization='negative', id_start=len(self.dfs[0].index)+1)
-            self.data_map['Feature_statistics_positive'] = task_fun.column_sort_DFS(pd.merge(self.dfs[0], self.pass_through[0], how='left', on=['Feature_ID']))
+            dum = pd.merge(self.dfs[0], self.pass_through[0], how='left', on=['Feature_ID'])
+            self.data_map['Feature_statistics_positive'] = task_fun.column_sort_DFS(dum)
             self.data_map['Feature_statistics_negative'] = task_fun.column_sort_DFS(pd.merge(self.dfs[1], self.pass_through[1], how='left', on=['Feature_ID']))
         elif self.dfs[0] is not None:
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
