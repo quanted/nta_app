@@ -1,0 +1,1 @@
+var jobid = JSON.parse(document.getElementById('jobid').textContent);

@@ -10,6 +10,7 @@ from nta_app.views.ms1 import qaqc as ms1_qaqc
 from nta_app.views.ms1 import references as ms1_references
 from nta_app.views.ms1 import formula_list as ms1_formulas
 from nta_app.views.ms1 import ms1_test_files as ms1_test_files
+from nta_app.views.ms1 import decision_tree as ms1_decision_tree
 from nta_app.views.ms2 import ms2_test_files as ms2_test_files
 from nta_app.views.ms2 import upload as ms2_upload
 from nta_app.views.ms2 import processing as ms2_processing
@@ -51,6 +52,7 @@ urlpatterns = [
     path('ms1/algorithms/', ms1_algorithms.algorithms_page),
     path('ms1/qaqc/', ms1_qaqc.qaqcd_page),
     path('ms1/references/', ms1_references.references_page),
+    path('ms1/results/decision_tree/<slug:jobid>', ms1_decision_tree.decision_tree_page),
     path('github/', github),
     #
     # ms2 tool
