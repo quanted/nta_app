@@ -13,7 +13,7 @@ def decision_tree_page(request, model='nta', header='NTA', jobid = '00000000'):
     decision_tree_content_html = "<h3> Job ID: " + jobid + "</h3> <br>"
     decision_tree_content_html += "<div class=decision_tree> </div>"
     decision_tree_content_html += "{{ jobid|json_script:'jobid' }}" # pass job id to the javascript
-    decision_tree_content_html += render_to_string('nta_decision_tree.html', {'jobid': jobid}) # call the decision tree template
+    decision_tree_content_html += render_to_string('ms1/nta_decision_tree.html', {'jobid': jobid}) # call the decision tree template
     #this is where the func to generate page html will be called
     html = decision_tree_page_html(header, model, decision_tree_content_html)
     response = HttpResponse()
