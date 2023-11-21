@@ -466,7 +466,41 @@ def chunk_stats(df_in):
     output['Max_CV_across_sample'] = output.filter(regex='CV_').max(axis=1)
     
     return output
+
+
+# Sort columns for the data feature statistics outputs; TMF 11/21/23
+def column_sort_DFS(df_in):
+    df = df_in.copy()
+    # Parse headers
+    all_headers = parse_headers(df)
+    # Get all cols, group roots (i.e., drop unique value from sample groups)
+    all_cols = df.columns.tolist()
+    group_cols = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
+    # Create list of prefixes to remove non-samples
+    prefixes = ['Mean_','Median_', 'CV_', 'STD_', 'N_Abun_', 'Replicate_Percent_', 'Detection']   
+    # Isolate sample_groups from prefixes columns   
+    groups = [item for item in group_cols if not any(x in item for x in prefixes)]
     
+    # Organize front matter
+    front_matter = [item for item in all_cols if not any(x in item for x in groups)]
+    ids = ['Feature_ID', 'Mass', 'Retention_Time', 'Ionization_Mode']
+    #ids = ['Compound Name', 'Mass', 'Retention_Time', 'Ionization_Mode']
+    front_matter = [item for item in front_matter if not any(x in item for x in ids)]
+    front_matter = ids + front_matter
+    
+    # Organize stats columns
+    cols = []
+    for sam in groups:
+        group_stats = [item for item in all_cols if sam in item]
+        cols.append(group_stats)    
+    stats_cols = sum(cols, [])
+    
+    # Combine columns to re-org dataframe
+    new_col_org = front_matter + stats_cols
+    df_reorg = df[new_col_org]
+    
+    return df_reorg
+
 
 '''FUNCTION FOR CLEANING FEATURES'''
 
