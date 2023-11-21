@@ -156,7 +156,7 @@ def passthrucol(df_in):
     # Define active_cols: Keep 'Feature_ID' in pt_headers to merge later
     active_cols = ['Retention_Time', 'Mass', 'Ionization_Mode']
     # Create list of pass through headers that are not in the active columns
-    pt_headers = [item for sublist in all_headers for item in sublist if len(sublist) == 1 and not any(x in sublist for x in active_cols)]
+    pt_headers = ['Feature_ID'] + [item for sublist in all_headers for item in sublist if len(sublist) == 1 and not any(x in sublist for x in active_cols)]
     headers = ['Feature_ID'] + [item for sublist in all_headers for item in sublist if not any(x in item for x in pt_headers)]
     # Save pass through columns in df
     df_pt = df[pt_headers]
