@@ -494,18 +494,27 @@ def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
     # NTAW-94
     # dft = dft.rename(columns = {'Compound':'Formula'})
     
+    
     if pts[0] is not None and pts[1] is not None:
-            dft = pd.merge(dft, pts[0], how='left', on=['Feature_ID'])
-            dft = pd.merge(dft, pts[1], how='left', on=['Feature_ID'])
-        elif pts[0] is not None:
-            dft = pd.merge(dft, pts[0], how='left', on=['Feature_ID'])
-        else:
-            dft = pd.merge(dft, pts[1], how='left', on=['Feature_ID'])
+        dft = pd.merge(dft, pts[0], how='left', on=['Feature_ID'])
+        dft = pd.merge(dft, pts[1], how='left', on=['Feature_ID'])
+        pt_cols = pts[0].columns.tolist()
+        pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
+    elif pts[0] is not None:
+        dft = pd.merge(dft, pts[0], how='left', on=['Feature_ID'])
+        pt_cols = pts[0].columns.tolist()
+        pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
+    else:
+        dft = pd.merge(dft, pts[1], how='left', on=['Feature_ID'])
+        pt_cols = pts[1].columns.tolist()
+        pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
             
     
     Headers = parse_headers(dft,0)
     raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
     blank_subtracted_means = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
+    
+    
     #Blanks = dft.columns[dft.columns.str.contains(pat ='MB_')].tolist()
     #Samples = [x for x in Abundance if x not in Blanks]
     #NewSamples = common_substrings(Samples)
@@ -520,14 +529,14 @@ def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
     # if dft contains 'Formula'
     if 'Formula' in dft.columns:
         if tracer_df:
-            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
         else:
-            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
     else:
         if tracer_df:
-            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
         else:
-            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
     #dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)
     return dft
 
