@@ -489,15 +489,11 @@ def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):
 
 
 def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
-    #dft = dft.rename(columns = {'Compound':'Formula','Retention_Time':'RT'})
-    #dft['Compound Name'] = dft['Formula']
-    # NTAW-94
-    # dft = dft.rename(columns = {'Compound':'Formula'})
-    
-    
+    # If/elif/else to combine pass through columns with dft
+    # Assign pass through columns to pt_cols for re_org
     if pts[0] is not None and pts[1] is not None:
-        dft = pd.merge(dft, pts[0], how='left', on=['Feature_ID'])
-        dft = pd.merge(dft, pts[1], how='left', on=['Feature_ID'])
+        pt_com = pd.concat([pts[0], pts[1]], axis=0)
+        dft = pd.merge(dft, pt_com, how='left', on=['Feature_ID'])
         pt_cols = pts[0].columns.tolist()
         pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
     elif pts[0] is not None:
@@ -509,24 +505,13 @@ def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
         pt_cols = pts[1].columns.tolist()
         pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
             
-    
+    # Parse headers, get sample values and blank subtracted means
     Headers = parse_headers(dft,0)
     raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
     blank_subtracted_means = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
     
-    
-    #Blanks = dft.columns[dft.columns.str.contains(pat ='MB_')].tolist()
-    #Samples = [x for x in Abundance if x not in Blanks]
-    #NewSamples = common_substrings(Samples)
-    #for i in range(len(Samples)):
-    #    dft.rename(columns = {Samples[i]:NewSamples[i]},inplace=True)
-    #columns = dft.columns.values.tolist()
-    #dft = dft.reindex(columns=Columns)
-    #print dft
-    #dft.to_csv(directory+'/'+file+'_MPP_Ready.csv', index=False)
-    # NTAW-94
-    # dft = dft[['Feature_ID','Formula','Score', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + raw_samples + blank_subtracted_medians]
-    # if dft contains 'Formula'
+    # Check for 'Formula' (should be deprecated), then check for tracer_df
+    # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
     if 'Formula' in dft.columns:
         if tracer_df:
             dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
@@ -537,7 +522,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
             dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
         else:
             dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
-    #dft.to_csv(directory+'/'+'Data_Both_Modes_MPP_Ready.csv', index=False)
+
     return dft
 
 
