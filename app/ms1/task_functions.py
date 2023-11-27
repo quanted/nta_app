@@ -466,9 +466,9 @@ def chunk_stats(df_in):
     output['Max_CV_across_sample'] = output.filter(regex='CV_').max(axis=1)
     # Define lists to calculate MRL for inclusion in 'Feature_statistics' outputs
     blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
-    Mean = df.columns[df.columns.str.contains(pat ='Mean_')].tolist()
+    Mean = output.columns[output.columns.str.contains(pat ='Mean_')].tolist()
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]   
-    Std = df.columns[df.columns.str.contains(pat ='STD_')].tolist()
+    Std = output.columns[output.columns.str.contains(pat ='STD_')].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
     # Calculate feature MRL
     df['MRL'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
