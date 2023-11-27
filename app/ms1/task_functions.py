@@ -471,9 +471,9 @@ def chunk_stats(df_in):
     Std = output.columns[output.columns.str.contains(pat ='STD_')].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
     # Calculate feature MRL
-    df['MRL'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
-    df['MRL'] = df['MRL'].fillna(df[Mean_MB[0]])
-    df['MRL'] = df['MRL'].fillna(0)
+    output['MRL'] = (3 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output['MRL'] = output['MRL'].fillna(output[Mean_MB[0]])
+    output['MRL'] = output['MRL'].fillna(0)
     
     return output
 
