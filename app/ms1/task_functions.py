@@ -608,15 +608,17 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     if tracer_df:
         for x in Mean:
             MDL_all_mask[x] = (df[x] > df['BlkStd_cutoff']) | (~df['Tracer_chemical_match'].isnull())  
-            MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
+        
+        MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
         for x in Mean_Samples:
-            MDL_sample_mask[x] = df[x] > df['BlkStd_cutoff'] | (~df['Tracer_chemical_match'].isnull())
+            MDL_sample_mask[x] = (df[x] > df['BlkStd_cutoff']) | (~df['Tracer_chemical_match'].isnull())
     else:
         for x in Mean:
             MDL_all_mask[x] = (df[x] > df['BlkStd_cutoff']) 
-            MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
+        
+        MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
         for x in Mean_Samples:
-            MDL_sample_mask[x] = df[x] > df['BlkStd_cutoff']
+            MDL_sample_mask[x] = (df[x] > df['BlkStd_cutoff'])
 
     '''CALCULATE DETECTION COUNTS'''
     # Calculate Detection_Count
