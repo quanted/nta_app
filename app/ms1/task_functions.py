@@ -604,12 +604,19 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     docs['BlkStd_cutoff'] = df['BlkStd_cutoff']  
     # Create a mask for docs based on sample-level MDL threshold 
     # Median Masks
-    MDL_all_mask = pd.DataFrame().reindex_like(df[Mean])  
-    for x in Mean:
-        MDL_all_mask[x] = df[x] > df['BlkStd_cutoff']   
-    MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
-    for x in Mean_Samples:
-        MDL_sample_mask[x] = df[x] > df['BlkStd_cutoff']  
+    MDL_all_mask = pd.DataFrame().reindex_like(df[Mean])
+    if tracer_df:
+        for x in Mean:
+            MDL_all_mask[x] = (df[x] > df['BlkStd_cutoff']) | (~df['Tracer_chemical_match'].isnull())  
+            MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
+        for x in Mean_Samples:
+            MDL_sample_mask[x] = df[x] > df['BlkStd_cutoff'] | (~df['Tracer_chemical_match'].isnull())
+    else:
+        for x in Mean:
+            MDL_all_mask[x] = (df[x] > df['BlkStd_cutoff']) 
+            MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
+        for x in Mean_Samples:
+            MDL_sample_mask[x] = df[x] > df['BlkStd_cutoff']
 
     '''CALCULATE DETECTION COUNTS'''
     # Calculate Detection_Count
@@ -666,7 +673,10 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     # Remove features where all sample abundances are below CV threshold
     df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True) 
     # Keep samples where the feature doesn't exist in the blank OR at least one sample mean exceeds MDL
-    df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
+    if tracer_df:
+        df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff']) | ~df['Tracer_chemical_match'].isnull()]
+    else:
+        df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]
     
     return df, docs
 
