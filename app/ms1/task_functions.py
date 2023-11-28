@@ -522,7 +522,8 @@ def column_sort_TSR(df_in):
     back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
     
     # Organize front matter
-    front_matter = ['Feature_ID', 'Monoisotopic_Mass', 'Retention_Time',
+    front_matter = ['Feature_ID', 'Observed_Mass', 'Observed_Retention_Time',
+                    'Monoisotopic_Mass', 'Retention_Time',
                     'Mass_Error_PPM', 'Retention_Time_Difference']
 
     new_col_org = front_matter + back_matter
