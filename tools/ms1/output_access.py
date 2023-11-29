@@ -219,7 +219,7 @@ class OutputServer:
         combined_df = pd.concat([pos_df, neg_df])  # combine pos and neg mode stats files
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=tree_data.csv'
-        combined_df.to_csv(path_or_buf=response)  # write our csv to the response
+        combined_df.to_csv(path_or_buf=response, index_label=False)  # write our csv to the response
         return response
             
 
