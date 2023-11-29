@@ -200,8 +200,28 @@ class OutputServer:
         response['Content-Disposition'] = 'attachment; filename=' + zip_filename
         response['Content-length'] = in_memory_zip.tell()
         return response
-
-
+    
+    def decision_tree(self):
+        data_pos_id = self.jobid + "_" + "Feature_statistics_positive"
+        data_neg_id = self.jobid + "_" + "Feature_statistics_negative"
+        try:  #
+            data_pos = self.gridfs.get(data_pos_id)
+            json_string = data_pos.read().decode('utf-8')
+            pos_df = pd.read_json(json_string, orient='split')
+        except (OperationFailure, TypeError, NoFile):
+            pos_df = pd.DataFrame()  # if pos file does not exist
+        try:  
+            data_neg = self.gridfs.get(data_neg_id)
+            json_string = data_neg.read().decode('utf-8')
+            neg_df = pd.read_json(json_string, orient='split')
+        except (OperationFailure, TypeError, NoFile):
+            neg_df = pd.DataFrame()  # if neg file does not exist
+        combined_df = pd.concat([pos_df, neg_df])  # combine pos and neg mode stats files
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=tree_data.csv'
+        combined_df.to_csv(path_or_buf=response)  # write our csv to the response
+        return response
+            
 
 
 

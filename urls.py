@@ -53,6 +53,7 @@ urlpatterns = [
     path('ms1/qaqc/', ms1_qaqc.qaqcd_page),
     path('ms1/references/', ms1_references.references_page),
     path('ms1/results/decision_tree/<slug:jobid>', ms1_decision_tree.decision_tree_page),
+    path('ms1/results/decision_tree_data/<slug:jobid>', ms1_results_api.decision_tree_data),
     path('github/', github),
     #
     # ms2 tool
