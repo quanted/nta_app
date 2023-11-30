@@ -438,6 +438,7 @@ class WebApp_plotter:
             col_names = [x for x in df_loc_seq.iloc[:, 0]]
             # col_names.insert(0, 'Chemical_Name')
             df = df_tracer[col_names].copy()
+            # 11/20/2023 AC: Add statement to grab sample groups from run sequence file (if available)
         else:
             headers = parse_headers(df_in, 0)
             abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
@@ -525,6 +526,8 @@ class WebApp_plotter:
             fig.text(0.05, 1.045, sub, fontsize=26)
 
             # add legend if needed
+            # 11/20/2023 AC: Add legend back to figure with colors denoted by sample group
+            # Create a list of colors from 
             # if legend == True:
             if False:
                 # background box
@@ -533,6 +536,7 @@ class WebApp_plotter:
                                           transform=fig.transFigure, figure=fig)
                 fig.patches.extend([bg_patch])
                 # legend innards
+                # 11/20/2023 AC: Iterate through sample groups, grabbing text description f
                 fig.text(0.55, 1.08, "Pooled", backgroundcolor=c_aes[2], \
                          c=c_leg_text, fontsize=23, fontfamily='serif', fontweight=500)
                 fig.text(0.658, 1.08, "Method Blank", backgroundcolor=c_aes[1], \
