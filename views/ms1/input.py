@@ -230,7 +230,8 @@ def input_page(request, form_data=None, form_files=None):
          request=request)
 
     html += str(NtaInputs(form_data, form_files))
-    html += "Disclaimer: This tool is being provided for internal testing purposes and is not yet approved by EPA-ORD."
+    html += "**Disclaimer: This tool is being provided for internal testing purposes and is not yet approved by EPA-ORD. Please do not publish any outputs.**"
+    html += "**Disclaimer: Input data is stored within this application. Be sure to remove all PII (Personal Identifiable Information) before submitting data.**"
     html += render_to_string('04uberinput_end_drupal.html', {})
     html += render_to_string('04ubertext_end_drupal.html', {})
 
