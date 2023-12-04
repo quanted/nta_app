@@ -331,13 +331,13 @@ class NtaRun:
         for df in input_dfs:
             if df is not None:
                 # Check to see if there is not the expected spelling of "Retention_Time" column
-                if 'Retention_Time' not in df.columns:
-                    # replace alternative capitalizations
-                    df = df.rename(columns={'Retention_time': 'Retention_Time', 'RETENTION_TIME': 'Retention_Time'})
-                    # replace rt/RT
-                    df = df.rename(columns={'rt': 'Retention_Time', 'RT': 'Retention_Time'})
-                    # replace "Ret. Time" (SCIEX data)
-                    df = df.rename(columns={'Ret._Time': 'Retention_Time'})
+                #if 'Retention_Time' not in df.columns:
+                # replace alternative capitalizations
+                df = df.rename(columns={'Retention_time': 'Retention_Time', 'RETENTION_TIME': 'Retention_Time'})
+                # replace rt/RT
+                df = df.rename(columns={'rt': 'Retention_Time', 'RT': 'Retention_Time'})
+                # replace "Ret. Time" (SCIEX data)
+                df = df.rename(columns={'Ret._Time': 'Retention_Time'})
 
         return
 
