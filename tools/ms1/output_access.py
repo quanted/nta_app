@@ -150,6 +150,22 @@ class OutputServer:
             except (OperationFailure, TypeError, NoFile) as e:
                 break
 
+    def add_occurrence_heatmap_to_zip(self, zipf,jobid):
+        # heatmap_plot = self.gridfs.get(f'{self.jobid}_occurrence_heatmaps').read().decode('utf-8').split("&&")
+        try:
+            heatmap_id = jobid + "_occurrence_heatmap"
+            db_record = self.gridfs.get(heatmap_id)
+            buffer = db_record.read()
+            project_name = db_record.project_name
+            if project_name:
+                filename = project_name.replace(" ", "_") + '_occurrence_heatmap.png'
+            else:
+                filename = heatmap_id + '.png'
+            zipf.writestr(filename, buffer)
+        except (OperationFailure, TypeError, NoFile) as e:
+            pass
+
+
     def final_result(self):
         in_memory_zip = BytesIO()
             
@@ -189,11 +205,15 @@ class OutputServer:
             zipf.writestr(filename, excel_data)
 
             #self.add_tracer_plots_to_zip(zipf, self.jobid)
-            
             try:
                 self.add_tracer_plots_to_zip(zipf, self.jobid)
             except (OperationFailure, TypeError, NoFile) as e:
                 pass # do we want to do anything if no tracer file present?
+            
+            try:
+                self.add_occurrence_heatmap_to_zip(zipf, self.jobid)
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass # do we want to do anything if no heatmap plot present?
 
         zip_filename = 'nta_results_' + self.jobid + '.zip'
         response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')
