@@ -15,6 +15,14 @@ from .utilities import *  #connect_to_mongoDB, connect_to_mongo_gridfs, reduced_
 
 from . import task_functions as task_fun
 from . WebApp_plotter import WebApp_plotter
+import io
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+# import seaborn as sns
+try:
+    import seaborn as sns
+except ModuleNotFoundError:
+    print("Seaborn is not installed. Please run 'pip install seaborn' to install it.")
 
 
 #os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
@@ -98,12 +106,14 @@ class NtaRun:
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__),"../../.."))
         self.data_map = {}
         self.tracer_map = {}
+        self.occurrence_heatmap_map = {}
         #self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         #self.new_download_dir = os.path.join(self.data_dir, "new")
         self.step = "Started"  # tracks the current step (for fail messages)
         #os.mkdir(self.data_dir)
         #os.mkdir(self.new_download_dir)
         self.tracer_plots_out = []
+        self.occurrence_heatmaps_out = []
 
 
     def execute(self):
@@ -159,6 +169,10 @@ class NtaRun:
         # 10/30/23 Calculating detection counts now happens in the 'Clean Features' step -- TMF
         #self.dfs = [task_fun.cal_detection_count(df) if df is not None else None for df in self.dfs]
  
+
+        # 2.1: Occurrence heatmap 
+        self.occurrence_heatmap(self.dfs)  
+
         # 3: check tracers (optional)
         self.step = "Checking tracers"
         self.check_tracers()
@@ -398,6 +412,142 @@ class NtaRun:
                                                  ionization='negative', id_start=1)
             self.data_map['Feature_statistics_negative'] = task_fun.column_sort_DFS(pd.merge(self.dfs[1], self.pass_through[1], how='left', on=['Feature_ID']))
         return
+
+    def occurrence_heatmap(self, input_dfs):
+
+        # get dataframe 'Feature_statistics_positive' if it exists else None
+        dfPos = self.data_map['Feature_statistics_positive'] if 'Feature_statistics_positive' in self.data_map else None
+
+        # get dataframe 'Feature_statistics_negative' if it exists else None  
+        dfNeg = self.data_map['Feature_statistics_negative'] if 'Feature_statistics_negative' in self.data_map else None
+
+        # combine the two dataframes. Ignnore non-existing dataframes
+        dfCombined = pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False) if dfPos is not None and dfNeg is not None else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
+
+        # log the dataframes if not None
+        if dfPos is not None:
+            logger.info("dfPos= {}".format(dfPos.columns.values))
+        if dfNeg is not None:
+            logger.info("dfNeg= {}".format(dfNeg.columns.values))
+        if dfCombined is not None:
+            logger.info("dfCombined= {}".format(dfCombined.columns.values))
+
+        # Get sample headers                
+        all_headers = task_fun.parse_headers(dfCombined) 
+        logger.info("all_headers= {}".format(all_headers))
+        sam_headers = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
+        logger.info("sam_headers= {}".format(sam_headers))
+
+        # Isolate sample_groups from stats columns
+        prefixes = ['Mean_','Median_', 'CV_', 'STD_', 'N_Abun_', 'Replicate_Percent_']
+        sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
+        logger.info("sample_groups= {}".format(sample_groups))
+
+        # Blank_MDL - need to check what the blank samples are actually named
+        blank_strings = ['MB', 'Mb', 'mb', 'BLANK', 'Blank', 'blank', 'BLK', 'Blk']
+        blank_col = [item for item in sample_groups if any(x in item for x in blank_strings)]
+        logger.info("blank_col= {}".format(blank_col))
+
+        blank_mean = 'Mean_' + blank_col[0]
+        logger.info("blank_mean= {}".format(blank_mean))
+        blank_std = 'STD_' + blank_col[0]
+        logger.info("blank_std= {}".format(blank_std))
+
+        dfCombined['MDL'] = dfCombined[blank_mean] + 3*dfCombined[blank_std]
+        logger.info("dfCombined['MDL']= {}".format(dfCombined['MDL']))
+        logger.info("dfCombined= {}".format(dfCombined.columns.values))
+
+        # Find CV cols from df
+        cv_cols = ['CV_' + col for col in sample_groups]
+        logger.info("cv_cols= {}".format(cv_cols))
+        rper_cols = ['Replicate_Percent_' + col for col in sample_groups]
+        logger.info("rper_cols= {}".format(rper_cols))
+        med_cols = ['Median_' + col for col in sample_groups]
+        logger.info("med_cols= {}".format(med_cols))
+
+        # Grab CV cols from df
+        cv_df = dfCombined[cv_cols]
+        logger.info("cv_df= {}".format(cv_df.columns.values))
+        rper_df = dfCombined[rper_cols]
+        logger.info("rper_df= {}".format(rper_df.columns.values))
+        med_df = dfCombined[med_cols]
+        logger.info("med_df= {}".format(med_df.columns.values))
+
+        # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
+        for x,y,z in zip(cv_cols, rper_cols, med_cols):
+            # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
+            cv_df.loc[dfCombined[y]<0.67, x] = np.nan
+            cv_df.loc[dfCombined[z]<=dfCombined['MDL'], x] = np.nan
+        logger.info("#1 cv_df= {}".format(cv_df.values))
+
+        # Add sum of Trues for condition applied to cv dataframe
+        cv_df['below count'] = (cv_df <= 1.25).sum(axis=1)
+        logger.info("#2 cv_df= {}".format(cv_df.values))
+
+        # Sort values by medians
+        cv_df = cv_df.sort_values('below count')
+        logger.info("#3 cv_df= {}".format(cv_df.values))
+
+        # Remove median column
+        del cv_df[cv_df.columns[-1]]
+        logger.info("#4 cv_df= {}".format(cv_df.values))
+
+        # Create masks for CV cutoffs
+        above = cv_df > 1.25
+        below = cv_df <= 1.25
+        nan_ = cv_df.isna()
+
+        # Get sum values for each group (use these in colorbar labels)
+        print(above.sum().sum())
+        print(below.sum().sum())
+        print(nan_.sum().sum())
+
+        # Use masks to changes values in cv_df to 1, 0, -1
+        dum = np.where(above, 1, cv_df)
+        dum = np.where(below, 0, dum)
+        dum = np.where(nan_, -1, dum)
+        logger.info("#5 cv_df= {}".format(cv_df.values))
+
+        # Create matrix from discretized dataframe
+        cv_df_discrete = pd.DataFrame(dum, index=cv_df.index, columns=cv_df.columns)
+        cv_df_trans = cv_df_discrete.transpose()
+
+        # Set Figure size and title
+        plt.figure(figsize = (40,15))
+        # plt.title('CA Data MS1 Feature Heatmap (post-blank subtraction), ESI- (n='+str(cv_df.size)+')\nSorted by # samples below CV threshold (lowest[left] to highest[right])', fontsize = 36)
+
+        # Create custom color mapping
+        myColors = ((0.8, 0.8, 0.8, 1.0), (1.0, 1.0, 1.0, 1.0), (1, 0.0, 0.2, 1.0))
+        cmap = LinearSegmentedColormap.from_list('Custom', myColors, len(myColors))
+
+        # Plot heatmap
+        ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
+
+        ax.set(xticklabels=[])
+
+        # Manually specify colorbar labelling after it's been generated
+        colorbar = ax.collections[0].colorbar
+        colorbar.set_ticks([-0.667, 0, 0.667])
+        colorbar.set_ticklabels(['non detect ('+str(nan_.sum().sum())+')', 'CV <=1.25 ('+str(below.sum().sum())+')', 'CV >1.25 ('+str(above.sum().sum())+')'])
+
+        plt.ylabel('Sample Set', fontsize = 28)
+        plt.xlabel('Feature ID (n = '+str(len(cv_df))+')', fontsize = 28)
+
+        # plt.savefig('./outputTest02/occurrence_heatmap.png', bbox_inches='tight')
+
+        # Convert the plot to a bytes-like object
+        buffer = io.BytesIO()
+        plt.savefig(buffer)
+        # buffer.seek(0)
+
+        self.occurrence_heatmaps_out.append(buffer.getvalue())
+
+        self.occurrence_heatmap_map['occurrence_heatmap'] = self.occurrence_heatmaps_out[0]
+
+        project_name = self.parameters['project_name'][1] 
+        self.gridfs.put("&&".join(self.occurrence_heatmap_map.keys()), _id=self.jobid + "_occurrence_heatmaps", encoding='utf-8', project_name = project_name)
+        self.mongo_save(self.occurrence_heatmap_map['occurrence_heatmap'], step='occurrence_heatmap')
+
 
     def check_tracers(self):
         if self.tracer_df is None:
