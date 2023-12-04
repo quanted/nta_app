@@ -122,9 +122,16 @@ class NtaRun:
         self.check_existence_of_ionization_mode_column(self.dfs)  
         # 0: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
+        
+        # 12/4/2023 AC - debugging statements
+        logger.info("df columns before check RT: {}".format(self.dfs[1].columns))        
+        
         # 0: check for alternate spellings of 'Retention_Time' column
-        #self.dfs = [df.check_retention_time_column(df) if df is not None else None for df in self.dfs]
         self.check_retention_time_column(self.dfs)
+        
+        # 12/4/2023 AC - debugging statements
+        logger.info("df columns after check RT: {}".format(self.dfs[1].columns))
+        
         # 0: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
         # 0: create a status in mongo
