@@ -233,6 +233,13 @@ def Blank_Subtract_Mean(df,index):
 def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm): #a method to query and save the features with tracers criteria
     df1 = df.copy()
     df2 = tracers_file.copy() #pd.read_csv(tracers_file,comment='#',na_values= 1 | 0)
+    
+    # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
+    df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('ESI+','Esi+')
+    df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('esi+','Esi+')
+    df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('ESI-','Esi-')
+    df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('esi-','Esi-')
+    
     #b_Statistics[index] = [B + '_x' for B in Statistics[index]]
     df2['Rounded_Mass'] = df2['Monoisotopic_Mass'].round(0)
     #df2['Rounded_RT'] = df2['Retention_Time'].round(0)

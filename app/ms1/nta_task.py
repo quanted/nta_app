@@ -112,6 +112,9 @@ class NtaRun:
         self.check_existence_of_ionization_mode_column(self.dfs)  
         # 0: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
+        # 0: check for alternate spellings of 'Retention_Time' column
+        #self.dfs = [df.check_retention_time_column(df) if df is not None else None for df in self.dfs]
+        self.check_retention_time_column(self.dfs)
         # 0: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
         # 0: create a status in mongo
@@ -297,6 +300,23 @@ class NtaRun:
                         df['Mass'] = df['m/z'] + 1.0073
                 else:
                     raise ValueError("Either Mass or m/z column must be in the input file.")
+
+        return
+    
+    def check_retention_time_column(self, input_dfs):
+        
+        # Check for the existence of alternate spellings of 'Retention_Time' column in input dataframes and rename to "Retention_Time".
+        
+        for df in input_dfs:
+            if df is not None:
+                # Check to see if there is not the expected spelling of "Retention_Time" column
+                if 'Retention_Time' not in df.columns:
+                    # replace alternative capitalizations
+                    df = df.rename(columns={'Retention_time': 'Retention_Time', 'RETENTION_TIME': 'Retention_Time'})
+                    # replace rt/RT
+                    df = df.rename(columns={'rt': 'Retention_Time', 'RT': 'Retention_Time'})
+                    # replace "Ret. Time" (SCIEX data)
+                    df = df.rename(columns={'Ret. Time': 'Retention_Time'})
 
         return
 
