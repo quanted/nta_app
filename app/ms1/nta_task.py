@@ -337,7 +337,7 @@ class NtaRun:
                     # replace rt/RT
                     df = df.rename(columns={'rt': 'Retention_Time', 'RT': 'Retention_Time'})
                     # replace "Ret. Time" (SCIEX data)
-                    df = df.rename(columns={'Ret. Time': 'Retention_Time'})
+                    df = df.rename(columns={'Ret._Time': 'Retention_Time'})
 
         return
 
