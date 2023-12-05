@@ -150,6 +150,20 @@ class OutputServer:
             except (OperationFailure, TypeError, NoFile) as e:
                 break
 
+    def add_cv_scatterplot_to_zip(self, zipf,jobid):
+        try:
+            id = jobid + "_cv_scatterplot"
+            db_record = self.gridfs.get(id)
+            buffer = db_record.read()
+            project_name = db_record.project_name
+            if project_name:
+                filename = project_name.replace(" ", "_") + '_cv_scatterplot.png'
+            else:
+                filename = id + '.png'
+            zipf.writestr(filename, buffer)
+        except (OperationFailure, TypeError, NoFile) as e:
+            pass
+
     def add_occurrence_heatmap_to_zip(self, zipf,jobid):
         # heatmap_plot = self.gridfs.get(f'{self.jobid}_occurrence_heatmaps').read().decode('utf-8').split("&&")
         try:
@@ -214,6 +228,11 @@ class OutputServer:
                 self.add_occurrence_heatmap_to_zip(zipf, self.jobid)
             except (OperationFailure, TypeError, NoFile) as e:
                 pass # do we want to do anything if no heatmap plot present?
+          
+            try:
+                self.add_cv_scatterplot_to_zip(zipf, self.jobid)
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass # do we want to do anything if no cv_scatterplot present?
 
         zip_filename = 'nta_results_' + self.jobid + '.zip'
         response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')

@@ -107,6 +107,7 @@ class NtaRun:
         self.data_map = {}
         self.tracer_map = {}
         self.occurrence_heatmap_map = {}
+        self.cv_scatterplot_map = {}
         #self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         #self.new_download_dir = os.path.join(self.data_dir, "new")
         self.step = "Started"  # tracks the current step (for fail messages)
@@ -114,6 +115,7 @@ class NtaRun:
         #os.mkdir(self.new_download_dir)
         self.tracer_plots_out = []
         self.occurrence_heatmaps_out = []
+        self.cv_scatterplots_out = []
 
 
     def execute(self):
@@ -183,6 +185,7 @@ class NtaRun:
         # 2.1: Occurrence heatmap 
         self.occurrence_heatmap(self.dfs)  
 
+
         # 3: check tracers (optional)
         self.step = "Checking tracers"
         self.check_tracers()
@@ -190,6 +193,9 @@ class NtaRun:
             logger.info("Checked tracers.")
             #print(self.tracer_dfs_out)
         # counting occrrences of each feature after cleaning
+        
+       # 3.1: CV Scatterplog 
+        self.cv_scatterplot(self.dfs)  
 
         # 4: clean features
         self.step = "Cleaning features"
@@ -439,6 +445,218 @@ class NtaRun:
                                                  ionization='negative', id_start=1)
             self.data_map['Feature_statistics_negative'] = task_fun.column_sort_DFS(pd.merge(self.dfs[1], self.pass_through[1], how='left', on=['Feature_ID']))
         return
+
+    def cv_scatterplot(self, input_dfs):
+
+        # get dataframe 'Feature_statistics_positive' if it exists else None
+        dfPos = self.data_map['Feature_statistics_positive'] if 'Feature_statistics_positive' in self.data_map else None
+
+        # get dataframe 'Feature_statistics_negative' if it exists else None  
+        dfNeg = self.data_map['Feature_statistics_negative'] if 'Feature_statistics_negative' in self.data_map else None
+
+        dfTracer = self.data_map['Tracer_Sample_Results'] if 'Tracer_Sample_Results' in self.data_map else None
+        tracers = dfTracer[['Observed_Mass', 'Observed_Retention_Time']].copy()
+        tracers.rename({'Observed_Mass':'Mass'}, axis=1, inplace=True)
+        tracers.rename({'Observed_Retention_Time':'Retention_Time'}, axis=1, inplace=True)
+        tracers['spike'] = 1
+
+        # combine the two dataframes. Ignnore non-existing dataframes
+        dfCombined = pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False) if dfPos is not None and dfNeg is not None else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
+
+        # log the dataframes if not None
+        if dfPos is not None:
+            logger.info("dfPos= {}".format(dfPos.columns.values))
+        if dfNeg is not None:
+            logger.info("dfNeg= {}".format(dfNeg.columns.values))
+        if dfCombined is not None:
+            logger.info("dfCombined= {}".format(dfCombined.columns.values))
+        # Get sample headers                
+        all_headers = task_fun.parse_headers(dfCombined) 
+        logger.info("all_headers= {}".format(all_headers))
+        sam_headers = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
+        logger.info("sam_headers= {}".format(sam_headers))
+
+        # Isolate sample_groups from stats columns
+        prefixes = ['Mean_','Median_', 'CV_', 'STD_', 'N_Abun_', 'Replicate_Percent_']
+        sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
+        logger.info("sample_groups= {}".format(sample_groups))
+
+        # Blank_MDL - need to check what the blank samples are actually named
+        blank_strings = ['MB', 'Mb', 'mb', 'BLANK', 'Blank', 'blank', 'BLK', 'Blk']
+        blank_col = [item for item in sample_groups if any(x in item for x in blank_strings)]
+        logger.info("blank_col= {}".format(blank_col))
+
+        blank_mean = 'Mean_' + blank_col[0]
+        logger.info("blank_mean= {}".format(blank_mean))
+        blank_std = 'STD_' + blank_col[0]
+        logger.info("blank_std= {}".format(blank_std))
+
+        dfCombined['MDL'] = dfCombined[blank_mean] + 3*dfCombined[blank_std]
+        logger.info("dfCombined['MDL']= {}".format(dfCombined['MDL']))
+        logger.info("dfCombined= {}".format(dfCombined.columns.values))
+
+        # Find CV cols from df
+        cv_cols = ['CV_' + col for col in sample_groups]
+        logger.info("cv_cols= {}".format(cv_cols))
+        rper_cols = ['Replicate_Percent_' + col for col in sample_groups]
+        logger.info("rper_cols= {}".format(rper_cols))
+        med_cols = ['Median_' + col for col in sample_groups]
+        logger.info("med_cols= {}".format(med_cols))
+
+        # Grab CV cols from df
+        cv_df = dfCombined[cv_cols]
+        logger.info("cv_df= {}".format(cv_df.columns.values))
+        rper_df = dfCombined[rper_cols]
+        logger.info("rper_df= {}".format(rper_df.columns.values))
+        med_df = dfCombined[med_cols]
+        logger.info("med_df= {}".format(med_df.columns.values))
+
+        # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
+        for x,y,z in zip(cv_cols, rper_cols, med_cols):
+            # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
+            cv_df.loc[dfCombined[y]<0.67, x] = np.nan
+            cv_df.loc[dfCombined[z]<=dfCombined['MDL'], x] = np.nan
+        logger.info("#1 cv_df= {}".format(cv_df.values))
+
+        # Find CV cols from df
+        cv_cols = ['CV_' + col for col in sample_groups]
+
+        # Grab CV cols from df
+        cv_df = dfCombined[cv_cols]
+        cv_df['Mass'] = dfCombined['Mass']
+        cv_df['Retention_Time'] = dfCombined['Retention_Time']
+
+        # Find mean cols from df
+        mean_cols = ['Mean_' + col for col in sample_groups]
+
+        # Grab mean cols from df
+        mean_df = dfCombined[mean_cols]
+
+        li=[]
+        blanks=['MB1','BLK','EQ', 'Solvent', 'Blank', 'MB']
+        # stds=['Standard','Pooled', 'SSC', 'BSD', 'BS2', 'MSD', 'MS']
+
+        # Take each sample's CV and mean, store in dummy variable
+        # Add sample type, and whether or not native samples are present or not
+        # Append to list
+        for x in sample_groups:
+            cv = 'CV_'+x
+            mean = 'Mean_'+x
+
+            dum = pd.concat([cv_df[cv], mean_df[mean]], axis=1)
+            dum.rename({cv:'CV'}, axis=1, inplace=True)
+            dum.rename({mean:'Mean'}, axis=1, inplace=True)
+
+            dum['sample'] = x
+            dum['Mass'] = cv_df['Mass']
+            dum['Retention_Time'] = cv_df['Retention_Time']
+            
+            if any(i in x for i in blanks):
+                dum['type'] = 'blank'
+                # dum['native'] = 0
+            # elif any(i in x for i in stds):
+            #     dum['type'] = 'spiked'
+            #     dum['native'] = 1
+            else:
+                dum['type'] = 'sample'
+                # dum['native'] = 0
+            
+            li.append(dum)
+
+        # Concatenate plot, drop NAs
+        plot = pd.concat(li)
+        plot.dropna(axis=0, subset=['CV', 'Mean'], how='any', inplace=True)
+
+        # Merge df with tracers and utracers to get labels
+        plot2 = pd.merge(plot, tracers, how='left', on=['Mass', 'Retention_Time'])
+        # plot2 = pd.merge(plot2, utracers, how='left', on=['Mass', 'Retention_Time'])
+        plot2.replace(np.nan, 0, inplace=True)
+
+        f, axes = plt.subplots(1,2)
+
+        f.set_figheight(5)
+        f.set_figwidth(15)
+
+        palette = ['whitesmoke', 'firebrick']
+        sns.set_palette(palette, 2)
+
+        a=sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')),:].sort_values('spike'),
+                        x='Mean', y='CV', hue = 'spike',
+                        edgecolor = 'black', alpha = 0.5, ax = axes[0])
+
+        a.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
+        a.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
+        '''
+        sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')&(plot2['spike']==1)),:],
+                        x='Mean', y='CV', color="firebrick",
+                        edgecolor = 'black', alpha = 0.15, ax = axes[0])
+        '''
+        # legend = a.legend(title = "Features")
+        # legend.get_texts()[0].set_text('unknowns')
+        # legend.get_texts()[1].set_text('ISTDs')
+
+        # frame = legend.get_frame() #sets up for color, edge, and transparency
+        # frame.set_facecolor('lightgray') #color of legend
+        # frame.set_edgecolor('black') #edge color of legend
+        # frame.set_alpha(1) #deals with transparency
+
+
+
+        axes[0].set_title("ROAR CA WebApp Output: Blanks", weight='bold')
+        axes[0].set_xlabel("Mean Abundance", fontsize = 12)
+        axes[0].set_ylabel("CV", fontsize = 12)
+        axes[0].set_ylim(0, 4)
+        axes[0].set_xlim(100, 10000000000)
+        axes[0].set(xscale='log')
+
+        b=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')),:],
+                        x='Mean', y='CV', color="whitesmoke",
+                        edgecolor = 'black', alpha = 0.5, ax = axes[1])
+
+        c=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')&(plot2['spike']==1)),:],
+                        x='Mean', y='CV', color="firebrick",
+                        edgecolor = 'black', alpha = 0.5, ax = axes[1])
+
+        # palette = ['royalblue', 'gold']
+        # sns.set_palette(palette, 2)
+
+        # d=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')&(plot2['present']==1)),:],
+        #                 x='Mean', y='CV', hue = 'native',
+        #                 edgecolor = 'black', alpha = 0.5, ax = axes[1])
+
+        c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
+        c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
+
+        axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
+        axes[1].set_xlabel("Mean Abundance", fontsize = 12)
+        axes[1].set_ylabel("CV", fontsize = 12)
+        axes[1].set_ylim(0, 4)
+        axes[1].set_xlim(100, 10000000000)
+        axes[1].set(xscale='log')
+
+        # legend = d.legend(title = "Natives")
+        # legend.get_texts()[0].set_text('present')
+        # legend.get_texts()[1].set_text('spiked')
+
+        # frame = legend.get_frame() #sets up for color, edge, and transparency
+        # frame.set_facecolor('lightgray') #color of legend
+        # frame.set_edgecolor('black') #edge color of legend
+        # frame.set_alpha(1) #deals with transparency
+
+        # plt.savefig('./outputTest02/cv_scatterplot.png', bbox_inches='tight')
+
+        # Convert the plot to a bytes-like object
+        buffer = io.BytesIO()
+        plt.savefig(buffer)
+        # buffer.seek(0)
+
+        self.cv_scatterplots_out.append(buffer.getvalue())
+
+        self.cv_scatterplot_map['cv_scatterplot'] = self.cv_scatterplots_out[0]
+
+        project_name = self.parameters['project_name'][1] 
+        self.gridfs.put("&&".join(self.cv_scatterplot_map.keys()), _id=self.jobid + "_cv_scatterplots", encoding='utf-8', project_name = project_name)
+        self.mongo_save(self.cv_scatterplot_map['cv_scatterplot'], step='cv_scatterplot')
 
     def occurrence_heatmap(self, input_dfs):
 
