@@ -602,7 +602,8 @@ class NtaRun:
 
 
 
-        axes[0].set_title("ROAR CA WebApp Output: Blanks", weight='bold')
+        #axes[0].set_title("ROAR CA WebApp Output: Blanks", weight='bold')
+        axes[0].set_title("WebApp Output: Blanks", weight='bold')
         axes[0].set_xlabel("Mean Abundance", fontsize = 12)
         axes[0].set_ylabel("CV", fontsize = 12)
         axes[0].set_ylim(0, 4)
@@ -627,7 +628,8 @@ class NtaRun:
         c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
 
-        axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
+        #axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
+        axes[1].set_title("WebApp Output: Samples", weight='bold')
         axes[1].set_xlabel("Mean Abundance", fontsize = 12)
         axes[1].set_ylabel("CV", fontsize = 12)
         axes[1].set_ylim(0, 4)
