@@ -209,9 +209,13 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
 
+        # 4.1: Merge detection count columns onto tracers for export
+        self.step = "Merge detection counts onto tracers"
+        self.merge_columns_onto_tracers()
+
         # commented out for NTAW-94
         # # 5: create flags
-        # self.step = "Creating flags"
+        self.step = "Creating flags"
         # self.create_flags()
         if self.verbose:
             logger.info("Created flags.")
@@ -887,10 +891,11 @@ class NtaRun:
 
 
         # create summary table
-        if 'DTXSID' not in dft.columns:
-            dft['DTXSID'] = ''
-        dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
-        self.data_map['Tracers_Summary'] = dft
+        # AC 12/7/2023: commented out to move to function after clean_features
+        # if 'DTXSID' not in dft.columns:
+        #     dft['DTXSID'] = ''
+        # dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
+        # self.data_map['Tracers_Summary'] = dft
         
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
         # self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
@@ -924,6 +929,29 @@ class NtaRun:
         self.dfs = [fn.Blank_Subtract_Mean(df, index) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
         #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
         #self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
+        return
+    
+    def merge_columns_onto_tracers(self):
+        # self.data_map['Tracer_Sample_Results'] = task_fun.column_sort_TSR(dft)
+        
+        # Grab the tracer dataframe from self.data_map
+        dft = self.data_map['Tracer_Sample_Results']
+        
+        # Go through both negative and positive mode dataframes and merge iin the detection count columns based on Feature_ID if that mode of data exists
+        for i in range (len(self.dfs)):
+            if self.dfs[i] is not None:
+                tracer_df = pd.merge(dft, self.dfs[i][['Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']], how='left', on='Feature_ID')
+        
+        # Push new version of tracers dataframe back into data_map
+        self.data_map['Tracer_Sample_Results'] = tracer_df
+        
+
+        # create summary table
+        if 'DTXSID' not in tracer_df.columns:
+            tracer_df['DTXSID'] = ''
+        dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 
+        'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']]
+        self.data_map['Tracers_Summary'] = dft
         return
 
     def create_flags(self):
