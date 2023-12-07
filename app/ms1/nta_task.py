@@ -939,11 +939,20 @@ class NtaRun:
         dft = self.data_map['Tracer_Sample_Results']
         logger.info("dft: {}".format(dft.columns))
         
-        # Go through both negative and positive mode dataframes and merge in the detection count columns based on Feature_ID if that mode of data exists
+        # Go through both negative and positive mode dataframes combine when present into a new temp dataframe
         for i in range(len(self.dfs)):
             if self.dfs[i] is not None:
-                logger.info("self.dfs columns: {}".format(self.dfs[i].columns))
-                dft = pd.merge(dft, self.dfs[i][['Feature_ID', 'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']], how='left', on='Feature_ID')
+                #logger.info("self.dfs columns: {}".format(self.dfs[i].columns))
+                if i == 0: # If it is the first dataframe, set the temp_df as the first dataframe
+                    temp_df = self.dfs[i]
+                else:
+                    if temp_df is not None: # If we're on the second dataframe, check to see if the first dataframe had any data... if so concatenate to this dataframe
+                        temp_df = pd.concat(temp_df, self.dfs[1])
+                    else: # If there wasn't a first dataframe, then set the temp dataframe to the second dataframe
+                        temp_df = self.dfs[i]
+              
+        # Merge combined modes dataframe with tracer dataframe            
+        dft = pd.merge(dft, temp_df[['Feature_ID', 'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']], how='left', on='Feature_ID')
         
         # Push new version of tracers dataframe back into data_map
         self.data_map['Tracer_Sample_Results'] = dft
