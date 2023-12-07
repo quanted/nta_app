@@ -947,7 +947,7 @@ class NtaRun:
                     temp_df = self.dfs[i]
                 else:
                     if temp_df is not None: # If we're on the second dataframe, check to see if the first dataframe had any data... if so concatenate to this dataframe
-                        temp_df = pd.concat(temp_df, self.dfs[1])
+                        temp_df = pd.concat([temp_df, self.dfs[1]], axis=0)
                     else: # If there wasn't a first dataframe, then set the temp dataframe to the second dataframe
                         temp_df = self.dfs[i]
               
