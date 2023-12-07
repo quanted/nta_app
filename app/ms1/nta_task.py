@@ -940,15 +940,15 @@ class NtaRun:
         # Go through both negative and positive mode dataframes and merge iin the detection count columns based on Feature_ID if that mode of data exists
         for i in range (len(self.dfs)):
             if self.dfs[i] is not None:
-                tracer_df = pd.merge(dft, self.dfs[i][['Feature_ID', 'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']], how='left', on='Feature_ID')
+                dft = pd.merge(dft, self.dfs[i][['Feature_ID', 'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']], how='left', on='Feature_ID')
         
         # Push new version of tracers dataframe back into data_map
-        self.data_map['Tracer_Sample_Results'] = tracer_df
+        self.data_map['Tracer_Sample_Results'] = dft
         
 
         # create summary table
         if 'DTXSID' not in tracer_df.columns:
-            tracer_df['DTXSID'] = ''
+            dft['DTXSID'] = ''
         dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 
         'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']]
         self.data_map['Tracers_Summary'] = dft
