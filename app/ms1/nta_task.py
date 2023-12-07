@@ -947,7 +947,7 @@ class NtaRun:
         
 
         # create summary table
-        if 'DTXSID' not in tracer_df.columns:
+        if 'DTXSID' not in dft.columns:
             dft['DTXSID'] = ''
         dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 
         'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']]
