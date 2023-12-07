@@ -537,7 +537,7 @@ def column_sort_TSR(df_in):
 ''' NEW FUNCTION FOR CLEANING FEATURES THAT ALSO DOCUMENTS FLAGS IN A SEPARATE DATAFRAME - DETECTION COUNT IS MIGRATING TO THIS FUNCTION
     TMF 10/27/23 '''
     
-def clean_features(df_in, controls, tracer_df=False):  # a method that drops rows based on conditions
+def clean_features(df_in, controls):  # a method that drops rows based on conditions
     # Make dataframe copy, create docs in df's image
     df = df_in.copy()
     df['AnySamplesDropped'] = np.nan
@@ -606,20 +606,13 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     # Create a mask for docs based on sample-level MDL threshold 
     # Median Masks
     MDL_all_mask = pd.DataFrame().reindex_like(df[Mean])
-    if tracer_df:
-        for x in Mean:
-            MDL_all_mask[x] = (df[x] > df['BlkStd_cutoff']) | (~df['Tracer_chemical_match'].isnull())  
+
+    for x in Mean:
+        MDL_all_mask[x] = (df[x] > df['BlkStd_cutoff']) 
         
-        MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
-        for x in Mean_Samples:
-            MDL_sample_mask[x] = (df[x] > df['BlkStd_cutoff']) | (~df['Tracer_chemical_match'].isnull())
-    else:
-        for x in Mean:
-            MDL_all_mask[x] = (df[x] > df['BlkStd_cutoff']) 
-        
-        MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
-        for x in Mean_Samples:
-            MDL_sample_mask[x] = (df[x] > df['BlkStd_cutoff'])
+    MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
+    for x in Mean_Samples:
+        MDL_sample_mask[x] = (df[x] > df['BlkStd_cutoff'])
 
     '''CALCULATE DETECTION COUNTS'''
     # Calculate Detection_Count
