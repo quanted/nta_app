@@ -778,6 +778,7 @@ class NtaRun:
 
         # Manually specify colorbar labelling after it's been generated
         colorbar = ax.collections[0].colorbar
+        colorbar.ax.tick_params(labelsize=24)
         colorbar.set_ticks([-0.667, 0, 0.667])
         colorbar.set_ticklabels(['non detect ('+str(nan_.sum().sum())+')', 'CV <=1.25 ('+str(below.sum().sum())+')', 'CV >1.25 ('+str(above.sum().sum())+')'])
 
