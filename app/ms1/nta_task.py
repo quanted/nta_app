@@ -936,6 +936,7 @@ class NtaRun:
         
         # Grab the tracer dataframe from self.data_map
         dft = self.data_map['Tracer_Sample_Results']
+        logger.info("dft: {}".format(dft.columns))
         
         # Go through both negative and positive mode dataframes and merge in the detection count columns based on Feature_ID if that mode of data exists
         for i in range(len(self.dfs)):
@@ -945,7 +946,8 @@ class NtaRun:
         
         # Push new version of tracers dataframe back into data_map
         self.data_map['Tracer_Sample_Results'] = dft
-        
+
+        logger.info("dft post-merge: {}".format(dft.columns))
 
         # create summary table
         if 'DTXSID' not in dft.columns:
