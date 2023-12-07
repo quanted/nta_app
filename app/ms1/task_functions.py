@@ -537,7 +537,7 @@ def column_sort_TSR(df_in):
 ''' NEW FUNCTION FOR CLEANING FEATURES THAT ALSO DOCUMENTS FLAGS IN A SEPARATE DATAFRAME - DETECTION COUNT IS MIGRATING TO THIS FUNCTION
     TMF 10/27/23 '''
     
-def clean_features(df_in, controls):  # a method that drops rows based on conditions
+def clean_features(df_in, controls, tracer_df=False):  # a method that drops rows based on conditions
     # Make dataframe copy, create docs in df's image
     df = df_in.copy()
     df['AnySamplesDropped'] = np.nan
