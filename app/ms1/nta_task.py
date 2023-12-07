@@ -937,9 +937,10 @@ class NtaRun:
         # Grab the tracer dataframe from self.data_map
         dft = self.data_map['Tracer_Sample_Results']
         
-        # Go through both negative and positive mode dataframes and merge iin the detection count columns based on Feature_ID if that mode of data exists
-        for i in range (len(self.dfs)):
+        # Go through both negative and positive mode dataframes and merge in the detection count columns based on Feature_ID if that mode of data exists
+        for i in range(len(self.dfs)):
             if self.dfs[i] is not None:
+                logger.info("self.dfs columns: {}".format(self.dfs[i].columns))
                 dft = pd.merge(dft, self.dfs[i][['Feature_ID', 'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']], how='left', on='Feature_ID')
         
         # Push new version of tracers dataframe back into data_map
