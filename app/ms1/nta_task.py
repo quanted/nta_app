@@ -952,7 +952,7 @@ class NtaRun:
                         temp_df = self.dfs[i]
               
         # Merge combined modes dataframe with tracer dataframe            
-        dft = pd.merge(dft, temp_df[['Feature_ID', 'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']], how='left', on='Feature_ID')
+        dft = pd.merge(dft, temp_df[['Feature_ID', 'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']], how='left', on='Feature_ID')
         
         # Push new version of tracers dataframe back into data_map
         self.data_map['Tracer_Sample_Results'] = dft
@@ -963,7 +963,7 @@ class NtaRun:
         if 'DTXSID' not in dft.columns:
             dft['DTXSID'] = ''
         dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 
-        'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)']]
+        'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']]
         self.data_map['Tracers_Summary'] = dft
         return
 
@@ -987,7 +987,7 @@ class NtaRun:
         self.data_map['Filter_documentation'] = self.doc_combined
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool)
-        self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Detection_Count(all_samples)','Detection_Count(all_samples)(%)'])
+        self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
         self.data_map['Cleaned_feature_results_reduced'] = reduced_file(self.mpp_ready)
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save = True):

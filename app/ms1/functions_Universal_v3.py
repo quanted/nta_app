@@ -512,14 +512,14 @@ def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
     # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
     if 'Formula' in dft.columns:
         if tracer_df:
-            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
         else:
-            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
     else:
         if tracer_df:
-            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
         else:
-            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(all_samples)','Detection_Count(all_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
 
     return dft
 

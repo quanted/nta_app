@@ -608,30 +608,31 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     MDL_all_mask = pd.DataFrame().reindex_like(df[Mean])
 
     for x in Mean:
-        #MDL_all_mask[x] = (df[x] > df['BlkStd_cutoff'])
-        MDL_all_mask[x] = (~df[x].isnull())
+        # Count the number of occurrences independent of MRL
+        MDL_all_mask[x] = df[x].count(axis=1)
         
     MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
     for x in Mean_Samples:
+        # Count the number of detects
         MDL_sample_mask[x] = (df[x] > df['BlkStd_cutoff'])
 
     '''CALCULATE DETECTION COUNTS'''
     # Calculate Detection_Count
-    df['Detection_Count(all_samples)'] = MDL_all_mask.sum(axis=1)
+    df['Occurrence_Count(all_samples)'] = MDL_all_mask.sum(axis=1)
     df['Detection_Count(non-blank_samples)'] = MDL_sample_mask.sum(axis=1)
     # total number of samples (subtract 1 for the compound name)
     mean_total = len(Mean)
     mean_samples = len(Mean_Samples)
-    # calculate percentage of samples that have a value and store in new column 'detection_Count(all_samples)(%)'
-    df['Detection_Count(all_samples)(%)'] = (df['Detection_Count(all_samples)'] / mean_total) * 100
-    df['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)'].round(1)
-    # calculate percentage of samples that have a value and store in new column 'detection_Count(non-blank_samples)(%)'
+    # calculate percentage of samples that have a value and store in new column 'Occurrence_Count(all_samples)(%)'
+    df['Occurrence_Count(all_samples)(%)'] = (df['Occurrence_Count(all_samples)'] / mean_total) * 100
+    df['Occurrence_Count(all_samples)(%)'] = df['Occurrence_Count(all_samples)(%)'].round(1)
+    # calculate percentage of samples that have a value and store in new column 'Detection_Count(non-blank_samples)(%)'
     df['Detection_Count(non-blank_samples)(%)'] = (df['Detection_Count(non-blank_samples)'] / mean_samples) * 100
     df['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)'].round(1)
     # Assign to docs
-    docs['Detection_Count(all_samples)'] = df['Detection_Count(all_samples)']
+    docs['Occurrence_Count(all_samples)'] = df['Occurrence_Count(all_samples)']
     docs['Detection_Count(non-blank_samples)'] = df['Detection_Count(non-blank_samples)']
-    docs['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)']
+    docs['Occurrence_Count(all_samples)(%)'] = df['Occurrence_Count(all_samples)(%)']
     docs['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)']
         
     '''MDL/ND FLAG'''
