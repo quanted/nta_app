@@ -215,7 +215,7 @@ def Blank_Subtract_Mean(df_in):
     # Iterate through sample means, subtracting blank mean into new column 
     for mean in Mean_Samples:
         # Create new column, do subtraction
-        df["BlankSub_"+str(mean)] = df[mean].sub(df[Mean_MB],axis=0)
+        df["BlankSub_"+str(mean)] = df[mean].sub(df[Mean_MB[0]],axis=0)
         # Clip values at 0, replace 0s with NaN
         df["BlankSub_"+str(mean)] = df["BlankSub_"+str(mean)].clip(lower=0).replace({0:np.nan})
     return df
