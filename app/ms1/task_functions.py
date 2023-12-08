@@ -671,9 +671,11 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True) 
     # Keep samples where the feature doesn't exist in the blank OR at least one sample mean exceeds MDL
     if tracer_df:
-        df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]
+        #df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]
+        df = df[((df[Replicate_Percent_MB[0]] == 0) & (df[Mean_Samples].count(axis=1) > 0)) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]
     else:
-        df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]
+        #df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]
+        df = df[((df[Replicate_Percent_MB[0]] == 0) & (df[Mean_Samples].count(axis=1) > 0)) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]
     
     return df, docs
 
