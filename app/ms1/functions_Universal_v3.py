@@ -201,32 +201,23 @@ def Blank_Subtract_Median(df,index):
     return df
 
 
-def Blank_Subtract_Mean(df,index):
+def Blank_Subtract_Mean(df_in):
     """
     Calculate the mean blank intensity for each feature and subtract that value from each sample's mean value for
     that feature
     """
-    Abundance = [[],[]]
-    Headers = [0,0]
-    Blanks = [[],[]]
-    Mean = [[],[]]
-    Headers[index] = parse_headers(df,index)
-    blanks_str = BLANKS
-    Abundance[index] = [item for sublist in Headers[index] for item in sublist if (len(sublist)>1) & (not any(x in item for x in blanks_str))]
-    # On with the agony of subtracting the MB median from Samples
-    # Lines below commented out to adjust for blank definition "MB" rather than "MB_"
-    # Blanks[index] = df.columns[(df.columns.str.contains(pat ='MB_|blank|blanks|BLANK|Blank')) &
-    #                           (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio') == False)].tolist()
-    
-    Blanks[index] = df.columns[(df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank')) &
-                               (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio|Replicate_Percent') == False)].tolist()
-    Mean[index] = df.columns[(df.columns.str.contains(pat ='Mean_')==True) & (df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank')==False)].tolist()
-    df['Mean_ALLMB'] = df[Blanks[index]].mean(axis=1,skipna=True).round(0).fillna(0)  # instead using mean calc in statistics
-    #df[Abundance[index]] = df[Abundance[index]].sub(df['Mean_ALLMB'],axis=0)
-    for mean in Mean[index]:
-        df["BlankSub_"+str(mean)] = df[mean].sub(df['Mean_ALLMB'],axis=0)
+    df = df_in.copy()
+    # Define lists; blanks, means, sample means, and blank means
+    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
+    Mean = df.columns[df.columns.str.contains(pat ='Mean_')].tolist()
+    Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+    Mean_MB = [md for md in Mean if any(x in md for x in blanks)]   
+    # Iterate through sample means, subtracting blank mean into new column 
+    for mean in Mean_Samples:
+        # Create new column, do subtraction
+        df["BlankSub_"+str(mean)] = df[mean].sub(df[Mean_MB],axis=0)
+        # Clip values at 0, replace 0s with NaN
         df["BlankSub_"+str(mean)] = df["BlankSub_"+str(mean)].clip(lower=0).replace({0:np.nan})
-    #df[Abundance[index]] = df[Abundance[index]].clip(lower=0).replace({0:np.nan})
     return df
 
 

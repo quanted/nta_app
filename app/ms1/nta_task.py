@@ -927,7 +927,7 @@ class NtaRun:
         self.docs = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[1] if df is not None else None for index, df in enumerate(self.dfs)]
         self.dfs = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[0] if df is not None else None for index, df in enumerate(self.dfs)]
         #self.dfs, self.docs = map(list, zip(*[task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]))
-        self.dfs = [fn.Blank_Subtract_Mean(df, index) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
+        self.dfs = [fn.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
         #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
         #self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
         return
