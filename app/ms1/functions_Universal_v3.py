@@ -219,7 +219,7 @@ def Blank_Subtract_Mean(df,index):
     #                           (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio') == False)].tolist()
     
     Blanks[index] = df.columns[(df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank')) &
-                               (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio') == False)].tolist()
+                               (df.columns.str.contains(pat='Mean|Median|CV|STD|N_Abun|ratio|Replicate_Percent') == False)].tolist()
     Mean[index] = df.columns[(df.columns.str.contains(pat ='Mean_')==True) & (df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank')==False)].tolist()
     df['Mean_ALLMB'] = df[Blanks[index]].mean(axis=1,skipna=True).round(0).fillna(0)  # instead using mean calc in statistics
     #df[Abundance[index]] = df[Abundance[index]].sub(df['Mean_ALLMB'],axis=0)
