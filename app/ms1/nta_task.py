@@ -960,7 +960,7 @@ class NtaRun:
         if 'DTXSID' not in dft.columns:
             dft['DTXSID'] = ''
         dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample', 
-        'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']]
+        'Occurrence_Count(across_all_replicates)', 'Occurrence_Count(across_all_replicates)(%)']]
         self.data_map['Tracers_Summary'] = dft
         return
     
