@@ -663,6 +663,8 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     docs['Feature_removed'] = np.where((df[CV_Samples] > controls[1]).all(axis=1), 'CV', docs['Feature_removed'])
     # Features dropped because all samples are below replicate threshold
     docs['Feature_removed'] = np.where((df[Replicate_Percent_Samples] < controls[0]).all(axis=1), 'R', docs['Feature_removed'])
+    # Label features that don't have anything in the blank and have nothing above MRL as removed by CV/R filters
+    docs['Feature_removed'] = np.where(((df[Replicate_Percent_MB[0]] == 0) & (df[Mean_Samples].count(axis=1) > 0)), 'CV/R', docs['Feature_removed'])
     
     
     '''DROP FEATURES FROM DF'''
@@ -672,8 +674,6 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True) 
     
     # Keep samples where the feature doesn't exist in the blank OR at least one sample mean exceeds MDL
-    # Label features that don't have anything in the blank and have nothing above MRL as removed by CV/R filters
-    docs['Feature_removed'] = np.where(((df[Replicate_Percent_MB[0]] == 0) & (df[Mean_Samples].count(axis=1) > 0)), 'CV/R', docs['Feature_removed'])
     # Remove these features from the feature results
     df = df[((df[Replicate_Percent_MB[0]] == 0) & (df[Mean_Samples].count(axis=1) > 0)) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]
     
