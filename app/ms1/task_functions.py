@@ -609,7 +609,7 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
 
     for x in Mean:
         # Count the number of occurrences independent of MRL
-        MDL_all_mask[x] = df[x].count(axis=1)
+        MDL_all_mask[x] = df[x].notnull()
         
     MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
     for x in Mean_Samples:
