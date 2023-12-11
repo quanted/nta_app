@@ -940,16 +940,12 @@ class NtaRun:
         logger.info("dft: {}".format(dft.columns))
         
         # Go through both negative and positive mode dataframes combine when present into a new temp dataframe
-        for i in range(len(self.dfs)):
-            if self.dfs[i] is not None:
-                #logger.info("self.dfs columns: {}".format(self.dfs[i].columns))
-                if i == 0: # If it is the first dataframe, set the temp_df as the first dataframe
-                    temp_df = self.dfs[i]
-                else:
-                    if temp_df is not None: # If we're on the second dataframe, check to see if the first dataframe had any data... if so concatenate to this dataframe
-                        temp_df = pd.concat([temp_df, self.dfs[1]], axis=0)
-                    else: # If there wasn't a first dataframe, then set the temp dataframe to the second dataframe
-                        temp_df = self.dfs[i]
+        if self.dfs[0] is not None and self.dfs[1] is not None:
+            temp_df = pd.concat([self.dfs[0], self.dfs[1]], axis=0)
+        elif self.dfs[0] is not None:
+            temp_df = self.dfs[0]
+        else:
+            temp_df = self.dfs[1]
               
         # Merge combined modes dataframe with tracer dataframe            
         dft = pd.merge(dft, temp_df[['Feature_ID', 'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']], how='left', on='Feature_ID')
