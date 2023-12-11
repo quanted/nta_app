@@ -221,9 +221,14 @@ def Blank_Subtract_Mean(df_in):
     return df
 
 
+# Moving this to task_functions; TMF 12/11/23
 def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm): #a method to query and save the features with tracers criteria
     df1 = df.copy()
     df2 = tracers_file.copy() #pd.read_csv(tracers_file,comment='#',na_values= 1 | 0)
+    
+    # Get sample names
+    all_headers = parse_headers(df1)
+    samples = [item for subgroup in all_headers for item in subgroup if len(subgroup) > 2]
     
     # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
     df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('ESI+','Esi+')
@@ -243,6 +248,11 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
     else:
         dft['Matches'] = np.where((abs(dft['Monoisotopic_Mass']-dft['Observed_Mass'])<=Mass_Difference) & (abs(dft['Retention_Time']-dft['Observed_Retention_Time'])<=Retention_Difference) ,1,0)
     dft = dft[dft['Matches']==1]
+    
+    # Caculate Occurrence Count and % in tracers
+    dft['Occurrence_Count(across_all_replicates)'] = dft[[samples]].count(axis=1)
+    dft['Occurrence_Count(across_all_replicates)(%)'] = (dft['Occurrence_Count(across_all_replicates)'] / len(samples)) * 100
+    
     # Get 'Matches' info into main df
     dum = dft[['Observed_Mass', 'Observed_Retention_Time', 'Matches']].copy()
     dfc = pd.merge(df1, dum, how='left', on=['Observed_Mass', 'Observed_Retention_Time'])
@@ -512,14 +522,14 @@ def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
     # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
     if 'Formula' in dft.columns:
         if tracer_df:
-            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
         else:
-            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
     else:
         if tracer_df:
-            dft = dft[['Feature_ID', 'Mass','Retention_Time','Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
         else:
-            dft = dft[['Feature_ID', 'Mass','Retention_Time','Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
 
     return dft
 

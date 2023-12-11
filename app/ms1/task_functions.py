@@ -532,6 +532,54 @@ def column_sort_TSR(df_in):
     return df_reorg
 
 
+
+'''FUNCTION FOR CHECKING TRACERS'''
+
+''' UPDATED FUNCTION FOR CHECKING TRACERS THAT APPENDS 'Tracer_chemical_match' TO THE DFS AND CALCULATES OCCURRENCE COUNT
+    TMF 12/11/23 '''
+
+def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm): #a method to query and save the features with tracers criteria
+    df1 = df.copy()
+    df2 = tracers_file.copy() #pd.read_csv(tracers_file,comment='#',na_values= 1 | 0)
+    
+    # Get sample names
+    all_headers = parse_headers(df1)
+    samples = [item for subgroup in all_headers for item in subgroup if len(subgroup) > 2]
+    
+    # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
+    df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('ESI+','Esi+')
+    df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('esi+','Esi+')
+    df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('ESI-','Esi-')
+    df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('esi-','Esi-')
+    
+    #b_Statistics[index] = [B + '_x' for B in Statistics[index]]
+    df2['Rounded_Mass'] = df2['Monoisotopic_Mass'].round(0)
+    #df2['Rounded_RT'] = df2['Retention_Time'].round(0)
+    df1.rename(columns = {'Mass':'Observed_Mass','Retention_Time':'Observed_Retention_Time'},inplace=True)
+    df1['Rounded_Mass'] = df1['Observed_Mass'].round(0)
+    #df['Rounded_RT'] = df['Observed_Retention_Time'].round(0)
+    dft = pd.merge(df2,df1,how='left',on=['Rounded_Mass','Ionization_Mode'])
+    if ppm:
+        dft['Matches'] = np.where((abs((dft['Monoisotopic_Mass']-dft['Observed_Mass'])/dft['Monoisotopic_Mass'])*1000000<=Mass_Difference) & (abs(dft['Retention_Time']-dft['Observed_Retention_Time'])<=Retention_Difference) ,1,0)
+    else:
+        dft['Matches'] = np.where((abs(dft['Monoisotopic_Mass']-dft['Observed_Mass'])<=Mass_Difference) & (abs(dft['Retention_Time']-dft['Observed_Retention_Time'])<=Retention_Difference) ,1,0)
+    dft = dft[dft['Matches']==1]
+    
+    # Caculate Occurrence Count and % in tracers
+    dft['Occurrence_Count(across_all_replicates)'] = dft[[samples]].count(axis=1)
+    dft['Occurrence_Count(across_all_replicates)(%)'] = (dft['Occurrence_Count(across_all_replicates)'] / len(samples)) * 100
+    
+    # Get 'Matches' info into main df
+    dum = dft[['Observed_Mass', 'Observed_Retention_Time', 'Matches']].copy()
+    dfc = pd.merge(df1, dum, how='left', on=['Observed_Mass', 'Observed_Retention_Time'])
+    dfc.rename(columns = {'Observed_Mass':'Mass','Observed_Retention_Time':'Retention_Time', 'Matches':'Tracer_chemical_match'},inplace=True)
+    
+    dft.drop(['Rounded_Mass','Matches'],axis=1,inplace=True)
+    
+    return dft, dfc
+
+
+
 '''FUNCTION FOR CLEANING FEATURES'''
 
 ''' NEW FUNCTION FOR CLEANING FEATURES THAT ALSO DOCUMENTS FLAGS IN A SEPARATE DATAFRAME - DETECTION COUNT IS MIGRATING TO THIS FUNCTION
@@ -605,11 +653,10 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     docs['BlkStd_cutoff'] = df['BlkStd_cutoff']  
     # Create a mask for docs based on sample-level MDL threshold 
     # Median Masks
-    MDL_all_mask = pd.DataFrame().reindex_like(df[Mean])
-
-    for x in Mean:
+    #MDL_all_mask = pd.DataFrame().reindex_like(df[Mean])
+    #for x in Mean:
         # Count the number of occurrences independent of MRL
-        MDL_all_mask[x] = df[x].notnull()
+        #MDL_all_mask[x] = df[x].notnull()
         
     MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
     for x in Mean_Samples:
@@ -618,21 +665,21 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
 
     '''CALCULATE DETECTION COUNTS'''
     # Calculate Detection_Count
-    df['Occurrence_Count(all_samples)'] = MDL_all_mask.sum(axis=1)
+    #df['Occurrence_Count(all_samples)'] = MDL_all_mask.sum(axis=1)
     df['Detection_Count(non-blank_samples)'] = MDL_sample_mask.sum(axis=1)
     # total number of samples (subtract 1 for the compound name)
-    mean_total = len(Mean)
+    #mean_total = len(Mean)
     mean_samples = len(Mean_Samples)
     # calculate percentage of samples that have a value and store in new column 'Occurrence_Count(all_samples)(%)'
-    df['Occurrence_Count(all_samples)(%)'] = (df['Occurrence_Count(all_samples)'] / mean_total) * 100
-    df['Occurrence_Count(all_samples)(%)'] = df['Occurrence_Count(all_samples)(%)'].round(1)
+    #df['Occurrence_Count(all_samples)(%)'] = (df['Occurrence_Count(all_samples)'] / mean_total) * 100
+    #df['Occurrence_Count(all_samples)(%)'] = df['Occurrence_Count(all_samples)(%)'].round(1)
     # calculate percentage of samples that have a value and store in new column 'Detection_Count(non-blank_samples)(%)'
     df['Detection_Count(non-blank_samples)(%)'] = (df['Detection_Count(non-blank_samples)'] / mean_samples) * 100
     df['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)'].round(1)
     # Assign to docs
-    docs['Occurrence_Count(all_samples)'] = df['Occurrence_Count(all_samples)']
+    #docs['Occurrence_Count(all_samples)'] = df['Occurrence_Count(all_samples)']
     docs['Detection_Count(non-blank_samples)'] = df['Detection_Count(non-blank_samples)']
-    docs['Occurrence_Count(all_samples)(%)'] = df['Occurrence_Count(all_samples)(%)']
+    #docs['Occurrence_Count(all_samples)(%)'] = df['Occurrence_Count(all_samples)(%)']
     docs['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)']
         
     '''MDL/ND FLAG'''

@@ -210,8 +210,8 @@ class NtaRun:
             #print(self.dfs[0])
 
         # 4.1: Merge detection count columns onto tracers for export
-        self.step = "Merge detection counts onto tracers"
-        self.merge_columns_onto_tracers()
+        #self.step = "Merge detection counts onto tracers"
+        #self.merge_columns_onto_tracers()
 
         # commented out for NTAW-94
         # # 5: create flags
@@ -809,8 +809,8 @@ class NtaRun:
             logger.info("Tracer file found, checking tracers.")
         ppm = self.parameters['mass_accuracy_units_tr'][1]== 'ppm'
         mass_accuracy_tr = float(self.parameters['mass_accuracy_tr'][1])
-        self.tracer_dfs_out = [fn.check_feature_tracers(df, self.tracer_df, mass_accuracy_tr, float(self.parameters['rt_accuracy_tr'][1]), ppm)[0] if df is not None else None for index, df in enumerate(self.dfs)]
-        self.dfs = [fn.check_feature_tracers(df, self.tracer_df, mass_accuracy_tr, float(self.parameters['rt_accuracy_tr'][1]), ppm)[1] if df is not None else None for index, df in enumerate(self.dfs)]
+        self.tracer_dfs_out = [task_fun.check_feature_tracers(df, self.tracer_df, mass_accuracy_tr, float(self.parameters['rt_accuracy_tr'][1]), ppm)[0] if df is not None else None for index, df in enumerate(self.dfs)]
+        self.dfs = [task_fun.check_feature_tracers(df, self.tracer_df, mass_accuracy_tr, float(self.parameters['rt_accuracy_tr'][1]), ppm)[1] if df is not None else None for index, df in enumerate(self.dfs)]
         #logger.info("self.tracer_dfs_out[0].shape = {}".format(self.tracer_dfs_out[0].shape))
         
         self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
@@ -932,6 +932,7 @@ class NtaRun:
         #self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
         return
     
+    '''
     def merge_columns_onto_tracers(self):
         # self.data_map['Tracer_Sample_Results'] = task_fun.column_sort_TSR(dft)
         
@@ -962,6 +963,7 @@ class NtaRun:
         'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']]
         self.data_map['Tracers_Summary'] = dft
         return
+    '''
 
     def create_flags(self):
         self.dfs = [fn.flags(df) if df is not None else None for df in self.dfs]
@@ -983,7 +985,7 @@ class NtaRun:
         self.data_map['Filter_documentation'] = self.doc_combined
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool)
-        self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
+        #self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
         self.data_map['Cleaned_feature_results_reduced'] = reduced_file(self.mpp_ready)
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save = True):
