@@ -567,7 +567,7 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
     dft = dft[dft['Matches']==1]
     
     # Caculate Occurrence Count and % in tracers
-    dft['Occurrence_Count(across_all_replicates)'] = dft[[samples]].count(axis=1)
+    dft['Occurrence_Count(across_all_replicates)'] = dft[samples].count(axis=1)
     dft['Occurrence_Count(across_all_replicates)(%)'] = (dft['Occurrence_Count(across_all_replicates)'] / len(samples)) * 100
     
     # Get 'Matches' info into main df
