@@ -685,63 +685,63 @@ class NtaRun:
 
         # Get sample headers                
         all_headers = task_fun.parse_headers(dfCombined) 
-        logger.info("all_headers= {}".format(all_headers))
+        #logger.info("all_headers= {}".format(all_headers))
         sam_headers = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
-        logger.info("sam_headers= {}".format(sam_headers))
+        #logger.info("sam_headers= {}".format(sam_headers))
 
         # Isolate sample_groups from stats columns
         prefixes = ['Mean_','Median_', 'CV_', 'STD_', 'N_Abun_', 'Replicate_Percent_']
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
-        logger.info("sample_groups= {}".format(sample_groups))
+        #logger.info("sample_groups= {}".format(sample_groups))
 
         # Blank_MDL - need to check what the blank samples are actually named
         blank_strings = ['MB', 'Mb', 'mb', 'BLANK', 'Blank', 'blank', 'BLK', 'Blk']
         blank_col = [item for item in sample_groups if any(x in item for x in blank_strings)]
-        logger.info("blank_col= {}".format(blank_col))
+        #logger.info("blank_col= {}".format(blank_col))
 
         blank_mean = 'Mean_' + blank_col[0]
-        logger.info("blank_mean= {}".format(blank_mean))
+        #logger.info("blank_mean= {}".format(blank_mean))
         blank_std = 'STD_' + blank_col[0]
-        logger.info("blank_std= {}".format(blank_std))
+        #logger.info("blank_std= {}".format(blank_std))
 
         dfCombined['MDL'] = dfCombined[blank_mean] + 3*dfCombined[blank_std]
-        logger.info("dfCombined['MDL']= {}".format(dfCombined['MDL']))
-        logger.info("dfCombined= {}".format(dfCombined.columns.values))
+        #logger.info("dfCombined['MDL']= {}".format(dfCombined['MDL']))
+        #logger.info("dfCombined= {}".format(dfCombined.columns.values))
 
         # Find CV cols from df
         cv_cols = ['CV_' + col for col in sample_groups]
         logger.info("cv_cols= {}".format(cv_cols))
         rper_cols = ['Replicate_Percent_' + col for col in sample_groups]
-        logger.info("rper_cols= {}".format(rper_cols))
+        #logger.info("rper_cols= {}".format(rper_cols))
         med_cols = ['Median_' + col for col in sample_groups]
-        logger.info("med_cols= {}".format(med_cols))
+        #logger.info("med_cols= {}".format(med_cols))
 
         # Grab CV cols from df
         cv_df = dfCombined[cv_cols]
         logger.info("cv_df= {}".format(cv_df.columns.values))
         rper_df = dfCombined[rper_cols]
-        logger.info("rper_df= {}".format(rper_df.columns.values))
+        #logger.info("rper_df= {}".format(rper_df.columns.values))
         med_df = dfCombined[med_cols]
-        logger.info("med_df= {}".format(med_df.columns.values))
+        #logger.info("med_df= {}".format(med_df.columns.values))
 
         # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
         for x,y,z in zip(cv_cols, rper_cols, med_cols):
             # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
             cv_df.loc[dfCombined[y]<0.67, x] = np.nan
             cv_df.loc[dfCombined[z]<=dfCombined['MDL'], x] = np.nan
-        logger.info("#1 cv_df= {}".format(cv_df.values))
+        #logger.info("#1 cv_df= {}".format(cv_df.values))
 
         # Add sum of Trues for condition applied to cv dataframe
         cv_df['below count'] = (cv_df <= 1.25).sum(axis=1)
-        logger.info("#2 cv_df= {}".format(cv_df.values))
+        #logger.info("#2 cv_df= {}".format(cv_df.values))
 
         # Sort values by medians
         cv_df = cv_df.sort_values('below count')
-        logger.info("#3 cv_df= {}".format(cv_df.values))
+        #logger.info("#3 cv_df= {}".format(cv_df.values))
 
         # Remove median column
         del cv_df[cv_df.columns[-1]]
-        logger.info("#4 cv_df= {}".format(cv_df.values))
+        #logger.info("#4 cv_df= {}".format(cv_df.values))
 
         # Create masks for CV cutoffs
         above = cv_df > 1.25

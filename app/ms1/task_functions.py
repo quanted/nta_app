@@ -545,7 +545,7 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
     # Get sample names
     prefixes = ['Mean_','Median_', 'CV_', 'STD_', 'N_Abun_', 'Replicate_Percent_', 'Detection']  
     all_headers = parse_headers(df1)
-    samples = [item for subgroup in all_headers for item in subgroup if ((len(subgroup) > 2) and not any(x in item for x in prefixes))]
+    samples = [item for subgroup in all_headers for item in subgroup if ((len(subgroup) > 1) and not any(x in item for x in prefixes))]
     
     # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
     df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('ESI+','Esi+')
@@ -777,9 +777,9 @@ def combine_doc(doc, dupe, tracer_df=False):
         dfc = dupe.copy()
     
     if tracer_df:
-        to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed', 'Tracer_chemical_match'] + Mean
+        to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'AnySamplesDropped', 'Feature_removed', 'Tracer_chemical_match'] + Mean
     else:
-        to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'Feature_removed'] + Mean
+        to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'AnySamplesDropped', 'Feature_removed'] + Mean
     
     dfc = dfc[to_keep]
     dfc.rename({'BlkStd_cutoff':'MRL'}, axis=1, inplace=True)
