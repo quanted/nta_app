@@ -37,16 +37,17 @@ def fix_names(df,index): # parse the Dataframe into a numpy array
         if 'Ionization_mode' in df.columns:
             df.rename(columns = {'Ionization_mode':'Ionization_Mode'},inplace=True)
         #df.drop(['CompositeSpectrum','Compound_Name'],axis=1)
-        if 'Compound_Name' in df.columns:
-            df.drop(['Compound_Name'],axis=1)
-        Headers = parse_headers(df,index)
-        Abundance = [item for sublist in Headers for item in sublist if len(sublist)>1]
-        Samples= [x for x in Abundance]
-        NewSamples = common_substrings(Samples)
-        df.drop([col for col in df.columns if 'Spectrum' in col], axis=1,inplace=True)
-        for i in range(len(Samples)):
-            df.rename(columns = {Samples[i]:NewSamples[i]},inplace=True)
-        #df = df
+        
+        #AC 12/12/2023 - I believe the below code is deprecated and is unintentionally renaming samples when there is a large shared string between multiple sample groups
+        # if 'Compound_Name' in df.columns:
+        #     df.drop(['Compound_Name'],axis=1)
+        # Headers = parse_headers(df,index)
+        # Abundance = [item for sublist in Headers for item in sublist if len(sublist)>1]
+        # Samples= [x for x in Abundance]
+        # NewSamples = common_substrings(Samples)
+        # df.drop([col for col in df.columns if 'Spectrum' in col], axis=1,inplace=True)
+        # for i in range(len(Samples)):
+
         return df
 
 
