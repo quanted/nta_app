@@ -119,7 +119,9 @@ class NtaRun:
 
 
     def execute(self):
-
+        
+        logger.info("self.dfs[1] beginning of execute= {}".format(self.dfs[1].columns))
+        
         # 0: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)  
         # 0: check existence of 'mass column'
@@ -133,6 +135,8 @@ class NtaRun:
         
         # 12/4/2023 AC - debugging statements
         #logger.info("df columns after check RT: {}".format(self.dfs[1].columns))
+        
+        logger.info("self.dfs[1] pre-sort= {}".format(self.dfs[1].columns))
         
         # 0: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
@@ -154,7 +158,9 @@ class NtaRun:
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
-
+        
+        logger.info("self.dfs[1] post-sort= {}".format(self.dfs[1].columns))    
+        
         # 2: statistics
         self.step = "Calculating statistics"
         self.calc_statistics()
@@ -429,12 +435,12 @@ class NtaRun:
         ppm = self.parameters['mass_accuracy_units'][1]== 'ppm'
         
         #AC
-        logger.info("self.dfs[1] columns pre-stats= {}".format(self.dfs[1].columns))
+        #logger.info("self.dfs[1] columns pre-stats= {}".format(self.dfs[1].columns))
         
         self.dfs = [task_fun.chunk_stats(df) if df is not None else None for df in self.dfs]
         self.dupes = [task_fun.chunk_stats(df) if df is not None else None for df in self.dupes]
         
-        logger.info("self.dfs[1] columns post-stats= {}".format(self.dfs[1].columns))
+        #logger.info("self.dfs[1] columns post-stats= {}".format(self.dfs[1].columns))
         
         if self.dfs[0] is not None and self.dfs[1] is not None:
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
@@ -476,13 +482,15 @@ class NtaRun:
         # combine the two dataframes. Ignnore non-existing dataframes
         dfCombined = pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False) if dfPos is not None and dfNeg is not None else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
 
-        # log the dataframes if not None
-        if dfPos is not None:
-            logger.info("dfPos= {}".format(dfPos.columns.values))
-        if dfNeg is not None:
-            logger.info("dfNeg= {}".format(dfNeg.columns.values))
-        if dfCombined is not None:
-            logger.info("dfCombined= {}".format(dfCombined.columns.values))
+        # # log the dataframes if not None
+        # if dfPos is not None:
+        #     logger.info("dfPos= {}".format(dfPos.columns.values))
+        # if dfNeg is not None:
+        #     logger.info("dfNeg= {}".format(dfNeg.columns.values))
+        # if dfCombined is not None:
+        #     logger.info("dfCombined= {}".format(dfCombined.columns.values))
+        
+        
         # Get sample headers                
         all_headers = task_fun.parse_headers(dfCombined) 
         #logger.info("all_headers= {}".format(all_headers))
