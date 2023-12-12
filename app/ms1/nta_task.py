@@ -712,12 +712,12 @@ class NtaRun:
         # Isolate sample_groups from stats columns
         prefixes = ['Mean_','Median_', 'CV_', 'STD_', 'N_Abun_', 'Replicate_Percent_']
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
-        #logger.info("sample_groups= {}".format(sample_groups))
+        logger.info("sample_groups= {}".format(sample_groups))
 
         # Blank_MDL - need to check what the blank samples are actually named
         blank_strings = ['MB', 'Mb', 'mb', 'BLANK', 'Blank', 'blank', 'BLK', 'Blk']
         blank_col = [item for item in sample_groups if any(x in item for x in blank_strings)]
-        #logger.info("blank_col= {}".format(blank_col))
+        logger.info("blank_col= {}".format(blank_col))
 
         blank_mean = 'Mean_' + blank_col[0]
         #logger.info("blank_mean= {}".format(blank_mean))
@@ -730,7 +730,7 @@ class NtaRun:
 
         # Find CV cols from df
         cv_cols = ['CV_' + col for col in sample_groups]
-        logger.info("cv_cols= {}".format(cv_cols))
+        #logger.info("cv_cols= {}".format(cv_cols))
         rper_cols = ['Replicate_Percent_' + col for col in sample_groups]
         #logger.info("rper_cols= {}".format(rper_cols))
         med_cols = ['Median_' + col for col in sample_groups]
@@ -738,7 +738,7 @@ class NtaRun:
 
         # Grab CV cols from df
         cv_df = dfCombined[cv_cols]
-        logger.info("cv_df= {}".format(cv_df.columns.values))
+        #logger.info("cv_df= {}".format(cv_df.columns.values))
         rper_df = dfCombined[rper_cols]
         #logger.info("rper_df= {}".format(rper_df.columns.values))
         med_df = dfCombined[med_cols]
