@@ -36,6 +36,9 @@ logger.setLevel(logging.INFO)
 def run_nta_dask(parameters, input_dfs, tracer_df = None, run_sequence_pos_df = None, run_sequence_neg_df = None, jobid = "00000000", verbose = True):
     in_docker = os.environ.get("IN_DOCKER") != "False"
     mongo_address = os.environ.get('MONGO_SERVER')
+    
+    logger.info("input_dfs[1] beginning of run_nta_ask= {}".format(input_dfs[1].columns))
+    
     if NO_DASK:
         run_nta(parameters, input_dfs, tracer_df, run_sequence_pos_df, run_sequence_neg_df, mongo_address, jobid, verbose, in_docker = in_docker)
         return
@@ -136,7 +139,7 @@ class NtaRun:
         # 12/4/2023 AC - debugging statements
         #logger.info("df columns after check RT: {}".format(self.dfs[1].columns))
         
-        logger.info("self.dfs[1] pre-sort= {}".format(self.dfs[1].columns))
+        #logger.info("self.dfs[1] pre-sort= {}".format(self.dfs[1].columns))
         
         # 0: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
@@ -159,7 +162,7 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
         
-        logger.info("self.dfs[1] post-sort= {}".format(self.dfs[1].columns))    
+        #logger.info("self.dfs[1] post-sort= {}".format(self.dfs[1].columns))    
         
         # 2: statistics
         self.step = "Calculating statistics"
@@ -692,13 +695,13 @@ class NtaRun:
         # combine the two dataframes. Ignnore non-existing dataframes
         dfCombined = pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False) if dfPos is not None and dfNeg is not None else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
 
-        # log the dataframes if not None
-        if dfPos is not None:
-            logger.info("dfPos= {}".format(dfPos.columns.values))
-        if dfNeg is not None:
-            logger.info("dfNeg= {}".format(dfNeg.columns.values))
-        if dfCombined is not None:
-            logger.info("dfCombined= {}".format(dfCombined.columns.values))
+        # # log the dataframes if not None
+        # if dfPos is not None:
+        #     logger.info("dfPos= {}".format(dfPos.columns.values))
+        # if dfNeg is not None:
+        #     logger.info("dfNeg= {}".format(dfNeg.columns.values))
+        # if dfCombined is not None:
+        #     logger.info("dfCombined= {}".format(dfCombined.columns.values))
 
         # Get sample headers                
         all_headers = task_fun.parse_headers(dfCombined) 
