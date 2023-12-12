@@ -37,7 +37,7 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, run_sequence_pos_df = 
     in_docker = os.environ.get("IN_DOCKER") != "False"
     mongo_address = os.environ.get('MONGO_SERVER')
     
-    logger.info("input_dfs[1] beginning of run_nta_ask= {}".format(input_dfs[1].columns))
+    #logger.info("input_dfs[1] beginning of run_nta_ask= {}".format(input_dfs[1].columns))
     
     if NO_DASK:
         run_nta(parameters, input_dfs, tracer_df, run_sequence_pos_df, run_sequence_neg_df, mongo_address, jobid, verbose, in_docker = in_docker)
@@ -743,6 +743,11 @@ class NtaRun:
         #logger.info("rper_df= {}".format(rper_df.columns.values))
         med_df = dfCombined[med_cols]
         #logger.info("med_df= {}".format(med_df.columns.values))
+
+        logger.info("cv_df shape= {}".format(cv_df.shape))
+        logger.info("rper_df shape= {}".format(rper_df.shape))
+        logger.info("med_df shape= {}".format(med_df.shape))
+        logger.info("dfCombined shape= {}".format(dfCombined.shape))
 
         # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
         for x,y,z in zip(cv_cols, rper_cols, med_cols):
