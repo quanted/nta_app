@@ -638,7 +638,8 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     cv_not_met = pd.DataFrame().reindex_like(df[Mean_Samples])
     for mean,CV in zip(Mean_Samples, CV_Samples):
         #AC Create additional condition such that if CV is no value (i.e. only 1 replicate), the occurrence will not fail (i.e. it passes)
-        cv_not_met[mean] = (df[CV] > controls[1] & ~df[CV].isnull())
+        #cv_not_met[mean] = (df[CV] > controls[1] & ~df[CV].isnull())
+        cv_not_met[mean] = df[CV] > controls[1]
     # Create empty cell masks from the docs and df dataframes
     cell_empty = docs[Mean_Samples].isnull()
     cell_empty_df = df[Mean_Samples].isnull()  
