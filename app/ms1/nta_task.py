@@ -37,8 +37,6 @@ def run_nta_dask(parameters, input_dfs, tracer_df = None, run_sequence_pos_df = 
     in_docker = os.environ.get("IN_DOCKER") != "False"
     mongo_address = os.environ.get('MONGO_SERVER')
     
-    #logger.info("input_dfs[1] beginning of run_nta_ask= {}".format(input_dfs[1].columns))
-    
     if NO_DASK:
         run_nta(parameters, input_dfs, tracer_df, run_sequence_pos_df, run_sequence_neg_df, mongo_address, jobid, verbose, in_docker = in_docker)
         return
@@ -126,23 +124,13 @@ class NtaRun:
 
     def execute(self):
         
-        logger.info("self.dfs[1] beginning of execute= {}".format(self.dfs[1].columns))
-        
         # 0: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)  
         # 0: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
         
-        # 12/4/2023 AC - debugging statements
-        #logger.info("df columns before check RT: {}".format(self.dfs[1].columns))        
-        
         # 0: check for alternate spellings of 'Retention_Time' column
         self.check_retention_time_column(self.dfs)
-        
-        # 12/4/2023 AC - debugging statements
-        #logger.info("df columns after check RT: {}".format(self.dfs[1].columns))
-        
-        #logger.info("self.dfs[1] pre-sort= {}".format(self.dfs[1].columns))
         
         # 0: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
