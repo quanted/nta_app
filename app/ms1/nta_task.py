@@ -953,8 +953,8 @@ class NtaRun:
         if self.tracer_df is not None:
             tracer_df_bool=True
         self.docs = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[1] if df is not None else None for index, df in enumerate(self.dfs)]
-        self.dfs = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[0] if df is not None else None for index, df in enumerate(self.dfs)]
         self.dfs_flagged = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[2] if df is not None else None for index, df in enumerate(self.dfs)]
+        self.dfs = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[0] if df is not None else None for index, df in enumerate(self.dfs)]
         #self.dfs, self.docs = map(list, zip(*[task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]))
         self.dfs = [fn.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
         self.dfs_flagged = [fn.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs_flagged)]  # subtract blanks from medians
