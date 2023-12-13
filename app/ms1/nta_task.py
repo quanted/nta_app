@@ -153,7 +153,7 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
         
-        #logger.info("self.dfs[1] post-sort= {}".format(self.dfs[1].columns))    
+        logger.info("self.dfs[1] pre-stat columns= {}".format(self.dfs[1].columns))    
         
         # 2: statistics
         self.step = "Calculating statistics"
@@ -428,13 +428,8 @@ class NtaRun:
     def calc_statistics(self):
         ppm = self.parameters['mass_accuracy_units'][1]== 'ppm'
         
-        #AC
-        #logger.info("self.dfs[1] columns pre-stats= {}".format(self.dfs[1].columns))
-        
         self.dfs = [task_fun.chunk_stats(df) if df is not None else None for df in self.dfs]
         self.dupes = [task_fun.chunk_stats(df) if df is not None else None for df in self.dupes]
-        
-        #logger.info("self.dfs[1] columns post-stats= {}".format(self.dfs[1].columns))
         
         if self.dfs[0] is not None and self.dfs[1] is not None:
             mass_accuracy = float(self.parameters['mass_accuracy'][1])
