@@ -39,6 +39,7 @@ def tracer_handler(file):
 def fix_names(df,index): # parse the Dataframe into a numpy array
         #df.columns = df.columns.str.replace(': Log2','') #log specific code
         df.columns = df.columns.str.replace(' ','_')
+        df.columns = df.columns.str.replace('#','_')
         df.columns = df.columns.str.replace('\([^)]*\)','')
         # NTAW-94 comment out the following line. Compound is no longer being used
         # df['Compound'] = df['Compound'].str.replace("\ Esi.*$","")
