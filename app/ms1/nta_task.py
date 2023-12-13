@@ -92,12 +92,15 @@ class NtaRun:
         self.run_sequence_pos_df = run_sequence_pos_df
         self.run_sequence_neg_df = run_sequence_neg_df
         self.dfs = input_dfs
+        self.dfs_flagged = None # DFs that will retain occurrences failing CV values
         self.dupes = None
         self.docs = None
         self.doc_combined = None
         self.df_combined = None
+        self.df_flagged_combined = None
         self.pass_through = None
         self.mpp_ready = None
+        self.mpp_ready_flagged = None
         self.search_results = None
         self.search = None
         self.jobid = jobid
@@ -951,8 +954,10 @@ class NtaRun:
             tracer_df_bool=True
         self.docs = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[1] if df is not None else None for index, df in enumerate(self.dfs)]
         self.dfs = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[0] if df is not None else None for index, df in enumerate(self.dfs)]
+        self.dfs_flagged = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[2] if df is not None else None for index, df in enumerate(self.dfs)]
         #self.dfs, self.docs = map(list, zip(*[task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]))
         self.dfs = [fn.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
+        self.dfs_flagged = [fn.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs_flagged)]  # subtract blanks from medians
         #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
         #self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
         return
@@ -1000,6 +1005,7 @@ class NtaRun:
         if self.tracer_df is not None:
             tracer_df_bool=True
         self.df_combined = task_fun.combine(self.dfs[0], self.dfs[1])
+        self.df_flagged_combined = task_fun.combine(self.dfs_flagged[0], self.dfs_flagged[1])
         self.doc_combined = [task_fun.combine_doc(doc, dupe, tracer_df=tracer_df_bool) if doc is not None else None for doc, dupe in zip(self.docs, self.dupes)]
         if self.doc_combined[0] is not None and self.doc_combined[1] is not None:
             self.doc_combined = pd.concat([self.doc_combined[0], self.doc_combined[1]], axis=0)
@@ -1010,8 +1016,10 @@ class NtaRun:
         self.data_map['Filter_documentation'] = self.doc_combined
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = fn.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool)
+        self.mpp_ready_flagged = fn.MPP_Ready(self.df_flagged_combined, self.pass_through, tracer_df_bool)
         #self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
         self.data_map['Cleaned_feature_results_reduced'] = reduced_file(self.mpp_ready)
+        self.data_map['Results_flagged'] = reduced_file(self.mpp_ready_flagged)
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save = True):
         logging.info('Rows flagged for dashboard search: {} out of {}'.format(len(self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :]), len(self.df_combined)))
