@@ -16,7 +16,15 @@ def input_handler(file, index):
         df = pd.read_csv(file, sep='\t', comment='#', na_values=1 | 0)
     if ext == '.csv':
         df = pd.read_csv(file, comment='#', na_values=1 | 0)
+                
+    #AC
+    print("df columns pre-fix names", df.columns)
+        
     df = fix_names(df, index)
+    
+    #AC
+    print("df columns pre-fix names", df.columns)
+    
     return df
 
 
