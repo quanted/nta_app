@@ -629,6 +629,9 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     # update docs with 'AnySamplesDropped' column
     docs['AnySamplesDropped'] = df['AnySamplesDropped']
     
+    # Create a copy of df prior to CV flag/filter step - this DF will not remove occurrences/features failing CV threshold
+    df_flagged = df.copy()
+    
     '''CV FLAG'''
     # Create a mask for df based on sample-level CV threshold
     #CV masks
@@ -651,6 +654,9 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     df['BlkStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
     df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(df[Mean_MB[0]]) # In the case of a single blank replicate, the previous calculation is an empty value as it cannot calculate Std dev; replace with mean value
     df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(0)
+    df_flagged['BlkStd_cutoff'] = (3 * df_flagged[Std_MB[0]]) + df_flagged[Mean_MB[0]]
+    df_flagged['BlkStd_cutoff'] = df_flagged['BlkStd_cutoff'].fillna(df_flagged[Mean_MB[0]]) # In the case of a single blank replicate, the previous calculation is an empty value as it cannot calculate Std dev; replace with mean value
+    df_flagged['BlkStd_cutoff'] = df_flagged['BlkStd_cutoff'].fillna(0)
     docs['BlkStd_cutoff'] = df['BlkStd_cutoff']  
     # Create a mask for docs based on sample-level MDL threshold 
     # Median Masks
@@ -668,6 +674,7 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     # Calculate Detection_Count
     #df['Occurrence_Count(all_samples)'] = MDL_all_mask.sum(axis=1)
     df['Detection_Count(non-blank_samples)'] = MDL_sample_mask.sum(axis=1)
+    df_flagged['Detection_Count(non-blank_samples)'] = MDL_sample_mask.sum(axis=1)
     # total number of samples (subtract 1 for the compound name)
     #mean_total = len(Mean)
     mean_samples = len(Mean_Samples)
@@ -677,6 +684,8 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     # calculate percentage of samples that have a value and store in new column 'Detection_Count(non-blank_samples)(%)'
     df['Detection_Count(non-blank_samples)(%)'] = (df['Detection_Count(non-blank_samples)'] / mean_samples) * 100
     df['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)'].round(1)
+    df_flagged['Detection_Count(non-blank_samples)(%)'] = (df_flagged['Detection_Count(non-blank_samples)'] / mean_samples) * 100
+    df_flagged['Detection_Count(non-blank_samples)(%)'] = df_flagged['Detection_Count(non-blank_samples)(%)'].round(1)
     # Assign to docs
     #docs['Occurrence_Count(all_samples)'] = df['Occurrence_Count(all_samples)']
     docs['Detection_Count(non-blank_samples)'] = df['Detection_Count(non-blank_samples)']
@@ -718,14 +727,16 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     '''DROP FEATURES FROM DF'''
     # Remove features where all sample abundances are below replicate threshold
     df.drop(df[(df[Replicate_Percent_Samples] < controls[0]).all(axis=1)].index, inplace=True)
+    df_flagged.drop(df_flagged[(df_flagged[Replicate_Percent_Samples] < controls[0]).all(axis=1)].index, inplace=True)
     # Remove features where all sample abundances are below CV threshold
-    df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True) 
+    df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True)
+    # df_flagged does not drop features due to CV threshold
     
     # Keep samples where the feature doesn't exist in the blank OR at least one sample mean exceeds MDL
     # Remove these features from the feature results
     df = df[((df[Replicate_Percent_MB[0]] == 0) & (df[Mean_Samples].count(axis=1) > 0)) | (df[Mean_Samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]
-    
-    return df, docs
+    df_flagged = df_flagged[((df_flagged[Replicate_Percent_MB[0]] == 0) & (df_flagged[Mean_Samples].count(axis=1) > 0)) | (df_flagged[Mean_Samples].max(axis=1, skipna=True) > df_flagged['BlkStd_cutoff'])]
+    return df, docs, df_flagged
 
 
 '''FUNCTIONS FOR COMBINING DATAFRAMES'''
