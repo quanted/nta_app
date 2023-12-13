@@ -588,6 +588,8 @@ class NtaRun:
             plot2 = pd.merge(plot, tracers, how='left', on=['Mass', 'Retention_Time'])
             # plot2 = pd.merge(plot2, utracers, how='left', on=['Mass', 'Retention_Time'])
         else:
+            # If tracer plot doesn't exist, still need to create a spike column that is empty
+            plot['spike'] = ''
             plot2 = plot.copy()
         
         plot2.replace(np.nan, 0, inplace=True)
