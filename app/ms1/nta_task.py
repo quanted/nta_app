@@ -458,6 +458,10 @@ class NtaRun:
 
     def cv_scatterplot(self, input_dfs):
 
+        titleText = "Scatterplot of all feature occurrences, CV versus mean abundance vlaues"
+        
+        max_replicate_cv_value = self.parameters['max_replicate_cv'][1]
+
         # get dataframe 'Feature_statistics_positive' if it exists else None
         dfPos = self.data_map['Feature_statistics_positive'] if 'Feature_statistics_positive' in self.data_map else None
 
@@ -606,8 +610,10 @@ class NtaRun:
                         x='Mean', y='CV', hue = 'spike',
                         edgecolor = 'black', alpha = 0.5, ax = axes[0])
 
-        a.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        a.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
+        # a.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
+        # a.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
+        a.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
+        a.text(1000000000, 1.4, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
         '''
         sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')&(plot2['spike']==1)),:],
                         x='Mean', y='CV', color="firebrick",
@@ -625,7 +631,7 @@ class NtaRun:
 
 
         #axes[0].set_title("ROAR CA WebApp Output: Blanks", weight='bold')
-        axes[0].set_title("WebApp Output: Blanks", weight='bold')
+        axes[0].set_title(titleText + ": Blanks", weight='bold')
         axes[0].set_xlabel("Mean Abundance", fontsize = 12)
         axes[0].set_ylabel("CV", fontsize = 12)
         axes[0].set_ylim(0, 4)
@@ -647,11 +653,13 @@ class NtaRun:
         #                 x='Mean', y='CV', hue = 'native',
         #                 edgecolor = 'black', alpha = 0.5, ax = axes[1])
 
-        c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
+        # c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
+        # c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
+        c.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
+        c.text(1000000000, 1.4, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
 
         #axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
-        axes[1].set_title("WebApp Output: Samples", weight='bold')
+        axes[1].set_title(titleText + ": Samples", weight='bold')
         axes[1].set_xlabel("Mean Abundance", fontsize = 12)
         axes[1].set_ylabel("CV", fontsize = 12)
         axes[1].set_ylim(0, 4)
