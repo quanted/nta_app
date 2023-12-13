@@ -193,9 +193,6 @@ def input_page(request, form_data=None, form_files=None):
                 print("len(inputs)= ", len(inputs) )
                 print("inputs: {} ".format(inputs))
                 
-                #AC
-                print("inputs[0] columns pre-fix names", inputs[0].columns)
-                
                 input_dfs = []
                 for index, df in enumerate(inputs) :
                     print('indx=',index)
@@ -204,9 +201,6 @@ def input_page(request, form_data=None, form_files=None):
                     else:
                         input_dfs.append(None)
                 # input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs) if df is not None]
-                
-                #AC
-                print("inputs[0] columns post-fix names", inputs[0].columns)
                 
                 print("len(input_dfs)= ", len(input_dfs) )
                 print("input_page: inputParameters: {} ".format(inputParameters))

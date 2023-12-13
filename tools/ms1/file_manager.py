@@ -23,7 +23,7 @@ def input_handler(file, index):
     df = fix_names(df, index)
     
     #AC
-    print("df columns pre-fix names", df.columns)
+    print("df columns post-fix names", df.columns)
     
     return df
 
