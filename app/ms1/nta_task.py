@@ -588,7 +588,7 @@ class NtaRun:
             plot2 = pd.merge(plot, tracers, how='left', on=['Mass', 'Retention_Time'])
             # plot2 = pd.merge(plot2, utracers, how='left', on=['Mass', 'Retention_Time'])
         else:
-            plot2 = plot1.copy()
+            plot2 = plot.copy()
         
         plot2.replace(np.nan, 0, inplace=True)
 
