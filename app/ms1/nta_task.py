@@ -465,10 +465,13 @@ class NtaRun:
         dfNeg = self.data_map['Feature_statistics_negative'] if 'Feature_statistics_negative' in self.data_map else None
 
         dfTracer = self.data_map['Tracer_Sample_Results'] if 'Tracer_Sample_Results' in self.data_map else None
-        tracers = dfTracer[['Observed_Mass', 'Observed_Retention_Time']].copy()
-        tracers.rename({'Observed_Mass':'Mass'}, axis=1, inplace=True)
-        tracers.rename({'Observed_Retention_Time':'Retention_Time'}, axis=1, inplace=True)
-        tracers['spike'] = 1
+        
+        # Add conditional for if tracers exist:
+        if dfTracer != None:
+            tracers = dfTracer[['Observed_Mass', 'Observed_Retention_Time']].copy()
+            tracers.rename({'Observed_Mass':'Mass'}, axis=1, inplace=True)
+            tracers.rename({'Observed_Retention_Time':'Retention_Time'}, axis=1, inplace=True)
+            tracers['spike'] = 1
 
         # combine the two dataframes. Ignnore non-existing dataframes
         dfCombined = pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False) if dfPos is not None and dfNeg is not None else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
@@ -545,7 +548,7 @@ class NtaRun:
         mean_df = dfCombined[mean_cols]
 
         li=[]
-        blanks=['MB1','BLK','EQ', 'Solvent', 'Blank', 'MB']
+        blanks=['MB1','BLK', 'Blank', 'BLANK', 'blank', 'MB', 'mb']
         # stds=['Standard','Pooled', 'SSC', 'BSD', 'BS2', 'MSD', 'MS']
 
         # Take each sample's CV and mean, store in dummy variable
@@ -578,10 +581,15 @@ class NtaRun:
         # Concatenate plot, drop NAs
         plot = pd.concat(li)
         plot.dropna(axis=0, subset=['CV', 'Mean'], how='any', inplace=True)
-
-        # Merge df with tracers and utracers to get labels
-        plot2 = pd.merge(plot, tracers, how='left', on=['Mass', 'Retention_Time'])
-        # plot2 = pd.merge(plot2, utracers, how='left', on=['Mass', 'Retention_Time'])
+        
+        # Conditional for if tracers are present:
+        if dfTracer != None:
+            # Merge df with tracers to get labels
+            plot2 = pd.merge(plot, tracers, how='left', on=['Mass', 'Retention_Time'])
+            # plot2 = pd.merge(plot2, utracers, how='left', on=['Mass', 'Retention_Time'])
+        else:
+            plot2 = plot1.copy()
+        
         plot2.replace(np.nan, 0, inplace=True)
 
         f, axes = plt.subplots(1,2)
