@@ -960,7 +960,9 @@ class NtaRun:
     
     def merge_columns_onto_tracers(self):
         # self.data_map['Tracer_Sample_Results'] = task_fun.column_sort_TSR(dft)
-        
+        if self.tracer_df is None:
+            logger.info("No tracer file, skipping this step.")
+            return
         # Grab the tracer dataframe from self.data_map
         dft = self.data_map['Tracer_Sample_Results']
         logger.info("dft: {}".format(dft.columns))
