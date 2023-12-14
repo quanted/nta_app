@@ -471,7 +471,7 @@ class NtaRun:
         dfTracer = self.data_map['Tracer_Sample_Results'] if 'Tracer_Sample_Results' in self.data_map else None
         
         # Add conditional for if tracers exist:
-        if dfTracer != None:
+        if dfTracer is not None:
             tracers = dfTracer[['Observed_Mass', 'Observed_Retention_Time']].copy()
             tracers.rename({'Observed_Mass':'Mass'}, axis=1, inplace=True)
             tracers.rename({'Observed_Retention_Time':'Retention_Time'}, axis=1, inplace=True)
@@ -587,7 +587,7 @@ class NtaRun:
         plot.dropna(axis=0, subset=['CV', 'Mean'], how='any', inplace=True)
         
         # Conditional for if tracers are present:
-        if dfTracer != None:
+        if dfTracer is not None:
             # Merge df with tracers to get labels
             plot2 = pd.merge(plot, tracers, how='left', on=['Mass', 'Retention_Time'])
             # plot2 = pd.merge(plot2, utracers, how='left', on=['Mass', 'Retention_Time'])
