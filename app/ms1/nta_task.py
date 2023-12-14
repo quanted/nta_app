@@ -458,7 +458,7 @@ class NtaRun:
 
     def cv_scatterplot(self, input_dfs):
 
-        titleText = "Scatterplot of all feature occurrences, CV versus mean abundance vlaues"
+        titleText = "CV vs. Abundance"
         
         max_replicate_cv_value = self.parameters['max_replicate_cv'][1]
 
