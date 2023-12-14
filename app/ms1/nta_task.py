@@ -334,7 +334,7 @@ class NtaRun:
                     elif ionizationMode == "Esi-":
                         df['Mass'] = df['m/z'] + 1.0073
                 else:
-                    raise ValueError("Either Mass or m/z column must be in the input file.")
+                    raise ValueError("Either Mass or m/z column must be in the input file. (Check spelling!)")
 
         return
     
@@ -353,7 +353,7 @@ class NtaRun:
                 # replace "Ret. Time" (SCIEX data)
                 df.rename(columns={'Ret._Time': 'Retention_Time'}, inplace=True)
             if 'Retention_Time' not in df.columns:
-                raise ValueError("Retention_Time column must be in the input file.")
+                raise ValueError("Retention_Time column must be in the input file. (Check spelling!)")
 
         return
 
