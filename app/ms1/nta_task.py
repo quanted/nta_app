@@ -126,11 +126,11 @@ class NtaRun:
         
         logger.info("self.dfs[1] start of execute columns= {}".format(self.dfs[1].columns))
         
+        self.step = "Check for existence of required columns"
         # 0: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)  
         # 0: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
-        
         # 0: check for alternate spellings of 'Retention_Time' column
         self.check_retention_time_column(self.dfs)
         
@@ -352,6 +352,8 @@ class NtaRun:
                 df.rename(columns={'rt': 'Retention_Time', 'RT': 'Retention_Time'}, inplace=True)
                 # replace "Ret. Time" (SCIEX data)
                 df.rename(columns={'Ret._Time': 'Retention_Time'}, inplace=True)
+            if 'Retention_Time' not in df.columns:
+                raise ValueError("Retention_Time column must be in the input file.")
 
         return
 
