@@ -352,8 +352,8 @@ class NtaRun:
                 df.rename(columns={'rt': 'Retention_Time', 'RT': 'Retention_Time'}, inplace=True)
                 # replace "Ret. Time" (SCIEX data)
                 df.rename(columns={'Ret._Time': 'Retention_Time'}, inplace=True)
-            if 'Retention_Time' not in df.columns:
-                raise ValueError("Retention_Time column must be in the input file. (Check spelling!)")
+                if 'Retention_Time' not in df.columns:
+                    raise ValueError("Retention_Time column must be in the input file. (Check spelling!)")
 
         return
 
