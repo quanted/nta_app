@@ -7,7 +7,6 @@ import os
 import re
 import logging
 
-#  BLANKS = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank']  NOT USED
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -42,9 +41,6 @@ def differences(s1, s2):
 
 
 def formulas(df):
-    # changed for NTAW094
-    # df.drop_duplicates(subset='Compound',keep='first',inplace=True)
-    # formulas = df.loc[df['For_Dashboard_Search'] == '1','Compound'].values
     df.drop_duplicates(subset='Formula',keep='first',inplace=True)
     formulas = df.loc[df['For_Dashboard_Search'] == '1','Formula'].values
     formulas_list = [str(i) for i in formulas]
@@ -52,14 +48,12 @@ def formulas(df):
 
 
 def masses(df):
-    #df.drop_duplicates(subset='Mass', keep='first',inplace=True)  # TODO should this be on?
     masses = df.loc[df['For_Dashboard_Search'] == '1','Mass'].values
     logger.info('# of masses for dashboard search: {} out of {}'.format(len(masses),len(df)))
     masses_list = [str(i) for i in masses]
     return masses_list
 
 
-#untested
 def parse_headers(df_in):
     '''
     A function to group the dataframe's column headers into sets of similar names which represent replicates
@@ -94,56 +88,6 @@ def parse_headers(df_in):
     new_headers_list = [[item[0] for item in data] for (key, data) in groups]
     return new_headers_list
 
-
-def score(df):  # Get score from annotations.
-    """
-The Python function score(df) appears to be used to extract a "Score" column from a Pandas DataFrame, df, 
-based on the contents of an "Annotations" column within the DataFrame. Here's a breakdown of how the function works:
-
-It defines a regular expression, regex, which is used to extract the score value from the "Annotations" 
-column. The regular expression captures the value following "db=" and ending with a comma, closing square bracket, or space.
-
-It first checks if the DataFrame df contains a column named "Annotations" using the condition "Annotations" in df.
-
-If the "Annotations" column exists, it checks whether the entire column is null (contains only NaN values) using 
-df.Annotations.isnull().all(). If the entire column is null, meaning there's no useful information in the "Annotations" 
-column, it sets the "Score" column in the DataFrame to None for all rows and returns the modified DataFrame.
-
-If the "Annotations" column is not entirely null and contains at least one string that contains "overall=", it 
-proceeds to extract the score values from the "Annotations" column.
-
-It uses df.Annotations.str.contains('overall=') to check if any of the strings in the "Annotations" column 
-contain the substring "overall=". If such strings are found, it attempts to extract the score values using the 
-regular expression defined earlier (df.Annotations.str.extract(regex, expand=True).astype('float64')), and 
-stores the extracted scores in a new "Score" column in the DataFrame. The scores are converted to floating-point 
-numbers (float64) during extraction.
-
-If an error occurs during the extraction (e.g., if the regular expression doesn't match), it sets the "Score" column to None for all rows.
-
-If the DataFrame does not contain an "Annotations" column and also does not have a "Score" column, it sets the "Score" column in the DataFrame to None for all rows.
-
-Finally, the function returns the modified DataFrame, which may include a new "Score" column based on the extraction process.
-
-This function essentially extracts a "Score" column from the "Annotations" column if certain conditions are met. 
-It handles cases where the "Annotations" column is entirely null, where the "Annotations" column contains relevant 
-score information, and where the DataFrame doesn't have an "Annotations" column at all.
-    """
-    regex = "db=(.*?)[, \]].*"  # grab score from first match of db=(value) followed by a , ] or space
-    if "Annotations" in df:
-        if df.Annotations.isnull().all():  # make sure there isn't a totally blank Annotations column
-            df['Score'] = None
-            return df
-        if df.Annotations.str.contains('overall=').any():
-            try:
-                df['Score'] = df.Annotations.str.extract(regex, expand=True).astype('float64')
-            except ValueError:
-                df['Score'] = None
-    elif "Score" in df:
-        pass
-    else:
-        df['Score'] = None
-    # logging.info("List of scores: {}".format(df['Score']))
-    return df
 
 '''PASS THROUGH COLUMNS'''
 
@@ -443,8 +387,6 @@ def statistics(df_in):
 def chunk_stats(df_in):
     # Create copy
     df=df_in.copy()
-    # Calculate 'score'
-    df = score(df)
     # Set chunk size (i.e., # rows)
     n = 5000
     # 'if' statement for chunks: if no chunks needed, send to 'statistics', else chunk and iterate
@@ -490,23 +432,21 @@ def column_sort_DFS(df_in):
     prefixes = ['Mean_','Median_', 'CV_', 'STD_', 'N_Abun_', 'Replicate_Percent_', 'Detection']   
     # Isolate sample_groups from prefixes columns   
     groups = [item for item in group_cols if not any(x in item for x in prefixes)]
-    
     # Organize front matter
     front_matter = [item for item in all_cols if not any(x in item for x in groups)]
     ids = ['Feature_ID', 'Mass', 'Retention_Time', 'Ionization_Mode']
     #ids = ['Compound Name', 'Mass', 'Retention_Time', 'Ionization_Mode']
     front_matter = [item for item in front_matter if not any(x in item for x in ids)]
     front_matter = ids + front_matter
-    
     # Organize stats columns
     cols = []
     for sam in groups:
         group_stats = [item for item in all_cols if sam in item]
         cols.append(group_stats)    
     stats_cols = sum(cols, [])
-    
-    # Combine columns to re-org dataframe
+    # Combine into new column list
     new_col_org = front_matter + stats_cols
+    # Subset data with new column list
     df_reorg = df[new_col_org]
     
     return df_reorg
@@ -520,13 +460,13 @@ def column_sort_TSR(df_in):
     prefixes = ['Feature_ID', 'Mass', 'Retention_Time']   
     # Isolate sample_groups from prefixes columns   
     back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
-    
     # Organize front matter
     front_matter = ['Feature_ID', 'Observed_Mass', 'Observed_Retention_Time',
                     'Monoisotopic_Mass', 'Retention_Time',
                     'Mass_Error_PPM', 'Retention_Time_Difference']
-
+    # Combine into new column list
     new_col_org = front_matter + back_matter
+    # Subset data with new column list
     df_reorg = df[new_col_org]
     
     return df_reorg
@@ -538,43 +478,37 @@ def column_sort_TSR(df_in):
 ''' UPDATED FUNCTION FOR CHECKING TRACERS THAT APPENDS 'Tracer_chemical_match' TO THE DFS AND CALCULATES OCCURRENCE COUNT
     TMF 12/11/23 '''
 
-def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm): #a method to query and save the features with tracers criteria
+def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm):
     df1 = df.copy()
-    df2 = tracers_file.copy() #pd.read_csv(tracers_file,comment='#',na_values= 1 | 0)
-    
+    df2 = tracers_file.copy()
     # Get sample names
     prefixes = ['Mean_','Median_', 'CV_', 'STD_', 'N_Abun_', 'Replicate_Percent_', 'Detection']  
     all_headers = parse_headers(df1)
     samples = [item for subgroup in all_headers for item in subgroup if ((len(subgroup) > 1) and not any(x in item for x in prefixes))]
-    
     # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
     df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('ESI+','Esi+')
     df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('esi+','Esi+')
     df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('ESI-','Esi-')
     df2['Ionization_Mode'] = df2['Ionization_Mode'].replace('esi-','Esi-')
-    
-    #b_Statistics[index] = [B + '_x' for B in Statistics[index]]
+    # Create 'Rounded_Mass' variable to merge on
     df2['Rounded_Mass'] = df2['Monoisotopic_Mass'].round(0)
-    #df2['Rounded_RT'] = df2['Retention_Time'].round(0)
     df1.rename(columns = {'Mass':'Observed_Mass','Retention_Time':'Observed_Retention_Time'},inplace=True)
     df1['Rounded_Mass'] = df1['Observed_Mass'].round(0)
-    #df['Rounded_RT'] = df['Observed_Retention_Time'].round(0)
+    # Merge df and tracers
     dft = pd.merge(df2,df1,how='left',on=['Rounded_Mass','Ionization_Mode'])
     if ppm:
         dft['Matches'] = np.where((abs((dft['Monoisotopic_Mass']-dft['Observed_Mass'])/dft['Monoisotopic_Mass'])*1000000<=Mass_Difference) & (abs(dft['Retention_Time']-dft['Observed_Retention_Time'])<=Retention_Difference) ,1,0)
     else:
         dft['Matches'] = np.where((abs(dft['Monoisotopic_Mass']-dft['Observed_Mass'])<=Mass_Difference) & (abs(dft['Retention_Time']-dft['Observed_Retention_Time'])<=Retention_Difference) ,1,0)
     dft = dft[dft['Matches']==1]
-    
     # Caculate Occurrence Count and % in tracers
     dft['Occurrence_Count(across_all_replicates)'] = dft[samples].count(axis=1)
     dft['Occurrence_Count(across_all_replicates)(%)'] = (dft['Occurrence_Count(across_all_replicates)'] / len(samples)) * 100
-    
     # Get 'Matches' info into main df
     dum = dft[['Observed_Mass', 'Observed_Retention_Time', 'Matches']].copy()
     dfc = pd.merge(df1, dum, how='left', on=['Observed_Mass', 'Observed_Retention_Time'])
     dfc.rename(columns = {'Observed_Mass':'Mass','Observed_Retention_Time':'Retention_Time', 'Matches':'Tracer_chemical_match'},inplace=True)
-    
+    # Drop columns
     dft.drop(['Rounded_Mass','Matches'],axis=1,inplace=True)
     
     return dft, dfc
@@ -614,7 +548,6 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     
     '''REPLICATE FLAG'''
     # Set medians (means in docs) where feature presence is less than some replicate percentage cutoff to nan
-    
     for mean,N in zip(Mean_Samples,Replicate_Percent_Samples):
         docs.loc[((df[N] < controls[0]) & (~df[mean].isnull())), mean] = 'R'
         df.loc[df[N] < controls[0], mean] = np.nan
@@ -634,7 +567,7 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     
     '''CV FLAG'''
     # Create a mask for df based on sample-level CV threshold
-    #CV masks
+    # CV masks
     cv_not_met = pd.DataFrame().reindex_like(df[Mean_Samples])
     for mean,CV in zip(Mean_Samples, CV_Samples):
         #AC Create additional condition such that if CV is no value (i.e. only 1 replicate), the occurrence will not fail (i.e. it passes)
@@ -661,12 +594,7 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     df_flagged['BlkStd_cutoff'] = df_flagged['BlkStd_cutoff'].fillna(0)
     docs['BlkStd_cutoff'] = df['BlkStd_cutoff']  
     # Create a mask for docs based on sample-level MDL threshold 
-    # Median Masks
-    #MDL_all_mask = pd.DataFrame().reindex_like(df[Mean])
-    #for x in Mean:
-        # Count the number of occurrences independent of MRL
-        #MDL_all_mask[x] = df[x].notnull()
-        
+    # Mean Masks
     MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])  
     for x in Mean_Samples:
         # Count the number of detects
@@ -677,21 +605,15 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     #df['Occurrence_Count(all_samples)'] = MDL_all_mask.sum(axis=1)
     df['Detection_Count(non-blank_samples)'] = MDL_sample_mask.sum(axis=1)
     df_flagged['Detection_Count(non-blank_samples)'] = MDL_sample_mask.sum(axis=1)
-    # total number of samples (subtract 1 for the compound name)
-    #mean_total = len(Mean)
+    # total number of samples
     mean_samples = len(Mean_Samples)
-    # calculate percentage of samples that have a value and store in new column 'Occurrence_Count(all_samples)(%)'
-    #df['Occurrence_Count(all_samples)(%)'] = (df['Occurrence_Count(all_samples)'] / mean_total) * 100
-    #df['Occurrence_Count(all_samples)(%)'] = df['Occurrence_Count(all_samples)(%)'].round(1)
     # calculate percentage of samples that have a value and store in new column 'Detection_Count(non-blank_samples)(%)'
     df['Detection_Count(non-blank_samples)(%)'] = (df['Detection_Count(non-blank_samples)'] / mean_samples) * 100
     df['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)'].round(1)
     df_flagged['Detection_Count(non-blank_samples)(%)'] = (df_flagged['Detection_Count(non-blank_samples)'] / mean_samples) * 100
     df_flagged['Detection_Count(non-blank_samples)(%)'] = df_flagged['Detection_Count(non-blank_samples)(%)'].round(1)
     # Assign to docs
-    #docs['Occurrence_Count(all_samples)'] = df['Occurrence_Count(all_samples)']
     docs['Detection_Count(non-blank_samples)'] = df['Detection_Count(non-blank_samples)']
-    #docs['Occurrence_Count(all_samples)(%)'] = df['Occurrence_Count(all_samples)(%)']
     docs['Detection_Count(non-blank_samples)(%)'] = df['Detection_Count(non-blank_samples)(%)']
         
     '''MDL/ND FLAG'''
@@ -708,13 +630,6 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     docs[Mean_Samples] = np.where(values, df[Mean_Samples], docs[Mean_Samples])
     
     '''DOCUMENT DROP FEATURES FROM DF'''
-    # Features dropped because all samples are below replicate threshold
-    # docs['Feature_removed'] = np.where((df[Replicate_Percent_Samples] < controls[0]).all(axis=1), 'R', np.nan)
-    # # Features dropped because all samples are below CV threshold
-    # docs['Feature_removed'] = np.where((df[CV_Samples] > controls[1]).all(axis=1), 'CV', docs['Feature_removed'])
-    # # Features dropped because no sample is above the detection limit
-    # docs['Feature_removed'] = np.where((df[Replicate_Percent_MB[0]] != 0) & (df[Mean_Samples].max(axis=1, skipna=True) < df['BlkStd_cutoff']), 'BLK', docs['Feature_removed'])
-    
     # AC 11/3/2023: Reversing the order of documenting drop features from DF (in cases of overwriting flags, this will match the numbers from the logic tree in theory)
     # Features dropped because no sample is above the detection limit
     docs['Feature_removed'] = np.where((df[Replicate_Percent_MB[0]] != 0) & (df[Mean_Samples].max(axis=1, skipna=True) < df['BlkStd_cutoff']), 'BLK', '')   
@@ -724,7 +639,6 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     docs['Feature_removed'] = np.where((df[Replicate_Percent_Samples] < controls[0]).all(axis=1), 'R', docs['Feature_removed'])
     # Label features that don't have anything in the blank and have nothing above MRL as removed by CV/R filters
     docs['Feature_removed'] = np.where(((df[Replicate_Percent_MB[0]] == 0) & (df[Mean_Samples].count(axis=1) < 1)), 'CV/R', docs['Feature_removed'])
-    
     
     '''DROP FEATURES FROM DF'''
     # Remove features where all sample abundances are below replicate threshold
@@ -745,6 +659,7 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
 
 # Combine function for the self.dfs
 def combine(df1,df2):
+    # Recombine dfs
     if df1 is not None and df2 is not None:
         dfc = pd.concat([df1,df2], sort=True) #fixing pandas FutureWarning
         dfc = dfc.reindex(columns = df1.columns)
@@ -752,33 +667,26 @@ def combine(df1,df2):
         dfc = df1.copy()
     else:
         dfc = df2.copy()
+    # Get column names
     columns = dfc.columns.values.tolist()
-
-    # create new flags
-    # NTAW-94
-    # dfc = dfc.drop_duplicates(subset=['Compound','Mass','Retention_Time','Score'])
-    # dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
+    # Drop duplicates (should not be any)
     dfc = dfc.drop_duplicates(subset=['Mass','Retention_Time'])
-    # dfc['N_Compound_Hits'] = dfc.groupby('Compound')['Compound'].transform('size')
-
+    # Get sample Means
     Mean_list =  dfc.columns[(dfc.columns.str.contains(pat ='Mean_')==True)\
                  & (dfc.columns.str.contains(pat ='MB|blank|blanks|BlankSub|_x|_y')==False)].tolist()
-    #print(Median_list)
+    # Count sample-level occurrences and median of means
     dfc['N_Abun_Samples'] = dfc[Mean_list].count(axis=1,numeric_only=True)
     dfc['Mean_Abun_Samples'] = dfc[Mean_list].median(axis=1,skipna=True).round(0)
-
-    # NTAW-94
-    # dfc = dfc[columns].sort_values(['Compound'],ascending=[True])
+    # Sort by 'Mass' and 'Retention_Time'
     dfc = dfc[columns].sort_values(['Mass','Retention_Time'],ascending=[True,True])
     return dfc
     
 
 # Combine function for the self.docs and self.dupes
 def combine_doc(doc, dupe, tracer_df=False):
-    
+    # Get Mean columns
     Mean = doc.columns[doc.columns.str.contains(pat ='Mean_')].tolist()
-    # Median = doc.columns[doc.columns.str.contains(pat = 'BlankSub_')].tolist()
-    
+    # Recombine doc and dupe
     if doc is not None and dupe is not None:
         dupe.loc[:, Mean] = 'D'
         dfc = pd.concat([doc,dupe], sort=True) #fixing pandas FutureWarning
@@ -788,331 +696,13 @@ def combine_doc(doc, dupe, tracer_df=False):
     else:
         dupe.loc[:, Mean] = 'D'
         dfc = dupe.copy()
-    
+    # Select columns for keeping, with tracer conditional
     if tracer_df:
         to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'AnySamplesDropped', 'Feature_removed', 'Tracer_chemical_match'] + Mean
     else:
         to_keep = ['Feature_ID', 'Mass', 'Retention_Time', 'BlkStd_cutoff', 'AnySamplesDropped', 'Feature_removed'] + Mean
-    
+    # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
     dfc = dfc[to_keep]
     dfc.rename({'BlkStd_cutoff':'MRL'}, axis=1, inplace=True)
     
     return dfc
-
-
-
-'''
-def cal_detection_count(df_in):
-    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
-
-    # make a working copy of the dataframe
-    df = df_in.copy()
-
-    # a list of lists of headers that contain abundance data
-    all_header_groups = parse_headers(df)
-    abundance = [item for sublist in all_header_groups for item in sublist if len(sublist) > 1]
-    # NTAW-94 remove 'Compound' from list of abundance
-    # filter_headers= ['Compound'] + abundance
-    filter_headers= ['Mass', "Retention_Time"] + abundance
-
-    # remove all items filter_headers containing string 'BlankSub_Median_' from list filter_headers
-    filter_headers = [item for item in filter_headers if 'BlankSub_Median_' not in item]
-
-    filter_headers_nonblanks = [item for item in filter_headers if not any(x in item for x in blanks)]
-
-# Std_samples = [md for md in Std if not any(x in md for x in blanks)]
-
-    df = df[filter_headers].copy()
-    df_nonblanks = df[filter_headers_nonblanks].copy()
-
-    # calculate detection_Count
-    df['Detection_Count(all_samples)'] = df.count(axis=1)
-
-    # subtract 2 from detection_Count to account for the 'Mass', "Retention_Time"
-    df['Detection_Count(all_samples)'] = df['Detection_Count(all_samples)'].apply(lambda x: x - 2)
-
-    # total number of samples (subtract 2 for the 'Mass', "Retention_Time")
-    total_samples = len(filter_headers) - 2
-
-    # calculate percentage of samples that have a value and store in new column 'detection_Count(all_samples)(%)'
-    df['Detection_Count(all_samples)(%)'] = (df['Detection_Count(all_samples)'] / total_samples) * 100
-    # round to whole number
-    df['Detection_Count(all_samples)(%)'] = df['Detection_Count(all_samples)(%)'].round(0)
-
-
-
-
-    # calculate non-blank_samples
-    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks.count(axis=1)
-
-    # subtract 2 from non-blank_samples to account for the 'Mass', "Retention_Time"
-    df_nonblanks['Detection_Count(non-blank_samples)'] = df_nonblanks['Detection_Count(non-blank_samples)'].apply(lambda x: x - 2)
-
-    # total number of samples (subtract 2 for the 'Mass', "Retention_Time")
-    total_nonblank_samples = len(filter_headers_nonblanks) - 2
-
-    # calculate percentage of samples that have a value and store in new column 'detection_Count(non-blank_samples)(%)'
-    df_nonblanks['Detection_Count(non-blank_samples)(%)'] = (df_nonblanks['Detection_Count(non-blank_samples)'] / total_nonblank_samples) * 100
-    # round to whole number
-    df_nonblanks['Detection_Count(non-blank_samples)(%)'] = df_nonblanks['Detection_Count(non-blank_samples)(%)'].round(0)
-
-
-
-    # merge new data into original dataframe
-    # NYAW-94
-    # df_out = pd.merge(df_in, df[[ 'Compound','Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Compound'])
-    # df_out = pd.merge(df_out, df_nonblanks[[ 'Compound','Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Compound'])
-    df_out = pd.merge(df_in, df[[ 'Mass', "Retention_Time",'Detection_Count(all_samples)', 'Detection_Count(all_samples)(%)' ]], how='left', on=['Mass', "Retention_Time"])
-    df_out = pd.merge(df_out, df_nonblanks[[ 'Mass', "Retention_Time",'Detection_Count(non-blank_samples)', 'Detection_Count(non-blank_samples)(%)' ]], how='left', on=['Mass', "Retention_Time"])
-    return df_out
-'''
-
-'''
-# not yet unit tested
-def clean_features(df, controls):  # a method that drops rows based on conditions
-    # Abundance=  df.columns[df.columns.str.contains(pat ='N_Abun_')].tolist()
-    Abundance=  df.columns[df.columns.str.contains(pat ='Replicate_Percent_')].tolist()
-    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
-    Mean = df.columns[df.columns.str.contains(pat ='Mean_')].tolist()
-    Mean_samples = [md for md in Mean if not any(x in md for x in blanks)]
-    Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
-    Std = df.columns[df.columns.str.contains(pat ='STD_')].tolist()
-    # Std_samples = [md for md in Std if not any(x in md for x in blanks)]
-    Std_MB = [md for md in Std if any(x in md for x in blanks)]
-    Median = df.columns[df.columns.str.contains(pat ='Median_')].tolist()    
-    Median_Samples = [md for md in Median if not any(x in md for x in blanks)]
-    Median_Blanks = [md for md in Median if any(x in md for x in blanks)]
-    # Median_High = [md for md in Median if 'C' in md]
-    # Median_Mid = [md for md in Median if 'B' in md]
-    # Median_Low = [md for md in Median if 'A' in md]
-    # Median_MB = [md for md in Median if any(x in md for x in blanks)]
-    # N_Abun_High = [N for N in Abundance if 'C' in N]
-    # N_Abun_MB = [N for N in Abundance if any(x in N for x in blanks)]
-    # N_Abun_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
-    Replicate_Percent_MB = [N for N in Abundance if any(x in N for x in blanks)]
-    Replicate_Percent_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
-    #N_Abun_MB= [N for N in Abundanceif 'MB' in N]
-
-    CV = df.columns[df.columns.str.startswith('CV_')].tolist()
-
-    CV_Samples= [C for C in CV if not any(x in C for x in blanks)]
-    #set medians where feature abundance is less than some cutoff to nan
-    df['AnySamplesDropped'] = np.nan
-    for median,N in zip(Median_Samples,Replicate_Percent_Samples):
-        #print((str(median) + " , " +str(N)))
-        df.loc[df[N] < controls[0], median] = np.nan
-        df.loc[df[N] < controls[0], 'AnySamplesDropped'] = 1
-    for mean,Std,median,N in zip(Mean_MB,Std_MB,Median_Blanks,Replicate_Percent_MB):
-        #print((str(median) + " , " +str(N)))
-        df.loc[df[N] < controls[2], median] = np.nan
-        df.loc[df[N] < controls[2], mean] = 0
-        df.loc[df[N] < controls[2], Std] = 0
-    # remove all features where the abundance is less than some cutoff in all samples
-    df.drop(df[(df[Replicate_Percent_Samples] < controls[0]).all(axis=1)].index, inplace=True)
-    df.drop(df[(df[CV_Samples] > controls[1]).all(axis=1)].index, inplace=True)
-    # blank out samples that do not meet the CV cutoff
-    cv_not_met = df[CV_Samples] > controls[1]
-    m = df[Median_Samples].copy()
-    cv_not_met.columns = m.columns
-    df[Median_Samples] = m.mask(cv_not_met)
-    #find the median of all samples and select features where median_samples/ median_blanks >= cutoff
-    #Updated to test sample mean > 3*STDblank + mean_blank
-    df['Max_Median_ALLSamples'] = df[Median_Samples].max(axis=1,skipna=True).round(0)
-
-    df['BlkStd_cutoff'] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
-    df['BlkStd_cutoff'] = df['BlkStd_cutoff'].fillna(df[Mean_MB[0]]) # In the case of a single blank replicate, the previous calculation is an empty value as it cannot calculate Std dev; replace with mean value
-    df = df[(df[Replicate_Percent_MB[0]] == 0) | (df[Mean_samples].max(axis=1, skipna=True) > df['BlkStd_cutoff'])]#>=(df['SampletoBlanks_ratio'] >= controls[0])].copy()
-    
-    return df
-  '''  
-  
-  
-  
-  
-  
-'''OLD VERSIONS OF FUNCTIONS -- NEED TO MOVE OR DELETE''' 
- 
- 
-'''
-def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 1):  # TODO optimize memory usage
-    """
-    Label features which could have adduct or loss products in the feature list, or may be adduct of loss products of
-    other features. This information is added to the dataframe in three columns, Has_Adduct_or_Loss - true/false,
-    Is_Adduct_or_Loss - true/false, and Adduct_or_Less_Info which points to the feature number of the associated
-    adduct/loss or parent feature and gives the type of adduct/loss.
-    :param df_in: A dataframe of MS features
-    :param Mass_Difference: Mass differences below this number are possible duplicates. Units of ppm or Da based on the
-    ppm parameter.
-    :param Retention_Difference: Retention time differences below this number are possible duplicates. Units of mins.
-    :param ppm: True if mass differences are given in ppm, otherwise False and units are Da.
-    :param ionization: 'positive' if data are from positive ionization mode, otherwise 'negative'.
-    :param id_start: The first feature id in the dataset (defaults to 1)
-    :return: A Dataframe where adduct info is given in three new columns.
-    """
-    df = df_in.copy()
-    mass = df['Mass'].to_numpy()
-    rts = df['Retention_Time'].to_numpy()
-    masses_matrix = np.reshape(mass, (len(mass), 1))
-    rts_matrix = np.reshape(rts, (len(rts),1))
-    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
-    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
-    pos_adduct_deltas = {'Na': 22.989218, 'K': 38.963158, 'NH4': 18.033823}
-    neg_adduct_deltas = {'Cl': 34.969402, 'Br': 78.918885, 'HCO2': 44.998201, 'CH3CO2': 59.013851, 'CF3CO2': 112.985586}
-    neutral_loss_deltas= {'H2O': -18.010565, 'CO2': -43.989829}
-    proton_mass = 1.007276
-    if ionization == "positive":
-        # we observe Mass+(H+) and Mass+(Adduct)
-        possible_adduct_deltas = {k: v - proton_mass for (k,v) in pos_adduct_deltas.items()}
-    else:
-        # we observe Mass-(H+) and Mass+(Adduct)
-        possible_adduct_deltas = {k: v + proton_mass for (k,v) in neg_adduct_deltas.items()}
-    possible_adduct_deltas.update(neutral_loss_deltas)  # add our neutral losses
-    df['Has_Adduct_or_Loss'] = 0
-    df['Is_Adduct_or_Loss'] = 0
-    df['Adduct_or_Loss_Info'] = ""
-    unique_adduct_number = np.zeros(len(df.index))
-    for a_name, delta in sorted(possible_adduct_deltas.items()):
-        is_adduct_diff = abs(diff_matrix_mass - delta)
-        has_adduct_diff = abs(diff_matrix_mass + delta)
-        if ppm:
-            is_adduct_diff = (is_adduct_diff/masses_matrix)*10**6
-            has_adduct_diff = (has_adduct_diff/masses_matrix)*10**6
-        is_adduct_matrix = np.where((is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
-        has_adduct_matrix = np.where((has_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference), 1, 0)
-        np.fill_diagonal(is_adduct_matrix, 0)  # remove self matches
-        np.fill_diagonal(has_adduct_matrix, 0)  # remove self matches
-        row_num = len(mass)
-        is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start #don't need to do the reshape if we pass a tuple: np.tile(np.arange(row_num), (row_num, row_num))
-        #has_id_matrix = is_id_matrix.transpose()
-        is_adduct_number = is_adduct_matrix * is_id_matrix
-        is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row; unlikely to happen?
-        is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0) # should this be '- id_start' ? --> maybe get rid of '- 1', but need to test this
-        is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
-                                       (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
-        is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
-        has_adduct_number = has_adduct_matrix * is_id_matrix
-        has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
-        unique_adduct_number = np.where(has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat).astype(int) # preferentially stores having an adduct over being an adduct
-        #unique_adduct_number = np.where(unique_adduct_number == 0, unique_adduct_number_new, unique_adduct_number)
-        df['Has_Adduct_or_Loss'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
-                                            df['Has_Adduct_or_Loss']+1, df['Has_Adduct_or_Loss'])                # this is labeled as a binary, but is actually a count!
-        df['Is_Adduct_or_Loss'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0), 1, df['Is_Adduct_or_Loss'])
-        # new_cols = ['unique_{}_number'.format(a_name), 'has_{}_adduct'.format(a_name), 'is_{}_adduct'.format(a_name)]
-        #unique_adduct_number_str =
-        logger.info("Checkpoint xi")
-        df['Adduct_or_Loss_Info'] = np.where((has_adduct_number_flat > 0) & (df['Is_Adduct_or_Loss'] == 0),
-                                             df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
-        df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
-                                             df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
-    return df
-'''
-
-
-'''
-#untested
-def duplicates(df, mass_cutoff=0.005, rt_cutoff=0.05):
-    """
-    Drop features that are deemed to be duplicates. Duplicates are defined as two features whose differences in
-    both mass and retention time are less than the defined cutoffs.
-    :param df: A dataframe of MS feature data
-    :param mass_cutoff: Mass differences below this number are possible duplicates. Units of Da.
-    :param rt_cutoff: Retention time differences below this number are possible duplicates. Units of mins.
-    :return: A dataframe with duplicates removed
-    """
-    df_new = df.copy()
-    samples_df = df.filter(like='Sample', axis=1)
-    df_new['all_sample_mean'] = samples_df.mean(axis=1)  # mean intensity across all samples
-    df_new.sort_values(by=['all_sample_mean'], inplace=True, ascending=False)
-    df_new.reset_index(drop=True, inplace=True)
-    mass = df_new['Mass'].to_numpy()
-    rts = df_new['Retention_Time'].to_numpy()
-    masses_matrix = np.reshape(mass, (len(mass), 1))
-    rts_matrix = np.reshape(rts, (len(rts), 1))
-    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
-    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
-    duplicates_matrix = np.where((abs(diff_matrix_mass) <= mass_cutoff) & (abs(diff_matrix_rt) <= rt_cutoff),1,0)
-    np.fill_diagonal(duplicates_matrix, 0)
-    row_sums = np.sum(duplicates_matrix, axis=1)  # gives number of duplicates for each df row
-    duplicates_matrix_lower = np.tril(duplicates_matrix)  # lower triangle of matrix
-    lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
-    to_keep = df_new[(row_sums == 0) | (lower_row_sums == 0)].copy()
-    to_keep.sort_values(by=['Mass'], inplace=True)
-    to_keep.reset_index(drop=True, inplace=True)
-    to_keep = to_keep.drop(['all_sample_mean'], axis=1).copy()
-    return to_keep
-'''
-
-
-
-'''
-#untested
-def statistics(df_in):
-    """
-    # Calculate Mean,Median,STD,CV for every feature in a sample of multiple replicates
-    :param df_in: the dataframe to calculate stats for
-    :return: a new dataframe including the stats
-    """
-    # make a copy of the input DataFrame, df_in, to avoid modifying the original DataFrame.
-    df = df_in.copy()
-    # extract the headers (column names) from the input DataFrame by calling a function called parse_headers. The extracted headers are stored in the all_headers variable.
-    all_headers = parse_headers(df)
-    # create a list called abundance by flattening the all_headers list and filtering out items with a length greater than 1. 
-    abundance = [item for sublist in all_headers for item in sublist if len(sublist) > 1]
-    # call the score function to calculate the score for each feature in the input DataFrame. The score is stored in a new column called Score.
-    df = score(df)
-    # create a list called filter_headers, which includes a predefined set of column names to keep in the DataFrame. 
-    filter_headers= ['Compound','Ionization_Mode','Score','Mass','Retention_Time'] + abundance
-    # create a new DataFrame called df, which includes only the columns in the filter_headers list.
-    df = df[filter_headers].copy()
-    
-    # 8/16/2023 AC: Adjust code generating new statistics columns to avoid fragmented Dataframe / frame.insert messages
-    # For each list of replicates (the_list), it calculates statistics for each replicate by comparing them. Specifically, 
-    # it finds the longest common substring between the replicate names, and this common substring is used to create new 
-    # columns in the DataFrame to store the statistics (Mean, Median, STD, CV, N_Abun).
-    for the_list in all_headers:
-        REP_NUM = len(the_list)
-        if REP_NUM > 1:
-            i = 0
-            # match finds the indices of the largest common substring between two strings
-            match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
-            df['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(4)
-            df['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(4)
-            df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(4)
-            df['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (df['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Mean_' + str(the_list[i])[match.a:match.a + match.size]]).round(4)
-            df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
-            # add column named 'Total_Abun_' for the total number of replicates for the sample group
-            df['Total_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = REP_NUM
-            Replicate_Percent = (df['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]]/df['Total_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]]).round(4)
-            df['Replicate_Percent_'+ str(the_list[i])[match.a:match.a +  match.size]] = Replicate_Percent * 100.0
-
-           
-    # 8/21/2023 AC: Adjust code to dictionary comprehension to avoid Dataframe fragmentations
-    # for the_list in all_headers:
-    #     REP_NUM = len(the_list)
-    #     if REP_NUM > 1:
-    #         stats_data = {}
-    #         for i in range(0, REP_NUM):
-    #             # match finds the indices of the largest common substring between two strings
-    #             match = SequenceMatcher(None, the_list[i], the_list[i+1]).find_longest_match(0, len(the_list[i]),0, len(the_list[i+1]))
-    #             stats_data['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].mean(axis=1).round(0)
-    #             stats_data['Median_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].median(axis=1,skipna=True).round(0)
-    #             stats_data['STD_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].std(axis=1,skipna=True).round(0)
-    #             stats_data['CV_'+ str(the_list[i])[match.a:match.a +  match.size]] = (stats_data['STD_'+ str(the_list[i])[match.a:match.a +  match.size]]/stats_data['Mean_'+ str(the_list[i])[match.a:match.a +  match.size]]).round(4)
-    #             stats_data['N_Abun_'+ str(the_list[i])[match.a:match.a +  match.size]] = df[the_list[i:i + REP_NUM]].count(axis=1).round(0)
-    #             break
-    #         new_df = pd.concat(stats_data.values(), axis=1, ignore_index=True)
-    #         new_df.columns = stats_data.keys()  # since Python 3.7, order of insertion is preserved
-    # df = df.join(new_df)
-    
-    # sort the DataFrame based on the 'Mass' and 'Retention_Time' columns in ascending order.
-    df.sort_values(['Mass', 'Retention_Time'], ascending=[True, True], inplace=True)
-    # round the 'Mass' column to zero decimal places and stores the result in a new column called 'Rounded_Mass'.
-    df['Rounded_Mass'] = df['Mass'].round(0)
-
-    # Create a new dataframe column titled "Max_CV_across_sample" and populate it with the maximum CV value for each feature across all columns containing the string "CV_" in the header
-    # df=df.assign(Max_CV_across_sample=df.filter(regex='CV_').max(axis=1))
-    df['Max_CV_across_sample'] = df.filter(regex='CV_').max(axis=1)
-
-    return df
-'''
-   
