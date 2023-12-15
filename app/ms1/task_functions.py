@@ -723,7 +723,7 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     # Features dropped because all samples are below replicate threshold
     docs['Feature_removed'] = np.where((df[Replicate_Percent_Samples] < controls[0]).all(axis=1), 'R', docs['Feature_removed'])
     # Label features that don't have anything in the blank and have nothing above MRL as removed by CV/R filters
-    docs['Feature_removed'] = np.where(((df[Replicate_Percent_MB[0]] == 0) & (df[Mean_Samples].count(axis=1) > 0)), 'CV/R', docs['Feature_removed'])
+    docs['Feature_removed'] = np.where(((df[Replicate_Percent_MB[0]] == 0) & (df[Mean_Samples].count(axis=1) < 1)), 'CV/R', docs['Feature_removed'])
     
     
     '''DROP FEATURES FROM DF'''
