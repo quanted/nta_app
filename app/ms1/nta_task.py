@@ -460,9 +460,13 @@ class NtaRun:
 
     def cv_scatterplot(self, input_dfs):
 
+        plt.rcdefaults()
+
         titleText = "CV vs. Abundance"
         
         max_replicate_cv_value = self.parameters['max_replicate_cv'][1]
+        # convert to float
+        max_replicate_cv_value = float(max_replicate_cv_value)
 
         # get dataframe 'Feature_statistics_positive' if it exists else None
         dfPos = self.data_map['Feature_statistics_positive'] if 'Feature_statistics_positive' in self.data_map else None
@@ -636,9 +640,10 @@ class NtaRun:
         axes[0].set_title(titleText + ": Blanks", weight='bold')
         axes[0].set_xlabel("Mean Abundance", fontsize = 12)
         axes[0].set_ylabel("CV", fontsize = 12)
-        axes[0].set_ylim(0, 4)
+        axes[0].set_ylim(0,4)
         axes[0].set_xlim(100, 10000000000)
         axes[0].set(xscale='log')
+        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0,3.5,4.0])
 
         b=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')),:],
                         x='Mean', y='CV', color="whitesmoke",
@@ -664,10 +669,10 @@ class NtaRun:
         axes[1].set_title(titleText + ": Samples", weight='bold')
         axes[1].set_xlabel("Mean Abundance", fontsize = 12)
         axes[1].set_ylabel("CV", fontsize = 12)
-        axes[1].set_ylim(0, 4)
+        axes[1].set_ylim(0,4)
         axes[1].set_xlim(100, 10000000000)
         axes[1].set(xscale='log')
-
+        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0,3.5,4.0])
         # legend = d.legend(title = "Natives")
         # legend.get_texts()[0].set_text('present')
         # legend.get_texts()[1].set_text('spiked')
@@ -692,7 +697,21 @@ class NtaRun:
         self.gridfs.put("&&".join(self.cv_scatterplot_map.keys()), _id=self.jobid + "_cv_scatterplots", encoding='utf-8', project_name = project_name)
         self.mongo_save(self.cv_scatterplot_map['cv_scatterplot'], step='cv_scatterplot')
 
+        # reset plt
+        plt.clf()
+
     def occurrence_heatmap(self, input_dfs):
+        plt.rcdefaults()
+
+        max_replicate_cv_value = self.parameters['max_replicate_cv'][1]
+        min_replicate_hits_percent = self.parameters['min_replicate_hits'][1]
+        titleText = "Heatmap of all feature occurrences using filter values of {} maximum CV and {} minimum replicate %".format(max_replicate_cv_value, min_replicate_hits_percent)
+        
+        # convert max_replicate_cv_value to a numeric value
+        max_replicate_cv_value = pd.to_numeric(self.parameters['max_replicate_cv'][1], errors='coerce')
+
+        # convert min_replicate_hits_percent to a numeric value
+        min_replicate_hits_percent = pd.to_numeric(self.parameters['min_replicate_hits'][1], errors='coerce')
 
         # get dataframe 'Feature_statistics_positive' if it exists else None
         dfPos = self.data_map['Feature_statistics_positive'] if 'Feature_statistics_positive' in self.data_map else None
@@ -760,12 +779,12 @@ class NtaRun:
         # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
         for x,y,z in zip(cv_cols, rper_cols, med_cols):
             # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
-            cv_df.loc[dfCombined[y]<0.67, x] = np.nan
+            cv_df.loc[dfCombined[y]<min_replicate_hits_percent, x] = np.nan
             cv_df.loc[dfCombined[z]<=dfCombined['MDL'], x] = np.nan
         #logger.info("#1 cv_df= {}".format(cv_df.values))
 
         # Add sum of Trues for condition applied to cv dataframe
-        cv_df['below count'] = (cv_df <= 1.25).sum(axis=1)
+        cv_df['below count'] = (cv_df <= max_replicate_cv_value).sum(axis=1)
         #logger.info("#2 cv_df= {}".format(cv_df.values))
 
         # Sort values by medians
@@ -777,8 +796,8 @@ class NtaRun:
         #logger.info("#4 cv_df= {}".format(cv_df.values))
 
         # Create masks for CV cutoffs
-        above = cv_df > 1.25
-        below = cv_df <= 1.25
+        above = cv_df > max_replicate_cv_value
+        below = cv_df <= max_replicate_cv_value
         nan_ = cv_df.isna()
 
         # Get sum values for each group (use these in colorbar labels)
@@ -798,6 +817,7 @@ class NtaRun:
 
         # Set Figure size and title
         plt.figure(figsize = (40,15))
+        plt.title(titleText, fontsize = 36)
         # plt.title('CA Data MS1 Feature Heatmap (post-blank subtraction), ESI- (n='+str(cv_df.size)+')\nSorted by # samples below CV threshold (lowest[left] to highest[right])', fontsize = 36)
 
         # Create custom color mapping
@@ -813,7 +833,11 @@ class NtaRun:
         colorbar = ax.collections[0].colorbar
         colorbar.ax.tick_params(labelsize=24)
         colorbar.set_ticks([-0.667, 0, 0.667])
-        colorbar.set_ticklabels(['non detect ('+str(nan_.sum().sum())+')', 'CV <=1.25 ('+str(below.sum().sum())+')', 'CV >1.25 ('+str(above.sum().sum())+')'])
+        colorbar.set_ticklabels([
+            'non detect ({})'.format(nan_.sum().sum()),
+            'CV <= {} ({})'.format(max_replicate_cv_value, below.sum().sum()),
+            'CV > {} ({})'.format(max_replicate_cv_value, above.sum().sum())])
+
 
         plt.ylabel('Sample Set', fontsize = 28)
         plt.xlabel('Feature ID (n = '+str(len(cv_df))+')', fontsize = 28)
@@ -832,6 +856,9 @@ class NtaRun:
         project_name = self.parameters['project_name'][1] 
         self.gridfs.put("&&".join(self.occurrence_heatmap_map.keys()), _id=self.jobid + "_occurrence_heatmaps", encoding='utf-8', project_name = project_name)
         self.mongo_save(self.occurrence_heatmap_map['occurrence_heatmap'], step='occurrence_heatmap')
+
+        # reset plt
+        plt.clf()
 
 
     def check_tracers(self):
