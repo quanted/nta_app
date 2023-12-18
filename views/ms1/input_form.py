@@ -17,11 +17,11 @@ class NtaInputs(forms.Form):
         choices=(('no', 'no'),('yes', 'yes')),
         initial='no')
     pos_input = forms.FileField(
-        label = 'Positive MPP file (csv)',
+        label = 'Positive mode file (csv)',
         required=False,
         validators= [FileExtensionValidator(['csv'])])
     neg_input = forms.FileField(
-        label='Negative MPP file (csv)',
+        label='Negative mode file (csv)',
         required=False,
         validators= [FileExtensionValidator(['csv'])])
     mass_accuracy_units = forms.ChoiceField(

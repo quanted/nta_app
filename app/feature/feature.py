@@ -346,7 +346,7 @@ class MS2_Spectrum:
         """
         Aligns this object's fragment mass and intensity vlaues with the other spectrum's mass and intensity values.
         Mass values are aligned by:
-            2) Binning masses into goups by rounding masses to the 4th decimal
+            2) Binning masses into goups by rounding masses to the nearest whole number
             2) Constructing dataframe of self and other, then merging the two matricies on the 'bin_mass' column to 
                     generate all possible combinations of masses in corresponding bins
             3) Calculate the absolute difference between the the fragment masses between the self and other spectrum and 

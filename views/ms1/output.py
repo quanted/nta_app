@@ -58,6 +58,12 @@ def file_download_buttons(jobid):
             <input type="button" value="Final results" onclick="window.open('/nta/ms1/results/toxpi/{jobid}')">
         </div>
     </div>
+    <div id="decision_tree_area">
+        <H3 id="section1">View plots:</H3>
+        <div class="buttons">
+            <input type="button" value="CV decision tree" onclick="window.open('/nta/ms1/results/decision_tree/{jobid}')">
+        </div>
+    </div>
     """
     return html.format(jobid = jobid)
 

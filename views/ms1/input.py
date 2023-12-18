@@ -192,6 +192,7 @@ def input_page(request, form_data=None, form_files=None):
                 inputs = [pos_input, neg_input]
                 print("len(inputs)= ", len(inputs) )
                 print("inputs: {} ".format(inputs))
+                
                 input_dfs = []
                 for index, df in enumerate(inputs) :
                     print('indx=',index)
@@ -200,6 +201,7 @@ def input_page(request, form_data=None, form_files=None):
                     else:
                         input_dfs.append(None)
                 # input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs) if df is not None]
+                
                 print("len(input_dfs)= ", len(input_dfs) )
                 print("input_page: inputParameters: {} ".format(inputParameters))
 
@@ -231,6 +233,8 @@ def input_page(request, form_data=None, form_files=None):
 
     html += str(NtaInputs(form_data, form_files))
     html += render_to_string('04uberinput_end_drupal.html', {})
+    html += "<div class='disclaimer'>**Disclaimer: This tool is being provided for internal testing purposes and is not yet approved by EPA-ORD. Please do not publish any outputs.**<br>"
+    html += "**Disclaimer: Please remove all sensitive or personally identifiable information before submitting data.** </div>"
     html += render_to_string('04ubertext_end_drupal.html', {})
 
     html += links_left.ordered_list(model, page)

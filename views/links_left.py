@@ -14,6 +14,7 @@ def ordered_list(model=None, page=None):
         ('Documentation', OrderedDict([
                 # ('API Documentation', '/qedinternal.epa.gov/pisces/rest'),
                 ('Source Code', 'github'),
+                ('NTA Informatics Toolkit User Guide v0.1', 'static/docs/NTA-WebApp-user-guide_v0.1.docx'),
             ])
          )
     ])

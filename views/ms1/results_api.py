@@ -15,3 +15,8 @@ def check_status(request, jobid= None):
     server = OutputServer(jobid)
     response = server.status()
     return response
+    
+def decision_tree_data(request, jobid = None):
+    server = OutputServer(jobid)
+    response = server.decision_tree()
+    return response

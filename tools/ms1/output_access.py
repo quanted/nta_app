@@ -150,27 +150,117 @@ class OutputServer:
             except (OperationFailure, TypeError, NoFile) as e:
                 break
 
+    def add_cv_scatterplot_to_zip(self, zipf,jobid):
+        try:
+            id = jobid + "_cv_scatterplot"
+            db_record = self.gridfs.get(id)
+            buffer = db_record.read()
+            project_name = db_record.project_name
+            if project_name:
+                filename = project_name.replace(" ", "_") + '_cv_scatterplot.png'
+            else:
+                filename = id + '.png'
+            zipf.writestr(filename, buffer)
+        except (OperationFailure, TypeError, NoFile) as e:
+            pass
+
+    def add_occurrence_heatmap_to_zip(self, zipf,jobid):
+        # heatmap_plot = self.gridfs.get(f'{self.jobid}_occurrence_heatmaps').read().decode('utf-8').split("&&")
+        try:
+            heatmap_id = jobid + "_occurrence_heatmap"
+            db_record = self.gridfs.get(heatmap_id)
+            buffer = db_record.read()
+            project_name = db_record.project_name
+            if project_name:
+                filename = project_name.replace(" ", "_") + '_occurrence_heatmap.png'
+            else:
+                filename = heatmap_id + '.png'
+            zipf.writestr(filename, buffer)
+        except (OperationFailure, TypeError, NoFile) as e:
+            pass
+
+
     def final_result(self):
         in_memory_zip = BytesIO()
             
         with ZipFile(in_memory_zip, 'w', ZIP_DEFLATED) as zipf:
             excel_data = self.generate_excel()
-            zipf.writestr('summary.xlsx', excel_data)
+            
+            # Update Excel file name to be named after project name and if not present, after Job ID
+            data_files = self.gridfs.get(f'{self.jobid}_file_names').read().decode('utf-8').split("&&")
+            for name in data_files:
+                try:
+                    tracer_id = self.jobid + "_" + name
+                    db_record = self.gridfs.get(tracer_id)
+                    buffer = db_record.read()
+                    project_name = db_record.project_name
+                    if project_name:
+                        #filename = project_name.replace(" ", "_") + '_' + name + '.png'
+                        filename = project_name.replace(" ", "_") + '_NTA_WebApp_results.xlsx'
+                    else:
+                        #filename = tracer_id + '.png'
+                        filename = self.jobid + '_NTA_WebApp_results.xlsx'
+                    #zipf.writestr(filename, buffer)
+                except (OperationFailure, TypeError, NoFile) as e:
+                    break
+            
+            
+            # db_record = self.gridfs.get(self.jobid)
+            # buffer = db_record.read()
+            # project_name = db_record.project_name
+            # if project_name:
+            #     filename = project_name.replace(" ", "_") + '_NTA_WebApp_results.xlsx'
+            # else:
+            #     filename = self.jobid + '_NTA_WebApp_results.xlsx'
+
+
+            #excel_filename = self.parameters['project_name'][1] + '_' + self.jobid + '.xlsx'
+            #zipf.writestr('summary.xlsx', excel_data)
+            zipf.writestr(filename, excel_data)
 
             #self.add_tracer_plots_to_zip(zipf, self.jobid)
-            
             try:
                 self.add_tracer_plots_to_zip(zipf, self.jobid)
             except (OperationFailure, TypeError, NoFile) as e:
                 pass # do we want to do anything if no tracer file present?
+            
+            try:
+                self.add_occurrence_heatmap_to_zip(zipf, self.jobid)
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass # do we want to do anything if no heatmap plot present?
+          
+            try:
+                self.add_cv_scatterplot_to_zip(zipf, self.jobid)
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass # do we want to do anything if no cv_scatterplot present?
 
         zip_filename = 'nta_results_' + self.jobid + '.zip'
         response = HttpResponse(in_memory_zip.getvalue(),content_type='application/zip')
         response['Content-Disposition'] = 'attachment; filename=' + zip_filename
         response['Content-length'] = in_memory_zip.tell()
         return response
-
-
+    
+    def decision_tree(self):
+        data_pos_id = self.jobid + "_" + "Feature_statistics_positive"
+        data_neg_id = self.jobid + "_" + "Feature_statistics_negative"
+        try:  #
+            data_pos = self.gridfs.get(data_pos_id)
+            json_string = data_pos.read().decode('utf-8')
+            pos_df = pd.read_json(json_string, orient='split')
+        except (OperationFailure, TypeError, NoFile):
+            pos_df = pd.DataFrame()  # if pos file does not exist
+        try:  
+            data_neg = self.gridfs.get(data_neg_id)
+            json_string = data_neg.read().decode('utf-8')
+            neg_df = pd.read_json(json_string, orient='split')
+        except (OperationFailure, TypeError, NoFile):
+            neg_df = pd.DataFrame()  # if neg file does not exist
+        combined_df = pd.concat([pos_df, neg_df])  # combine pos and neg mode stats files
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=tree_data.csv'
+        combined_df.to_csv(path_or_buf=response, index_label=False)  # write our csv to the response
+        return response
+            
 
 
 
