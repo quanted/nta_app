@@ -619,15 +619,15 @@ class NtaRun:
         # a.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # a.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         a.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        a.text(1000000000, 1.4, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        a.text(1000000000, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
         '''
         sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')&(plot2['spike']==1)),:],
                         x='Mean', y='CV', color="firebrick",
                         edgecolor = 'black', alpha = 0.15, ax = axes[0])
         '''
-        # legend = a.legend(title = "Features")
-        # legend.get_texts()[0].set_text('unknowns')
-        # legend.get_texts()[1].set_text('ISTDs')
+        legend = a.legend(title = "Features")
+        legend.get_texts()[0].set_text('unknowns')
+        legend.get_texts()[1].set_text('ISTDs')
 
         # frame = legend.get_frame() #sets up for color, edge, and transparency
         # frame.set_facecolor('lightgray') #color of legend
@@ -663,7 +663,7 @@ class NtaRun:
         # c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         c.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        c.text(1000000000, 1.4, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        c.text(1000000000, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
 
         #axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
         axes[1].set_title(titleText + ": Samples", weight='bold')
