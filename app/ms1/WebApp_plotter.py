@@ -441,7 +441,7 @@ class WebApp_plotter:
             df = df_tracer[col_names].copy()
             # 11/20/2023 AC: Add statement to grab sample groups from run sequence file (if available)
         else:
-            headers = parse_headers(df_in, 0)
+            headers = parse_headers(df_in)
             abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
             #abundance.remove('Detection_Count(all_samples)')
             #abundance.remove('Detection_Count(all_samples)(%)')
