@@ -762,7 +762,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
         pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
             
     # Parse headers, get sample values and blank subtracted means
-    Headers = parse_headers(dft,0)
+    Headers = parse_headers(dft)
     raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
     blank_subtracted_means = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
     
