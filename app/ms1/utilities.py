@@ -12,7 +12,7 @@ import requests
 import time
 import numpy as np
 import pandas as pd
-import task_functions as task_fun
+from . import task_functions as task_fun
 #from .functions_Universal_v3 import parse_headers
 
 logger = logging.getLogger("nta_app.ms1")
