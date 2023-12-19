@@ -12,7 +12,8 @@ import requests
 import time
 import numpy as np
 import pandas as pd
-from .functions_Universal_v3 import parse_headers
+import task_functions as task_fun
+#from .functions_Universal_v3 import parse_headers
 
 logger = logging.getLogger("nta_app.ms1")
 logger.setLevel(logging.INFO)
@@ -45,7 +46,7 @@ def remove_columns(df_in, list_of_columns2remove):
 
 def reduced_file(df_in):
     df = df_in.copy()
-    headers = parse_headers(df, 0)
+    headers = task_fun.parse_headers(df)
     keeps_str = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank', 'Mean', 'Sub']
     to_drop = [item for sublist in headers for item in sublist if
                         (len(sublist) > 1) & (not any(x in item for x in keeps_str))]
@@ -150,7 +151,7 @@ def format_tracer_file(df_in):
 def create_tracer_plot(df_in):
     mpl_logger = logging.getLogger('matplotlib')
     mpl_logger.setLevel(logging.WARNING)
-    headers = parse_headers(df_in, 0)
+    headers = task_fun.parse_headers(df_in)
     abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
     fig, ax = plt.subplots()
     for i, tracer in df_in.iterrows():

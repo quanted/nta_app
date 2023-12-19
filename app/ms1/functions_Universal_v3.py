@@ -17,14 +17,29 @@ from itertools import groupby
 from difflib import SequenceMatcher
 import dask.dataframe as dd
 pd.options.mode.chained_assignment = None  # suppress settingwithcopy warning
-
+'''
 #REP_NUM = 3
 HBR = 3.0 # High_Blank_Ratio condition
 HMR = 1.5 # High_Mid_Ratio condition
 SCORE = 90 # formula match is 90
-
+'''
 BLANKS = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank']
 
+
+def common_substrings(ls=None):
+    match  = SequenceMatcher(None,ls[0],ls[len(ls)-1]).find_longest_match(0,len(ls[0]),0,len(ls[len(ls)-1]))
+    common = ls[0][match.a: match.a + match.size]
+    #print((" ********* " + common))
+    lsnew = list()
+    for i in range(len(ls)):
+        if len(common) > 3:
+            lsnew.append(ls[i].replace(common,''))
+        else:
+            lsnew.append(ls[i])
+            #print ls
+    return lsnew
+    
+    
 def fix_names(df,index): # parse the Dataframe into a numpy array
         #df.columns = df.columns.str.replace(': Log2','') #log specific code
         df.columns = df.columns.str.replace(' ','_')
@@ -45,9 +60,6 @@ def fix_names(df,index): # parse the Dataframe into a numpy array
         return df
 
 
-
-
-
 def read_data(file,index):  # read a csv file into a DataFrame
         ext = os.path.splitext(file)[1]
         #print(ext)
@@ -59,9 +71,6 @@ def read_data(file,index):  # read a csv file into a DataFrame
         return df
 
 
-
-
-
 def differences(s1,s2): #find the number of different characters between two strings (headers)
         s1 = re.sub(re.compile(r'\([^)]*\)'),'',s1)
         s2 = re.sub(re.compile(r'\([^)]*\)'),'',s2)
@@ -70,21 +79,21 @@ def differences(s1,s2): #find the number of different characters between two str
 
 
 
-
+'''
 def formulas(df):
         df.drop_duplicates(subset='Compound',keep='first',inplace=True)
         formulas = df.loc[df['For_Dashboard_Search'] == '1','Compound'].values #only features flagged for Dashboard search
         #print(formulas)
         return formulas
-
-
+'''
+'''
 def masses(df):
         #df.drop_duplicates(subset='Mass',keep='first',inplace=True)
         masses = df.loc[df['For_Dashboard_Search'] == '1','Mass'].values #only features flagged for Dashboard search
         #print(masses)
         return masses
-
-
+'''
+'''
 def parse_headers(df,index): #group headers into a group of samples
         #global df
         headers = [[],[]]
@@ -120,11 +129,11 @@ def parse_headers(df,index): #group headers into a group of samples
         Headers[index] = New_Headers[index]
         #print((Headers[1]))
         return Headers[index]
+'''
 
 
 
-
-
+'''
 def score(df): # Get that Sneaky score from Annotations.
         regex = "^.*=(.*) \].*$" # a regex to find the score looking for a pattern of "=something_to_find ]" 
         if "Annotations" in df:
@@ -136,11 +145,11 @@ def score(df): # Get that Sneaky score from Annotations.
         else:
             df['Score'] = None
         return df
+'''
 
 
 
-
-
+'''
 def statistics(df,index): # calculate Mean,Median,STD,CV for every feature in a sample of multiple replicates
         Abundance = [[],[]]
         Headers = [0,0]
@@ -169,9 +178,9 @@ def statistics(df,index): # calculate Mean,Median,STD,CV for every feature in a 
         #df.to_csv('input-updated.csv', index=False)
 
         return df
+'''
 
-
-
+'''
 def Blank_Subtract_Median(df,index):
     """
     Calculate the median blank intensity for each feature and subtract that value from each sample's median value for
@@ -199,8 +208,8 @@ def Blank_Subtract_Median(df,index):
         df["BlankSub_"+str(median)] = df["BlankSub_"+str(median)].clip(lower=0).replace({0:np.nan})
     #df[Abundance[index]] = df[Abundance[index]].clip(lower=0).replace({0:np.nan})
     return df
-
-
+'''
+'''
 def Blank_Subtract_Mean(df_in):
     """
     Calculate the mean blank intensity for each feature and subtract that value from each sample's mean value for
@@ -219,8 +228,8 @@ def Blank_Subtract_Mean(df_in):
         # Clip values at 0, replace 0s with NaN
         df["BlankSub_"+str(mean)] = df["BlankSub_"+str(mean)].clip(lower=0).replace({0:np.nan})
     return df
-
-
+'''
+'''
 # Moving this to task_functions; TMF 12/11/23
 def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm): #a method to query and save the features with tracers criteria
     df1 = df.copy()
@@ -261,12 +270,12 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
     dft.drop(['Rounded_Mass','Matches'],axis=1,inplace=True)
     
     return dft, dfc
+'''
 
 
 
 
-
-
+'''
 def clean_features(df,index,ENTACT,controls): # a method that drops rows based on conditions
 
     Abundance=[[],[]]
@@ -328,11 +337,11 @@ def clean_features(df,index,ENTACT,controls): # a method that drops rows based o
         df.drop(df[(df[N_Abun_Samples[index]] < controls[1]).all(axis=1)].index, inplace=True)
         df.drop(df[(df[CV_Samples[index]] >= controls[2]).all(axis=1)].index, inplace=True)
     return df
+'''
 
 
 
-
-
+'''
 def flags(df): # a method to develop required flags
     df['Neg_Mass_Defect'] = np.where((df.Mass - df.Mass.round(0)) < 0 , '1','0')
     df['Halogen'] = np.where(df.Compound.str.contains('F|l|r|I'),'1','0')
@@ -346,9 +355,9 @@ def flags(df): # a method to develop required flags
     #print df1
     df.sort_values('Compound',ascending=True,inplace=True)
     return df
+'''
 
-
-
+'''
 def match_headers(list1=None,list2=None):
     string_match = list()
     #print((len(list1), len(list2)))
@@ -357,7 +366,8 @@ def match_headers(list1=None,list2=None):
         string_match.append("".join([list2[i][j] for j, (a,b) in enumerate(zip(list1[i],list2[i])) if a == b]))
         #print((len(string_match)))
     return string_match
-
+'''
+'''
 def append_headers(list1,list2):
     #list1.sort()
     #list_new = list()
@@ -373,23 +383,12 @@ def append_headers(list1,list2):
         list_new = list1
     #print(list_new)
     return diff
-
-
-def common_substrings(ls=None):
-    match  = SequenceMatcher(None,ls[0],ls[len(ls)-1]).find_longest_match(0,len(ls[0]),0,len(ls[len(ls)-1]))
-    common = ls[0][match.a: match.a + match.size]
-    #print((" ********* " + common))
-    lsnew = list()
-    for i in range(len(ls)):
-        if len(common) > 3:
-            lsnew.append(ls[i].replace(common,''))
-        else:
-            lsnew.append(ls[i])
-            #print ls
-    return lsnew
+'''
 
 
 
+
+'''
 def combine(df1,df2):
     if df1 is not None and df2 is not None:
         dfc = pd.concat([df1,df2], sort=True) #fixing pandas FutureWarning
@@ -417,10 +416,10 @@ def combine(df1,df2):
     # dfc = dfc[columns].sort_values(['Compound'],ascending=[True])
     dfc = dfc[columns].sort_values(['Mass','Retention_Time'],ascending=[True,True])
     return dfc
+'''
 
 
-
-
+'''
 def reduce(df,index):
     Abundance = [[],[]]
     Headers = [0,0]
@@ -428,8 +427,8 @@ def reduce(df,index):
     Abundance[index] = [item for sublist in Headers[index] for item in sublist if len(sublist)>2]
     df.drop(Abundance[index],axis=1,inplace=True)
     return df
-
-
+'''
+'''
 def adduct_identifier(df_in, index, Mass_Difference, Retention_Difference,ppm, ionization):  # TODO optimize memory usage
     df = df_in.copy()
     mass = df['Mass'].to_numpy()
@@ -471,7 +470,8 @@ def adduct_identifier(df_in, index, Mass_Difference, Retention_Difference,ppm, i
         new_cols = ['unique_{}_number'.format(a_name), 'has_{}_adduct'.format(a_name), 'is_{}_adduct'.format(a_name)]
         df[new_cols] = df[new_cols].replace(0, np.nan)
     return df
-
+'''
+'''
 def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):  # TODO optimize memory usage
     df_new = df.copy()
     samples_df = df.filter(like='Sample', axis=1)
@@ -494,8 +494,8 @@ def duplicates(df,index, high_res=False, mass_cutoff = 0.005, rt_cutoff = 0.05):
     to_keep.reset_index(drop=True, inplace=True)
     to_keep = to_keep.drop(['all_sample_mean'], axis=1).copy()
     return to_keep
-
-
+'''
+'''
 def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
     # If/elif/else to combine pass through columns with dft
     # Assign pass through columns to pt_cols for re_org
@@ -532,8 +532,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
             dft = dft[['Feature_ID', 'Mass','Retention_Time','AnySamplesDropped','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
 
     return dft
-
-
+'''
+'''
 def Replicates_Number(df,index=0): # calculate Mean,Median,STD,CV for every feature in a sample of multiple replicates
     Headers = [0,0]
     lst = list()
@@ -545,10 +545,4 @@ def Replicates_Number(df,index=0): # calculate Mean,Median,STD,CV for every feat
     rep = max(lst)
     #df.to_csv('input-updated.csv', index=False)
     return rep
-
-
-
-
-#check_feature_tracers(read_data("House_Dust_Negative_MPP_output.csv"),read_data("Tracers_Table_ for_SRM2585_20170524.csv"))
-
-
+'''

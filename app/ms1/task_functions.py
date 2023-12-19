@@ -89,6 +89,22 @@ def parse_headers(df_in):
     return new_headers_list
 
 
+def flags(df): # a method to develop required flags
+    SCORE = 90 # formula match is 90
+    df['Neg_Mass_Defect'] = np.where((df.Mass - df.Mass.round(0)) < 0 , '1','0')
+    df['Halogen'] = np.where(df.Compound.str.contains('F|l|r|I'),'1','0')
+    df['Formula_Match'] = np.where(df.Score != df.Score,'0','1') #check if it does not have a score
+    df['Formula_Match_Above90'] = np.where(df.Score >= SCORE,'1','0')
+    df['X_NegMassDef_Below90'] = np.where(((df.Score < SCORE) & (df.Neg_Mass_Defect == '1') & (df.Halogen == '1')),'1','0')
+    #df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '0')
+    df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '1') #REMOVE THIS LINE AND UNCOMMENT ABOVE
+    df.sort_values(['Formula_Match','For_Dashboard_Search','Formula_Match_Above90','X_NegMassDef_Below90'],ascending=[False,False,False,False],inplace=True)
+    #df.to_csv('input-afterflag.csv', index=False)
+    #print df1
+    df.sort_values('Compound',ascending=True,inplace=True)
+    return df
+
+
 '''PASS THROUGH COLUMNS'''
 
 # Find all columns in dfs that aren't necessary and store for the output
@@ -655,7 +671,27 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     return df, docs, df_flagged
 
 
-'''FUNCTIONS FOR COMBINING DATAFRAMES'''
+def Blank_Subtract_Mean(df_in):
+    """
+    Calculate the mean blank intensity for each feature and subtract that value from each sample's mean value for
+    that feature
+    """
+    df = df_in.copy()
+    # Define lists; blanks, means, sample means, and blank means
+    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
+    Mean = df.columns[df.columns.str.contains(pat ='Mean_')].tolist()
+    Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+    Mean_MB = [md for md in Mean if any(x in md for x in blanks)]   
+    # Iterate through sample means, subtracting blank mean into new column 
+    for mean in Mean_Samples:
+        # Create new column, do subtraction
+        df["BlankSub_"+str(mean)] = df[mean].sub(df[Mean_MB[0]],axis=0)
+        # Clip values at 0, replace 0s with NaN
+        df["BlankSub_"+str(mean)] = df["BlankSub_"+str(mean)].clip(lower=0).replace({0:np.nan})
+    return df
+    
+
+'''FUNCTIONS FOR COMBINING DATAFRAMES / FILE PREPARATION'''
 
 # Combine function for the self.dfs
 def combine(df1,df2):
@@ -706,3 +742,41 @@ def combine_doc(doc, dupe, tracer_df=False):
     dfc.rename({'BlkStd_cutoff':'MRL'}, axis=1, inplace=True)
     
     return dfc
+
+
+def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
+    # If/elif/else to combine pass through columns with dft
+    # Assign pass through columns to pt_cols for re_org
+    if pts[0] is not None and pts[1] is not None:
+        pt_com = pd.concat([pts[0], pts[1]], axis=0)
+        dft = pd.merge(dft, pt_com, how='left', on=['Feature_ID'])
+        pt_cols = pts[0].columns.tolist()
+        pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
+    elif pts[0] is not None:
+        dft = pd.merge(dft, pts[0], how='left', on=['Feature_ID'])
+        pt_cols = pts[0].columns.tolist()
+        pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
+    else:
+        dft = pd.merge(dft, pts[1], how='left', on=['Feature_ID'])
+        pt_cols = pts[1].columns.tolist()
+        pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
+            
+    # Parse headers, get sample values and blank subtracted means
+    Headers = parse_headers(dft,0)
+    raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
+    blank_subtracted_means = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
+    
+    # Check for 'Formula' (should be deprecated), then check for tracer_df
+    # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
+    if 'Formula' in dft.columns:
+        if tracer_df:
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','AnySamplesDropped','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
+        else:
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','AnySamplesDropped','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
+    else:
+        if tracer_df:
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','AnySamplesDropped','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
+        else:
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','AnySamplesDropped','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
+
+    return dft
