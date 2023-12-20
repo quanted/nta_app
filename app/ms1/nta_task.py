@@ -123,9 +123,7 @@ class NtaRun:
 
 
     def execute(self):
-        
-        logger.info("self.dfs[1] start of execute columns= {}".format(self.dfs[1].columns))
-        
+
         self.step = "Check for existence of required columns"
         # 0: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)  
