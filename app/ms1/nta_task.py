@@ -547,6 +547,12 @@ class NtaRun:
         med_df = dfCombined[med_cols]
         #logger.info("med_df= {}".format(med_df.columns.values))
 
+        #AC 1/2/2024 Get minimum and maximum abundance/CV values of dataframe for the purposes of setting the x-axis range
+        min_abundance_value = med_df.min(numeric_only=True).min()
+        max_abundance_value = med_df.max(numeric_only=True).max()
+        min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
+        max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
+
         # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
         for x,y,z in zip(cv_cols, rper_cols, med_cols):
             # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
@@ -630,7 +636,7 @@ class NtaRun:
         # a.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # a.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         a.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        a.text(1000000000, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        a.text(1000000000, max_replicate_cv_value+0.2, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
         '''
         sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')&(plot2['spike']==1)),:],
                         x='Mean', y='CV', color="firebrick",
@@ -651,10 +657,11 @@ class NtaRun:
         axes[0].set_title(titleText + ": Blanks", weight='bold')
         axes[0].set_xlabel("Mean Abundance", fontsize = 12)
         axes[0].set_ylabel("CV", fontsize = 12)
-        axes[0].set_ylim(0,4)
-        axes[0].set_xlim(100, 10000000000)
+        axes[0].set_ylim(0,3)
+        #axes[0].set_xlim(100, 10000000000)
+        axes[0].set_xlim(min_abundance_limit, max_abundance_limit) # Set x-axis to scale based on the min/max data points
         axes[0].set(xscale='log')
-        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0,3.5,4.0])
+        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0])
 
         b=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')),:],
                         x='Mean', y='CV', color="whitesmoke",
@@ -674,16 +681,17 @@ class NtaRun:
         # c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         c.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        c.text(1000000000, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        c.text(1000000000, max_replicate_cv_value+0.2, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
 
         #axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
         axes[1].set_title(titleText + ": Samples", weight='bold')
         axes[1].set_xlabel("Mean Abundance", fontsize = 12)
         axes[1].set_ylabel("CV", fontsize = 12)
-        axes[1].set_ylim(0,4)
-        axes[1].set_xlim(100, 10000000000)
+        axes[1].set_ylim(0,3)
+        #axes[1].set_xlim(100, 10000000000)
+        axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
         axes[1].set(xscale='log')
-        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0,3.5,4.0])
+        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0])
         # legend = d.legend(title = "Natives")
         # legend.get_texts()[0].set_text('present')
         # legend.get_texts()[1].set_text('spiked')
