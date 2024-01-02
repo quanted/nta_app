@@ -547,7 +547,7 @@ class NtaRun:
         med_df = dfCombined[med_cols]
         #logger.info("med_df= {}".format(med_df.columns.values))
 
-        #AC 1/2/2024 Get minimum and maximum abundance/CV values of dataframe for the purposes of setting the x-axis range
+        #AC 1/2/2024 Get minimum and maximum abundance values of dataframe for the purposes of setting the x-axis range
         min_abundance_value = med_df.min(numeric_only=True).min()
         max_abundance_value = med_df.max(numeric_only=True).max()
         min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
@@ -636,7 +636,7 @@ class NtaRun:
         # a.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # a.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         a.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        a.text(max_abundance_limit/5, max_replicate_cv_value+0.2, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        a.text(max_abundance_limit/5, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
         '''
         sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')&(plot2['spike']==1)),:],
                         x='Mean', y='CV', color="firebrick",
@@ -681,7 +681,7 @@ class NtaRun:
         # c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         c.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        c.text(max_abundance_limit/5, max_replicate_cv_value+0.2, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        c.text(max_abundance_limit/5, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
 
         #axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
         axes[1].set_title(titleText + ": Samples", weight='bold')
