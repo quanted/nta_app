@@ -636,7 +636,7 @@ class NtaRun:
         # a.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # a.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         a.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        a.text(1000000000, max_replicate_cv_value+0.2, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        a.text(max_abundance_limit/5, max_replicate_cv_value+0.2, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
         '''
         sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')&(plot2['spike']==1)),:],
                         x='Mean', y='CV', color="firebrick",
@@ -657,11 +657,11 @@ class NtaRun:
         axes[0].set_title(titleText + ": Blanks", weight='bold')
         axes[0].set_xlabel("Mean Abundance", fontsize = 12)
         axes[0].set_ylabel("CV", fontsize = 12)
-        axes[0].set_ylim(0,3)
+        axes[0].set_ylim(0,2)
         #axes[0].set_xlim(100, 10000000000)
         axes[0].set_xlim(min_abundance_limit, max_abundance_limit) # Set x-axis to scale based on the min/max data points
         axes[0].set(xscale='log')
-        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0])
+        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0])
 
         b=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')),:],
                         x='Mean', y='CV', color="whitesmoke",
@@ -681,17 +681,17 @@ class NtaRun:
         # c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         c.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        c.text(1000000000, max_replicate_cv_value+0.2, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        c.text(max_abundance_limit/5, max_replicate_cv_value+0.2, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
 
         #axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
         axes[1].set_title(titleText + ": Samples", weight='bold')
         axes[1].set_xlabel("Mean Abundance", fontsize = 12)
         axes[1].set_ylabel("CV", fontsize = 12)
-        axes[1].set_ylim(0,3)
+        axes[1].set_ylim(0,2)
         #axes[1].set_xlim(100, 10000000000)
         axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
         axes[1].set(xscale='log')
-        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0])
+        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0])
         # legend = d.legend(title = "Natives")
         # legend.get_texts()[0].set_text('present')
         # legend.get_texts()[1].set_text('spiked')
