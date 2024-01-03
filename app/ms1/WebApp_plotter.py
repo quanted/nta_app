@@ -11,6 +11,12 @@ import math
 #from .functions_Universal_v3 import parse_headers
 from .task_functions import parse_headers
 import io
+import logging
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger("nta_app.ms1")
+logger.setLevel(logging.INFO)
 
 class WebApp_plotter:
     '''
@@ -585,6 +591,9 @@ class WebApp_plotter:
                 # For each sample group, go through each list of indices, pulling out x and y values from each group
                 for h in range(len(sample_group_unique)):
                     x_values_temp = [x+1 for x in indices_list[h][:]]
+                    #AC 1/3/2024 Debug error with sample group addition
+                    logger.info('x_values_temp: {} '.format(x_values_temp))
+                    logger.info('df.shape: {} '.format(df.shape))
                     y_values_temp = [y for y in df.iloc[chem_index, x_values_temp]]
                     
                     # get rid of nan values and set x_values
