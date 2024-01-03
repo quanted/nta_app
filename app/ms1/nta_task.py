@@ -895,15 +895,12 @@ class NtaRun:
         
         self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
         # self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
-        
-        #logger.info("self.tracer_dfs_out[1].shape = {}".format(self.tracer_dfs_out[1].shape))
 
         # declare plotter
         df_WA = WebApp_plotter()
-
-        # logger.info("self.tracer_dfs_out[0].shape = {}".format(self.tracer_dfs_out[0].shape))
-        # logger.info("self.tracer_dfs_out[0].columns.values = {}".format(self.tracer_dfs_out[0].columns.values))
-
+        
+        logger.info('nta_task: self.tracer_dfs_out[0]: {} '.format(self.tracer_dfs_out[0]))
+        
         # plot
         if self.tracer_dfs_out[0] is not None:
             listOfPNGs,df_debug = df_WA.make_seq_scatter(
