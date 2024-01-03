@@ -921,7 +921,7 @@ class NtaRun:
                 chemical_names=None, 
                 # save_image=True, 
                 # image_title='./output02/slide_12-dark',
-                dark_mode=True)
+                dark_mode=False)
             
             logger.info("df_debug= {}".format(df_debug.columns.values))
 
@@ -953,7 +953,7 @@ class NtaRun:
                 chemical_names=None, 
                 # save_image=True, 
                 # image_title='./output02/slide_12-dark',
-                dark_mode=True)
+                dark_mode=False)
             
             #logger.info("df_debug= {}".format(df_debug.columns.values))
 

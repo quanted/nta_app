@@ -421,6 +421,8 @@ class WebApp_plotter:
             sample_group_unique = df_loc_seq.iloc[:, 1].unique().tolist()
         else: # If there is no sample group column, assign all samples to sample group 'Sample'
             sample_group_unique = ['Sample']
+            # Create the sample group column in the dataframe
+            df_loc_seq['Sample_Group'] = 'Sample'
         
         #AC Loop through sample group column and get indices of samples for each sample group
         indices_list = []
