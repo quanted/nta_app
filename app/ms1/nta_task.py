@@ -899,7 +899,7 @@ class NtaRun:
         # declare plotter
         df_WA = WebApp_plotter()
         
-        logger.info('nta_task: self.tracer_dfs_out[0]: {} '.format(self.tracer_dfs_out[0]))
+        logger.info('nta_task: self.tracer_dfs_out[0].columns: {} '.format(self.tracer_dfs_out[0].columns))
         
         # plot
         if self.tracer_dfs_out[0] is not None:
