@@ -404,8 +404,7 @@ class WebApp_plotter:
         ###   Setting colors for plotting before cleaning data   ###
         ############################################################
         
-        # colors for [Sample, MB, Pooled]
-        c_aes = ['teal', 'Orange', 'magenta']    # for scatter points
+        c_aes = ['teal', 'Orange', 'magenta', 'b', 'g', 'r', 'c', 'y', 'w', 'k']    # for scatter points
         c_leg_text = 'white'                     # for legend text
         c_leg_bg = "#f2f2f2"                     # for legend background
         c_leg_ec = '#000'                        # for legend edgecolor
@@ -416,20 +415,19 @@ class WebApp_plotter:
             c_leg_text = 'black'
             c_leg_bg = '#333'
             c_leg_ec = '#fff'
+            
+        #AC Check if sample sequence file has more than one column, second column would be the sample group column
+        if len(df_loc_seq.columns) > 1:
+            sample_group_unique = df_loc_seq.iloc[:, 1].unique().tolist()
+        else: # If there is no sample group column, assign all samples to sample group 'Sample'
+            sample_group_unique = ['Sample']
         
-        # get indices of MD and Pooled locations and set conditional colors for plotting later
-        # try:
-        #     locs = df_loc_seq.iloc[:,0]
-        #     mb_indices = [i for i in locs.index[locs.str.startswith('MB')]]
-        #     pool_indices = [i for i in locs.index[locs.str.startswith('Pooled')]]
-        #     # set marker colors for plot
-        #     mark_colors = [c_aes[1] if i in mb_indices else c_aes[2] if i in pool_indices else c_aes[0] \
-        #                                                       for i in range(0, len(locs))]
-        # # in case there is an error above... this can probably be removed
-        # except:
-        #     mark_colors = [c_aes[0] for i in range(0, len(locs))]
-        
-        
+        #AC Loop through sample group column and get indices of samples for each sample group
+        indices_list = []
+        for i in range(len(sample_group_unique)):
+            temp_indices = df_loc_seq.index[df_loc_seq.iloc[:, 1] == sample_group_unique[i]].tolist()
+            indices_list.append(temp_indices)
+
         ################################################
         ###             Clean the data               ###
         ################################################
@@ -439,7 +437,6 @@ class WebApp_plotter:
             col_names = [x for x in df_loc_seq.iloc[:, 0]]
             # col_names.insert(0, 'Chemical_Name')
             df = df_tracer[col_names].copy()
-            # 11/20/2023 AC: Add statement to grab sample groups from run sequence file (if available)
         else:
             headers = parse_headers(df_in)
             abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
