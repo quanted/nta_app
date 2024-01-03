@@ -452,7 +452,7 @@ class WebApp_plotter:
             #abundance.remove('Detection_Count(all_samples)(%)')
             df = df_in[abundance].copy()
         
-        logger.info('order_samples: {} '.format(order_samples))
+        #logger.info('order_samples: {} '.format(order_samples))
         
         # our list of final chemical names with appropriate capitalization
         chemical_names = df_in['Chemical_Name']
@@ -484,6 +484,7 @@ class WebApp_plotter:
                 og_index += 1
         
         logger.info('first df.shape: {} '.format(df.shape))
+        logger.info('first df.columns: {} '.format(df.columns))
                 
         ################################################
         ###        Set up figures and axes           ###
