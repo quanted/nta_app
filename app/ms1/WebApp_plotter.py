@@ -393,7 +393,10 @@ class WebApp_plotter:
         ##########################################################
                             
         # set df_tracer to the input dataframe
-        df_tracer = df_in
+        #df_tracer = df_in
+        
+        logger.info('1 df_in.columns: {} '.format(df_in.columns))
+        logger.info('1 df_in.shape: {} '.format(df_in.shape))
         
         # check if there is a sequence csv file
         if seq_csv is None:
@@ -444,7 +447,7 @@ class WebApp_plotter:
         if order_samples:
             col_names = [x for x in df_loc_seq.iloc[:, 0]]
             # col_names.insert(0, 'Chemical_Name')
-            df = df_tracer[col_names].copy()
+            df = df_in[col_names].copy()
         else:
             headers = parse_headers(df_in)
             abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
@@ -454,8 +457,13 @@ class WebApp_plotter:
         
         #logger.info('order_samples: {} '.format(order_samples))
         
+        logger.info('2 df.columns: {} '.format(df.columns))
+        logger.info('2 df.shape: {} '.format(df.shape))
+        
         # our list of final chemical names with appropriate capitalization
         chemical_names = df_in['Chemical_Name']
+        
+        logger.info('chemical names: {} '.format(chemical_names))
     
         # # need to make a column for lower cased names for sorting alpha-numerically (ignoring case)
         # df['chem_name'] = df.loc[:, 'Chemical_Name'].str.lower().copy()
@@ -483,8 +491,8 @@ class WebApp_plotter:
                 chem_names.append([c])
                 og_index += 1
         
-        logger.info('first df.shape: {} '.format(df.shape))
-        logger.info('first df.columns: {} '.format(df.columns))
+        logger.info('3 df.shape: {} '.format(df.shape))
+        logger.info('3 df.columns: {} '.format(df.columns))
                 
         ################################################
         ###        Set up figures and axes           ###
