@@ -391,12 +391,6 @@ class WebApp_plotter:
         ##########################################################
         ###     set df_tracer and check for sequence data      ###
         ##########################################################
-                            
-        # set df_tracer to the input dataframe
-        #df_tracer = df_in
-        
-        logger.info('1 df_in.columns: {} '.format(df_in.columns))
-        logger.info('1 df_in.shape: {} '.format(df_in.shape))
         
         # check if there is a sequence csv file
         if seq_csv is None:
@@ -458,16 +452,9 @@ class WebApp_plotter:
             #abundance.remove('Detection_Count(all_samples)(%)')
             df = df_in[abundance].copy()
         
-        #logger.info('order_samples: {} '.format(order_samples))
-        
-        logger.info('2 df.columns: {} '.format(df.columns))
-        logger.info('2 df.shape: {} '.format(df.shape))
-        
         # our list of final chemical names with appropriate capitalization
         chemical_names = df_in['Chemical_Name']
-        
-        logger.info('chemical names: {} '.format(chemical_names))
-    
+
         # # need to make a column for lower cased names for sorting alpha-numerically (ignoring case)
         # df['chem_name'] = df.loc[:, 'Chemical_Name'].str.lower().copy()
         # #df.loc[:,'Chemical_Name'] = df.loc[:,'Chemical_Name'].str.lower().copy()
@@ -493,10 +480,7 @@ class WebApp_plotter:
             else:
                 chem_names.append([c])
                 og_index += 1
-        
-        logger.info('3 df.shape: {} '.format(df.shape))
-        logger.info('3 df.columns: {} '.format(df.columns))
-                
+
         ################################################
         ###        Set up figures and axes           ###
         ###      And set up global aesthetics        ###
@@ -606,9 +590,6 @@ class WebApp_plotter:
                 # For each sample group, go through each list of indices, pulling out x and y values from each group
                 for h in range(len(sample_group_unique)):
                     x_values_temp = [x+1 for x in indices_list[h][:]]
-                    #AC 1/3/2024 Debug error with sample group addition
-                    logger.info('x_values_temp: {} '.format(x_values_temp))
-                    logger.info('df.shape: {} '.format(df.shape))
                     y_values_temp = [y for y in df.iloc[chem_index, x_values_temp]]
                     
                     # get rid of nan values and set x_values

@@ -866,7 +866,7 @@ class NtaRun:
 
         # Convert the plot to a bytes-like object
         buffer = io.BytesIO()
-        plt.savefig(buffer, bbox_inches='tight')
+        plt.savefig(buffer)
         # buffer.seek(0)
 
         self.occurrence_heatmaps_out.append(buffer.getvalue())
