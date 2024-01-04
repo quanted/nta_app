@@ -445,12 +445,15 @@ class WebApp_plotter:
         
         # start by getting df with chemical names and abundance at each location in sequential order
         if order_samples:
+            
             col_names = [x for x in df_loc_seq.iloc[:, 0]]
+            col_names.insert(0, 'Chemical_Name') #AC 1/4/2024 Add in chemical name column to dataframe
             # col_names.insert(0, 'Chemical_Name')
             df = df_in[col_names].copy()
         else:
             headers = parse_headers(df_in)
             abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
+            abundance.insert(0, 'Chemical_Name') #AC 1/4/2024 Add in chemical name column to dataframe
             #abundance.remove('Detection_Count(all_samples)')
             #abundance.remove('Detection_Count(all_samples)(%)')
             df = df_in[abundance].copy()
