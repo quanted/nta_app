@@ -613,7 +613,9 @@ class WebApp_plotter:
                 if (nrows == 1) and (ncols == 1):
                     
                     #AC Loop through scatter plot generation
-                    ax.scatter(x_values_list[0], y_values_list[0], color=c_aes[0], s=m_size, zorder=100)
+                    #ax.scatter(x_values_list[0], y_values_list[0], color=c_aes[0], s=m_size, zorder=100)
+                    for k in range(len(sample_group_unique)):
+                        ax.scatter(x_values_list[k], y_values_list[k], color=c_aes[k], s=m_size, zorder=100)
                     ax.set_title(chem, fontsize=24, fontweight=600)
                     
                     #AC 1/3/2024 Disable line fit for now
