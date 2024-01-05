@@ -123,9 +123,7 @@ class NtaRun:
 
 
     def execute(self):
-        
-        logger.info("self.dfs[1] start of execute columns= {}".format(self.dfs[1].columns))
-        
+
         self.step = "Check for existence of required columns"
         # 0: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)  
@@ -263,6 +261,7 @@ class NtaRun:
         self.step = "Displaying results"
         self.set_status('Completed')
 
+
     def check_existence_of_ionization_mode_column(self, input_dfs):
         """
         Check and ensure the existence of the 'Ionization_Mode' column in a list of DataFrames.
@@ -295,6 +294,7 @@ class NtaRun:
             # the first element of input_dfs is the negative mode dataframe
             ionizationMode = "Esi-"
         return
+
 
     def check_existence_of_mass_column(self, input_dfs):
         """
@@ -338,6 +338,7 @@ class NtaRun:
 
         return
     
+    
     def check_retention_time_column(self, input_dfs):
         
         # Check for the existence of alternate spellings of 'Retention_Time' column in input dataframes and rename to "Retention_Time".
@@ -356,6 +357,7 @@ class NtaRun:
                     raise ValueError("Retention_Time column must be in the input file. (Check spelling!)")
 
         return
+
 
     def create_analysis_parameters_sheet(self):
         # logger.info("create_analysis_parameters_sheet: inputParameters: {} ".format(inputParameters))
@@ -376,6 +378,7 @@ class NtaRun:
 
         return
 
+
     def set_status(self, status, create = False):
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
@@ -391,6 +394,7 @@ class NtaRun:
                                                     'status': status}},
                              upsert=True)
 
+
     def set_except_message(self, e):
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
@@ -400,8 +404,10 @@ class NtaRun:
                                               'error_info': e}},
                          upsert=True)
 
+
     def get_step(self):
         return self.step
+    
     
     def assign_id(self):
         if self.dfs[0] is not None and self.dfs[1] is not None:
@@ -412,15 +418,18 @@ class NtaRun:
         else:
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
         return
+   
     
     def pass_through_cols(self):
         self.pass_through = [task_fun.passthrucol(df)[0] if df is not None else None for df in self.dfs]
         self.dfs = [task_fun.passthrucol(df)[1] if df is not None else None for df in self.dfs]
         return
+   
     
     def filter_void_volume(self, min_rt):
         self.dfs = [df.loc[df['Retention_Time'] > min_rt].copy() if df is not None else None for index, df in enumerate(self.dfs)]
         return
+  
     
     def filter_duplicates(self):
         #self.dfs = [task_fun.duplicates(df) if df is not None else None for df in self.dfs] # Deprecated 10/30/23 -- TMF
@@ -428,6 +437,7 @@ class NtaRun:
         self.dupes = [task_fun.duplicates(df)[1] if df is not None else None for df in self.dfs]
         self.dfs = [task_fun.duplicates(df)[0] if df is not None else None for df in self.dfs]
         return
+
 
     def calc_statistics(self):
         ppm = self.parameters['mass_accuracy_units'][1]== 'ppm'
@@ -457,6 +467,7 @@ class NtaRun:
                                                  ionization='negative', id_start=1)
             self.data_map['Feature_statistics_negative'] = task_fun.column_sort_DFS(pd.merge(self.dfs[1], self.pass_through[1], how='left', on=['Feature_ID']))
         return
+
 
     def cv_scatterplot(self, input_dfs):
 
@@ -535,6 +546,12 @@ class NtaRun:
         #logger.info("rper_df= {}".format(rper_df.columns.values))
         med_df = dfCombined[med_cols]
         #logger.info("med_df= {}".format(med_df.columns.values))
+
+        #AC 1/2/2024 Get minimum and maximum abundance values of dataframe for the purposes of setting the x-axis range
+        min_abundance_value = med_df.min(numeric_only=True).min()
+        max_abundance_value = med_df.max(numeric_only=True).max()
+        min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
+        max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
 
         # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
         for x,y,z in zip(cv_cols, rper_cols, med_cols):
@@ -619,7 +636,7 @@ class NtaRun:
         # a.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # a.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         a.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        a.text(1000000000, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        a.text(max_abundance_limit/5, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
         '''
         sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')&(plot2['spike']==1)),:],
                         x='Mean', y='CV', color="firebrick",
@@ -640,10 +657,11 @@ class NtaRun:
         axes[0].set_title(titleText + ": Blanks", weight='bold')
         axes[0].set_xlabel("Mean Abundance", fontsize = 12)
         axes[0].set_ylabel("CV", fontsize = 12)
-        axes[0].set_ylim(0,4)
-        axes[0].set_xlim(100, 10000000000)
+        axes[0].set_ylim(0,2)
+        #axes[0].set_xlim(100, 10000000000)
+        axes[0].set_xlim(min_abundance_limit, max_abundance_limit) # Set x-axis to scale based on the min/max data points
         axes[0].set(xscale='log')
-        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0,3.5,4.0])
+        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0])
 
         b=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')),:],
                         x='Mean', y='CV', color="whitesmoke",
@@ -663,16 +681,17 @@ class NtaRun:
         # c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         # c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
         c.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        c.text(1000000000, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        c.text(max_abundance_limit/5, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
 
         #axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
         axes[1].set_title(titleText + ": Samples", weight='bold')
         axes[1].set_xlabel("Mean Abundance", fontsize = 12)
         axes[1].set_ylabel("CV", fontsize = 12)
-        axes[1].set_ylim(0,4)
-        axes[1].set_xlim(100, 10000000000)
+        axes[1].set_ylim(0,2)
+        #axes[1].set_xlim(100, 10000000000)
+        axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
         axes[1].set(xscale='log')
-        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5,3.0,3.5,4.0])
+        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0])
         # legend = d.legend(title = "Natives")
         # legend.get_texts()[0].set_text('present')
         # legend.get_texts()[1].set_text('spiked')
@@ -699,6 +718,7 @@ class NtaRun:
 
         # reset plt
         plt.clf()
+
 
     def occurrence_heatmap(self, input_dfs):
         plt.rcdefaults()
@@ -875,15 +895,12 @@ class NtaRun:
         
         self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
         # self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
-        
-        #logger.info("self.tracer_dfs_out[1].shape = {}".format(self.tracer_dfs_out[1].shape))
 
         # declare plotter
         df_WA = WebApp_plotter()
-
-        # logger.info("self.tracer_dfs_out[0].shape = {}".format(self.tracer_dfs_out[0].shape))
-        # logger.info("self.tracer_dfs_out[0].columns.values = {}".format(self.tracer_dfs_out[0].columns.values))
-
+        
+        #logger.info('nta_task: self.tracer_dfs_out[0].columns: {} '.format(self.tracer_dfs_out[0].columns))
+        
         # plot
         if self.tracer_dfs_out[0] is not None:
             listOfPNGs,df_debug = df_WA.make_seq_scatter(
@@ -901,7 +918,7 @@ class NtaRun:
                 chemical_names=None, 
                 # save_image=True, 
                 # image_title='./output02/slide_12-dark',
-                dark_mode=True)
+                dark_mode=False)
             
             logger.info("df_debug= {}".format(df_debug.columns.values))
 
@@ -933,7 +950,7 @@ class NtaRun:
                 chemical_names=None, 
                 # save_image=True, 
                 # image_title='./output02/slide_12-dark',
-                dark_mode=True)
+                dark_mode=False)
             
             #logger.info("df_debug= {}".format(df_debug.columns.values))
 
@@ -979,6 +996,7 @@ class NtaRun:
             self.mongo_save(self.tracer_map[key], step=key)
         return
 
+
     def clean_features(self):
         controls = [float(self.parameters['min_replicate_hits'][1]), float(self.parameters['max_replicate_cv'][1]), float(self.parameters['min_replicate_hits_blanks'][1])]
         tracer_df_bool=False
@@ -988,8 +1006,8 @@ class NtaRun:
         self.dfs_flagged = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[2] if df is not None else None for index, df in enumerate(self.dfs)]
         self.dfs = [task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[0] if df is not None else None for index, df in enumerate(self.dfs)]
         #self.dfs, self.docs = map(list, zip(*[task_fun.clean_features(df, controls) if df is not None else None for index, df in enumerate(self.dfs)]))
-        self.dfs = [fn.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
-        self.dfs_flagged = [fn.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs_flagged)]  # subtract blanks from medians
+        self.dfs = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs)]  # subtract blanks from medians
+        self.dfs_flagged = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs_flagged)]  # subtract blanks from medians
         #self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
         #self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
         return
@@ -1030,9 +1048,10 @@ class NtaRun:
     
 
     def create_flags(self):
-        self.dfs = [fn.flags(df) if df is not None else None for df in self.dfs]
+        self.dfs = [task_fun.flags(df) if df is not None else None for df in self.dfs]
         #self.mongo_save(self.dfs[0], FILENAMES['flags'][0])
         #self.mongo_save(self.dfs[1], FILENAMES['flags'][1])
+
 
     def combine_modes(self):
         tracer_df_bool=False
@@ -1049,11 +1068,12 @@ class NtaRun:
             self.doc_combined = self.doc_combined[1]
         self.data_map['Filter_documentation'] = self.doc_combined
         #self.mongo_save(self.df_combined, FILENAMES['combined'])
-        self.mpp_ready = fn.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool)
-        self.mpp_ready_flagged = fn.MPP_Ready(self.df_flagged_combined, self.pass_through, tracer_df_bool)
+        self.mpp_ready = task_fun.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool)
+        self.mpp_ready_flagged = task_fun.MPP_Ready(self.df_flagged_combined, self.pass_through, tracer_df_bool)
         #self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
         self.data_map['Cleaned_feature_results_reduced'] = reduced_file(self.mpp_ready)
         self.data_map['Results_flagged'] = reduced_file(self.mpp_ready_flagged)
+
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save = True):
         logging.info('Rows flagged for dashboard search: {} out of {}'.format(len(self.df_combined.loc[self.df_combined['For_Dashboard_Search'] == '1', :]), len(self.df_combined)))
@@ -1095,6 +1115,7 @@ class NtaRun:
             self.data_map['chemical_results'] = self.search_results
             self.data_map['hcd_search'] = hcd_results
     
+    
     def store_data(self):
         logger.info(f'Storing data files to MongoDB')
         project_name = self.parameters['project_name'][1] 
@@ -1102,12 +1123,14 @@ class NtaRun:
         for key in self.data_map.keys():
             self.mongo_save(self.data_map[key], step=key)
 
+
     def process_toxpi(self):
         by_mass = self.parameters['search_mode'][1] == "mass"
         self.df_combined = toxpi.process_toxpi(self.df_combined, self.search_results,
                                                tophit=(self.parameters['top_result_only'][1] == 'yes'), by_mass = by_mass)
         self.data_map['final_full'] = self.df_combined
         self.data_map['final_reduced'] = reduced_file(self.df_combined)
+
 
     def mongo_save(self, file, step=""):
         

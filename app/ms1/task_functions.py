@@ -14,7 +14,8 @@ logger = logging.getLogger("nta_app.ms1")
 logger.setLevel(logging.INFO)
 
 
-'''UTILITY FUNCTIONS'''
+'''UTILITY FUNCTIONS (many from Functions_Universal_v3)'''
+
 
 def assign_feature_id(df_in, start = 1):
     """
@@ -41,6 +42,9 @@ def differences(s1, s2):
 
 
 def formulas(df):
+    """
+    Return list of formulas tagged 'For_Dashboard_Search'
+    """
     df.drop_duplicates(subset='Formula',keep='first',inplace=True)
     formulas = df.loc[df['For_Dashboard_Search'] == '1','Formula'].values
     formulas_list = [str(i) for i in formulas]
@@ -48,6 +52,9 @@ def formulas(df):
 
 
 def masses(df):
+    """
+    Return list of masses tagged 'For_Dashboard_Search'
+    """
     masses = df.loc[df['For_Dashboard_Search'] == '1','Mass'].values
     logger.info('# of masses for dashboard search: {} out of {}'.format(len(masses),len(df)))
     masses_list = [str(i) for i in masses]
@@ -89,10 +96,33 @@ def parse_headers(df_in):
     return new_headers_list
 
 
-'''PASS THROUGH COLUMNS'''
+def flags(df):
+    """
+     A function to develop optional flags
+    """
+    SCORE = 90 # formula match is 90
+    df['Neg_Mass_Defect'] = np.where((df.Mass - df.Mass.round(0)) < 0 , '1','0')
+    df['Halogen'] = np.where(df.Compound.str.contains('F|l|r|I'),'1','0')
+    df['Formula_Match'] = np.where(df.Score != df.Score,'0','1') #check if it does not have a score
+    df['Formula_Match_Above90'] = np.where(df.Score >= SCORE,'1','0')
+    df['X_NegMassDef_Below90'] = np.where(((df.Score < SCORE) & (df.Neg_Mass_Defect == '1') & (df.Halogen == '1')),'1','0')
+    #df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '0')
+    df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '1') #REMOVE THIS LINE AND UNCOMMENT ABOVE
+    df.sort_values(['Formula_Match','For_Dashboard_Search','Formula_Match_Above90','X_NegMassDef_Below90'],ascending=[False,False,False,False],inplace=True)
+    #df.to_csv('input-afterflag.csv', index=False)
+    #print df1
+    df.sort_values('Compound',ascending=True,inplace=True)
+    return df
 
-# Find all columns in dfs that aren't necessary and store for the output
+
+'''PASS-THROUGH COLUMNS FUNCTION'''
+
+
 def passthrucol(df_in):
+    """
+    Find all columns in dfs that aren't necessary (i.e., not Mass and RT) and store 
+    these columns to be later appended to the output -- TMF 11/20/23
+    """
     # Make a copy of the input df
     df=df_in.copy()
     # Parse headers
@@ -105,14 +135,18 @@ def passthrucol(df_in):
     # Save pass through columns in df
     df_pt = df[pt_headers]
     df_trim = df[headers]
-    
+    # Return passthrough columns data and dataframe minus passthrough columns
     return df_pt, df_trim
 
 
 '''ADDUCT IDENTIFICATION FUNCTIONS'''
 
-# Modified version of Jeff's 'adduct_identifier' function. This is the matrix portion. TMF 10/27/23
+
 def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start):
+    """
+    Modified version of Jeff's 'adduct_identifier' function. This function executes
+    the matrix portion of the old function -- TMF 10/27/23
+    """
     # 'Mass' to matrix, 'Retention Time' to matrix
     mass = df['Mass'].to_numpy()
     rts = df['Retention_Time'].to_numpy()
@@ -147,7 +181,8 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm,
         is_id_matrix = np.tile(np.arange(row_num),row_num).reshape((row_num,row_num)) + id_start
         # Matrix multiplication, keep highest # row if multiple adducts
         is_adduct_number = is_adduct_matrix * is_id_matrix
-        is_adduct_number_flat = np.max(is_adduct_number, axis=1) # if is adduct of multiple, keep highest # row
+            # if is adduct of multiple, keep highest # row
+        is_adduct_number_flat = np.max(is_adduct_number, axis=1) 
         #is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0)
         #is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
         #                               (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
@@ -166,12 +201,15 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm,
         # Edit 'df['Adduct_or_Loss_Info']' column
         df['Adduct_or_Loss_Info'] = np.where((is_adduct_number_flat > 0) & (df['Has_Adduct_or_Loss'] == 0),
                                             df['Adduct_or_Loss_Info'] + unique_adduct_number.astype(str) + "({});".format(a_name), df['Adduct_or_Loss_Info'])
-    
+    # Return dataframe with three new adduct info columns
     return df
 
 
-# Estimate a window size from the input data by finding the maximum distance between indices differing by 'mass_diff_mass'. TMF 10/27/23
 def window_size(df_in, mass_diff_mass = 112.985586):
+    """
+    # Estimate a sliding window size from the input data by finding
+    the maximum distance between indices differing by 'mass_diff_mass' -- TMF 10/27/23
+    """
     df = df_in.copy()
     masses = df['Mass'].tolist()    
     li=[]
@@ -182,13 +220,15 @@ def window_size(df_in, mass_diff_mass = 112.985586):
             li.append(ind - i)
     window_size = pd.Series(li)
     val = window_size.max()
-    
+    # Return singular int value that ensures we won't miss any possible adducts
     return val
 
 
-# Function that takes the input data, chunks it based on window size, then loops through chunks
-# and sends them to 'adduct_matrix' for calculation. TMF 10/27/23
 def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start):
+    """
+    Function that takes the input data, chunks it based on window size, then loops through chunks
+    and sends them to 'adduct_matrix' for calculation -- TMF 10/27/23
+    """
     # Create copy
     df=df_in.copy()
     # Create chunks of df based on how much Web App can handle (n) and step size that captures all adducts (step)
@@ -201,14 +241,16 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
         li.append(dum)
     # Concatenate results together, removing overlapping sections
     output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'last')
-    
+    # Return dataframe with three adduct info columns added
     return output
 
 
-# Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
-# features that are near to adduct distance from another feature. This shortened dataframe is used to 
-# calculate a window size, then loop through possible adducts, passing to 'chunk_adducts'. TMF 10/27/23
 def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start = 0):
+    """
+    Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
+    features that are near to adduct distance from another feature. This shortened dataframe is used to 
+    calculate a window size, then loop through possible adducts, passing to 'chunk_adducts' -- TMF 10/27/23
+    """
     # Copy df_in, only need 'Mass' and 'Retention Time'
     df = df_in[['Mass', 'Retention_Time']].copy()
     # Round columns
@@ -268,21 +310,24 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
     df_in = pd.merge(df_in, to_test[['Mass', 'Retention_Time', 'Has_Adduct_or_Loss','Is_Adduct_or_Loss','Adduct_or_Loss_Info']],
                   how = 'left', on = ['Mass', 'Retention_Time'])
-    
+    # Return dataframe with three adduct info columns added
     return df_in
 
 
 '''DUPLICATE REMOVAL FUNCTIONS'''
 
-# Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix'. TMF 10/27/23
+
 def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff):
+    """
+    Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix' -- TMF 10/27/23
+    """
     # Create copy of df_in
     df=df_in.copy()
     # Chunk df based on n (# of features WebApp can handle) and step
     to_test_list = [df[i:i+n] for i in range(0, df.shape[0], step)]
     # Remove small remainder tail, if present
     to_test_list = [i for i in to_test_list if (i.shape[0] > n/2)]
-        
+    # Create list and duplicate list   
     li=[]
     dupe_li = []
     # Pass list to 'dup_matrix'
@@ -294,12 +339,15 @@ def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff):
     # Concatenate results, drop duplicates from overlap
     output = pd.concat(li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'first')
     dupe_df = pd.concat(dupe_li, axis=0).drop_duplicates(subset = ['Mass', 'Retention_Time'], keep = 'first')
-    
+    # Return de-duplicated dataframe (output) and removed duplicates (dupe_df)
     return output, dupe_df
 
 
-# Called within the 'duplicates' function - takes a filtered 'to_test' df, does matrix math, returns 'passed'. TMF 10/27/23
 def dup_matrix(df_in, mass_cutoff, rt_cutoff):
+    """
+    Matrix portion of 'duplicates' function; takes a filtered 'to_test' df, does matrix math, 
+    returns 'passed' items (i.e., de-duplicated dataframe) -- TMF 10/27/23
+    """
     # Create matrices from df_in
     mass = df_in['Mass'].to_numpy()
     rts = df_in['Retention_Time'].to_numpy()
@@ -321,12 +369,16 @@ def dup_matrix(df_in, mass_cutoff, rt_cutoff):
     passed = df_in[(row_sums == 0) | (lower_row_sums == 0)].copy()
     # Flag duplicates as 'D'
     dupes = df_in.loc[df_in[(row_sums!=0) & (lower_row_sums != 0)].index,:]
-    
+    # Return de-duplicated dataframe (passed) and duplicates (dupes)
     return passed, dupes
 
 
-# Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff. TMF 10/27/23    
 def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
+    """
+    Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff.
+    Includes logic statement for determining if the dataframe is too large to
+    be processed in a single pass -- TMF 10/27/23 
+    """
     # Copy the dataframe
     df = df_in.copy()
     # Parse headers to find sample columns
@@ -351,13 +403,19 @@ def duplicates(df_in, mass_cutoff=0.005, rt_cutoff=0.25):
     output.reset_index(drop=True, inplace=True)
     output.drop(['all_sample_mean'], axis=1, inplace=True)
     dupe_df.drop(['all_sample_mean'], axis=1, inplace=True)
-    
+    # Return output dataframe with duplicates removed and duplicate dataframe
     return output, dupe_df
 
 
 '''CALCULATE STATISTICS FUNCTIONS'''
-# TMF 10/27/23
+
+
 def statistics(df_in):
+    """
+    Calculates statistics (mean, median, std, CV, N_Abun, & Percent Abun) on 
+    the dataframe. Includes logic statement for determining if the dataframe is 
+    too large to be processed in a single pass -- TMF 10/27/23 
+    """
     # Create copy
     df = df_in.copy()
     # Parse headers, get sample headers
@@ -379,12 +437,14 @@ def statistics(df_in):
     rpers = pd.concat([((nabuns[ncol]/len(x)).round(4)*100).rename(col) for x, ncol, col in zip(sam_headers, nabun_cols, rper_cols)], axis=1)
     # Concatenate all statistics together
     output = pd.concat([df, means, medians, stds, cvs, nabuns, rpers], axis=1)
-    
+    # Return dataframe with new statistics columns appended
     return output
    
     
-# TMF 10/27/23    
 def chunk_stats(df_in):
+    """
+    Wrapper function for passing manageable-sized dataframe chunks to 'statistics' -- TMF 10/27/23
+    """
     # Create copy
     df=df_in.copy()
     # Set chunk size (i.e., # rows)
@@ -416,12 +476,14 @@ def chunk_stats(df_in):
     output['MRL'] = (3 * output[Std_MB[0]]) + output[Mean_MB[0]]
     output['MRL'] = output['MRL'].fillna(output[Mean_MB[0]])
     output['MRL'] = output['MRL'].fillna(0)
-    
+    # Return dataframe with statistics calculated and MRL included, to be output as data_feature_stats
     return output
 
 
-# Sort columns for the data feature statistics outputs; TMF 11/21/23
 def column_sort_DFS(df_in):
+    """
+    Function that sorts columns for the data_feature_statistics outputs -- TMF 11/21/23
+    """
     df = df_in.copy()
     # Parse headers
     all_headers = parse_headers(df)
@@ -448,12 +510,14 @@ def column_sort_DFS(df_in):
     new_col_org = front_matter + stats_cols
     # Subset data with new column list
     df_reorg = df[new_col_org]
-    
+    # Return re-organized dataframe
     return df_reorg
 
 
-# Sort columns for tracer sample results
 def column_sort_TSR(df_in):
+    """
+    Function that sorts columns for the tracer_sample_results outputs -- TMF 11/21/23
+    """
     df = df_in.copy()
     all_cols = df.columns.tolist()
     # Create list of prefixes to remove non-samples
@@ -468,17 +532,18 @@ def column_sort_TSR(df_in):
     new_col_org = front_matter + back_matter
     # Subset data with new column list
     df_reorg = df[new_col_org]
-    
+    # Return re-organized dataframe
     return df_reorg
-
 
 
 '''FUNCTION FOR CHECKING TRACERS'''
 
-''' UPDATED FUNCTION FOR CHECKING TRACERS THAT APPENDS 'Tracer_chemical_match' TO THE DFS AND CALCULATES OCCURRENCE COUNT
-    TMF 12/11/23 '''
 
 def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,ppm):
+    """
+    Function that takes dataframe and the optional tracers input, identifies which features
+    are a tracer, and which samples the tracers are present in -- TMF 12/11/23
+    """
     df1 = df.copy()
     df2 = tracers_file.copy()
     # Get sample names
@@ -510,17 +575,20 @@ def check_feature_tracers(df,tracers_file,Mass_Difference,Retention_Difference,p
     dfc.rename(columns = {'Observed_Mass':'Mass','Observed_Retention_Time':'Retention_Time', 'Matches':'Tracer_chemical_match'},inplace=True)
     # Drop columns
     dft.drop(['Rounded_Mass','Matches'],axis=1,inplace=True)
-    
+    # Returns tracers data (dft) and dataframe with 'Tracer_chemical_match' appended (dfc)
     return dft, dfc
-
 
 
 '''FUNCTION FOR CLEANING FEATURES'''
 
-''' NEW FUNCTION FOR CLEANING FEATURES THAT ALSO DOCUMENTS FLAGS IN A SEPARATE DATAFRAME - DETECTION COUNT IS MIGRATING TO THIS FUNCTION
-    TMF 10/27/23 '''
-    
-def clean_features(df_in, controls, tracer_df=False):  # a method that drops rows based on conditions
+ 
+def clean_features(df_in, controls, tracer_df=False):
+    """
+    Function that removes (blanks out) features at sample and occurrence level
+    based on user-defined thresholds for replicate percent and CV threshold, and
+    the calculated MRL value. The removed features/ocurrences are documented in 
+    an additional dataframe (docs). Sample-level detection counts are also calculated -- AC & TMF 12/11/23
+    """
     # Make dataframe copy, create docs in df's image
     df = df_in.copy()
     df['AnySamplesDropped'] = np.nan
@@ -655,10 +723,33 @@ def clean_features(df_in, controls, tracer_df=False):  # a method that drops row
     return df, docs, df_flagged
 
 
-'''FUNCTIONS FOR COMBINING DATAFRAMES'''
+def Blank_Subtract_Mean(df_in):
+    """
+    Calculate the mean blank intensity for each feature and subtract that value from 
+    each sample's mean value for that feature
+    """
+    df = df_in.copy()
+    # Define lists; blanks, means, sample means, and blank means
+    blanks = ['MB','mb','mB','Mb','blank','Blank','BLANK']
+    Mean = df.columns[df.columns.str.contains(pat ='Mean_')].tolist()
+    Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+    Mean_MB = [md for md in Mean if any(x in md for x in blanks)]   
+    # Iterate through sample means, subtracting blank mean into new column 
+    for mean in Mean_Samples:
+        # Create new column, do subtraction
+        df["BlankSub_"+str(mean)] = df[mean].sub(df[Mean_MB[0]],axis=0)
+        # Clip values at 0, replace 0s with NaN
+        df["BlankSub_"+str(mean)] = df["BlankSub_"+str(mean)].clip(lower=0).replace({0:np.nan})
+    return df
+    
 
-# Combine function for the self.dfs
+'''FUNCTIONS FOR COMBINING DATAFRAMES / FILE PREPARATION'''
+
+
 def combine(df1,df2):
+    """
+    Function to combine positive and negative mode dataframes into df_combined
+    """
     # Recombine dfs
     if df1 is not None and df2 is not None:
         dfc = pd.concat([df1,df2], sort=True) #fixing pandas FutureWarning
@@ -679,11 +770,14 @@ def combine(df1,df2):
     dfc['Mean_Abun_Samples'] = dfc[Mean_list].median(axis=1,skipna=True).round(0)
     # Sort by 'Mass' and 'Retention_Time'
     dfc = dfc[columns].sort_values(['Mass','Retention_Time'],ascending=[True,True])
+    # Return combined dataframe
     return dfc
     
 
-# Combine function for the self.docs and self.dupes
 def combine_doc(doc, dupe, tracer_df=False):
+    """
+    Function to combine removed duplicates onto the filter_documentation sheet
+    """
     # Get Mean columns
     Mean = doc.columns[doc.columns.str.contains(pat ='Mean_')].tolist()
     # Recombine doc and dupe
@@ -704,5 +798,45 @@ def combine_doc(doc, dupe, tracer_df=False):
     # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
     dfc = dfc[to_keep]
     dfc.rename({'BlkStd_cutoff':'MRL'}, axis=1, inplace=True)
-    
+    # Return filter_documentation dataframe with removed duplicates appended
     return dfc
+
+
+def MPP_Ready(dft, pts, tracer_df=False, directory='',file=''):
+    """
+    Function that re-combines the pass-through columns with the processed dataframe
+    plus some final column sorting
+    """
+    # If/elif/else to combine pass through columns with dft
+    # Assign pass through columns to pt_cols for re_org
+    if pts[0] is not None and pts[1] is not None:
+        pt_com = pd.concat([pts[0], pts[1]], axis=0)
+        dft = pd.merge(dft, pt_com, how='left', on=['Feature_ID'])
+        pt_cols = pts[0].columns.tolist()
+        pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
+    elif pts[0] is not None:
+        dft = pd.merge(dft, pts[0], how='left', on=['Feature_ID'])
+        pt_cols = pts[0].columns.tolist()
+        pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
+    else:
+        dft = pd.merge(dft, pts[1], how='left', on=['Feature_ID'])
+        pt_cols = pts[1].columns.tolist()
+        pt_cols = [col for col in pt_cols if 'Feature_ID' not in col]
+    # Parse headers, get sample values and blank subtracted means
+    Headers = parse_headers(dft)
+    raw_samples= [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ('BlankSub' not in item)]
+    blank_subtracted_means = dft.columns[dft.columns.str.contains(pat='BlankSub')].tolist()
+    # Check for 'Formula' (should be deprecated), then check for tracer_df
+    # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
+    if 'Formula' in dft.columns:
+        if tracer_df:
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','AnySamplesDropped','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
+        else:
+            dft = dft[['Feature_ID','Formula', 'Mass','Retention_Time','AnySamplesDropped','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
+    else:
+        if tracer_df:
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','AnySamplesDropped','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)', 'Tracer_chemical_match'] + pt_cols + raw_samples + blank_subtracted_means]
+        else:
+            dft = dft[['Feature_ID', 'Mass','Retention_Time','AnySamplesDropped','Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'] + pt_cols + raw_samples + blank_subtracted_means]
+    # Return re-combined, sorted dataframe for output as 'Cleaned_feature_results_reduced' and 'Results_flagged'
+    return dft
