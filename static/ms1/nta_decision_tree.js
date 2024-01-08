@@ -8,13 +8,13 @@ var csv_path = 'https://qed-dev.edap-cluster.com/nta/ms1/results/decision_tree_d
 // set default threshold values
 var thresholdData = {
   "repA": 66.7,
-  "cvA": 1.25,
+  "cvA": 0.80,
   "repB": 50.0,
-  "cvB": 0.80,
+  "cvB": 1.25,
   "repMin": 0.0,
   "repMax": 100.0,
   "cvMin": 0.0,
-  "cvMax": 5.0
+  "cvMax": 2.5
 };
 
 // set up objects for keeping count of occurrence and feat level filters

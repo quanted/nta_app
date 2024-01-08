@@ -659,11 +659,11 @@ class NtaRun:
         axes[0].set_title(titleText + ": Blanks", weight='bold')
         axes[0].set_xlabel("Mean Abundance", fontsize = 12)
         axes[0].set_ylabel("CV", fontsize = 12)
-        axes[0].set_ylim(0,2)
+        axes[0].set_ylim(0,2.5)
         #axes[0].set_xlim(100, 10000000000)
         axes[0].set_xlim(min_abundance_limit, max_abundance_limit) # Set x-axis to scale based on the min/max data points
         axes[0].set(xscale='log')
-        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0])
+        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
 
         b=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')),:],
                         x='Mean', y='CV', color="whitesmoke",
@@ -689,11 +689,11 @@ class NtaRun:
         axes[1].set_title(titleText + ": Samples", weight='bold')
         axes[1].set_xlabel("Mean Abundance", fontsize = 12)
         axes[1].set_ylabel("CV", fontsize = 12)
-        axes[1].set_ylim(0,2)
+        axes[1].set_ylim(0,2.5)
         #axes[1].set_xlim(100, 10000000000)
         axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
         axes[1].set(xscale='log')
-        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0])
+        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
         # legend = d.legend(title = "Natives")
         # legend.get_texts()[0].set_text('present')
         # legend.get_texts()[1].set_text('spiked')
