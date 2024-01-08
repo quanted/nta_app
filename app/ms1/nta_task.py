@@ -153,7 +153,7 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
         
-        logger.info("self.dfs[1] pre-stat columns= {}".format(self.dfs[1].columns))    
+        #logger.info("self.dfs[1] pre-stat columns= {}".format(self.dfs[1].columns))    
         
         # 2: statistics
         self.step = "Calculating statistics"
@@ -643,8 +643,9 @@ class NtaRun:
                         edgecolor = 'black', alpha = 0.15, ax = axes[0])
         '''
         legend = a.legend(title = "Features")
-        legend.get_texts()[0].set_text('unknowns')
-        legend.get_texts()[1].set_text('ISTDs')
+        #AC 1/8/2024 Comment out for debugging
+        # legend.get_texts()[0].set_text('unknowns')
+        # legend.get_texts()[1].set_text('ISTDs')
 
         # frame = legend.get_frame() #sets up for color, edge, and transparency
         # frame.set_facecolor('lightgray') #color of legend
