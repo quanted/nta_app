@@ -1,4 +1,5 @@
-var jobid = JSON.parse(document.getElementById('jobid').textContent);
+// var jobid = JSON.parse(document.getElementById('jobid').textContent);
+var jobid = window.location.pathname.split("/").pop();
 
 // set path for webApp reduced CSV
 // var csv_path = '../Reduced_WebApp_input_file_perc.csv';
