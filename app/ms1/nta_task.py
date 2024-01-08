@@ -613,7 +613,6 @@ class NtaRun:
         if dfTracer is not None:
             # Merge df with tracers to get labels
             plot2 = pd.merge(plot, tracers, how='left', on=['Mass', 'Retention_Time'])
-            # plot2 = pd.merge(plot2, utracers, how='left', on=['Mass', 'Retention_Time'])
         else:
             # If tracer plot doesn't exist, still need to create a spike column that is empty
             plot['spike'] = ''
@@ -643,9 +642,9 @@ class NtaRun:
                         edgecolor = 'black', alpha = 0.15, ax = axes[0])
         '''
         legend = a.legend(title = "Features")
-        #AC 1/8/2024 Comment out for debugging
-        # legend.get_texts()[0].set_text('unknowns')
-        # legend.get_texts()[1].set_text('ISTDs')
+        legend.get_texts()[0].set_text('unknowns')
+        if dfTracer is not None: # Conditional for if tracers are present:
+            legend.get_texts()[1].set_text('ISTDs') # If tracers are present, add secondary legend label
 
         # frame = legend.get_frame() #sets up for color, edge, and transparency
         # frame.set_facecolor('lightgray') #color of legend
