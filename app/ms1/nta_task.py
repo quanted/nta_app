@@ -641,9 +641,11 @@ class NtaRun:
                         x='Mean', y='CV', color="firebrick",
                         edgecolor = 'black', alpha = 0.15, ax = axes[0])
         '''
-        legend = a.legend(title = "Features")
-        legend.get_texts()[0].set_text('unknowns')
-        if dfTracer is not None: # Conditional for if tracers are present:
+        
+        # Only generate legend if tracers are submitted
+        if dfTracer is not None:
+            legend = a.legend(title = "Features")
+            legend.get_texts()[0].set_text('unknowns')
             legend.get_texts()[1].set_text('ISTDs') # If tracers are present, add secondary legend label
 
         # frame = legend.get_frame() #sets up for color, edge, and transparency
