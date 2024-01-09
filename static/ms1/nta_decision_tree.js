@@ -328,7 +328,7 @@ d3.csv(csv_path).then(function(data) {
                 occ_counts['nUnderCV'] += 1;
 
                 // check if this occurrence passes MRL check
-                var mrl_threshold_header = "Blank_MDL"; // change to "MRL" for alex // change to "Blank_MDL for tyler"
+                var mrl_threshold_header = "MRL"; // change to "MRL" for alex // change to "Blank_MDL for tyler"
                 var sample_mean_header = "Mean" + sample_name;
                 if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
                   // pass MRL (pass replicate-->pass CV-->pass MRL)
@@ -342,7 +342,7 @@ d3.csv(csv_path).then(function(data) {
                 occ_counts['nOverCV'] += 1;
 
                 // check if this occurrence passes MRL check
-                var mrl_threshold_header = "Blank_MDL"; // change to "MRL" for alex // change to "Blank_MDL for tyler"
+                var mrl_threshold_header = "MRL"; // change to "MRL" for alex // change to "Blank_MDL for tyler"
                 var sample_mean_header = "Mean" + sample_name;
                 if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
                   // pass MRL (pass replicate-->fail CV-->pass MRL)
@@ -455,7 +455,7 @@ d3.csv(csv_path).then(function(data) {
             }
 
             // check if this occurrence within the feature passes MRL check (and hence causes the feature to pass)
-            var mrl_threshold_header = "Blank_MDL"; // change to "MRL" for alex // change to "Blank_MDL for tyler"
+            var mrl_threshold_header = "MRL"; // change to "MRL" for alex // change to "Blank_MDL for tyler"
             var sample_mean_header = "Mean" + sample_name;
             if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
               mrlPass = true;
