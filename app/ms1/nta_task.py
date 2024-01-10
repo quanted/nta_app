@@ -853,7 +853,7 @@ class NtaRun:
         
         # Add outside border
         ax.patch.set_edgecolor('black')
-        ax.patch.set_linewidth(1)
+        ax.patch.set_linewidth(2)
         
         # Manually specify colorbar labelling after it's been generated
         colorbar = ax.collections[0].colorbar
