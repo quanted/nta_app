@@ -645,7 +645,7 @@ class NtaRun:
         legend = a.legend(title = "Features")
         # Only generate legend if tracers are submitted
         if dfTracer is not None:
-            legend.get_texts()[0].set_text('unknowns')
+            legend.get_texts()[0].set_text('Unknowns')
             legend.get_texts()[1].set_text('Tracers') # If tracers are present, add secondary legend label
 
         # frame = legend.get_frame() #sets up for color, edge, and transparency
@@ -850,7 +850,10 @@ class NtaRun:
         ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
 
         ax.set(xticklabels=[])
-
+        
+        # Add outside border
+        ax.spines["outline"].set(visible=True, lw=.8, edgecolor="black")
+        
         # Manually specify colorbar labelling after it's been generated
         colorbar = ax.collections[0].colorbar
         colorbar.ax.tick_params(labelsize=24)
