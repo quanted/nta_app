@@ -153,7 +153,7 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
             #print(self.dfs[0])
         
-        logger.info("self.dfs[1] pre-stat columns= {}".format(self.dfs[1].columns))    
+        #logger.info("self.dfs[1] pre-stat columns= {}".format(self.dfs[1].columns))    
         
         # 2: statistics
         self.step = "Calculating statistics"
@@ -613,7 +613,6 @@ class NtaRun:
         if dfTracer is not None:
             # Merge df with tracers to get labels
             plot2 = pd.merge(plot, tracers, how='left', on=['Mass', 'Retention_Time'])
-            # plot2 = pd.merge(plot2, utracers, how='left', on=['Mass', 'Retention_Time'])
         else:
             # If tracer plot doesn't exist, still need to create a spike column that is empty
             plot['spike'] = ''
@@ -642,9 +641,12 @@ class NtaRun:
                         x='Mean', y='CV', color="firebrick",
                         edgecolor = 'black', alpha = 0.15, ax = axes[0])
         '''
+        
         legend = a.legend(title = "Features")
-        legend.get_texts()[0].set_text('unknowns')
-        legend.get_texts()[1].set_text('ISTDs')
+        # Only generate legend if tracers are submitted
+        if dfTracer is not None:
+            legend.get_texts()[0].set_text('unknowns')
+            legend.get_texts()[1].set_text('ISTDs') # If tracers are present, add secondary legend label
 
         # frame = legend.get_frame() #sets up for color, edge, and transparency
         # frame.set_facecolor('lightgray') #color of legend
@@ -657,11 +659,11 @@ class NtaRun:
         axes[0].set_title(titleText + ": Blanks", weight='bold')
         axes[0].set_xlabel("Mean Abundance", fontsize = 12)
         axes[0].set_ylabel("CV", fontsize = 12)
-        axes[0].set_ylim(0,2)
+        axes[0].set_ylim(0,2.5)
         #axes[0].set_xlim(100, 10000000000)
         axes[0].set_xlim(min_abundance_limit, max_abundance_limit) # Set x-axis to scale based on the min/max data points
         axes[0].set(xscale='log')
-        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0])
+        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
 
         b=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')),:],
                         x='Mean', y='CV', color="whitesmoke",
@@ -687,11 +689,11 @@ class NtaRun:
         axes[1].set_title(titleText + ": Samples", weight='bold')
         axes[1].set_xlabel("Mean Abundance", fontsize = 12)
         axes[1].set_ylabel("CV", fontsize = 12)
-        axes[1].set_ylim(0,2)
+        axes[1].set_ylim(0,2.5)
         #axes[1].set_xlim(100, 10000000000)
         axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
         axes[1].set(xscale='log')
-        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0])
+        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
         # legend = d.legend(title = "Natives")
         # legend.get_texts()[0].set_text('present')
         # legend.get_texts()[1].set_text('spiked')
