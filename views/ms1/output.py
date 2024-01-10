@@ -61,7 +61,7 @@ def file_download_buttons(jobid):
     <div id="decision_tree_area">
         <H3 id="section1">View plots:</H3>
         <div class="buttons">
-            <input type="button" value="CV decision tree" onclick="window.open('/nta/ms1/results/decision_tree/{jobid}')">
+            <input type="button" value="Filtering logic tree" onclick="window.open('/nta/ms1/results/decision_tree/{jobid}')">
         </div>
     </div>
     """
