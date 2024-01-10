@@ -852,7 +852,8 @@ class NtaRun:
         ax.set(xticklabels=[])
         
         # Add outside border
-        ax.spines["outline"].set(visible=True, lw=.8, edgecolor="black")
+        ax.patch.set_edgecolor('black')
+        ax.patch.set_linewidth(1)
         
         # Manually specify colorbar labelling after it's been generated
         colorbar = ax.collections[0].colorbar
