@@ -727,7 +727,6 @@ class NtaRun:
 
         max_replicate_cv_value = self.parameters['max_replicate_cv'][1]
         min_replicate_hits_percent = self.parameters['min_replicate_hits'][1]
-        titleText = "Heatmap of all feature occurrences using filter values of {} maximum CV and {} minimum replicate %".format(max_replicate_cv_value, min_replicate_hits_percent)
         
         # convert max_replicate_cv_value to a numeric value
         max_replicate_cv_value = pd.to_numeric(self.parameters['max_replicate_cv'][1], errors='coerce')
@@ -743,7 +742,8 @@ class NtaRun:
 
         # combine the two dataframes. Ignnore non-existing dataframes
         dfCombined = pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False) if dfPos is not None and dfNeg is not None else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
-
+        titleText = "Heatmap of feature occurrences (n = "+ str(dfCombined.size) +") using filter values of {} maximum CV and {} minimum replicate %".format(max_replicate_cv_value, min_replicate_hits_percent)
+        
         # # log the dataframes if not None
         # if dfPos is not None:
         #     logger.info("dfPos= {}".format(dfPos.columns.values))
