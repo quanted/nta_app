@@ -645,8 +645,8 @@ class NtaRun:
         legend = a.legend(title = "Features")
         # Only generate legend if tracers are submitted
         if dfTracer is not None:
-            legend.get_texts()[0].set_text('unknowns')
-            legend.get_texts()[1].set_text('ISTDs') # If tracers are present, add secondary legend label
+            legend.get_texts()[0].set_text('Unknowns')
+            legend.get_texts()[1].set_text('Tracers') # If tracers are present, add secondary legend label
 
         # frame = legend.get_frame() #sets up for color, edge, and transparency
         # frame.set_facecolor('lightgray') #color of legend
@@ -727,7 +727,6 @@ class NtaRun:
 
         max_replicate_cv_value = self.parameters['max_replicate_cv'][1]
         min_replicate_hits_percent = self.parameters['min_replicate_hits'][1]
-        titleText = "Heatmap of all feature occurrences using filter values of {} maximum CV and {} minimum replicate %".format(max_replicate_cv_value, min_replicate_hits_percent)
         
         # convert max_replicate_cv_value to a numeric value
         max_replicate_cv_value = pd.to_numeric(self.parameters['max_replicate_cv'][1], errors='coerce')
@@ -743,7 +742,8 @@ class NtaRun:
 
         # combine the two dataframes. Ignnore non-existing dataframes
         dfCombined = pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False) if dfPos is not None and dfNeg is not None else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
-
+        titleText = "Heatmap of feature occurrences (n = "+ str(dfCombined.size) +") using filter values of {} maximum CV and {} minimum replicate %".format(max_replicate_cv_value, min_replicate_hits_percent)
+        
         # # log the dataframes if not None
         # if dfPos is not None:
         #     logger.info("dfPos= {}".format(dfPos.columns.values))
@@ -850,7 +850,11 @@ class NtaRun:
         ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
 
         ax.set(xticklabels=[])
-
+        
+        # Add outside border
+        ax.patch.set_edgecolor('black')
+        ax.patch.set_linewidth(2)
+        
         # Manually specify colorbar labelling after it's been generated
         colorbar = ax.collections[0].colorbar
         colorbar.ax.tick_params(labelsize=24)
