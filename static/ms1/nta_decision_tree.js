@@ -3,7 +3,7 @@ var jobid = window.location.pathname.split("/").pop();
 
 // set path for webApp reduced CSV
 // var csv_path = '../Reduced_WebApp_input_file_perc.csv';
-var csv_path = 'https://qed-dev.edap-cluster.com/nta/ms1/results/decision_tree_data/' + jobid;
+var csv_path = 'https://qed-prod.edap-cluster.com/nta/ms1/results/decision_tree_data/' + jobid;
 
 // set default threshold values
 var thresholdData = {
