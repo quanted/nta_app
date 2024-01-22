@@ -1,5 +1,6 @@
 import os
 import string, random
+import datetime
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -17,10 +18,28 @@ example_neg_filename_1 = 'EntactEnv_Neg_MS1_Dust1IDA_01_Debug.mgf'
 
 
 def upload_page(request, form_data=None, form_files=None):
+    print("Entered upload_page")
 
     model = 'ms2'
     header = "Run MS2 CFMID Tool"
     page = 'run_model'
+
+    # generate a timestamp with the current time and date
+    current_datetime = datetime.datetime.now()
+
+    # define inputParameters dictionary containing all the parameters and their attributes, labels, and initial values
+    inputParameters = {'project_name': ['Project Name', None],
+    'datetime': ['Date & Time', str(current_datetime)],
+    'csrfmiddlewaretoken': ['csrfmiddlewaretoken', None],
+    'jobID': ['jobID', None],
+    'fileUpload': ['fileUpload', []],
+    'test_files': ['test_files', None],
+    'precursor_mass_accuracy': ['precursor_mass_accuracy', None],
+    'fragment_mass_accuracy': ['fragment_mass_accuracy', None],
+    'classification_file': ['classification_file', None]
+    }
+    print("views/ms2/upload.py: inputParameters: {} ".format(inputParameters))
+
     if (request.method == "POST"):
         form = MS2ParametersInput(request.POST)
         # if request.POST['test_files'] == 'no':
@@ -36,18 +55,39 @@ def upload_page(request, form_data=None, form_files=None):
 
 
             parameters = request.POST
-            print('1. parameters: {}'.format(parameters))
+            # print('1. parameters: {}'.format(parameters))
             parameters = parameters.dict()
-            print('2. parameters: {}'.format(parameters))
-            print("3. request.FILES.keys: {}".format(request.FILES.keys()))
-            print("===>")
+            # print('2. parameters: {}'.format(parameters))
+            # print("3. request.FILES.keys: {}".format(request.FILES.keys()))
+            # print("4. request.FILES: {}".format(request.FILES))
+            # Assuming request.FILES['fileUpload'] is a list of InMemoryUploadedFile objects
+            # uploadedFiles = []
+            file_uploads = request.FILES.getlist('fileUpload')
+            for uploaded_file in file_uploads:
+                file_name = uploaded_file.name
+                # uploadedFiles.append(file_name)
+                inputParameters['fileUpload'][1].append(file_name)
+                # print(f"File Name: {file_name}")
+
+            # print("views/ms2/upload.py: inputParameters: {} ".format(inputParameters))
+
+            # print("===>")
             # loop over FILES.keys() and print each file name
-            for key in request.FILES.keys():
-                print("key: {}".format(key))
-                print("request.FILES[key]: {}".format(request.FILES[key]))
-                print("request.FILES[key].name: {}".format(request.FILES[key].name))
+            # for key in request.FILES.keys():
+            #     print("key: {}".format(key))
+            #     print("request.FILES[key]: {}".format(request.FILES[key]))
+            #     print("request.FILES[key].name: {}".format(request.FILES[key].name))
                 
             job_id = parameters['jobID']
+            inputParameters['jobID'][1] = job_id
+            inputParameters['project_name'][1] = parameters['project_name']
+            inputParameters['precursor_mass_accuracy'][1] = parameters['precursor_mass_accuracy']
+            inputParameters['fragment_mass_accuracy'][1] = parameters['fragment_mass_accuracy']
+            inputParameters['classification_file'][1] = parameters['classification_file']
+            inputParameters['test_files'][1] = parameters['test_files']
+            inputParameters['csrfmiddlewaretoken'][1] = parameters['csrfmiddlewaretoken']
+            parameters['inputParameters'] = inputParameters
+            print('Final parameters: {}'.format(parameters))
             run_ms2_dask(parameters, job_id)
             return redirect('/nta/ms2/processing/'+job_id, permanent=True)
         else:
