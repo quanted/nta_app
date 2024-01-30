@@ -15,7 +15,8 @@ COPY . /src/nta_app
 RUN conda create --name pyenv python=3.9.13
 RUN conda config --add channels conda-forge
 RUN conda run -n pyenv --no-capture-output pip install -r /src/nta_app/requirements.txt
-RUN conda install -n pyenv uwsgi
+RUN conda run -n pyenv --no-capture-output pip install uwsgi
+#RUN conda install -n pyenv uwsgi
 
 ENV PATH "/src:/src/nta_app":${PATH}
 ENV PYTHONPATH "/src:/src/nta_app":${PYTHONPATH}
