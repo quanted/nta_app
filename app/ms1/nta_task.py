@@ -547,11 +547,7 @@ class NtaRun:
         med_df = dfCombined[med_cols]
         #logger.info("med_df= {}".format(med_df.columns.values))
 
-        #AC 1/2/2024 Get minimum and maximum abundance values of dataframe for the purposes of setting the x-axis range
-        min_abundance_value = med_df.min(numeric_only=True).min()
-        max_abundance_value = med_df.max(numeric_only=True).max()
-        min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
-        max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
+
 
         # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
         for x,y,z in zip(cv_cols, rper_cols, med_cols):
@@ -573,6 +569,15 @@ class NtaRun:
 
         # Grab mean cols from df
         mean_df = dfCombined[mean_cols]
+
+        #AC 2/8/2024 Get minimum and maximum abundance values of dataframe (mean columns) for the purposes of setting the x-axis range
+        min_abundance_value = mean_df.min(numeric_only=True).min()
+        max_abundance_value = mean_df.max(numeric_only=True).max()
+        if min_abundance_value == 0: # If minimum abundance value is zero, then set minimum limit to zero (to avoid log issues on zero)
+            min_abundance_limit = 0
+        else:
+            min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
+        max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
 
         li=[]
         blanks=['MB1','BLK', 'Blank', 'BLANK', 'blank', 'MB', 'mb']
