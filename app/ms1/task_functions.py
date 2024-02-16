@@ -694,8 +694,10 @@ def clean_features(df_in, controls, tracer_df=False):
     
     '''ADD VALUES TO DOC'''
     # Mask, add values back to doc
-    values = docs[Mean_Samples].isnull()
-    docs[Mean_Samples] = np.where(values, df[Mean_Samples], docs[Mean_Samples])
+    data_values = docs[Mean_Samples].isnull()
+    docs[Mean_Samples] = np.where(data_values, df[Mean_Samples], docs[Mean_Samples])
+    blank_values = docs[Mean_MB].isnull()
+    docs[Mean_MB] = np.where(blank_values, df[Mean_MB], docs[Mean_MB])
     
     '''DOCUMENT DROP FEATURES FROM DF'''
     # AC 11/3/2023: Reversing the order of documenting drop features from DF (in cases of overwriting flags, this will match the numbers from the logic tree in theory)
