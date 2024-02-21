@@ -647,13 +647,13 @@ class NtaRun:
                         edgecolor = 'black', alpha = 0.15, ax = axes[0])
         '''
         
-        legend = a.legend(title = "Features")
+        #legend = a.legend(title = "Features")
         # Only generate legend if tracers are submitted
-        '''
-        if dfTracer is not None:
-            legend.get_texts()[0].set_text('Unknowns')
-            legend.get_texts()[1].set_text('Tracers') # If tracers are present, add secondary legend label
-        '''
+        
+        #if dfTracer is not None:
+            #legend.get_texts()[0].set_text('Unknowns')
+            #legend.get_texts()[1].set_text('Tracers') # If tracers are present, add secondary legend label
+        
         # frame = legend.get_frame() #sets up for color, edge, and transparency
         # frame.set_facecolor('lightgray') #color of legend
         # frame.set_edgecolor('black') #edge color of legend
