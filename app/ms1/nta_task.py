@@ -245,6 +245,7 @@ class NtaRun:
             self.step = "Searching dsstox database"
             self.perform_dashboard_search()
             if self.parameters['search_hcd'][1] == 'yes':
+                self.step = "Searching Cheminformatics Hazard Module database"
                 self.perform_hcd_search()
             # NTAW-94 comment out the following line. toxpi is no longer being used
             # self.process_toxpi()
