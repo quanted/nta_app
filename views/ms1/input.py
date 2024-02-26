@@ -52,8 +52,7 @@ def input_page(request, form_data=None, form_files=None):
     'search_dsstox': ['Search DSSTox for possible structures', None],
     'search_hcd': ['Search Hazard Comparison Dashboard for toxicity data', None],
     'search_mode': ['Search dashboard by', None],
-    'top_result_only': ['Save top result only?', None],
-    'api_batch_size': ['DSSTox search batch size (debugging)', None]
+    'top_result_only': ['Save top result only?', None]
     }
     print("input_page: inputParameters: {} ".format(inputParameters))
 
@@ -120,7 +119,6 @@ def input_page(request, form_data=None, form_files=None):
                 inputParameters['search_hcd'][1] = parameters['search_hcd']
                 inputParameters['search_mode'][1] = parameters['search_mode']
                 inputParameters['top_result_only'][1] = parameters['top_result_only']
-                inputParameters['api_batch_size'][1] = parameters['api_batch_size']
 
                 # two basic scenarios are possible: 1) the user has selected to run the test files, or 2) the user
                 # has not selected to run the test files. If the user has selected to run the test files, then the

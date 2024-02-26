@@ -1078,7 +1078,7 @@ class NtaRun:
         if self.parameters['search_mode'][1] == 'mass':
             mono_masses = task_fun.masses(to_search)
             dsstox_search_df = api_search_masses_batch(mono_masses, float(self.parameters['parent_ion_mass_accuracy'][1]),
-                                                       batchsize=int(self.parameters['api_batch_size'][1]), jobid=self.jobid)
+                                                       batchsize=150), jobid=self.jobid)
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)
