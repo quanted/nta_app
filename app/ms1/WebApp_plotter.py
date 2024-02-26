@@ -394,6 +394,11 @@ class WebApp_plotter:
         
         # check if there is a sequence csv file
         if seq_csv is None:
+            # If there is no sequence file, create a dummy sequence dataframe containing the sample names straight from the input data file
+            headers = parse_headers(df_in)
+            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
+            df_loc_seq = pd.DataFrame()
+            df_loc_seq['Sample Sequence'] = abundance
             order_samples = False
         else:
             df_loc_seq = seq_csv

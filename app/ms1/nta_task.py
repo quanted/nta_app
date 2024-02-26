@@ -245,6 +245,7 @@ class NtaRun:
             self.step = "Searching dsstox database"
             self.perform_dashboard_search()
             if self.parameters['search_hcd'][1] == 'yes':
+                self.step = "Searching Cheminformatics Hazard Module database"
                 self.perform_hcd_search()
             # NTAW-94 comment out the following line. toxpi is no longer being used
             # self.process_toxpi()
@@ -547,11 +548,7 @@ class NtaRun:
         med_df = dfCombined[med_cols]
         #logger.info("med_df= {}".format(med_df.columns.values))
 
-        #AC 1/2/2024 Get minimum and maximum abundance values of dataframe for the purposes of setting the x-axis range
-        min_abundance_value = med_df.min(numeric_only=True).min()
-        max_abundance_value = med_df.max(numeric_only=True).max()
-        min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
-        max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
+
 
         # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
         for x,y,z in zip(cv_cols, rper_cols, med_cols):
@@ -573,6 +570,15 @@ class NtaRun:
 
         # Grab mean cols from df
         mean_df = dfCombined[mean_cols]
+
+        #AC 2/8/2024 Get minimum and maximum abundance values of dataframe (mean columns) for the purposes of setting the x-axis range
+        min_abundance_value = mean_df.min(numeric_only=True).min()
+        max_abundance_value = mean_df.max(numeric_only=True).max()
+        if min_abundance_value == 0: # If minimum abundance value is zero, then set minimum limit to zero (to avoid log issues on zero)
+            min_abundance_limit = 0
+        else:
+            min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
+        max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
 
         li=[]
         blanks=['MB1','BLK', 'Blank', 'BLANK', 'blank', 'MB', 'mb']
@@ -627,81 +633,55 @@ class NtaRun:
 
         palette = ['whitesmoke', 'firebrick']
         sns.set_palette(palette, 2)
-
+        
+        # Blank plot
         a=sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')),:].sort_values('spike'),
                         x='Mean', y='CV', hue = 'spike',
-                        edgecolor = 'black', alpha = 0.5, ax = axes[0])
+                        edgecolor = 'black', alpha = 0.5, legend=False, ax = axes[0])
 
-        # a.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        # a.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
+        # Add CV red dashed line
         a.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
         a.text(max_abundance_limit/5, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
-        '''
-        sns.scatterplot(data=plot2.loc[((plot2['type']=='blank')&(plot2['spike']==1)),:],
-                        x='Mean', y='CV', color="firebrick",
-                        edgecolor = 'black', alpha = 0.15, ax = axes[0])
-        '''
-        
-        legend = a.legend(title = "Features")
-        # Only generate legend if tracers are submitted
-        if dfTracer is not None:
-            legend.get_texts()[0].set_text('Unknowns')
-            legend.get_texts()[1].set_text('Tracers') # If tracers are present, add secondary legend label
 
-        # frame = legend.get_frame() #sets up for color, edge, and transparency
-        # frame.set_facecolor('lightgray') #color of legend
-        # frame.set_edgecolor('black') #edge color of legend
-        # frame.set_alpha(1) #deals with transparency
-
-
-
-        #axes[0].set_title("ROAR CA WebApp Output: Blanks", weight='bold')
+        # Adjust axes labels
         axes[0].set_title(titleText + ": Blanks", weight='bold')
         axes[0].set_xlabel("Mean Abundance", fontsize = 12)
         axes[0].set_ylabel("CV", fontsize = 12)
         axes[0].set_ylim(0,2.5)
-        #axes[0].set_xlim(100, 10000000000)
         axes[0].set_xlim(min_abundance_limit, max_abundance_limit) # Set x-axis to scale based on the min/max data points
         axes[0].set(xscale='log')
         axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
-
-        b=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')),:],
-                        x='Mean', y='CV', color="whitesmoke",
+        
+        
+        # Sample plot
+        b=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')),:].sort_values('spike'),
+                        x='Mean', y='CV', hue='spike',
                         edgecolor = 'black', alpha = 0.5, ax = axes[1])
 
-        c=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')&(plot2['spike']==1)),:],
-                        x='Mean', y='CV', color="firebrick",
-                        edgecolor = 'black', alpha = 0.5, ax = axes[1])
-
-        # palette = ['royalblue', 'gold']
-        # sns.set_palette(palette, 2)
-
-        # d=sns.scatterplot(data=plot2.loc[((plot2['type']!='blank')&(plot2['present']==1)),:],
-        #                 x='Mean', y='CV', hue = 'native',
-        #                 edgecolor = 'black', alpha = 0.5, ax = axes[1])
-
-        # c.axhline(y=1.25, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        # c.text(1000000000, 1.4, 'CV = 1.25', ha='center', va='center_baseline', weight='bold', size = 12)
-        c.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
-        c.text(max_abundance_limit/5, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
-
-        #axes[1].set_title("ROAR CA WebApp Output: Samples", weight='bold')
+        # Add CV red dashed line
+        b.axhline(y=max_replicate_cv_value, color='red', linestyle="dashed", linewidth=1.5, alpha=1)
+        b.text(max_abundance_limit/5, max_replicate_cv_value+0.1, 'CV = {}'.format(max_replicate_cv_value), ha='center', va='center_baseline', weight='bold', size = 12)
+        
+        # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
+        legend = b.legend(title = "Features")
+        # Set legend labels
+        if dfTracer is not None:
+            legend.get_texts()[0].set_text('Unknowns')
+            legend.get_texts()[1].set_text('Tracers') # If tracers are present, add secondary legend label
+        # Make it pretty
+        frame = legend.get_frame() #sets up for color, edge, and transparency
+        frame.set_facecolor('lightgray') #color of legend
+        frame.set_edgecolor('black') #edge color of legend
+        frame.set_alpha(1) #deals with transparency
+        
+        # Adjust axes labels
         axes[1].set_title(titleText + ": Samples", weight='bold')
         axes[1].set_xlabel("Mean Abundance", fontsize = 12)
         axes[1].set_ylabel("CV", fontsize = 12)
         axes[1].set_ylim(0,2.5)
-        #axes[1].set_xlim(100, 10000000000)
         axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
         axes[1].set(xscale='log')
         axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
-        # legend = d.legend(title = "Natives")
-        # legend.get_texts()[0].set_text('present')
-        # legend.get_texts()[1].set_text('spiked')
-
-        # frame = legend.get_frame() #sets up for color, edge, and transparency
-        # frame.set_facecolor('lightgray') #color of legend
-        # frame.set_edgecolor('black') #edge color of legend
-        # frame.set_alpha(1) #deals with transparency
 
         # plt.savefig('./outputTest02/cv_scatterplot.png', bbox_inches='tight')
 
@@ -1098,7 +1078,7 @@ class NtaRun:
         if self.parameters['search_mode'][1] == 'mass':
             mono_masses = task_fun.masses(to_search)
             dsstox_search_df = api_search_masses_batch(mono_masses, float(self.parameters['parent_ion_mass_accuracy'][1]),
-                                                       batchsize=int(self.parameters['api_batch_size'][1]), jobid=self.jobid)
+                                                       batchsize=150, jobid=self.jobid)
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)

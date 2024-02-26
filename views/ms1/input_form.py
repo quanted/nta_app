@@ -103,7 +103,3 @@ class NtaInputs(forms.Form):
         label='Save top result only?',
         choices=(('yes', 'yes'), ('no', 'no'),),
         initial='no')
-    api_batch_size = forms.IntegerField(
-        widget=forms.NumberInput(attrs={'step': 1}),
-        label='DSSTox search batch size (debugging)',
-        initial=150)

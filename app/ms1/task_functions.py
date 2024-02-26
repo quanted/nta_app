@@ -691,11 +691,16 @@ def clean_features(df_in, controls, tracer_df=False):
     # append ND flag (occurrence < MDL) to documentation dataframe
     docs[Mean_Samples] = np.where(~MDL_sample_mask & cell_empty & ~cell_empty_df, 'ND', docs[Mean_Samples])
     docs[Mean_Samples] = np.where(~MDL_sample_mask & ~cell_empty & ~cell_empty_df, docs[Mean_Samples]+', ND', docs[Mean_Samples])
+    # remove occurrences below MDL in df and df_flagged
+    df[Mean_Samples] = np.where(~MDL_sample_mask, np.nan, df[Mean_Samples])
+    df_flagged[Mean_Samples] = np.where(~MDL_sample_mask, np.nan, df_flagged[Mean_Samples])
     
     '''ADD VALUES TO DOC'''
     # Mask, add values back to doc
-    values = docs[Mean_Samples].isnull()
-    docs[Mean_Samples] = np.where(values, df[Mean_Samples], docs[Mean_Samples])
+    data_values = docs[Mean_Samples].isnull()
+    docs[Mean_Samples] = np.where(data_values, df[Mean_Samples], docs[Mean_Samples])
+    blank_values = docs[Mean_MB].isnull()
+    docs[Mean_MB] = np.where(blank_values, df[Mean_MB], docs[Mean_MB])
     
     '''DOCUMENT DROP FEATURES FROM DF'''
     # AC 11/3/2023: Reversing the order of documenting drop features from DF (in cases of overwriting flags, this will match the numbers from the logic tree in theory)

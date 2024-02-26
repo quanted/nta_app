@@ -15,7 +15,8 @@ def input_handler(file, index):
     if ext == '.tsv':
         df = pd.read_csv(file, sep='\t', comment='#', na_values=1 | 0)
     if ext == '.csv':
-        df = pd.read_csv(file, comment='#', na_values=1 | 0)
+        nan_value_list = [0,1]
+        df = pd.read_csv(file, comment='#', na_values=nan_value_list)
                 
     #AC
     print("df columns pre-fix names", df.columns)

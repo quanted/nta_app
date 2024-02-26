@@ -118,12 +118,13 @@ def api_search_formulas(formulas, jobID = "00000"):
 def api_search_hcd(dtxsid_list):
     post_data = {"chemicals":[], "options": {"cts": None, "minSimilarity": 0.95, "analogsSearchType": None}}
     headers = {'content-type': 'application/json'}
-    url = 'https://hazard.sciencedataexperts.com/api/hazard'
+    #url = 'https://hazard.sciencedataexperts.com/api/hazard'
+    url = 'https://hcd.rtpnc.epa.gov/api/hazard'
     for dtxsid in dtxsid_list: 
         post_data['chemicals'].append({'chemical': {'sid': dtxsid, "checked": True}, "properties": {}})
     return requests.post(url, data=json.dumps(post_data), headers=headers)
             
-def batch_search_hcd(dtxsid_list, batchsize = 150):
+def batch_search_hcd(dtxsid_list, batchsize = 200):
     result_dict = {}
     logger.info(f"Search {len(dtxsid_list)} DTXSIDs in HCD")
     for i in range(0, len(dtxsid_list), batchsize):
