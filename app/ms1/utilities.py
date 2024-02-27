@@ -116,7 +116,7 @@ def api_search_formulas(formulas, jobID = "00000"):
 
 @response_log_wrapper('HCD')
 def api_search_hcd(dtxsid_list):
-    post_data = {"chemicals":[], "options": {"noRecords": "true"}}
+    post_data = {"chemicals":[], "options": {"noRecords": "true", "usePredictions": "false"}}
     headers = {'content-type': 'application/json'}
     #url = 'https://hazard.sciencedataexperts.com/api/hazard'
     url = 'https://hcd.rtpnc.epa.gov/api/hazard'
