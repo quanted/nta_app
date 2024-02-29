@@ -638,7 +638,7 @@ class WebApp_plotter:
                                 if y_fit[0] < 0:
                                     y_fit = y_fit[1:]
                                     x_fit = x_fit[1:]
-                                ax.plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)
+                                ax.plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
                     #AC 1/3/2024 Disable line fit for now
                     # # add a quadratic fits to plot
                     # if fit == True:
@@ -706,7 +706,7 @@ class WebApp_plotter:
                                 if y_fit[0] < 0:
                                     y_fit = y_fit[1:]
                                     x_fit = x_fit[1:]
-                                ax[row_index].plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)
+                                ax[row_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
                                 
                     # # add a quadratic fits to plot
                     # if fit == True:
@@ -775,7 +775,7 @@ class WebApp_plotter:
                                     if y_fit[0] < 0:
                                         y_fit = y_fit[1:]
                                         x_fit = x_fit[1:]
-                                    ax[row_index, col_index].plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)                        
+                                    ax[row_index, col_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)                        
                         # # add a quadratic fits to plot
                         # if fit == True:
                         #     if len(x_values_sample) > 2:
@@ -847,7 +847,7 @@ class WebApp_plotter:
                                     if y_fit[0] < 0:
                                         y_fit = y_fit[1:]
                                         x_fit = x_fit[1:]
-                                    ax[row_index, column_index].plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)                           
+                                    ax[row_index, column_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)                           
                         # # add a quadratic fits to plot
                         # if fit == True:
                         #     if len(x_values_sample) > 2:
