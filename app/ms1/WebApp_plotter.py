@@ -623,6 +623,22 @@ class WebApp_plotter:
                         ax.scatter(x_values_list[k], y_values_list[k], color=c_aes[k], s=m_size, zorder=100)
                     ax.set_title(chem, fontsize=24, fontweight=600)
                     
+                    # add a quadratic fits to plot
+                    if fit == True:
+                        #AC Loop through quadratic plot generation
+                        for b in range(len(sample_group_unique)):
+                            if len(x_values_list[b]) > 2:
+                                x_fit = np.linspace(min(x_values_list[b]), max(x_values_list[b]), len(x_values_list[b]))
+                                coefs = np.polyfit(x_fit, y_values_list[b], 2)
+                                y_fit = np.polyval(coefs, x_fit)
+                                # QA check, someimtes fit gives a negative value at the edge, looks horrible
+                                if y_fit[-1] < 0:
+                                    y_fit = x_fit[:-1]
+                                    x_fit = x_fit[:-1]
+                                if y_fit[0] < 0:
+                                    y_fit = y_fit[1:]
+                                    x_fit = x_fit[1:]
+                                ax.plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)
                     #AC 1/3/2024 Disable line fit for now
                     # # add a quadratic fits to plot
                     # if fit == True:
@@ -674,6 +690,24 @@ class WebApp_plotter:
 
                     ax[row_index].set_title(chem, fontsize=18, fontweight=600)
                     
+                    
+                    # add a quadratic fits to plot
+                    if fit == True:
+                        #AC Loop through quadratic plot generation
+                        for b in range(len(sample_group_unique)):
+                            if len(x_values_list[b]) > 2:
+                                x_fit = np.linspace(min(x_values_list[b]), max(x_values_list[b]), len(x_values_list[b]))
+                                coefs = np.polyfit(x_fit, y_values_list[b], 2)
+                                y_fit = np.polyval(coefs, x_fit)
+                                # QA check, someimtes fit gives a negative value at the edge, looks horrible
+                                if y_fit[-1] < 0:
+                                    y_fit = x_fit[:-1]
+                                    x_fit = x_fit[:-1]
+                                if y_fit[0] < 0:
+                                    y_fit = y_fit[1:]
+                                    x_fit = x_fit[1:]
+                                ax[row_index].plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)
+                                
                     # # add a quadratic fits to plot
                     # if fit == True:
                     #     if len(x_values_sample) > 2:
@@ -726,6 +760,22 @@ class WebApp_plotter:
                         
                         ax[row_index, col_index].set_title(chem, fontsize=18, fontweight=600)
                         
+                        # add a quadratic fits to plot
+                        if fit == True:
+                            #AC Loop through quadratic plot generation
+                            for b in range(len(sample_group_unique)):
+                                if len(x_values_list[b]) > 2:
+                                    x_fit = np.linspace(min(x_values_list[b]), max(x_values_list[b]), len(x_values_list[b]))
+                                    coefs = np.polyfit(x_fit, y_values_list[b], 2)
+                                    y_fit = np.polyval(coefs, x_fit)
+                                    # QA check, someimtes fit gives a negative value at the edge, looks horrible
+                                    if y_fit[-1] < 0:
+                                        y_fit = x_fit[:-1]
+                                        x_fit = x_fit[:-1]
+                                    if y_fit[0] < 0:
+                                        y_fit = y_fit[1:]
+                                        x_fit = x_fit[1:]
+                                    ax[row_index, col_index].plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)                        
                         # # add a quadratic fits to plot
                         # if fit == True:
                         #     if len(x_values_sample) > 2:
@@ -782,6 +832,22 @@ class WebApp_plotter:
 
                         ax[row_index, column_index].set_title(chem, fontsize=18, fontweight=600)
                         
+                        # add a quadratic fits to plot
+                        if fit == True:
+                            #AC Loop through quadratic plot generation
+                            for b in range(len(sample_group_unique)):
+                                if len(x_values_list[b]) > 2:
+                                    x_fit = np.linspace(min(x_values_list[b]), max(x_values_list[b]), len(x_values_list[b]))
+                                    coefs = np.polyfit(x_fit, y_values_list[b], 2)
+                                    y_fit = np.polyval(coefs, x_fit)
+                                    # QA check, someimtes fit gives a negative value at the edge, looks horrible
+                                    if y_fit[-1] < 0:
+                                        y_fit = x_fit[:-1]
+                                        x_fit = x_fit[:-1]
+                                    if y_fit[0] < 0:
+                                        y_fit = y_fit[1:]
+                                        x_fit = x_fit[1:]
+                                    ax[row_index, column_index].plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)                           
                         # # add a quadratic fits to plot
                         # if fit == True:
                         #     if len(x_values_sample) > 2:
