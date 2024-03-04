@@ -115,8 +115,7 @@ def upload_page(request, form_data=None, form_files=None):
     html += links_left.ordered_list(model, page)
 
     # css and scripts
-    html += render_to_string('09epa_drupal_pram_css.html', {})
-    html += render_to_string('09epa_drupal_pram_scripts.html', {})
+    html += render_to_string('nta_scripts_css.html', {})
 
     # epa template footer
     html += render_to_string('10epa_drupal_footer.html', {})
@@ -160,8 +159,7 @@ def upload_page_job(request, jobid = "000000", form_data=None, form_files=None):
     html += links_left.ordered_list(model, page)
 
     # css and scripts
-    html += render_to_string('09epa_drupal_pram_css.html', {})
-    html += render_to_string('09epa_drupal_pram_scripts.html', {})
+    html += render_to_string('nta_scripts_css.html', {})
 
     # epa template footer
     html += render_to_string('10epa_drupal_footer.html', {})

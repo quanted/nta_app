@@ -41,7 +41,7 @@ def output_page_html(header, model, tables_html):
     html += links_left.ordered_list(model)
 
     #css and scripts
-    html += render_to_string('09epa_drupal_pram_css.html', {})
+    html += render_to_string('nta_scripts_css.html', {})
     html += render_to_string('ms1/nta_output_scripts.html', {})
 
     #epa template footer

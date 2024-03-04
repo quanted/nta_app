@@ -41,8 +41,7 @@ def processing_page_html(header, model, tables_html):
     html += links_left.ordered_list(model)
 
     #css and scripts
-    html += render_to_string('09epa_drupal_pram_css.html', {})
-    html += render_to_string('09epa_drupal_pram_scripts.html', {})
+    html += render_to_string('nta_scripts_css.html', {})
     html += render_to_string('ms2/nta_processing_scripts.html')
     #html += render_to_string('09epa_drupal_pram_scripts.html', {})
 
