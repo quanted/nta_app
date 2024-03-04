@@ -27,11 +27,10 @@ def references_page_html(header, model, tables_html):
     html += render_to_string('epa_drupal_section_title_nta.html', {})
 
     #main body
-    html += render_to_string('06ubertext_start_index_drupal.html', {
+    html += render_to_string('nta_main_content.html', {
         'TITLE': header + ' References',
         'TEXT_PARAGRAPH': tables_html
     })
-    html += render_to_string('07ubertext_end_drupal.html', {})
     html += links_left.ordered_list(model, page)
 
     #css and scripts
