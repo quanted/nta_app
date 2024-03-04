@@ -4,7 +4,6 @@ on:
   push:
     branches: [ dev, add-sonarqube-integration ]
 
-
 jobs:
   code-scan:
     name: code-scan
