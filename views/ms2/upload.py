@@ -153,9 +153,8 @@ def upload_page_job(request, jobid = "000000", form_data=None, form_files=None):
     
     html += render_to_string('ms2/ms2_file_upload.html',{})
     html += str(MS2ParametersInput(form_data))
-    html += render_to_string('04uberinput_end_drupal.html', {})
-    html += render_to_string('04ubertext_end_drupal.html', {})    
-    
+    html += render_to_string('nta_input_form_end.html', {})
+
     html += links_left.ordered_list(model, page)
 
     # css and scripts
