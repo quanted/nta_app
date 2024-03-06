@@ -34,6 +34,9 @@ jobs:
         run: |
           npm install eslint@8.10.0
           npm install @microsoft/eslint-formatter-sarif@2.1.7
+          
+      - name: Cofigure ESLint with defaults
+        run: npm init @eslint/config
 
       - name: Run ESLint
         run: npx eslint .
