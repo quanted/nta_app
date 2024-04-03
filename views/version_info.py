@@ -4,7 +4,7 @@ from io import BytesIO
 from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from .. import links_left
+import links_left
 
 
 logging.basicConfig()
