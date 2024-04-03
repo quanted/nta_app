@@ -19,6 +19,7 @@ from nta_app.views.merge import processing as merge_processing
 from nta_app.views.merge import results_api as merge_results_api
 from nta_app.views.data_handler import data_api as data_api
 from nta_app.views.misc import github
+from nta_app.views.misc import version_info
 import nta_app.login_middleware as login_middleware
 import os
 
@@ -77,6 +78,9 @@ urlpatterns = [
     path("upload", data_api.upload_api),
     path("upload/", data_api.upload_api),
     path("delete/", data_api.delete_api),
+    #
+    # version info page
+    path("version_info", version_info.version_info_page),
 ]
 
 # Login requirement set url
