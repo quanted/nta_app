@@ -19,7 +19,7 @@ from nta_app.views.merge import processing as merge_processing
 from nta_app.views.merge import results_api as merge_results_api
 from nta_app.views.data_handler import data_api as data_api
 from nta_app.views.misc import github
-from nta_app.views.misc import version_info
+from nta_app.views import version_info
 import nta_app.login_middleware as login_middleware
 import os
 
