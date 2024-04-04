@@ -516,6 +516,7 @@ class NtaRun:
         return
 
     def filter_duplicates(self):
+        ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
         self.dupes = [
@@ -534,7 +535,6 @@ class NtaRun:
 
     def calc_statistics(self):
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
-
         self.dfs = [
             task_fun.chunk_stats(df) if df is not None else None for df in self.dfs
         ]
