@@ -516,13 +516,19 @@ class NtaRun:
         return
 
     def filter_duplicates(self):
-        # self.dfs = [task_fun.duplicates(df) if df is not None else None for df in self.dfs] # Deprecated 10/30/23 -- TMF
-        # self.dfs, self.dupes = map(list, zip(*[task_fun.duplicates(df) if df is not None else None for df in self.dfs]))
+        mass_accuracy = float(self.parameters["mass_accuracy"][1])
+        rt_accuracy = float(self.parameters["rt_accuracy"][1])
         self.dupes = [
-            task_fun.duplicates(df)[1] if df is not None else None for df in self.dfs
+            task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm)[1]
+            if df is not None
+            else None
+            for df in self.dfs
         ]
         self.dfs = [
-            task_fun.duplicates(df)[0] if df is not None else None for df in self.dfs
+            task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm)[0]
+            if df is not None
+            else None
+            for df in self.dfs
         ]
         return
 
