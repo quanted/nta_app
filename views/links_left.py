@@ -25,7 +25,7 @@ def ordered_list(model=None, page=None):
                             "NTA Informatics Toolkit User Guide v0.1",
                             "static/docs/NTA-WebApp-user-guide_v0.1.docx",
                         ),
-                        ("Version History and In Progress Works", "version_info"),
+                        ("Version History and Known Issues", "version_info"),
                     ]
                 ),
             ),
