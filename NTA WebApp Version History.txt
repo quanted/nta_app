@@ -1,0 +1,21 @@
+NTA WebApp Version History and In Progress Works Documentation (Live site)
+Version 1.0
+Updated 4/4/2024
+
+
+In Progress Works:
+1) Duplicate matching front end: Updating duplicate matching to use the same mass accuracy and retention time windows as adduct matching. Updating the front end page so that the text for parameters of adduct mass accuracy and retention time window now reflects that they are also used for duplicate matching.
+2) Duplicate matching retention: Updating duplicate matching such that features that are identified as duplicates are flagged in a column specifying that they are found to be a duplicate, but then retained rather than removed in the feature results sheets.
+3) Tracer plot log-scale/linear-scale: Adding an option on front-end to toggle between log-scale and linear-scale for tracer plots.
+4) Tracer plot trend-line: Adding an option on front-end to include or not include trend-lines on tracer plots.
+5) Logic tree visualization: Adding updated logic tree code which will include new icicle plot visualizations and new color schemes.
+6) Tracer plot issue: When greater than 16 tracers are submitted in an analysis, there is a known issue where one of the tracer plots is generated with empty graphs.
+7) ToxCast percent active column: There is a known issue where the toxcast percent active column is not calculated correctly.
+8) Dashboard hyperlinks: Updating DTXSID's returned in the chemical results sheet to be formatted as hyperlinks taking the user to the Dashboard page for a given chemical substance.
+9) Adduct matching: There is a known issue where the adduct matching columns are referencing incorrect features as matches.
+10) MS2 test file run: This is to be disabled as this functionality is not incorporated yet.
+
+
+Version 1.0 - 4/4/2024
+- Added version history documentation to Github
+- Added links to version history documentation under "Documentation" on the front-end links
