@@ -1095,13 +1095,13 @@ def combine_doc(doc, dupe, tracer_df=False):
     Mean = doc.columns[doc.columns.str.contains(pat="Mean_")].tolist()
     # Recombine doc and dupe
     if doc is not None and dupe is not None:
-        dupe.loc[:, Mean] = "D"
+        dupe["Feature_removed"] = "D"
         dfc = pd.concat([doc, dupe], sort=True)  # fixing pandas FutureWarning
         dfc = dfc.reindex(columns=doc.columns)
     elif doc is not None:
         dfc = doc.copy()
     else:
-        dupe.loc[:, Mean] = "D"
+        dupe["Feature_removed"] = "D"
         dfc = dupe.copy()
     # Select columns for keeping, with tracer conditional
     if tracer_df:
