@@ -958,11 +958,6 @@ def clean_features(df_in, controls, tracer_df=False):
         docs[Mean_Samples] + ", ND",
         docs[Mean_Samples],
     )
-    # remove occurrences below MDL in df and df_flagged
-    df[Mean_Samples] = np.where(~MDL_sample_mask, np.nan, df[Mean_Samples])
-    df_flagged[Mean_Samples] = np.where(
-        ~MDL_sample_mask, np.nan, df_flagged[Mean_Samples]
-    )
 
     """ADD VALUES TO DOC"""
     # Mask, add values back to doc
@@ -998,6 +993,11 @@ def clean_features(df_in, controls, tracer_df=False):
     )
 
     """DROP FEATURES FROM DF"""
+    # remove occurrences below MDL in df and df_flagged
+    df[Mean_Samples] = np.where(~MDL_sample_mask, np.nan, df[Mean_Samples])
+    df_flagged[Mean_Samples] = np.where(
+        ~MDL_sample_mask, np.nan, df_flagged[Mean_Samples]
+    )
     # Remove features where all sample abundances are below replicate threshold
     df.drop(
         df[(df[Replicate_Percent_Samples] < controls[0]).all(axis=1)].index,
@@ -1126,6 +1126,8 @@ def combine_doc(doc, dupe, tracer_df=False):
     # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
     dfc = dfc[to_keep]
     dfc.rename({"BlkStd_cutoff": "MRL"}, axis=1, inplace=True)
+    # Sort by 'Mass' and 'Retention_Time'
+    dfc = dfc.sort_values(["Mass", "Retention_Time"], ascending=[True, True])
     # Return filter_documentation dataframe with removed duplicates appended
     return dfc
 
