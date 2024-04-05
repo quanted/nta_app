@@ -535,6 +535,8 @@ class NtaRun:
 
     def calc_statistics(self):
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
+        mass_accuracy = float(self.parameters["mass_accuracy"][1])
+        rt_accuracy = float(self.parameters["rt_accuracy"][1])
         self.dfs = [
             task_fun.chunk_stats(df) if df is not None else None for df in self.dfs
         ]
@@ -543,8 +545,6 @@ class NtaRun:
         ]
 
         if self.dfs[0] is not None and self.dfs[1] is not None:
-            mass_accuracy = float(self.parameters["mass_accuracy"][1])
-            rt_accuracy = float(self.parameters["rt_accuracy"][1])
             self.dfs[0] = task_fun.adduct_identifier(
                 self.dfs[0],
                 mass_accuracy,
@@ -572,8 +572,6 @@ class NtaRun:
                 )
             )
         elif self.dfs[0] is not None:
-            mass_accuracy = float(self.parameters["mass_accuracy"][1])
-            rt_accuracy = float(self.parameters["rt_accuracy"][1])
             self.dfs[0] = task_fun.adduct_identifier(
                 self.dfs[0],
                 mass_accuracy,
@@ -588,8 +586,6 @@ class NtaRun:
                 )
             )
         else:
-            mass_accuracy = float(self.parameters["mass_accuracy"][1])
-            rt_accuracy = float(self.parameters["rt_accuracy"][1])
             self.dfs[1] = task_fun.adduct_identifier(
                 self.dfs[1],
                 mass_accuracy,
