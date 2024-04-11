@@ -434,7 +434,7 @@ def adduct_identifier(
 """DUPLICATE REMOVAL FUNCTIONS"""
 
 
-def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
+def chunk_dup_remove(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
     """
     Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix' -- TMF 10/27/23
     """
@@ -450,7 +450,7 @@ def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
     # Pass list to 'dup_matrix'
     for x in to_test_list:
         # dum = dup_matrix(x, mass_cutoff, rt_cutoff) # Deprecated 10/30/23 -- TMF
-        dum, dupes = dup_matrix(x, mass_cutoff, rt_cutoff, ppm)
+        dum, dupes = dup_matrix_remove(x, mass_cutoff, rt_cutoff, ppm)
         li.append(dum)
         dupe_li.append(dupes)
     # Concatenate results, drop duplicates from overlap
@@ -464,7 +464,7 @@ def chunk_duplicates(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
     return output, dupe_df
 
 
-def dup_matrix(df_in, mass_cutoff, rt_cutoff, ppm):
+def dup_matrix_remove(df_in, mass_cutoff, rt_cutoff, ppm):
     """
     Matrix portion of 'duplicates' function; takes a filtered 'to_test' df, does matrix math,
     returns 'passed' items (i.e., de-duplicated dataframe) -- TMF 10/27/23
@@ -500,17 +500,89 @@ def dup_matrix(df_in, mass_cutoff, rt_cutoff, ppm):
     lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
     # Store features with no duplicates in 'passed'
     passed = df_in[(row_sums == 0) | (lower_row_sums == 0)].copy()
-    # Flag duplicates as 'D'
+    # Store features with any dupi=licates in 'dupes'
     dupes = df_in.loc[df_in[(row_sums != 0) & (lower_row_sums != 0)].index, :]
     # Return de-duplicated dataframe (passed) and duplicates (dupes)
     return passed, dupes
 
 
-def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
+def chunk_dup_flag(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
+    """
+    Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix_flag' -- TMF 04/11/24
+    """
+    # Create copy of df_in
+    df = df_in.copy()
+    # Chunk df based on n (# of features WebApp can handle) and step
+    to_test_list = [df[i : i + n] for i in range(0, df.shape[0], step)]
+    # Remove small remainder tail, if present
+    to_test_list = [i for i in to_test_list if (i.shape[0] > n / 2)]
+    # Create list
+    li = []
+    # Pass list to 'dup_matrix'
+    for x in to_test_list:
+        # dum = dup_matrix(x, mass_cutoff, rt_cutoff) # Deprecated 10/30/23 -- TMF
+        dum = dup_matrix_flag(x, mass_cutoff, rt_cutoff, ppm)
+        li.append(dum)
+    # Concatenate results, drop duplicates from overlap
+    output = pd.concat(li, axis=0).drop_duplicates(
+        subset=["Mass", "Retention_Time"], keep="first"
+    )
+    # Return dataframe with flagged duplicates (output)
+    return output
+
+
+def dup_matrix_flag(df_in, mass_cutoff, rt_cutoff, ppm):
+    """
+    Matrix portion of 'duplicates' function; takes a filtered 'to_test' df, does matrix math,
+    returns 'df' with duplicates flagged in 'Duplicate feature?' column -- TMF 04/11/24
+    """
+    # Create matrices from df_in
+    mass = df_in["Mass"].to_numpy()
+    rts = df_in["Retention_Time"].to_numpy()
+    # Reshape matrices
+    masses_matrix = np.reshape(mass, (len(mass), 1))
+    rts_matrix = np.reshape(rts, (len(rts), 1))
+    # Perform matrix transposition
+    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
+    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
+    # Find indices where differences are less than 'mass_cutoff' and 'rt_cutoff'
+    if ppm:
+        duplicates_matrix = np.where(
+            (abs(diff_matrix_mass / masses_matrix) * 10**6 <= mass_cutoff)
+            & (abs(diff_matrix_rt) <= rt_cutoff),
+            1,
+            0,
+        )
+    else:
+        duplicates_matrix = np.where(
+            (abs(diff_matrix_mass) <= mass_cutoff) & (abs(diff_matrix_rt) <= rt_cutoff),
+            1,
+            0,
+        )
+    np.fill_diagonal(duplicates_matrix, 0)
+    # Find # of duplicates for each row
+    row_sums = np.sum(duplicates_matrix, axis=1)
+    # Calculate lower triangle of matrix
+    duplicates_matrix_lower = np.tril(duplicates_matrix)
+    lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
+    # Flag duplicates in new column
+    output = df_in.copy()
+    output["Duplicate feature?"] = np.where(
+        (row_sums != 0) | (lower_row_sums != 0), 1, 0
+    )
+    # Return de-duplicated dataframe (passed) and duplicates (dupes)
+    return output
+
+
+def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, remove=False):
     """
     Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff.
     Includes logic statement for determining if the dataframe is too large to
     be processed in a single pass -- TMF 10/27/23
+
+    A new keyword argument 'remove=False' is included here, and now results in
+    duplicates using the flag set of functions instead of the remove set of
+    functions. This can be coded as a user choice in the future -- TMF 04/11/24
     """
     # Copy the dataframe
     df = df_in.copy()
@@ -529,17 +601,26 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
     n = 12000
     step = 6000
     # 'if' statement for chunker: if no chunks needed, send to 'dup_matrix', else send to 'chunk_duplicates'
-    if df.shape[0] <= n:
-        output, dupe_df = dup_matrix(df, mass_cutoff, rt_cutoff, ppm)
+    if remove:
+        if df.shape[0] <= n:
+            output, dupe_df = dup_matrix_remove(df, mass_cutoff, rt_cutoff, ppm)
+        else:
+            output, dupe_df = chunk_dup_remove(df, n, step, mass_cutoff, rt_cutoff, ppm)
     else:
-        output, dupe_df = chunk_duplicates(df, n, step, mass_cutoff, rt_cutoff, ppm)
+        if df.shape[0] <= n:
+            output = dup_matrix_flag(df, mass_cutoff, rt_cutoff, ppm)
+        else:
+            output = chunk_dup_flag(df, n, step, mass_cutoff, rt_cutoff, ppm)
     # Sort output by 'Mass', reset the index, drop 'all_sample_mean'
     output.sort_values(by=["Mass"], inplace=True)
     output.reset_index(drop=True, inplace=True)
     output.drop(["all_sample_mean"], axis=1, inplace=True)
-    dupe_df.drop(["all_sample_mean"], axis=1, inplace=True)
-    # Return output dataframe with duplicates removed and duplicate dataframe
-    return output, dupe_df
+    if remove:
+        dupe_df.drop(["all_sample_mean"], axis=1, inplace=True)
+        # Return output dataframe with duplicates removed and duplicate dataframe
+        return output, dupe_df
+    # Return output dataframe with duplicates flagged
+    return output
 
 
 """CALCULATE STATISTICS FUNCTIONS"""
@@ -831,6 +912,7 @@ def clean_features(df_in, controls, tracer_df=False):
     docs["Mass"] = df["Mass"]
     docs["Retention_Time"] = df["Retention_Time"]
     docs["Feature_ID"] = df["Feature_ID"]
+    docs["Duplicate feature?"] = df["Duplicate feature?"]
     if tracer_df:
         docs["Tracer_chemical_match"] = df["Tracer_chemical_match"]
     # Define lists

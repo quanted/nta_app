@@ -151,6 +151,7 @@ class NtaRun:
         self.run_sequence_neg_df = run_sequence_neg_df
         self.dfs = input_dfs
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values
+        self.dup_remove = False
         self.dupes = None
         self.docs = None
         self.doc_combined = None
@@ -519,18 +520,28 @@ class NtaRun:
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
-        self.dupes = [
-            task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm)[1]
-            if df is not None
-            else None
-            for df in self.dfs
-        ]
-        self.dfs = [
-            task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm)[0]
-            if df is not None
-            else None
-            for df in self.dfs
-        ]
+        remove = self.dup_remove
+        if remove:
+            self.dupes = [
+                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[1]
+                if df is not None
+                else None
+                for df in self.dfs
+            ]
+            self.dfs = [
+                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[0]
+                if df is not None
+                else None
+                for df in self.dfs
+            ]
+        else:
+            self.dupes = [
+                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[1]
+                if df is not None
+                else None
+                for df in self.dfs
+            ]
+
         return
 
     def calc_statistics(self):
@@ -1299,8 +1310,13 @@ class NtaRun:
             task_fun.Blank_Subtract_Mean(df) if df is not None else None
             for index, df in enumerate(self.dfs_flagged)
         ]
-        # self.mongo_save(self.dfs[0], FILENAMES['cleaned'][0])
-        # self.mongo_save(self.dfs[1], FILENAMES['cleaned'][1])
+        # Remove flagged duplicates from dfs
+        if self.dup_remove == False:
+            self.dfs = [
+                df.loc[df["Duplicate feature?"] == 0, :] if df is not None else None
+                for df in self.dfs
+            ]
+            return
         return
 
     def merge_columns_onto_tracers(self):
@@ -1360,12 +1376,17 @@ class NtaRun:
         self.df_flagged_combined = task_fun.combine(
             self.dfs_flagged[0], self.dfs_flagged[1]
         )
-        self.doc_combined = [
-            task_fun.combine_doc(doc, dupe, tracer_df=tracer_df_bool)
-            if doc is not None
-            else None
-            for doc, dupe in zip(self.docs, self.dupes)
-        ]
+        # Check if duplicates are removed - if yes need to combine doc and dupe
+        if self.dup_remove:
+            self.doc_combined = [
+                task_fun.combine_doc(doc, dupe, tracer_df=tracer_df_bool)
+                if doc is not None
+                else None
+                for doc, dupe in zip(self.docs, self.dupes)
+            ]
+        else:
+            self.doc_combined = [doc if doc is not None else None for doc in self.docs]
+        # If both modes present, combine else set as present mode
         if self.doc_combined[0] is not None and self.doc_combined[1] is not None:
             self.doc_combined = pd.concat(
                 [self.doc_combined[0], self.doc_combined[1]], axis=0
