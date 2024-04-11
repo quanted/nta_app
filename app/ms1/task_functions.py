@@ -574,11 +574,15 @@ def dup_matrix_flag(df_in, mass_cutoff, rt_cutoff, ppm):
     return output
 
 
-def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
+def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, remove=False):
     """
     Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff.
     Includes logic statement for determining if the dataframe is too large to
     be processed in a single pass -- TMF 10/27/23
+
+    A new keyword argument 'remove=False' is included here, and now results in
+    duplicates using the flag set of functions instead of the remove set of
+    functions. This can be coded as a user choice in the future -- TMF 04/11/24
     """
     # Copy the dataframe
     df = df_in.copy()
@@ -597,50 +601,25 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
     n = 12000
     step = 6000
     # 'if' statement for chunker: if no chunks needed, send to 'dup_matrix', else send to 'chunk_duplicates'
-    if df.shape[0] <= n:
-        output, dupe_df = dup_matrix_remove(df, mass_cutoff, rt_cutoff, ppm)
+    if remove:
+        if df.shape[0] <= n:
+            output, dupe_df = dup_matrix_remove(df, mass_cutoff, rt_cutoff, ppm)
+        else:
+            output, dupe_df = chunk_dup_remove(df, n, step, mass_cutoff, rt_cutoff, ppm)
     else:
-        output, dupe_df = chunk_dup_remove(df, n, step, mass_cutoff, rt_cutoff, ppm)
+        if df.shape[0] <= n:
+            output = dup_matrix_flag(df, mass_cutoff, rt_cutoff, ppm)
+        else:
+            output = chunk_dup_flag(df, n, step, mass_cutoff, rt_cutoff, ppm)
     # Sort output by 'Mass', reset the index, drop 'all_sample_mean'
     output.sort_values(by=["Mass"], inplace=True)
     output.reset_index(drop=True, inplace=True)
     output.drop(["all_sample_mean"], axis=1, inplace=True)
-    dupe_df.drop(["all_sample_mean"], axis=1, inplace=True)
-    # Return output dataframe with duplicates removed and duplicate dataframe
-    return output, dupe_df
-
-
-def duplicates_flag(df_in, mass_cutoff, rt_cutoff, ppm):
-    """
-    Flag duplicates from input dataframe, based on mass_cutoff and rt_cutoff.
-    Includes logic statement for determining if the dataframe is too large to
-    be processed in a single pass -- TMF 04/11/24
-    """
-    # Copy the dataframe
-    df = df_in.copy()
-    # Parse headers to find sample columns
-    all_headers = parse_headers(df)
-    sam_headers = [
-        item for sublist in all_headers for item in sublist if len(sublist) > 1
-    ]
-    # Calculate 'all_sample_mean', sort df by 'all_sample_mean', reset index
-    df["all_sample_mean"] = df[sam_headers].mean(
-        axis=1
-    )  # mean intensity across all samples
-    df.sort_values(by=["all_sample_mean"], inplace=True, ascending=False)
-    df.reset_index(drop=True, inplace=True)
-    # Define feature limit of WebApp
-    n = 12000
-    step = 6000
-    # 'if' statement for chunker: if no chunks needed, send to 'dup_matrix', else send to 'chunk_duplicates'
-    if df.shape[0] <= n:
-        output = dup_matrix_flag(df, mass_cutoff, rt_cutoff, ppm)
-    else:
-        output = chunk_dup_flag(df, n, step, mass_cutoff, rt_cutoff, ppm)
-    # Sort output by 'Mass', reset the index, drop 'all_sample_mean'
-    output.sort_values(by=["Mass"], inplace=True)
-    output.reset_index(drop=True, inplace=True)
-    output.drop(["all_sample_mean"], axis=1, inplace=True)
+    if remove:
+        dupe_df.drop(["all_sample_mean"], axis=1, inplace=True)
+        # Return output dataframe with duplicates removed and duplicate dataframe
+        return output, dupe_df
+    # Return output dataframe with duplicates flagged
     return output
 
 
