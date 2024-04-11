@@ -523,20 +523,26 @@ class NtaRun:
         remove = self.dup_remove
         if remove:
             self.dupes = [
-                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[1]
+                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove=remove)[
+                    1
+                ]
                 if df is not None
                 else None
                 for df in self.dfs
             ]
             self.dfs = [
-                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[0]
+                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove=remove)[
+                    0
+                ]
                 if df is not None
                 else None
                 for df in self.dfs
             ]
         else:
             self.dupes = [
-                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[1]
+                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove=remove)[
+                    1
+                ]
                 if df is not None
                 else None
                 for df in self.dfs
