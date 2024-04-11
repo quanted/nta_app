@@ -574,7 +574,7 @@ def dup_matrix_flag(df_in, mass_cutoff, rt_cutoff, ppm):
     return output
 
 
-def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, remove=False):
+def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, remove):
     """
     Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff.
     Includes logic statement for determining if the dataframe is too large to
