@@ -1169,22 +1169,29 @@ def combine(df1, df2):
     return dfc
 
 
-def combine_doc(doc, dupe, tracer_df=False):
+def combine_doc(doc1, doc2, tracer_df=False):
     """
-    Function to combine removed duplicates onto the filter_documentation sheet
+    Function to combine positive and negative mode docs for filter_documentation sheet
     """
     # Get Mean columns
-    Mean = doc.columns[doc.columns.str.contains(pat="Mean_")].tolist()
+    Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
     # Recombine doc and dupe
-    if doc is not None and dupe is not None:
-        dupe["Feature_removed"] = "D"
-        dfc = pd.concat([doc, dupe], sort=True)  # fixing pandas FutureWarning
-        dfc = dfc.reindex(columns=doc.columns)
-    elif doc is not None:
-        dfc = doc.copy()
+    if doc1 is not None and doc2 is not None:
+        dfc = pd.concat([doc1, doc2], sort=True)  # fixing pandas FutureWarning
+        dfc = dfc.reindex(columns=doc1.columns)
+        dfc["Feature_removed"] = np.where(
+            dfc["Duplicate feature?"] == 1, "D", dfc["Feature_removed"]
+        )
+    elif doc1 is not None:
+        dfc = doc1.copy()
+        dfc["Feature_removed"] = np.where(
+            dfc["Duplicate feature?"] == 1, "D", dfc["Feature_removed"]
+        )
     else:
-        dupe["Feature_removed"] = "D"
-        dfc = dupe.copy()
+        dfc = doc2.copy()
+        dfc["Feature_removed"] = np.where(
+            dfc["Duplicate feature?"] == 1, "D", dfc["Feature_removed"]
+        )
     # Select columns for keeping, with tracer conditional
     if tracer_df:
         to_keep = [
@@ -1193,6 +1200,7 @@ def combine_doc(doc, dupe, tracer_df=False):
             "Retention_Time",
             "BlkStd_cutoff",
             "AnySamplesDropped",
+            "Duplicate feature?",
             "Feature_removed",
             "Tracer_chemical_match",
         ] + Mean
@@ -1203,6 +1211,7 @@ def combine_doc(doc, dupe, tracer_df=False):
             "Retention_Time",
             "BlkStd_cutoff",
             "AnySamplesDropped",
+            "Duplicate feature?",
             "Feature_removed",
         ] + Mean
     # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
@@ -1256,6 +1265,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Mass",
                     "Retention_Time",
                     "AnySamplesDropped",
+                    "Duplicate feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
                     "Tracer_chemical_match",
@@ -1272,6 +1282,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Mass",
                     "Retention_Time",
                     "AnySamplesDropped",
+                    "Duplicate feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
                 ]
@@ -1287,6 +1298,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Mass",
                     "Retention_Time",
                     "AnySamplesDropped",
+                    "Duplicate feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
                     "Tracer_chemical_match",
@@ -1302,6 +1314,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Mass",
                     "Retention_Time",
                     "AnySamplesDropped",
+                    "Duplicate feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
                 ]

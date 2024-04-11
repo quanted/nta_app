@@ -1383,22 +1383,18 @@ class NtaRun:
         # Check if duplicates are removed - if yes need to combine doc and dupe
         if self.dup_remove:
             self.doc_combined = [
-                task_fun.combine_doc(doc, dupe, tracer_df=tracer_df_bool)
+                task_fun.combine_doc(
+                    doc, dupe, tracer_df=tracer_df_bool
+                )  # This needs revisiting if self.dup_remove = True TMF 04/11/24
                 if doc is not None
                 else None
                 for doc, dupe in zip(self.docs, self.dupes)
             ]
         else:
-            self.doc_combined = [doc if doc is not None else None for doc in self.docs]
-        # If both modes present, combine else set as present mode
-        if self.doc_combined[0] is not None and self.doc_combined[1] is not None:
-            self.doc_combined = pd.concat(
-                [self.doc_combined[0], self.doc_combined[1]], axis=0
+            self.doc_combined = task_fun.combine_doc(
+                self.docs[0], self.docs[1], tracer_df=tracer_df_bool
             )
-        elif self.doc_combined[0] is not None:
-            self.doc_combined = self.doc_combined[0]
-        else:
-            self.doc_combined = self.doc_combined[1]
+
         self.data_map["Filter_documentation"] = self.doc_combined
         # self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = task_fun.MPP_Ready(
