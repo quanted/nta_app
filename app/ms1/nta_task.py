@@ -540,9 +540,7 @@ class NtaRun:
             ]
         else:
             self.dupes = [
-                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove=remove)[
-                    1
-                ]
+                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove=remove)
                 if df is not None
                 else None
                 for df in self.dfs
