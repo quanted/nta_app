@@ -151,7 +151,7 @@ class NtaRun:
         self.run_sequence_neg_df = run_sequence_neg_df
         self.dfs = input_dfs
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values
-        self.dup_remove = False
+        self.dup_remove = False  # Currently hard-coded so that duplicates will be flagged TMF 04/11/24
         self.dupes = None
         self.docs = None
         self.doc_combined = None
