@@ -11,6 +11,7 @@ Known Issues:
 4) MS2 test file run: This option is currently not functional.
 5) Merge workflow: The new version of the MS1 results is causing the merge workflow to throw an error.
 6) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
+7) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
 
 ************************
 Version 0.1.X - X/X/2024
