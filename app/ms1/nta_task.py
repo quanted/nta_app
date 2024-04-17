@@ -541,7 +541,6 @@ class NtaRun:
                 else None
                 for df in self.dfs
             ]
-        # logger.info("df= {}".format(self.dfs[0].columns.values))
         return
 
     def calc_statistics(self):
@@ -612,7 +611,6 @@ class NtaRun:
                     self.dfs[1], self.pass_through[1], how="left", on=["Feature_ID"]
                 )
             )
-        # logger.info("df= {}".format(self.dfs[0].columns.values))
         return
 
     def cv_scatterplot(self, input_dfs):
@@ -1277,7 +1275,6 @@ class NtaRun:
         return
 
     def clean_features(self):
-        # logger.info("df= {}".format(self.dfs[0].columns.values))
         controls = [
             float(self.parameters["min_replicate_hits"][1]),
             float(self.parameters["max_replicate_cv"][1]),
