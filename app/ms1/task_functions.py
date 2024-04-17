@@ -1173,21 +1173,25 @@ def combine_doc(doc1, doc2, tracer_df=False):
     """
     Function to combine positive and negative mode docs for filter_documentation sheet
     """
-    # Get Mean columns
-    Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
     # Recombine doc and dupe
     if doc1 is not None and doc2 is not None:
+        # Get Mean columns
+        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
         dfc = pd.concat([doc1, doc2], sort=True)  # fixing pandas FutureWarning
         dfc = dfc.reindex(columns=doc1.columns)
         dfc["Feature_removed"] = np.where(
             dfc["Duplicate feature?"] == 1, "D", dfc["Feature_removed"]
         )
     elif doc1 is not None:
+        # Get Mean columns
+        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
         dfc = doc1.copy()
         dfc["Feature_removed"] = np.where(
             dfc["Duplicate feature?"] == 1, "D", dfc["Feature_removed"]
         )
     else:
+        # Get Mean columns
+        Mean = doc2.columns[doc2.columns.str.contains(pat="Mean_")].tolist()
         dfc = doc2.copy()
         dfc["Feature_removed"] = np.where(
             dfc["Duplicate feature?"] == 1, "D", dfc["Feature_removed"]
