@@ -886,7 +886,7 @@ class NtaRun:
         frame.set_alpha(1)  # deals with transparency
 
         # Adjust axes labels
-        axes[1].set_title(titleText + ": Samples", weight="bold")
+        axes[1].set_title(titleText + ": Non-blanks", weight="bold")
         axes[1].set_xlabel("Mean Abundance", fontsize=12)
         axes[1].set_ylabel("CV", fontsize=12)
         axes[1].set_ylim(0, 2.5)
