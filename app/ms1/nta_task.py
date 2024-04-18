@@ -1095,7 +1095,7 @@ class NtaRun:
         )
 
         plt.ylabel("Sample Set", fontsize=28)
-        plt.yticks(fontsize=20, rotation=90)
+        plt.yticks(fontsize=20)
         plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
 
         # plt.savefig('./outputTest02/occurrence_heatmap.png', bbox_inches='tight')
