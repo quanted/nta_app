@@ -1067,6 +1067,9 @@ class NtaRun:
         # Set Figure size and title
         plt.figure(figsize=(40, 15))
         plt.title(titleText, fontsize=36)
+        plt.yticks(fontsize=20, rotation=90)
+        plt.ylabel("Sample Set", fontsize=28)
+        plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
         # plt.title('CA Data MS1 Feature Heatmap (post-blank subtraction), ESI- (n='+str(cv_df.size)+')\nSorted by # samples below CV threshold (lowest[left] to highest[right])', fontsize = 36)
 
         # Create custom color mapping
@@ -1093,10 +1096,6 @@ class NtaRun:
                 "CV > {} ({})".format(max_replicate_cv_value, above.sum().sum()),
             ]
         )
-
-        plt.ylabel("Sample Set", fontsize=28)
-        plt.yticks(fontsize=20)
-        plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
 
         # plt.savefig('./outputTest02/occurrence_heatmap.png', bbox_inches='tight')
 
