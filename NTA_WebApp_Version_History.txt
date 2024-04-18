@@ -16,11 +16,12 @@ Known Issues:
 ************************
 Version 0.1.X - X/X/2024
 ************************
-- 
-
+- MS1 input page now accepts a user input for "Adduct / duplicate" mass accuracy (Da or ppm) and retention time accuracy (min)
+- MS1 workflow now correctly uses the user-defined mass and retention time accuracy parameters for identifying duplicate features
+- Duplicate features are no longer automatically removed. They are kept in the "Results_flagged" sheet, flagged in the "Filter_documentation" sheet, and removed from the "Cleaned_feature_results_reduced" sheet.
 
 **********************
 Version 0.1 - 4/4/2024
 **********************
-- Added version history documentation to Github
-- Added links to version history documentation under "Documentation" on the front-end links
+- Added version history documentation to Github.
+- Added links to version history documentation under "Documentation" on the front-end links.
