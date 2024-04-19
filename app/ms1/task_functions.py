@@ -1321,17 +1321,23 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     to df_flagged. Return df and df_flagged. -- TMF 04/19/24
     """
     # Create mask of occurrences dropped for replicate flag
-    rep_fails = docs[Mean_Samples] == "R"
+    rep_fails = pd.concat(
+        [docs[mean].str.contains("R") for mean in Mean_Samples], axis=1
+    )
     # Mask df and df_flagged
     df[Mean_Samples] = df[Mean_Samples].mask(rep_fails)
     df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(rep_fails)
     # Create mask of occurrences dropped for replicate flag
-    non_detects = docs[Mean_Samples] == "ND"
+    non_detects = pd.concat(
+        [docs[mean].str.contains("ND") for mean in Mean_Samples], axis=1
+    )
     # Mask df and df_flagged
     df[Mean_Samples] = df[Mean_Samples].mask(non_detects)
     df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(non_detects)
     # Create mask of occurrences dropped for replicate flag
-    cv_fails = docs[Mean_Samples] == "CV"
+    cv_fails = pd.concat(
+        [docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1
+    )
     # Mask df
     df[Mean_Samples] = df[Mean_Samples].mask(cv_fails)
     return df, df_flagged
