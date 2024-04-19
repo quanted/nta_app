@@ -1266,55 +1266,49 @@ def populate_doc_values(df, docs, Mean_Samples, Mean_MB):
 def feat_removal_flag(docs, Mean_Samples):
     """
     Function that takes docs, and determines whether features should be removed
-    by counting the number of occurrence flags. If all occurrences are ND, feature
-    flag is BLK. If all occurrences are CV, feature flag is CV. If all occurrences
-    are R, feature flag is R. If all occurrences are some combination of CV, R, ND,
-    or were originally missing from df, feature flag is CV/R. Return docs. -- TMF 04/19/24
+    by counting the number real occurrences and then labels Feature_removed by counting
+    the number of each type of occurrence flag. Return docs. -- TMF 04/19/24
     """
-    num_samples = len(Mean_Samples)
-    # Features dropped because all occurrences flagged as non-detects
-    docs["Feature_removed"] = np.where(
-        (
-            (docs[Mean_Samples] == "ND").sum(axis=1)
-            + (docs[Mean_Samples].isnull()).sum(axis=1)
-        )
-        == num_samples,
-        "BLK",
-        "",
+    # Set all values of feature removed to ""
+    docs["Feature_removed"] = ""
+    # Generate mask of float values in docs (i.e., occurrences with flags or NaN are False)
+    num_mask = pd.concat(
+        [pd.to_numeric(docs[mean], errors="coerce").notnull() for mean in Mean_Samples],
+        axis=1,
     )
-    # Features dropped because all all occurrences fail CV threshold
+    docs["# of real occurrences"] = num_mask.sum(axis=1)
+    # Count # of times an occurrence flag contains R, CV, or ND, and count # of just CV flags
+    contains_R = pd.concat(
+        [docs[mean].str.contains("R") for mean in Mean_Samples], axis=1
+    )
+    contains_CV = pd.concat(
+        [docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1
+    )
+    is_CV = docs[Mean_Samples] == "CV"
+    contains_ND = pd.concat(
+        [docs[mean].str.contains("ND") for mean in Mean_Samples], axis=1
+    )
+    docs["# contains R flag"] = contains_R.sum(axis=1)
+    docs["# contains CV flag"] = contains_CV.sum(axis=1)
+    docs["# is CV flag"] = is_CV.sum(axis=1)
+    docs["# contains ND flag"] = contains_ND.sum(axis=1)
+    # Append feature level flags to features with no real occurrences
+    # Feature flag because occurrences fail detection threshold
     docs["Feature_removed"] = np.where(
-        (
-            (docs[Mean_Samples] == "CV").sum(axis=1)
-            + (docs[Mean_Samples].isnull()).sum(axis=1)
-        )
-        == num_samples,
-        "CV",
+        (docs["# of real occurrences"] == 0) & (docs["# contains ND flag"] > 0),
+        "BLK ",
         docs["Feature_removed"],
     )
-    # Features dropped because all all occurrences fail Replication threshold
+    # Feature flag because occurrences fail CV threshold
     docs["Feature_removed"] = np.where(
-        (
-            (docs[Mean_Samples] == "R").sum(axis=1)
-            + (docs[Mean_Samples].isnull()).sum(axis=1)
-        )
-        == num_samples,
-        "R",
+        (docs["# of real occurrences"] == 0) & (docs["# contains CV flag"] > 0),
+        docs["Feature_removed"] + "CV ",
         docs["Feature_removed"],
     )
-    # Features dropped because all occurrences fail some combination of Replication threshold, CV threshold, MRL or didn't have an original value
+    # Feature flag because occurrences fail Replication threshold
     docs["Feature_removed"] = np.where(
-        (
-            (
-                (docs[Mean_Samples] == "CV").sum(axis=1)
-                + (docs[Mean_Samples] == "R").sum(axis=1)
-                + (docs[Mean_Samples] == "ND").sum(axis=1)
-                + (docs[Mean_Samples].isnull()).sum(axis=1)
-            )
-            == num_samples
-        )
-        & (docs["Feature_removed"] == ""),
-        "CV/R",
+        (docs["# of real occurrences"] == 0) & docs["# contains R flag"] > 0,
+        docs["Feature_removed"] + "R ",
         docs["Feature_removed"],
     )
     return docs
@@ -1356,8 +1350,7 @@ def feat_drop_df(df, docs, df_flagged):
     # Subset df and df_flagged
     df = df.loc[df["Feature_removed"] == "", :]
     df_flagged = df_flagged.loc[
-        (df_flagged["Feature_removed"] == "") | (df_flagged["Feature_removed"] == "CV"),
-        :,
+        (df_flagged["Feature_removed"] == "") | (docs["# is CV flag"] > 0), :
     ]
     # Drop 'Feature_removed' from df
     df.drop(columns=["Feature_removed"], inplace=True)
