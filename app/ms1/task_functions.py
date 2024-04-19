@@ -897,7 +897,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
 
 """FUNCTION FOR CLEANING FEATURES"""
 
-
+''' Original clean_features function, swapped for the object-oriented version 04/19/2024
 def clean_features(df_in, controls, tracer_df=False):
     """
     Function that removes (blanks out) features at sample and occurrence level
@@ -1111,6 +1111,322 @@ def clean_features(df_in, controls, tracer_df=False):
             > df_flagged["BlkStd_cutoff"]
         )
     ]
+    return df, docs, df_flagged
+'''
+
+
+def replicate_flag(
+    df,
+    docs,
+    controls,
+    missing,
+    Mean_Samples,
+    Replicate_Percent_Samples,
+    Mean_MB,
+    Std_MB,
+    Replicate_Percent_MB,
+):
+    """
+    Function that takes df, docs, controls, and missing, and applies an R flag
+    where values in df fail the user-defined value in controls. This is done
+    for sample and blank occurrences in docs - blanks are set to 0 in df. -- TMF 04/19/24
+    """
+    # Flag sample occurrences where feature presence is less than some replicate percentage cutoff
+    for mean, N in zip(Mean_Samples, Replicate_Percent_Samples):
+        docs[mean] = docs[mean].astype(object)
+        docs.loc[((df[N] < controls[0]) & (~missing[mean])), mean] = "R"
+        df.loc[df[N] < controls[0], "AnySamplesDropped"] = 1
+    # Flag blanks occurrences where feature presence is less than some replicate percentage cutoff, and remove from blanks
+    for mean, Std, N in zip(Mean_MB, Std_MB, Replicate_Percent_MB):
+        docs[mean] = docs[mean].astype(object)
+        docs.loc[df[N] < controls[2], mean] = "R"
+        df.loc[df[N] < controls[2], mean] = 0
+        df.loc[df[N] < controls[2], Std] = 0
+    # update docs with 'AnySamplesDropped' column
+    docs["AnySamplesDropped"] = df["AnySamplesDropped"]
+    return df, docs
+
+
+def cv_flag(df, docs, controls, Mean_Samples, CV_Samples, missing):
+    """
+    Function that takes df, docs, controls, and missing, and applies a CV flag
+    where values in df fail the user-defined value in controls. This is done
+    for sample occurrences in docs, nothing in df changes. -- TMF 04/19/24
+    """
+    # Create a mask for df based on sample-level CV threshold
+    cv_not_met = pd.DataFrame().reindex_like(df[Mean_Samples])
+    for mean, CV in zip(Mean_Samples, CV_Samples):
+        cv_not_met[mean] = df[CV] > controls[1]
+    # Create empty cell mask from the docs dataframe
+    cell_empty = docs[Mean_Samples].isnull()
+    # append CV flag (CV > threshold) to documentation dataframe
+    docs[Mean_Samples] = np.where(
+        cv_not_met & cell_empty & ~missing, "CV", docs[Mean_Samples]
+    )
+    docs[Mean_Samples] = np.where(
+        cv_not_met & ~cell_empty & ~missing,
+        docs[Mean_Samples] + ", CV",
+        docs[Mean_Samples],
+    )
+    return docs
+
+
+def MDL_calc(df, docs, df_flagged, Mean_Samples, Mean_MB, Std_MB):
+    """
+    Function that calculates a MRL (BlkStd_cutoff) in df, df_flagged, and
+    sets it to docs. MRL is 1) mean + 3*std, then 2) mean, then 3) 0. Finally,
+    a mask is generated that finds detects in df. -- TMF 04/19/24
+    """
+    # Calculate feature MDL
+    df["BlkStd_cutoff"] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
+    df["BlkStd_cutoff"] = df["BlkStd_cutoff"].fillna(df[Mean_MB[0]])
+    df["BlkStd_cutoff"] = df["BlkStd_cutoff"].fillna(0)
+    df_flagged["BlkStd_cutoff"] = (3 * df_flagged[Std_MB[0]]) + df_flagged[Mean_MB[0]]
+    df_flagged["BlkStd_cutoff"] = df_flagged["BlkStd_cutoff"].fillna(
+        df_flagged[Mean_MB[0]]
+    )
+    df_flagged["BlkStd_cutoff"] = df_flagged["BlkStd_cutoff"].fillna(0)
+    docs["BlkStd_cutoff"] = df["BlkStd_cutoff"]
+    # Create a mask for docs based on sample-level MDL threshold
+    MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])
+    for x in Mean_Samples:
+        # Count the number of detects
+        MDL_sample_mask[x] = df[x] > df["BlkStd_cutoff"]
+    return df, docs, df_flagged, MDL_sample_mask
+
+
+def calculate_detection_counts(
+    df, docs, df_flagged, MDL_sample_mask, Std_MB, Mean_MB, Mean_Samples
+):
+    """
+    Function that takes df, docs, controls, and the MDL_sample_mask and calculates
+    detection counts in df and df_flagged. -- TMF 04/19/24
+    """
+    # Calculate Detection_Count - sum mask
+    df["Detection_Count(non-blank_samples)"] = MDL_sample_mask.sum(axis=1)
+    df_flagged["Detection_Count(non-blank_samples)"] = MDL_sample_mask.sum(axis=1)
+    # Determine total number of samples
+    mean_samples = len(Mean_Samples)
+    # Calculate percentage of samples that have a value and store in new column 'Detection_Count(non-blank_samples)(%)'
+    df["Detection_Count(non-blank_samples)(%)"] = (
+        df["Detection_Count(non-blank_samples)"] / mean_samples
+    ) * 100
+    df["Detection_Count(non-blank_samples)(%)"] = df[
+        "Detection_Count(non-blank_samples)(%)"
+    ].round(1)
+    df_flagged["Detection_Count(non-blank_samples)(%)"] = (
+        df_flagged["Detection_Count(non-blank_samples)"] / mean_samples
+    ) * 100
+    df_flagged["Detection_Count(non-blank_samples)(%)"] = df_flagged[
+        "Detection_Count(non-blank_samples)(%)"
+    ].round(1)
+    # Assign to docs
+    docs["Detection_Count(non-blank_samples)"] = df[
+        "Detection_Count(non-blank_samples)"
+    ]
+    docs["Detection_Count(non-blank_samples)(%)"] = df[
+        "Detection_Count(non-blank_samples)(%)"
+    ]
+    return df, docs, df_flagged
+
+
+def MRL_flag(docs, Mean_Samples, MDL_sample_mask, missing):
+    """
+    Function that takes docs, missing, and the MDL_sample_mask and flags
+    non-detects in df (via the MDL_sample_mask) as ND. -- TMF 04/19/24
+    """
+    # Update empty cell masks from the docs and df dataframes
+    cell_empty = docs[Mean_Samples].isnull()
+    # append ND flag (occurrence < MDL) to documentation dataframe
+    docs[Mean_Samples] = np.where(
+        ~MDL_sample_mask & cell_empty & ~missing, "ND", docs[Mean_Samples]
+    )
+    docs[Mean_Samples] = np.where(
+        ~MDL_sample_mask & ~cell_empty & ~missing,
+        docs[Mean_Samples] + ", ND",
+        docs[Mean_Samples],
+    )
+    return docs
+
+
+def populate_doc_values(df, docs, Mean_Samples, Mean_MB):
+    """
+    Function that takes df, docs, and populates a value in all cells of docs
+    where there is not currently an occurrence flag. Nothing happens to df. -- TMF 04/19/24
+    """
+    # Mask, add sample values back to doc
+    data_values = docs[Mean_Samples].isnull()
+    docs[Mean_Samples] = np.where(data_values, df[Mean_Samples], docs[Mean_Samples])
+    # Mask, add blank values back to doc
+    blank_values = docs[Mean_MB].isnull()
+    docs[Mean_MB] = np.where(blank_values, df[Mean_MB], docs[Mean_MB])
+    return docs
+
+
+def feat_removal_flag(docs, Mean_Samples):
+    """
+    Function that takes docs, and determines whether features should be removed
+    by counting the number of occurrence flags. If all occurrences are ND, feature
+    flag is BLK. If all occurrences are CV, feature flag is CV. If all occurrences
+    are R, feature flag is R. If all occurrences are some combination of CV, R, ND,
+    or were originally missing from df, feature flag is CV/R. Return docs. -- TMF 04/19/24
+    """
+    num_samples = len(Mean_Samples)
+    # Features dropped because all occurrences flagged as non-detects
+    docs["Feature_removed"] = np.where(
+        (docs[Mean_Samples] == "ND").sum(axis=1) == num_samples, "BLK", ""
+    )
+    # Features dropped because all all occurrences fail CV threshold
+    docs["Feature_removed"] = np.where(
+        (docs[Mean_Samples] == "CV").sum(axis=1) == num_samples,
+        "CV",
+        docs["Feature_removed"],
+    )
+    # Features dropped because all all occurrences fail Replication threshold
+    docs["Feature_removed"] = np.where(
+        (docs[Mean_Samples] == "R").sum(axis=1) == num_samples,
+        "R",
+        docs["Feature_removed"],
+    )
+    # Features dropped because all occurrences fail some combination of Replication threshold, CV threshold, MRL or didn't have an original value
+    docs["Feature_removed"] = np.where(
+        (
+            (
+                (docs[Mean_Samples] == "CV").sum(axis=1)
+                + (docs[Mean_Samples] == "R").sum(axis=1)
+                + (docs[Mean_Samples] == "ND").sum(axis=1)
+                + (docs[Mean_Samples].isnull()).sum(axis=1)
+            )
+            == num_samples
+        )
+        & (docs["Feature_removed"] == ""),
+        "CV/R",
+        docs["Feature_removed"],
+    )
+    return docs
+
+
+def occ_drop_df(df, docs, df_flagged, Mean_Samples):
+    """
+    Function that takes df, docs, df_flagged and creates a mask for each filter
+    applied to docs (R, CV, ND). All masks applied to df, only R and ND masks applied
+    to df_flagged. Return df and df_flagged. -- TMF 04/19/24
+    """
+    # Create mask of occurrences dropped for replicate flag
+    rep_fails = docs[Mean_Samples] == "R"
+    # Mask df and df_flagged
+    df[Mean_Samples] = df[Mean_Samples].mask(rep_fails)
+    df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(rep_fails)
+    # Create mask of occurrences dropped for replicate flag
+    non_detects = docs[Mean_Samples] == "ND"
+    # Mask df and df_flagged
+    df[Mean_Samples] = df[Mean_Samples].mask(non_detects)
+    df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(non_detects)
+    # Create mask of occurrences dropped for replicate flag
+    cv_fails = docs[Mean_Samples] == "CV"
+    # Mask df
+    df[Mean_Samples] = df[Mean_Samples].mask(cv_fails)
+    return df, df_flagged
+
+
+def feat_drop_df(df, docs, df_flagged):
+    """
+    Function that takes df, docs, df_flagged, and uses the Feature_removed column
+    from docs to subset df and df_flagged. All features that have a removal flag
+    are removed from df, only features with the R, ND, and CV flags are removed
+    from df_flagged. -- TMF 04/19/24
+    """
+    # Copy 'Feature_removed' column onto df and df_flagged
+    df["Feature_removed"] = docs["Feature_removed"]
+    df_flagged["Feature_removed"] = docs["Feature_removed"]
+    # Subset df and df_flagged
+    df = df.loc[df["Feature_removed"] == "", :]
+    df_flagged = df_flagged.loc[
+        (df_flagged["Feature_removed"] == "") | (df_flagged["Feature_removed"] == "CV"),
+        :,
+    ]
+    # Drop 'Feature_removed' from df
+    df.drop(columns=["Feature_removed"], inplace=True)
+    df_flagged.drop(columns=["Feature_removed"], inplace=True)
+    return df, df_flagged
+
+
+def clean_features(df_in, controls, tracer_df=False):
+    """
+    Function that removes (blanks out) observations at feature and occurrence level
+    based on user-defined thresholds for replicate percent and CV threshold, and
+    the calculated MRL value. The removed features/ocurrences are documented in
+    an additional dataframe (docs). Sample-level detection counts are also calculated.
+    This is an object-oriented version of the original fucntion that importantly
+    makes occurrence and feature removal decisions based directly on flags in docs. -- TMF 04/19/24
+    """
+    # Make dataframe copy, create docs in df's image
+    df = df_in.copy()
+    df["AnySamplesDropped"] = np.nan
+    docs = pd.DataFrame().reindex_like(df)
+    docs["Mass"] = df["Mass"]
+    docs["Retention_Time"] = df["Retention_Time"]
+    docs["Feature_ID"] = df["Feature_ID"]
+    if tracer_df:
+        docs["Tracer_chemical_match"] = df["Tracer_chemical_match"]
+    # Define lists
+    blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
+    Abundance = df.columns[df.columns.str.contains(pat="Replicate_Percent_")].tolist()
+    Replicate_Percent_MB = [N for N in Abundance if any(x in N for x in blanks)]
+    Replicate_Percent_Samples = [
+        N for N in Abundance if not any(x in N for x in blanks)
+    ]
+    Mean = df.columns[df.columns.str.contains(pat="Mean_")].tolist()
+    Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+    Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
+    Std = df.columns[df.columns.str.contains(pat="STD_")].tolist()
+    Std_MB = [md for md in Std if any(x in md for x in blanks)]
+    CV = df.columns[df.columns.str.startswith("CV_")].tolist()
+    CV_Samples = [C for C in CV if not any(x in C for x in blanks)]
+    missing = df[Mean_Samples].isnull()
+    """REPLICATE FLAG"""
+    # Implement replicate flag
+    df, docs = replicate_flag(
+        df,
+        docs,
+        controls,
+        missing,
+        Mean_Samples,
+        Replicate_Percent_Samples,
+        Mean_MB,
+        Std_MB,
+        Replicate_Percent_MB,
+    )
+    # Create a copy of df prior to CV flag/filter step - this DF will not remove occurrences/features failing CV threshold
+    df_flagged = df.copy()
+    """CV FLAG"""
+    # Implement CV flag
+    docs = cv_flag(df, docs, controls, Mean_Samples, CV_Samples, missing)
+    """MDL CALCULATION/MDL MASK GENERATION"""
+    # Calculate feature MDL
+    df, docs, df_flagged, MDL_sample_mask = MDL_calc(
+        df, docs, df_flagged, Mean_Samples, Mean_MB, Std_MB
+    )
+    """CALCULATE DETECTION COUNTS"""
+    # Calculate Detection_Count
+    df, docs, df_flagged = calculate_detection_counts(
+        df, docs, df_flagged, MDL_sample_mask, Std_MB, Mean_MB, Mean_Samples
+    )
+    """MDL/ND FLAG"""
+    # Implement MRL flag
+    docs = MRL_flag(docs, Mean_Samples, MDL_sample_mask, missing)
+    """ADD VALUES TO DOC"""
+    # Populate docs values
+    docs = populate_doc_values(df, docs, Mean_Samples, Mean_MB)
+    """DOCUMENT DROP FEATURES FROM DF"""
+    # Annotation feature removal
+    docs = feat_removal_flag(docs, Mean_Samples)
+    """DROP OCCURRENCES FROM DF"""
+    # Remove proper occurrences from df and df_flagged
+    df, df_flagged = occ_drop_df(df, docs, df_flagged, Mean_Samples)
+    """DROP FEATURES FROM DF"""
+    # Remove features from df and df_flagged
+    df, df_flagged = feat_drop_df(df, docs, df_flagged)
     return df, docs, df_flagged
 
 
