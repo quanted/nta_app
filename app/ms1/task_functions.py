@@ -1274,17 +1274,31 @@ def feat_removal_flag(docs, Mean_Samples):
     num_samples = len(Mean_Samples)
     # Features dropped because all occurrences flagged as non-detects
     docs["Feature_removed"] = np.where(
-        (docs[Mean_Samples] == "ND").sum(axis=1) == num_samples, "BLK", ""
+        (
+            (docs[Mean_Samples] == "ND").sum(axis=1)
+            + (docs[Mean_Samples].isnull()).sum(axis=1)
+        )
+        == num_samples,
+        "BLK",
+        "",
     )
     # Features dropped because all all occurrences fail CV threshold
     docs["Feature_removed"] = np.where(
-        (docs[Mean_Samples] == "CV").sum(axis=1) == num_samples,
+        (
+            (docs[Mean_Samples] == "CV").sum(axis=1)
+            + (docs[Mean_Samples].isnull()).sum(axis=1)
+        )
+        == num_samples,
         "CV",
         docs["Feature_removed"],
     )
     # Features dropped because all all occurrences fail Replication threshold
     docs["Feature_removed"] = np.where(
-        (docs[Mean_Samples] == "R").sum(axis=1) == num_samples,
+        (
+            (docs[Mean_Samples] == "R").sum(axis=1)
+            + (docs[Mean_Samples].isnull()).sum(axis=1)
+        )
+        == num_samples,
         "R",
         docs["Feature_removed"],
     )
