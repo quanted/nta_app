@@ -289,10 +289,12 @@ class NtaRun:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
                 # NTAW-94 set flag for dashboard search
                 self.dfs[0]["For_Dashboard_Search"] = "1"
+                self.dfs_flagged[0]["For_Dashboard_Search"] = "1"
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
                 # NTAW-94 set flag for dashboard search
                 self.dfs[1]["For_Dashboard_Search"] = "1"
+                self.dfs_flagged[1]["For_Dashboard_Search"] = "1"
             # print(self.dfs[0])
         # hardcoded to search all features against dsstox
 
@@ -1409,15 +1411,15 @@ class NtaRun:
         logging.info(
             "Rows flagged for dashboard search: {} out of {}".format(
                 len(
-                    self.df_combined.loc[
-                        self.df_combined["For_Dashboard_Search"] == "1", :
+                    self.df_flagged_combined.loc[
+                        self.df_flagged_combined["For_Dashboard_Search"] == "1", :
                     ]
                 ),
-                len(self.df_combined),
+                len(self.df_flagged_combined),
             )
         )
-        to_search = self.df_combined.loc[
-            self.df_combined["For_Dashboard_Search"] == "1", :
+        to_search = self.df_flagged_combined.loc[
+            self.df_flagged_combined["For_Dashboard_Search"] == "1", :
         ].copy()  # only rows flagged
         if self.parameters["search_mode"][1] == "mass":
             to_search.drop_duplicates(subset="Mass", keep="first", inplace=True)
