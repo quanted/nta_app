@@ -1135,15 +1135,12 @@ def replicate_flag(
     for mean, N in zip(Mean_Samples, Replicate_Percent_Samples):
         docs[mean] = docs[mean].astype(object)
         docs.loc[((df[N] < controls[0]) & (~missing[mean])), mean] = "R"
-        df.loc[df[N] < controls[0], "AnySamplesDropped"] = 1
     # Flag blanks occurrences where feature presence is less than some replicate percentage cutoff, and remove from blanks
     for mean, Std, N in zip(Mean_MB, Std_MB, Replicate_Percent_MB):
         docs[mean] = docs[mean].astype(object)
         docs.loc[df[N] < controls[2], mean] = "R"
         df.loc[df[N] < controls[2], mean] = 0
         df.loc[df[N] < controls[2], Std] = 0
-    # update docs with 'AnySamplesDropped' column
-    docs["AnySamplesDropped"] = df["AnySamplesDropped"]
     return df, docs
 
 
@@ -1292,6 +1289,14 @@ def feat_removal_flag(docs, Mean_Samples):
     docs["# contains CV flag"] = contains_CV.sum(axis=1)
     docs["# is CV flag"] = is_CV.sum(axis=1)
     docs["# contains ND flag"] = contains_ND.sum(axis=1)
+    # Determine if any samples are dropped for a feature
+    docs["AnySamplesDropped"] = np.where(
+        (docs["# contains R flag"] > 0)
+        | (docs["# contains CV flag"] > 0)
+        | (docs["# contains ND flag"] > 0),
+        1,
+        0,
+    )
     # Append feature level flags to features with no real occurrences
     # Feature flag because occurrences fail detection threshold
     docs["Feature_removed"] = np.where(
@@ -1320,6 +1325,9 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     applied to docs (R, CV, ND). All masks applied to df, only R and ND masks applied
     to df_flagged. Return df and df_flagged. -- TMF 04/19/24
     """
+    # Copy 'AnySamplesDropped' to df and df_flagged
+    df["AnySamplesDropped"] = docs["AnySamplesDropped"]
+    df_flagged["AnySamplesDropped"] = docs["AnySamplesDropped"]
     # Create mask of occurrences dropped for replicate flag
     rep_fails = pd.concat(
         [docs[mean].str.contains("R") for mean in Mean_Samples], axis=1
