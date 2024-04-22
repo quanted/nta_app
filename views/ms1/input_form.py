@@ -79,6 +79,22 @@ class NtaInputs(forms.Form):
         initial=0.1,
         validators=[MinValueValidator(0)],
     )
+    tracer_plot_yaxis_format = forms.ChoiceField(
+        choices=(
+            ("log", "log"),
+            ("linear", "linear"),
+        ),
+        label="Tracer plot y-axis scaling",
+        initial="log",
+    )
+    tracer_plot_trendline = forms.ChoiceField(
+        choices=(
+            ("yes", "yes"),
+            ("no", "no"),
+        ),
+        label="Tracer plot trendlines shown",
+        initial="yes",
+    )
     min_replicate_hits = forms.IntegerField(
         widget=RangeInput(attrs={"max": "100", "min": "1", "class": "slider_bar"}),
         label="Min replicate hits(%)",

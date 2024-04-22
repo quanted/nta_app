@@ -1132,6 +1132,8 @@ class NtaRun:
             logger.info("Tracer file found, checking tracers.")
         ppm = self.parameters["mass_accuracy_units_tr"][1] == "ppm"
         mass_accuracy_tr = float(self.parameters["mass_accuracy_tr"][1])
+        yaxis_scale = self.parameters["Tracer plot y-axis scaling"][1]
+        trendline_shown = self.parameters["Tracer plot trendlines shown"][1] == "yes"
         self.tracer_dfs_out = [
             task_fun.check_feature_tracers(
                 df,
@@ -1176,7 +1178,7 @@ class NtaRun:
                 df_in=self.tracer_dfs_out[0],
                 seq_csv=self.run_sequence_pos_df,
                 ionization="pos",
-                y_scale="linear",
+                y_scale=yaxis_scale,
                 fit=True,
                 share_y=False,
                 y_fixed=False,
@@ -1208,7 +1210,7 @@ class NtaRun:
                 df_in=self.tracer_dfs_out[1],
                 seq_csv=self.run_sequence_neg_df,
                 ionization="neg",
-                y_scale="linear",
+                y_scale=yaxis_scale,
                 fit=True,
                 share_y=False,
                 y_fixed=False,
