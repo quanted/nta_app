@@ -123,6 +123,12 @@ def input_page(request, form_data=None, form_files=None):
             ]
             inputParameters["mass_accuracy_tr"][1] = parameters["mass_accuracy_tr"]
             inputParameters["rt_accuracy_tr"][1] = parameters["rt_accuracy_tr"]
+            inputParameters["tracer_plot_yaxis_format"][1] = parameters[
+                "tracer_plot_yaxis_format"
+            ]
+            inputParameters["tracer_plot_trendline"][1] = parameters[
+                "tracer_plot_trendline"
+            ]
             inputParameters["min_replicate_hits"][1] = parameters["min_replicate_hits"]
             inputParameters["min_replicate_hits_blanks"][1] = parameters[
                 "min_replicate_hits_blanks"

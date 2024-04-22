@@ -1132,8 +1132,8 @@ class NtaRun:
             logger.info("Tracer file found, checking tracers.")
         ppm = self.parameters["mass_accuracy_units_tr"][1] == "ppm"
         mass_accuracy_tr = float(self.parameters["mass_accuracy_tr"][1])
-        yaxis_scale = self.parameters["Tracer plot y-axis scaling"][1]
-        trendline_shown = self.parameters["Tracer plot trendlines shown"][1] == "yes"
+        yaxis_scale = self.parameters["tracer_plot_yaxis_format"][1]
+        trendline_shown = self.parameters["tracer_plot_trendline"][1] == "yes"
         self.tracer_dfs_out = [
             task_fun.check_feature_tracers(
                 df,
