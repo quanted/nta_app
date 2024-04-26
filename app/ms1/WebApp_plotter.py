@@ -1187,7 +1187,7 @@ class WebApp_plotter:
                             pass
             # store matplot figure as a PNG
             buffer = io.BytesIO()
-            plt.savefig(buffer, bbox_inches="tight")  # , format='png')
+            # plt.savefig(buffer, bbox_inches="tight")  # , format='png')
 
             # append to list of PNGs
             listOfPNGs.append(buffer.getvalue())
