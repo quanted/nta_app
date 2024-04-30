@@ -1193,13 +1193,13 @@ class WebApp_plotter:
             listOfPNGs.append(buffer.getvalue())
 
             # close plt to prevent resource leaks
-            plt.close()
+            # plt.close()
 
             # iterate to the next figure
             sublist_index += 1
 
-        # return listOfPNGs, df
-        return listOfPNGs, chem_names
+        return listOfPNGs, df
+        # return listOfPNGs, chem_names
 
     def make_loc_plot(
         self,

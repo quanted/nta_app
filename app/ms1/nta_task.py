@@ -1193,7 +1193,7 @@ class NtaRun:
                 dark_mode=False,
             )
 
-            logger.info("df_debug= {}".format(df_debug.columns.values))
+            # logger.info("df_debug= {}".format(df_debug.columns.values))
 
             self.tracer_plots_out.append(listOfPNGs)
 
