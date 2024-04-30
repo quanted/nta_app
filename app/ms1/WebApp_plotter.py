@@ -1187,13 +1187,13 @@ class WebApp_plotter:
                             pass
             # store matplot figure as a PNG
             buffer = io.BytesIO()
-            # plt.savefig(buffer, bbox_inches="tight")  # , format='png')
+            plt.savefig(buffer, bbox_inches="tight")  # , format='png')
 
             # append to list of PNGs
             listOfPNGs.append(buffer.getvalue())
 
             # close plt to prevent resource leaks
-            # plt.close()
+            plt.close()
 
             # iterate to the next figure
             sublist_index += 1
