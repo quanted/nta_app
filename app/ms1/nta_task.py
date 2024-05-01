@@ -560,20 +560,10 @@ class NtaRun:
 
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.adduct_identifier(
-                self.dfs[0],
-                mass_accuracy,
-                rt_accuracy,
-                ppm,
-                ionization="positive",
-                id_start=1,
+                self.dfs[0], mass_accuracy, rt_accuracy, ppm, ionization="positive"
             )
             self.dfs[1] = task_fun.adduct_identifier(
-                self.dfs[1],
-                mass_accuracy,
-                rt_accuracy,
-                ppm,
-                ionization="negative",
-                id_start=len(self.dfs[0].index) + 1,
+                self.dfs[1], mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
             self.data_map["Feature_statistics_positive"] = task_fun.column_sort_DFS(
                 pd.merge(
@@ -587,12 +577,7 @@ class NtaRun:
             )
         elif self.dfs[0] is not None:
             self.dfs[0] = task_fun.adduct_identifier(
-                self.dfs[0],
-                mass_accuracy,
-                rt_accuracy,
-                ppm,
-                ionization="positive",
-                id_start=1,
+                self.dfs[0], mass_accuracy, rt_accuracy, ppm, ionization="positive"
             )
             self.data_map["Feature_statistics_positive"] = task_fun.column_sort_DFS(
                 pd.merge(
@@ -601,12 +586,7 @@ class NtaRun:
             )
         else:
             self.dfs[1] = task_fun.adduct_identifier(
-                self.dfs[1],
-                mass_accuracy,
-                rt_accuracy,
-                ppm,
-                ionization="negative",
-                id_start=1,
+                self.dfs[1], mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
             self.data_map["Feature_statistics_negative"] = task_fun.column_sort_DFS(
                 pd.merge(
