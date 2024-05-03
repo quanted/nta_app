@@ -320,8 +320,8 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     features that are near to adduct distance from another feature. This shortened dataframe is used to
     calculate a window size, then loop through possible adducts, passing to 'chunk_adducts' -- TMF 10/27/23
     """
-    # Copy df_in, only need 'Mass' and 'Retention Time'
-    df = df_in[["Mass", "Retention_Time"]].copy()
+    # Copy df_in, only need 'Feature_ID', 'Mass', and 'Retention Time'
+    df = df_in[["Feature_ID", "Mass", "Retention_Time"]].copy()
     # Round columns
     df["Rounded Mass"] = df["Mass"].round(2)
     df["Rounded RT"] = df["Retention_Time"].round(1)
