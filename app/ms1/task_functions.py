@@ -173,20 +173,20 @@ def passthrucol(df_in):
 
 """ADDUCT IDENTIFICATION FUNCTIONS"""
 
-'''
-def adduct_matrix(
-    df, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start
-):
+
+def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm):
     """
     Modified version of Jeff's 'adduct_identifier' function. This function executes
     the matrix portion of the old function -- TMF 10/27/23
     """
-    # 'Mass' to matrix, 'Retention Time' to matrix
+    # 'Mass' to matrix, 'Retention Time' to matrix, 'Feature_ID' to matrix
     mass = df["Mass"].to_numpy()
     rts = df["Retention_Time"].to_numpy()
-    # Reshape 'masses' and 'rts'
+    ids = df["Feature_ID"].to_numpy()
+    # Reshape 'masses', 'rts', and 'ids'
     masses_matrix = np.reshape(mass, (len(mass), 1))
     rts_matrix = np.reshape(rts, (len(rts), 1))
+    ids_matrix = np.reshape(ids, (1, len(ids)))
     # Create difference matrices
     diff_matrix_mass = masses_matrix - masses_matrix.transpose()
     diff_matrix_rt = rts_matrix - rts_matrix.transpose()
@@ -222,18 +222,14 @@ def adduct_matrix(
     else:
         # Define 'row_num', 'is_id_matrix'
         row_num = len(mass)
-        is_id_matrix = (
-            np.tile(np.arange(row_num), row_num).reshape((row_num, row_num)) + id_start
-        )
+        is_id_matrix = np.tile(ids_matrix, (row_num, 1))
         # Matrix multiplication, keep highest # row if multiple adducts
         is_adduct_number = is_adduct_matrix * is_id_matrix
         # if is adduct of multiple, keep highest # row
         is_adduct_number_flat = np.max(is_adduct_number, axis=1)
-        # is_adduct_number_flat_index = np.where(is_adduct_number_flat > 0, is_adduct_number_flat -1, 0)
-        # is_adduct_of_adduct = np.where((is_adduct_number_flat > 0) &
-        #                               (df['Is_Adduct_or_Loss'][pd.Series(is_adduct_number_flat_index-id_start).clip(lower=0)] > 0), 1, 0)
-        # is_adduct_number_flat[is_adduct_of_adduct == 1] = 0
+        # Matrix multiplication, keep highest # row if multiple adducts
         has_adduct_number = has_adduct_matrix * is_id_matrix
+        # if is adduct of multiple, keep highest # row
         has_adduct_number_flat = np.max(
             has_adduct_number, axis=1
         )  # these will all be the same down columns
@@ -292,7 +288,7 @@ def window_size(df_in, mass_diff_mass=112.985586):
 
 
 def chunk_adducts(
-    df_in, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start
+    df_in, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm
 ):
     """
     Function that takes the input data, chunks it based on window size, then loops through chunks
@@ -307,7 +303,7 @@ def chunk_adducts(
     li = []
     for x in to_test_list:
         dum = adduct_matrix(
-            x, a_name, delta, Mass_Difference, Retention_Difference, ppm, id_start
+            x, a_name, delta, Mass_Difference, Retention_Difference, ppm
         )
         li.append(dum)
     # Concatenate results together, removing overlapping sections
@@ -318,9 +314,7 @@ def chunk_adducts(
     return output
 
 
-def adduct_identifier(
-    df_in, Mass_Difference, Retention_Difference, ppm, ionization, id_start=0
-):
+def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization):
     """
     Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
     features that are near to adduct distance from another feature. This shortened dataframe is used to
@@ -388,13 +382,7 @@ def adduct_identifier(
     if to_test.shape[0] <= n:
         for a_name, delta in possible_adduct_deltas.items():
             to_test = adduct_matrix(
-                to_test,
-                a_name,
-                delta,
-                Mass_Difference,
-                Retention_Difference,
-                ppm,
-                id_start,
+                to_test, a_name, delta, Mass_Difference, Retention_Difference, ppm
             )
     # Else, calculate the moving window size and send 'to_test' to 'chunk_adducts'
     else:
@@ -410,7 +398,6 @@ def adduct_identifier(
                 Mass_Difference,
                 Retention_Difference,
                 ppm,
-                id_start,
             )
     # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
     df_in = pd.merge(
@@ -429,242 +416,6 @@ def adduct_identifier(
     )
     # Return dataframe with three adduct info columns added
     return df_in
-'''
-
-
-def calc_mass_diff(feat, li):
-    """
-    Take a feat and list of feature masses, return feat_ID / mass difference tuples.
-    """
-    li_of_tuples = [
-        (fid, (feat["Mass"] - mass)) for (fid, mass) in li if feat["Feature_ID"] != fid
-    ]
-    return li_of_tuples
-
-
-def calc_rt_diff(feat, li):
-    """
-    Take a feat and list of feature rts, return feat_ID / rt difference tuples.
-    """
-    li_of_tuples = [
-        (fid, (feat["Retention_Time"] - rt))
-        for (fid, rt) in li
-        if feat["Feature_ID"] != fid
-    ]
-    return li_of_tuples
-
-
-def is_adduct_diff(li, delta):
-    """
-    Take a list of feat_ID / mass difference tuples, subtract adduct delta from masses, return.
-    """
-    li_of_tuples = [(fid, abs(mass - delta)) for (fid, mass) in li]
-    return li_of_tuples
-
-
-def has_adduct_diff(li, delta):
-    """
-    Take a list of feat_ID / mass difference tuples, add adduct delta to masses, return.
-    """
-    li_of_tuples = [(fid, abs(mass + delta)) for (fid, mass) in li]
-    return li_of_tuples
-
-
-def ppm_adjustment(feat, col):
-    """
-    Take a feat, divide all feat_ID / mass difference tuples by feat mass, then multiply by 10**6, return.
-    """
-    li_of_tuples = [
-        (fid, ((mass / feat["Mass"]) * 10**6)) for (fid, mass) in feat[col]
-    ]
-    return li_of_tuples
-
-
-def combine_mass_rt_tuples(feat, mass_col, rt_col):
-    """
-    Take a feature's lists of feat_ID-mass tuples and feat_ID-rt tuples, return feat_ID-mass-rt tuples.
-    """
-    li_of_tuples = [m + rt[1:] for m, rt in zip(feat[mass_col], feat[rt_col])]
-    return li_of_tuples
-
-
-def mass_rt_threshold(li, Mass_Difference, Retention_Difference):
-    """
-    Take list of feat_ID-mass-rt tuples, return tuples where mass<Mass_Difference and rt<Retention_Difference.
-    """
-    li_of_tuples = [
-        (fid, mass, rt)
-        for (fid, mass, rt) in li
-        if ((mass < Mass_Difference) & (rt < Retention_Difference))
-    ]
-    return li_of_tuples
-
-
-def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization):
-    """
-    Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
-    features that are near to adduct distance from another feature. This shortened dataframe is used then
-    undergoes a series of list comprehension functions to annotate adducts -- TMF 05/01/24
-    """
-    # Copy df_in, only need 'Mass' and 'Retention Time'
-    df = df_in[["Feature_ID", "Mass", "Retention_Time"]].copy()
-    # Round columns
-    df["Rounded Mass"] = df["Mass"].round(2)
-    df["Rounded RT"] = df["Retention_Time"].round(1)
-    # Create tuple of 'Rounded RT' and 'Rounded Mass'
-    df["Rounded_RT_Mass_Pair"] = list(zip(df["Rounded RT"], df["Rounded Mass"]))
-    # Define pos/neg/neutral adduct dictionaries, proton
-    pos_adduct_deltas = {"Na": 22.989218, "K": 38.963158, "NH4": 18.033823}
-    neg_adduct_deltas = {
-        "Cl": 34.969402,
-        "Br": 78.918885,
-        "HCO2": 44.998201,
-        "CH3CO2": 59.013851,
-        "CF3CO2": 112.985586,
-    }
-    neutral_loss_deltas = {"H2O": 18.010565, "CO2": 43.989829}
-    proton_mass = 1.007276
-    # Determine possible adduct dictionary according to ionization
-    if ionization == "positive":
-        # we observe Mass+(H+) and Mass+(Adduct)
-        possible_adduct_deltas = {
-            k: v - proton_mass for (k, v) in pos_adduct_deltas.items()
-        }
-    else:
-        # we observe Mass-(H+) and Mass+(Adduct)
-        possible_adduct_deltas = {
-            k: v + proton_mass for (k, v) in neg_adduct_deltas.items()
-        }
-    # add neutral loss adducts
-    possible_adduct_deltas.update(neutral_loss_deltas)
-    # Create empty list to hold mass shift/RT tuples
-    list_of_mass_shifts_RT_pairs = []
-    # Loop through possible adducts, add/subtract adduct mass from each feature, append
-    # 'Rounded RT', 'Rounded Mass' tuples to 'list_of_mass_shifts_RT_pairs' for both addition
-    # and subtraction.
-    for k, v in possible_adduct_deltas.items():
-        col1 = "Mass - " + k
-        col2 = "Mass + " + k
-        df[col1] = (df["Mass"] - v).round(2)
-        df[col2] = (df["Mass"] + v).round(2)
-        list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col1])))
-        list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col2])))
-    # Extend list
-    list_of_mass_shifts_RT_pairs = [
-        item for sublist in list_of_mass_shifts_RT_pairs for item in sublist
-    ]
-    # Remove duplicate tuples (sets don't carry duplicates)
-    list_of_mass_shifts_RT_pairs = list(set(list_of_mass_shifts_RT_pairs))
-    # Filter df for features to check for adducts
-    to_test = df[df["Rounded_RT_Mass_Pair"].isin(list_of_mass_shifts_RT_pairs)]
-    to_test = to_test.sort_values("Mass", ignore_index=True)
-    # Add columns to be changed by 'adduct_matrix'
-    to_test["Has_Adduct_or_Loss"] = 0
-    to_test["Is_Adduct_or_Loss"] = 0
-    to_test["Adduct_or_Loss_Info"] = to_test.apply(lambda x: [], axis=1)
-    # Get list of Feature_ID / Mass and Feature_ID / RT tuples for all features in to_test
-    masses = list(zip(to_test["Feature_ID"], to_test["Mass"]))
-    rts = list(zip(to_test["Feature_ID"], to_test["Retention_Time"]))
-    # Loop through the possible adducts and compare / annotate features
-    for a_name, delta in possible_adduct_deltas.items():
-        # Determine Mass and RT differences (drop self-comparison)
-        to_test["Mass differences"] = to_test.apply(
-            lambda x: calc_mass_diff(x, masses), axis=1
-        )
-        to_test["RT differences"] = to_test.apply(
-            lambda x: calc_rt_diff(x, rts), axis=1
-        )
-        # Calculate 'Is Adduct' and 'Has Adduct'
-        to_test["Is Adduct differences"] = to_test["Mass differences"].apply(
-            lambda x: is_adduct_diff(x, delta)
-        )
-        to_test["Has Adduct differences"] = to_test["Mass differences"].apply(
-            lambda x: has_adduct_diff(x, delta)
-        )
-        # Convert to ppm if selected
-        if ppm:
-            to_test["Is Adduct differences"] = to_test.apply(
-                lambda x: ppm_adjustment(x, "Is Adduct differences"), axis=1
-            )
-            to_test["Has Adduct differences"] = to_test.apply(
-                lambda x: ppm_adjustment(x, "Has Adduct differences"), axis=1
-            )
-        # Combine tuples
-        to_test["Is Adduct differences"] = to_test.apply(
-            lambda x: combine_mass_rt_tuples(
-                x, "Is Adduct differences", "RT differences"
-            ),
-            axis=1,
-        )
-        to_test["Has Adduct differences"] = to_test.apply(
-            lambda x: combine_mass_rt_tuples(
-                x, "Has Adduct differences", "RT differences"
-            ),
-            axis=1,
-        )
-        # Remove items in lists that exceed thresholds
-        to_test["Is Adduct differences"] = to_test["Is Adduct differences"].apply(
-            lambda x: mass_rt_threshold(x, Mass_Difference, Retention_Difference)
-        )
-        to_test["Has Adduct differences"] = to_test["Has Adduct differences"].apply(
-            lambda x: mass_rt_threshold(x, Mass_Difference, Retention_Difference)
-        )
-        # Append info to the appropriate columns
-        to_test["Is_Adduct_or_Loss"] = to_test.apply(
-            lambda x: x["Is_Adduct_or_Loss"] + len(x["Is Adduct differences"]), axis=1
-        )
-        to_test["Has_Adduct_or_Loss"] = to_test.apply(
-            lambda x: x["Has_Adduct_or_Loss"] + len(x["Has Adduct differences"]), axis=1
-        )
-        to_test["Adduct_or_Loss_Info"] = to_test.apply(
-            lambda x: x["Adduct_or_Loss_Info"]
-            + [
-                "Is adduct of " + str(fid) + "({});".format(a_name)
-                for (fid, mass, rt) in x["Is Adduct differences"]
-            ],
-            axis=1,
-        )
-        to_test["Adduct_or_Loss_Info"] = to_test.apply(
-            lambda x: x["Adduct_or_Loss_Info"]
-            + [
-                "Has adduct " + str(fid) + "({});".format(a_name)
-                for (fid, mass, rt) in x["Has Adduct differences"]
-            ],
-            axis=1,
-        )
-    # Join existing 'Adduct_or_Loss_Info' lists, use " " as separator
-    s = " "
-    to_test["Adduct_or_Loss_Info"] = to_test["Adduct_or_Loss_Info"].apply(
-        lambda x: np.where(len(x) > 0, s.join(x), "")
-    )
-    # Replace empty queries with np.nan
-    to_test["Is_Adduct_or_Loss"] = np.where(
-        (to_test["Is_Adduct_or_Loss"] == 0) & (to_test["Has_Adduct_or_Loss"] == 0),
-        np.nan,
-        to_test["Is_Adduct_or_Loss"],
-    )
-    to_test["Has_Adduct_or_Loss"] = np.where(
-        (to_test["Is_Adduct_or_Loss"].isnull()) & (to_test["Has_Adduct_or_Loss"] == 0),
-        np.nan,
-        to_test["Has_Adduct_or_Loss"],
-    )
-    # Merge 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' results back on to df
-    output = pd.merge(
-        df_in,
-        to_test[
-            [
-                "Mass",
-                "Retention_Time",
-                "Has_Adduct_or_Loss",
-                "Is_Adduct_or_Loss",
-                "Adduct_or_Loss_Info",
-            ]
-        ],
-        how="left",
-        on=["Mass", "Retention_Time"],
-    )
-    # Return dataframe with three adduct info columns added
-    return output
 
 
 """DUPLICATE REMOVAL FUNCTIONS"""
