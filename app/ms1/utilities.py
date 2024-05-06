@@ -95,9 +95,10 @@ def api_search_mass(mass, accuracy, jobid = "00000"):
 def api_search_mass_batch(mass_list, accuracy):
     api_url = '{}/chemical/msready/search/by-mass/'.format(CCD_API)
     logger.info(api_url)
-    http_headers = {'x-api-key': CCD_API_KEY, 'content-type': 'application/json'}
+    http_headers = {'x-api-key': CCD_API_KEY, 'content-type': 'application/json',
+                    'accept': 'application/json'}
     post_data = {"masses": mass_list, "error": accuracy}
-    response = requests.post(api_url, data=post_data, headers=http_headers)
+    response = requests.post(api_url, data=json.dumps(post_data), headers=http_headers)
     candidate_list = response.json()
     logger.info(candidate_list)
     return candidate_list
