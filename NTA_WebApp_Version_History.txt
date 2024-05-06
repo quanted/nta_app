@@ -1,0 +1,27 @@
+NTA WebApp Version History and Known Issues Documentation
+Version 0.1
+Updated 4/4/2024
+
+*************
+Known Issues:
+*************
+1) Tracer plot issue: When greater than 16 tracers are submitted in an analysis, there is a known issue where one of the tracer plots is generated with empty graphs.
+2) ToxCast percent active column: There is a known issue where the toxcast percent active column is not calculated correctly.
+3) Adduct matching: There is a known issue where the adduct matching columns are referencing incorrect features as matches.
+4) MS2 test file run: This option is currently not functional.
+5) Merge workflow: The new version of the MS1 results is causing the merge workflow to throw an error.
+6) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
+7) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
+
+************************
+Version 0.1.X - X/X/2024
+************************
+- MS1 input page now accepts a user input for "Adduct / duplicate" mass accuracy (Da or ppm) and retention time accuracy (min)
+- MS1 workflow now correctly uses the user-defined mass and retention time accuracy parameters for identifying duplicate features
+- Duplicate features are no longer automatically removed. They are kept in the "Results_flagged" sheet, flagged in the "Filter_documentation" sheet, and removed from the "Cleaned_feature_results_reduced" sheet.
+
+**********************
+Version 0.1 - 4/4/2024
+**********************
+- Added version history documentation to Github.
+- Added links to version history documentation under "Documentation" on the front-end links.

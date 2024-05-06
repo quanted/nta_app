@@ -34,15 +34,14 @@ def output_page_html(header, model, tables_html):
     html += render_to_string('epa_drupal_section_title_nta.html', {})
 
     #main body
-    html += render_to_string('06ubertext_start_index_drupal.html', {
+    html += render_to_string('nta_main_content.html', {
         'TITLE': header + ' Output',
         'TEXT_PARAGRAPH': tables_html
     })
-    html += render_to_string('07ubertext_end_drupal.html', {})
     html += links_left.ordered_list(model)
 
     #css and scripts
-    html += render_to_string('09epa_drupal_pram_css.html', {})
+    html += render_to_string('nta_scripts_css.html', {})
     html += render_to_string('ms1/nta_output_scripts.html', {})
 
     #epa template footer
@@ -57,10 +56,11 @@ def file_download_buttons(jobid):
         <div class="buttons">
             <input type="button" value="Final results" onclick="window.open('/nta/ms1/results/toxpi/{jobid}')">
         </div>
-    """
-    html +=  """
+    </div>
+    <div id="decision_tree_area">
+        <H3 id="section1">View plots:</H3>
         <div class="buttons">
-            <input type="button" value="All files" onclick="window.open('/nta/ms1/results/all/{jobid}')">
+            <input type="button" value="Filtering logic tree" onclick="window.open('/nta/ms1/results/decision_tree/{jobid}')">
         </div>
     </div>
     """

@@ -1,0 +1,61 @@
+[1mdiff --git a/app/ms1/WebApp_plotter.py b/app/ms1/WebApp_plotter.py[m
+[1mindex 7c7ab1b..8797570 100644[m
+[1m--- a/app/ms1/WebApp_plotter.py[m
+[1m+++ b/app/ms1/WebApp_plotter.py[m
+[36m@@ -1306,7 +1306,7 @@[m [mdef make_subplots(chem_names, y_max=None, y_min=None, y_steps=4, share_y=True, y[m
+     # rcParams must be set before any plt objects are created![m
+     # Now set parameters that are needed for dark_mode=True[m
+     if dark_mode == True:[m
+[31m-        # es params[m
+[32m+[m[32m        # axes params[m
+         plt.rcParams.update({'axes.facecolor': '#0d0d0d', [m
+                              'axes.edgecolor': '#fff',[m
+                              'axes.titlecolor': '#fff'})[m
+[1mdiff --git a/app/ms1/nta_task.py b/app/ms1/nta_task.py[m
+[1mindex 010284a..5de3811 100644[m
+[1m--- a/app/ms1/nta_task.py[m
+[1m+++ b/app/ms1/nta_task.py[m
+[36m@@ -339,6 +339,10 @@[m [mclass NtaRun:[m
+ [m
+             self.tracer_plots_out.append(listOfPNGs)[m
+     [m
+[32m+[m[32m        else:[m
+[32m+[m[32m            self.tracer_plots_out.append(None)[m
+[32m+[m[41m    [m
+[32m+[m[41m    [m
+         # declare plotter[m
+         df_WA = WebApp_plotter()[m
+         # df_WA,df_debug = WebApp_plotter()[m
+[36m@@ -366,7 +370,9 @@[m [mclass NtaRun:[m
+             #logger.info("df_debug= {}".format(df_debug.columns.values))[m
+ [m
+             self.tracer_plots_out.append(listOfPNGs)[m
+[31m-    [m
+[32m+[m[32m        else:[m
+[32m+[m[32m            self.tracer_plots_out.append(None)[m
+[32m+[m[41m        [m
+         # implements part of NTAW-143[m
+         dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])[m
+ [m
+[36m@@ -385,15 +391,17 @@[m [mclass NtaRun:[m
+         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0][m
+         # self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1][m
+ [m
+[31m-        for i in range (len(self.tracer_plots_out[0])):[m
+[31m-            self.tracer_map['tracer_plot_pos_'+str(i+1)] = self.tracer_plots_out[0][i][m
+[32m+[m[32m        if self.tracer_plots_out[0] is not None:[m
+[32m+[m[32m            for i in range (len(self.tracer_plots_out[0])):[m
+[32m+[m[32m                self.tracer_map['tracer_plot_pos_'+str(i+1)] = self.tracer_plots_out[0][i][m
+             [m
+         #logger.info(len(self.tracer_plots_out[1]))[m
+         [m
+         # Add an if statement below to account for: if only negative mode data is entered, and only a negative tracer file is submitted, tracer_plots_out will only have one entry at [0][m
+         if len(self.tracer_plots_out) > 1:[m
+[31m-            for i in range (len(self.tracer_plots_out[1])):[m
+[31m-                self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i][m
+[32m+[m[32m            if self.tracer_plots_out[1] is not None:[m
+[32m+[m[32m                for i in range (len(self.tracer_plots_out[1])):[m
+[32m+[m[32m                    self.tracer_map['tracer_plot_neg_'+str(i+1)] = self.tracer_plots_out[1][i][m
+          [m
+         project_name = self.parameters['project_name'][1] [m
+         self.gridfs.put("&&".join(self.tracer_map.keys()), _id=self.jobid + "_tracer_files", encoding='utf-8', project_name = project_name)[m

@@ -12,7 +12,8 @@ import requests
 import time
 import numpy as np
 import pandas as pd
-from .functions_Universal_v3 import parse_headers
+from . import task_functions as task_fun
+#from .functions_Universal_v3 import parse_headers
 
 logger = logging.getLogger("nta_app.ms1")
 logger.setLevel(logging.INFO)
@@ -38,18 +39,24 @@ def connect_to_mongo_gridfs(address):
     fs = gridfs.GridFS(db)
     return fs
 
+# function to remove columns from a given dataframe, df_in. The columns to be removed are determined by the
+# a given list of strings.
+def remove_columns(df_in, list_of_columns2remove):
+    df = df_in.copy()
+    df.drop(list_of_columns2remove, axis=1, inplace=True)
+    return df
 
 def reduced_file(df_in):
     df = df_in.copy()
-    headers = parse_headers(df, 0)
-    keeps_str = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank', 'Median', 'Sub']
+    headers = task_fun.parse_headers(df)
+    keeps_str = ['MB_', 'blank', 'blanks', 'BLANK', 'Blank', 'Mean', 'Sub']
     to_drop = [item for sublist in headers for item in sublist if
                         (len(sublist) > 1) & (not any(x in item for x in keeps_str))]
-    to_drop.extend(df.columns[(df.columns.str.contains(pat ='CV_|N_Abun_|Mean_|STD_')==True)].tolist())
-    to_drop.extend(df.columns[(df.columns.str.contains(pat ='Median_') == True) &
+    to_drop.extend(df.columns[(df.columns.str.contains(pat ='CV_|N_Abun_|Median_|STD_')==True)].tolist())
+    to_drop.extend(df.columns[(df.columns.str.contains(pat ='Mean_') == True) &
                               (df.columns.str.contains(pat ='MB|blank|blanks|BLANK|Blank|Sub')==False)].tolist())
-    if 'Median_ALLMB' in df.columns.values.tolist():
-        to_drop.extend(['Median_ALLMB'])
+    if 'Mean_ALLMB' in df.columns.values.tolist():
+        to_drop.extend(['Mean_ALLMB'])
     df.drop(to_drop, axis=1, inplace=True)
     return df
 
@@ -85,30 +92,45 @@ def api_search_mass(mass, accuracy, jobid = "00000"):
     candidate_list = list(response.json())
     return candidate_list
 
+def api_search_mass_batch(mass_list, accuracy):
+    api_url = '{}/chemical/msready/search/by-mass/'.format(CCD_API)
+    logger.info(api_url)
+    http_headers = {'x-api-key': CCD_API_KEY, 'content-type': 'application/json'}
+    post_data = {"masses": mass_list, "error": accuracy}
+    response = requests.post(api_url, data=post_data, headers=http_headers)
+    candidate_list = json.loads(response.json())
+    logger.info(candidate_list)
+    return candidate_list
+
 def api_get_metadata(dtxsid):
     http_headers = {'x-api-key': CCD_API_KEY}
     chem_details_api = '{}/chemical/detail/search/by-dtxsid/{}'.format(CCD_API,dtxsid)
     chem_details_response = requests.get(chem_details_api, headers=http_headers)
-    output_dict = {dtxsid: chem_details_response.json()}
-    #logger.info('METADATA OUTPUT: {}'.format(output_dict))
+    #logger.info('METADATA OUTPUT: {}'.format({dtxsid: chem_details_response.json()}))
     return {dtxsid: chem_details_response.json()}
 
-def api_search_mass_list(masses, accuracy, jobid = "00000"):
+def api_search_mass_list(masses, accuracy, jobid = "00000", batchsize=100):
     n_masses = len(masses)
-    logging.info("Sending {} masses in batches of 1".format(n_masses))
-    results_dict = {}
-    for count, mass in enumerate(masses):
-        logger.info("Searching mass # {} out of {}".format(count+1, n_masses))
-        candidate_list = list(api_search_mass(mass, accuracy))
-        logger.info("Mass: {} - num of candidates: {}".format(mass, len(candidate_list)))
-        candidates_dict = {}
-        for candidate in candidate_list:
-            candidate_metadata = api_get_metadata(candidate)
-            candidates_dict.update(candidate_metadata)
-        results_dict[mass] = candidates_dict
-    logging.info('api search final dict: {}'.format(results_dict))
-    results_df = pd.read_json(json.dumps(results_dict))
-    return results_df
+    logging.info("Sending {} masses in batches of {}".format(n_masses, batchsize))
+    candidates_dict = {}
+    for i in range(0, len(masses), batchsize):
+        candidates_batch = api_search_mass_batch(mass_list=masses[i:i+batchsize],
+                              accuracy=accuracy)
+        candidates_dict.update(candidates_batch)
+    # for count, mass in enumerate(masses):
+    #     logger.info("Searching mass # {} out of {}".format(count+1, n_masses))
+    #     candidate_list = list(api_search_mass(mass, accuracy))
+    #     logger.info("Mass: {} - num of candidates: {}".format(mass, len(candidate_list)))
+    #     candidates_dict = {}
+    #     for candidate in candidate_list:
+    #         candidate_metadata = api_get_metadata(candidate)
+    #         candidates_dict.update(candidate_metadata)
+    #     results_dict[mass] = candidates_dict
+    # logging.info('api search final dict: {}'.format(results_dict))
+    # results_df = pd.read_json(json.dumps(results_dict))
+    logging.info("final ms ready batch result reached")
+    #return results_df
+    return None
 
 @response_log_wrapper('DSSTOX')
 def api_search_formulas(formulas, jobID = "00000"):
@@ -123,14 +145,15 @@ def api_search_formulas(formulas, jobID = "00000"):
 
 @response_log_wrapper('HCD')
 def api_search_hcd(dtxsid_list):
-    post_data = {"chemicals":[], "options": {"cts": None, "minSimilarity": 0.95, "analogsSearchType": None}}
+    post_data = {"chemicals":[], "options": {"noRecords": "true", "usePredictions": "false"}}
     headers = {'content-type': 'application/json'}
-    url = 'https://hazard.sciencedataexperts.com/api/hazard'
+    #url = 'https://hazard.sciencedataexperts.com/api/hazard'
+    url = 'https://hcd.rtpnc.epa.gov/api/hazard'
     for dtxsid in dtxsid_list: 
         post_data['chemicals'].append({'chemical': {'sid': dtxsid, "checked": True}, "properties": {}})
     return requests.post(url, data=json.dumps(post_data), headers=headers)
             
-def batch_search_hcd(dtxsid_list, batchsize = 150):
+def batch_search_hcd(dtxsid_list, batchsize = 200):
     result_dict = {}
     logger.info(f"Search {len(dtxsid_list)} DTXSIDs in HCD")
     for i in range(0, len(dtxsid_list), batchsize):
@@ -147,7 +170,8 @@ def batch_search_hcd(dtxsid_list, batchsize = 150):
 
 def format_tracer_file(df_in):
     df = df_in.copy()
-    df = df.drop(columns=['Compound', 'Score'])
+    # NTAW-94 comment out the following line. Compound is no longer being used
+    # df = df.drop(columns=['Compound', 'Score'])
     rt_diff = df['Observed_Retention_Time'] - df['Retention_Time']
     mass_diff = ((df['Observed_Mass'] - df['Monoisotopic_Mass']) / df['Monoisotopic_Mass']) * 1000000
     df.insert(7, 'Mass_Error_PPM', mass_diff)
@@ -157,7 +181,7 @@ def format_tracer_file(df_in):
 def create_tracer_plot(df_in):
     mpl_logger = logging.getLogger('matplotlib')
     mpl_logger.setLevel(logging.WARNING)
-    headers = parse_headers(df_in, 0)
+    headers = task_fun.parse_headers(df_in)
     abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
     fig, ax = plt.subplots()
     for i, tracer in df_in.iterrows():

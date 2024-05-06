@@ -61,14 +61,12 @@ def input_page(request, form_data=None, form_files=None):
          request=request)
 
     html += str(MergeInputs(form_data, form_files))
-    html += render_to_string('04uberinput_end_drupal.html', {})
-    html += render_to_string('04ubertext_end_drupal.html', {})
+    html += render_to_string('nta_input_form_end.html', {})
 
     html += links_left.ordered_list(model, page)
 
     # css and scripts
-    html += render_to_string('09epa_drupal_pram_css.html', {})
-    html += render_to_string('09epa_drupal_pram_scripts.html', {})
+    html += render_to_string('nta_scripts_css.html', {})
 
     # epa template footer
     html += render_to_string('10epa_drupal_footer.html', {})

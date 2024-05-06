@@ -30,6 +30,13 @@ logger.setLevel(logging.INFO)
 
 
 def run_ms2_dask(parameters, jobid = "00000000", verbose = True):
+    #log parameters
+    logger.info("Parameters:") 
+    logger.info(parameters)
+    logger.info("Job ID: {}".format(jobid))
+
+
+
     in_docker = os.environ.get("IN_DOCKER") != "False"
     mongo_address = os.environ.get('MONGO_SERVER')
     link_address = reverse('ms2_results', kwargs={'jobid': jobid})
@@ -68,7 +75,7 @@ def run_ms2(parameters, mongo_address = None, jobid = "00000000", results_link =
     return True
 
 
-FILENAMES = {'final_output': ['CFMID_results_pos', 'CFMID_results_neg']}
+FILENAMES = {'final_output': ['CFMID_results_pos', 'CFMID_results_neg', 'input_parameters']}
 
 
 class MS2Run:
@@ -76,6 +83,7 @@ class MS2Run:
     def __init__(self, parameters=None, mongo_address = None, jobid = "00000000",
                  results_link = None, verbose = True, in_docker = True):
         logger.info('MS2Run initialize - started')
+        self.inputParameters = parameters['inputParameters']
         self.project_name = parameters['project_name']
         self.n_masses = 1
         self.progress = 0
@@ -152,16 +160,19 @@ class MS2Run:
         self.n_masses = len(all_masses)
         logger.info(f'Number of features in list: {self.n_masses}')
         chunk_size = 100
-        for idx in range(0, self.n_masses, chunk_size):
-            chunk = all_masses[idx : min(idx + chunk_size, self.n_masses)]
-            start = time.perf_counter()
-            cfmid_responses = []
-            logger.info(f'API search: {chunk_size} of {len(all_masses)} structures')
-            logger.info(f'\t\t\t Total count: {idx}')
-            asyncio.run(ms2_api_search(self.cfmid_responses, chunk, self.precursor_mass_accuracy, self.jobid))
-            
-        logger.info(f'API search time: {time.perf_counter() - start} for {len(all_masses)} structures')
+        start = time.perf_counter()  # Initialize start before the loop
 
+        if self.n_masses > 0:
+            for idx in range(0, self.n_masses, chunk_size):
+                chunk = all_masses[idx: min(idx + chunk_size, self.n_masses)]
+                self.cfmid_responses = []
+                logger.info(f'API search: {chunk_size} of {len(all_masses)} structures')
+                logger.info(f'\t\t\t Total count: {idx}')
+                asyncio.run(ms2_api_search(self.cfmid_responses, chunk, self.precursor_mass_accuracy, self.jobid))
+
+            logger.info(f'API search time: {time.perf_counter() - start} for {len(all_masses)} structures')
+        else:
+            logger.warning("No masses to process.")
             
     def calc_CFMID_similarity(self):
         """
@@ -247,9 +258,23 @@ class MS2Run:
         #     self.update_progress()
         
 
-    def save_data(self):         
-        self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
-        self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
+    def save_data(self): 
+        # log self
+        inputParameters = self.inputParameters
+        logger.info("save_data - inputParameters:")
+        logger.info(inputParameters)
+        #convert inputParameters to a dataframe
+        inputParameters_df = pd.DataFrame.from_dict(inputParameters, orient='index')
+        # log inputParameters_df
+        logger.info("save_data - inputParameters_df:")
+        logger.info(inputParameters_df)
+
+        #self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
+        #self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
+        # 2/23/2023 Reverse the filenames index, currently pointing to the wrong file
+        self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][1])
+        self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][0])
+        self.mongo_save(inputParameters_df, step=FILENAMES['final_output'][2])
 
         
     def send_email(self):

@@ -1,5 +1,5 @@
 #FROM continuumio/miniconda3:4.10.3
-FROM daskdev/dask:2022.10.0-py3.9
+FROM daskdev/dask:2023.4.0-py3.9
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update --allow-releaseinfo-change -y
@@ -15,7 +15,7 @@ COPY . /src/nta_app
 RUN conda create --name pyenv python=3.9.13
 RUN conda config --add channels conda-forge
 RUN conda run -n pyenv --no-capture-output pip install -r /src/nta_app/requirements.txt
-RUN conda install -n pyenv uwsgi
+RUN conda install -n pyenv uwsgi=2.0.22
 
 ENV PATH "/src:/src/nta_app":${PATH}
 ENV PYTHONPATH "/src:/src/nta_app":${PYTHONPATH}

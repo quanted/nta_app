@@ -1,0 +1,424 @@
+/* set up general styles */
+div {
+  border-radius: 10px;
+}
+h1 {
+  text-align: center;
+}
+svg {
+  background-color: white;
+  overflow: visible;
+}
+text {
+  margin: auto;
+  white-space: pre;
+}
+#header {
+  font-size: 1.8rem;
+}
+.underline {
+  text-decoration-line: underline;
+}
+.repThreshSliderA {
+  border: 1px solid white;
+}
+
+/* set up styling for the grid that holds our content */
+.myTable { grid-area: myTable; }
+.repThreshSliderA { grid-area: repThreshSliderA; }
+.cvThreshSliderA { grid-area: cvThreshSliderA; }
+.downloadA { grid-area: downloadA; }
+.repThreshSliderB { grid-area: repThreshSliderB; }
+.cvThreshSliderB { grid-area: cvThreshSliderB; }
+.downloadB { grid-area: downloadB; }
+.occTreeA { grid-area: occTreeA; }
+.featTreeA { grid-area: featTreeA; }
+.occTreeB { grid-area: occTreeB; }
+.featTreeB { grid-area: featTreeB; }
+.toggleButtons { grid-area: toggleButtons; }
+.grid-container {
+  font-family: ui-rounded;
+  margin: auto;
+  display: grid;
+  align-items: left;
+  justify-content: left;
+  grid-template-areas: 
+    'occTreeA repThreshSliderA featTreeA'  
+    'occTreeA cvThreshSliderA featTreeA'
+    'occTreeA downloadA featTreeA'
+    'occTreeA myTable featTreeA'
+    'occTreeA myTable featTreeA'
+    'occTreeA myTable featTreeA'
+    'occTreeB myTable featTreeB'
+    'occTreeB myTable featTreeB'
+    'occTreeB repThreshSliderB featTreeB'  
+    'occTreeB cvThreshSliderB featTreeB'
+    'occTreeB downloadB featTreeB' /* featTreeA */
+    'occTreeB toggleButtons featTreeB';
+  gap: 3px;
+  background-color: #313131;
+  padding: 3px;
+  padding-right: 70px;
+  outline: 2px solid #000000;
+  overflow: hidden;
+  margin: auto;
+  width: 3350px;
+  grid-template-columns: 1fr 600px 1fr;
+}
+.grid-container > div {
+  background-color: rgba(255, 255, 255, 1);
+  text-align: center;
+  padding: 20px 0px;
+  font-size: 1.4rem;
+  border: 2px solid rgb(0, 0, 0);
+  color: rgb(0, 0, 0);
+}
+div.occTreeA, div.occTreeB, div.featTreeA, div.featTreeB {
+  padding: 0 0;
+  margin: 0 1px;
+}
+div.toggleButtons {
+  background-color: #d1e9fb;
+}
+/* div.cvThreshSliderA, div.repThreshSliderA, div.cvThreshSliderB, div.repThreshSliderB, div.downloadA, div.downloadB, div.myTable {
+  background-color: #f6fff6;
+} */
+
+/* set up styling for input / sliders */
+input {
+  margin-left: auto;
+  margin-right: auto;
+  height: 30px;
+  width: 200px;
+  font-size: 24px;
+  border-radius: 6px;
+  padding-left: 10px;
+}
+
+/* set style for table */
+table {
+  border-style: none;
+  border-width: 4px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
+  border-spacing: 3px;
+  position: relative;
+  background-color: white;
+  color: rgb(0, 0, 0);
+  margin: auto;
+  width: 98%;
+  font-family: arial, sans-serif;
+  border-color: rgb(38, 38, 38);
+  margin-top: -15px;
+  margin-bottom: -15px;
+}
+td, th {
+  border: 1px solid #555555;
+  border-radius: 3px;
+  text-align: center;
+  padding: 0.75rem;
+}
+th {
+  color: #ebebeb;
+  background-color: #1c1c1c;
+
+}
+td:nth-child(5n - 4) {
+  text-align: left;
+}
+tr:nth-child(5) {
+  font-weight: bold;
+}
+tr:nth-child(4) {
+  background-color: #F999A4;
+}
+tr:nth-child(3) {
+  background-color: #B2B2B2;
+}
+.slider {
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  width: 90%; /* Full-width */
+  height: 25px; /* Specified height */
+  background: #5f5f5f; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  transition: opacity .2s;
+  border-radius: 20px;
+  margin: 20px auto 30px auto;
+  border: 1px solid white;
+  padding: 0;
+}
+/* Mouse-over effects */
+  .slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 40px; /* Set a specific slider handle width */
+  height: 40px; /* Slider handle height */
+  background: #e7dc90; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 20px;
+  border: 4px solid rgb(0, 0, 0);
+  padding: 0;
+}
+.slider::-moz-range-thumb {
+  width: 40px; /* Set a specific slider handle width */
+  height: 40px; /* Slider handle height */
+  background: #e7dc90; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 20px;
+  border: 4px solid rgb(0, 0, 0);
+  padding: 0;
+}
+
+.slider_cv::-webkit-slider-thumb {
+  background: #5cbfc6;
+}
+
+button {
+  font-size: 29px;
+  padding: 6px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+button.download {
+  background-color: rgb(255, 255, 255); /* set background-color for transition on hover */
+  border: 4px solid #0e6cb6;    /* set a border for transition on hover */
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 10px;
+  font-weight: 600;
+  -webkit-transition: 0.2s;
+  transition: background-color 0.2s, border 0.2s, color 0.2s;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+button.download:hover {
+  background-color: #0e6cb6;
+  border: 4px solid #000;
+  color: rgb(255, 255, 255);
+}
+
+
+
+
+
+/* set up general styles */
+/*div {*/
+/*  border-radius: 10px;*/
+/*}*/
+/*h1 {*/
+/*  text-align: center;*/
+/*}*/
+/*svg {*/
+/*  background-color: black;*/
+/*  overflow: visible;*/
+/*}*/
+/*text {*/
+/*  margin: auto;*/
+/*  white-space: pre;*/
+/*}*/
+/*#header {*/
+/*  font-size: 1.8rem;*/
+/*}*/
+/*.underline {*/
+/*  text-decoration-line: underline;*/
+/*}*/
+/*.repThreshSliderA {*/
+/*  border: 1px solid white;*/
+/*}*/
+
+/* set up styling for the grid that holds our content */
+/*.myTable { grid-area: myTable; }*/
+/*.repThreshSliderA { grid-area: repThreshSliderA; }*/
+/*.cvThreshSliderA { grid-area: cvThreshSliderA; }*/
+/*.downloadA { grid-area: downloadA; }*/
+/*.repThreshSliderB { grid-area: repThreshSliderB; }*/
+/*.cvThreshSliderB { grid-area: cvThreshSliderB; }*/
+/*.downloadB { grid-area: downloadB; }*/
+/*.occTreeA { grid-area: occTreeA; }*/
+/*.featTreeA { grid-area: featTreeA; }*/
+/*.occTreeB { grid-area: occTreeB; }*/
+/*.featTreeB { grid-area: featTreeB; }*/
+/*.toggleButtons { grid-area: toggleButtons; }*/
+/*.grid-container {*/
+/*  font-family: ui-rounded;*/
+/*  margin: auto;*/
+/*  display: grid;*/
+/*  align-items: left;*/
+/*  justify-content: left;*/
+/*  grid-template-areas: */
+/*    'occTreeA repThreshSliderA occTreeB'  */
+/*    'occTreeA cvThreshSliderA occTreeB'*/
+/*    'occTreeA downloadA occTreeB'*/
+/*    'occTreeA myTable occTreeB'*/
+/*    'occTreeA myTable occTreeB'*/
+/*    'featTreeA myTable featTreeB'*/
+/*    'featTreeA myTable featTreeB'*/
+/*    'featTreeA repThreshSliderB featTreeB'  */
+/*    'featTreeA cvThreshSliderB featTreeB'*/
+/*    'featTreeA downloadB featTreeB';*/
+/*  gap: 3px;*/
+/*  background-color: #313131;*/
+/*  padding: 3px;*/
+/*  padding-right: 70px;*/
+/*  outline: 2px solid #000000;*/
+/*  overflow: hidden;*/
+/*  margin: auto;*/
+/*  width: 3350px;*/
+/*  grid-template-columns: 1fr 600px 1fr;*/
+/*}*/
+/*.grid-container > div {*/
+/*  background-color: rgba(0, 0, 0, 1);*/
+/*  text-align: center;*/
+/*  padding: 20px 0px;*/
+/*  font-size: 1.4rem;*/
+/*  border: 2px solid rgb(255, 255, 255);*/
+/*  color: white;*/
+/*}*/
+/*div.occTreeA, div.occTreeB, div.featTreeA, div.featTreeB {*/
+/*  padding: 0 0;*/
+/*  margin: 0 1px;*/
+/*}*/
+
+/* set up styling for input / sliders */
+/*input {*/
+/*  margin-left: auto;*/
+/*  margin-right: auto;*/
+/*  height: 30px;*/
+/*  width: 200px;*/
+/*  font-size: 24px;*/
+/*  border-radius: 6px;*/
+/*  padding-left: 10px;*/
+/*}*/
+
+/* set style for table */
+/*table {*/
+/*  border-style: solid;*/
+/*  border-width: 4px;*/
+/*  -moz-border-radius: 10px;*/
+/*  -webkit-border-radius: 10px;*/
+/*  border-radius: 10px;*/
+/*  border-spacing: 0px;*/
+/*  position: relative;*/
+/*  background-color: black;*/
+/*  color: aliceblue;*/
+/*  margin: auto;*/
+/*  width: 98%;*/
+/*  font-family: arial, sans-serif;*/
+/*  border-color: rgb(134, 134, 134);*/
+/*  margin-top: -15px;*/
+/*  margin-bottom: -15px;*/
+/*}*/
+/*td, th {*/
+/*  border: 1px solid #555555;*/
+/*  border-radius: 0px;*/
+/*  text-align: center;*/
+/*  padding: 0.75rem;*/
+/*}*/
+/*tr:nth-child(4) {*/
+/*  background-color: #2f2f2f;*/
+/*}*/
+/*tr:nth-child(5) {*/
+/*  background-color: #2f2f2f;*/
+/*}*/
+/*tr:nth-child(7) {*/
+/*  background-color: #361a1a;*/
+/*}*/
+/*tr:nth-child(8) {*/
+/*  background-color: #2f2f2f;*/
+/*}*/
+/*tr:nth-child(11) {*/
+/*  background-color: #2f2f2f;*/
+/*}*/
+/*tr:nth-child(9) {*/
+/*  background-color: #361a1a;*/
+/*}*/
+/*td:nth-child(5n - 4) {*/
+/*  text-align: left;*/
+/*}*/
+/*tr:nth-child(2) {*/
+/*  background-color: rgb(96, 94, 0);*/
+/*}*/
+/*tr:nth-child(12) {*/
+/*  background-color: #4c6c54;*/
+/*}*/
+/*.slider {*/
+  -webkit-appearance: none;  /* Override default CSS styles */
+/*  appearance: none;*/
+  width: 90%; /* Full-width */
+  height: 25px; /* Specified height */
+  background: #5f5f5f; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+/*  transition: opacity .2s;*/
+/*  border-radius: 20px;*/
+/*  margin: 20px auto 30px auto;*/
+/*  border: 1px solid white;*/
+/*  padding: 0;*/
+/*}*/
+/* Mouse-over effects */
+/*  .slider:hover {*/
+  opacity: 1; /* Fully shown on mouse-over */
+/*}*/
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+/*.slider::-webkit-slider-thumb {*/
+  -webkit-appearance: none; /* Override default look */
+/*  appearance: none;*/
+  width: 40px; /* Set a specific slider handle width */
+  height: 40px; /* Slider handle height */
+  background: #e7dc90; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+/*  border-radius: 20px;*/
+/*  border: 4px solid rgb(0, 0, 0);*/
+/*  padding: 0;*/
+/*}*/
+/*.slider::-moz-range-thumb {*/
+  width: 40px; /* Set a specific slider handle width */
+  height: 40px; /* Slider handle height */
+  background: #e7dc90; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+/*  border-radius: 20px;*/
+/*  border: 4px solid rgb(0, 0, 0);*/
+/*  padding: 0;*/
+/*}*/
+
+/*.slider_cv::-webkit-slider-thumb {*/
+/*  background: #9bc1c4;*/
+/*}*/
+
+/*button {*/
+/*  font-size: 29px;*/
+/*  padding: 6px;*/
+/*  margin-top: 5px;*/
+/*  margin-bottom: 5px;*/
+/*  cursor: pointer;*/
+/*  border-radius: 8px;*/
+/*}*/
+/*button.download {*/
+  background-color: rgb(255, 255, 255); /* set background-color for transition on hover */
+  border: 4px solid rgb(0, 141, 188);    /* set a border for transition on hover */
+/*  padding-left: 20px;*/
+/*  padding-right: 20px;*/
+/*  padding-bottom: 10px;*/
+/*  font-weight: 600;*/
+/*  -webkit-transition: 0.2s;*/
+/*  transition: background-color 0.2s, border 0.2s, color 0.2s;*/
+/*  margin-left: 10px;*/
+/*  margin-right: 10px;*/
+/*}*/
+/*button.download:hover {*/
+/*  background-color: rgb(0, 131, 174);*/
+/*  border: 4px solid rgb(254, 254, 254);*/
+/*  color: rgb(255, 255, 255);*/
+/*}*/
+

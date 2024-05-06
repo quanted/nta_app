@@ -100,7 +100,8 @@ class Feature_MS2(Feature):
         if(is_neutral):
             self.neutral_mass = self.mass
             return
-        self.neutral_mass = self.mass + 1.0073 if self.mode == 'POS' else self.mass - 1.0073  #This is the opposite of what it should be, but gives correct resutls. Tracking down bug MWB
+        #self.neutral_mass = self.mass + 1.0073 if self.mode == 'POS' else self.mass - 1.0073  #This is the opposite of what it should be, but gives correct resutls. Tracking down bug MWB
+        self.neutral_mass = self.mass - 1.0073 if self.mode == 'POS' else self.mass + 1.0073  #2/23/2023 Flip this to correct this (in addition to adjusting save_data function in ms2_task to fix Jira issue NTAW-68)
         
     def merge(self, other): #Implement later, consensus merge with fragment alignment
         return self
@@ -345,7 +346,7 @@ class MS2_Spectrum:
         """
         Aligns this object's fragment mass and intensity vlaues with the other spectrum's mass and intensity values.
         Mass values are aligned by:
-            2) Binning masses into goups by rounding masses to the 4th decimal
+            2) Binning masses into goups by rounding masses to the nearest whole number
             2) Constructing dataframe of self and other, then merging the two matricies on the 'bin_mass' column to 
                     generate all possible combinations of masses in corresponding bins
             3) Calculate the absolute difference between the the fragment masses between the self and other spectrum and 

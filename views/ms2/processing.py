@@ -34,16 +34,14 @@ def processing_page_html(header, model, tables_html):
     html += render_to_string('epa_drupal_section_title_nta.html', {})
 
     #main body
-    html += render_to_string('06ubertext_start_index_drupal.html', {
+    html += render_to_string('nta_main_content.html', {
         'TITLE': header,
         'TEXT_PARAGRAPH': tables_html
     })
-    html += render_to_string('07ubertext_end_drupal.html', {})
     html += links_left.ordered_list(model)
 
     #css and scripts
-    html += render_to_string('09epa_drupal_pram_css.html', {})
-    html += render_to_string('09epa_drupal_pram_scripts.html', {})
+    html += render_to_string('nta_scripts_css.html', {})
     html += render_to_string('ms2/nta_processing_scripts.html')
     #html += render_to_string('09epa_drupal_pram_scripts.html', {})
 
