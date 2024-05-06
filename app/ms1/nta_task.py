@@ -1414,7 +1414,7 @@ class NtaRun:
         to_search = to_search.iloc[lower_index:upper_index, :]
         if self.parameters["search_mode"][1] == "mass":
             mono_masses = task_fun.masses(to_search)
-            dsstox_search_df = api_search_mass_list(mono_masses, self.parent_ion_mass_accuracy,
+            dsstox_search_df = api_search_mass_list(mono_masses, self.parameters["parent_ion_mass_accuracy"],
                                                        jobid=self.jobid)
         else:
             formulas = task_fun.formulas(to_search)
