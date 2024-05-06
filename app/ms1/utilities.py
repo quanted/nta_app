@@ -92,30 +92,45 @@ def api_search_mass(mass, accuracy, jobid = "00000"):
     candidate_list = list(response.json())
     return candidate_list
 
+def api_search_mass_batch(mass_list, accuracy):
+    api_url = '{}/chemical/msready/search/by-mass/'.format(CCD_API)
+    logger.info(api_url)
+    http_headers = {'x-api-key': CCD_API_KEY, 'content-type': 'application/json'}
+    post_data = {"masses": mass_list, "error": accuracy}
+    response = requests.post(api_url, data=post_data, headers=http_headers)
+    candidate_list = json.loads(response.json())
+    logger.info(candidate_list)
+    return candidate_list
+
 def api_get_metadata(dtxsid):
     http_headers = {'x-api-key': CCD_API_KEY}
     chem_details_api = '{}/chemical/detail/search/by-dtxsid/{}'.format(CCD_API,dtxsid)
     chem_details_response = requests.get(chem_details_api, headers=http_headers)
-    output_dict = {dtxsid: chem_details_response.json()}
-    #logger.info('METADATA OUTPUT: {}'.format(output_dict))
+    #logger.info('METADATA OUTPUT: {}'.format({dtxsid: chem_details_response.json()}))
     return {dtxsid: chem_details_response.json()}
 
-def api_search_mass_list(masses, accuracy, jobid = "00000"):
+def api_search_mass_list(masses, accuracy, jobid = "00000", batchsize=100):
     n_masses = len(masses)
-    logging.info("Sending {} masses in batches of 1".format(n_masses))
-    results_dict = {}
-    for count, mass in enumerate(masses):
-        logger.info("Searching mass # {} out of {}".format(count+1, n_masses))
-        candidate_list = list(api_search_mass(mass, accuracy))
-        logger.info("Mass: {} - num of candidates: {}".format(mass, len(candidate_list)))
-        candidates_dict = {}
-        for candidate in candidate_list:
-            candidate_metadata = api_get_metadata(candidate)
-            candidates_dict.update(candidate_metadata)
-        results_dict[mass] = candidates_dict
-    logging.info('api search final dict: {}'.format(results_dict))
-    results_df = pd.read_json(json.dumps(results_dict))
-    return results_df
+    logging.info("Sending {} masses in batches of {}".format(n_masses, batchsize))
+    candidates_dict = {}
+    for i in range(0, len(masses), batchsize):
+        candidates_batch = api_search_mass_batch(mass_list=masses[i:i+batchsize],
+                              accuracy=accuracy)
+        candidates_dict.update(candidates_batch)
+    # for count, mass in enumerate(masses):
+    #     logger.info("Searching mass # {} out of {}".format(count+1, n_masses))
+    #     candidate_list = list(api_search_mass(mass, accuracy))
+    #     logger.info("Mass: {} - num of candidates: {}".format(mass, len(candidate_list)))
+    #     candidates_dict = {}
+    #     for candidate in candidate_list:
+    #         candidate_metadata = api_get_metadata(candidate)
+    #         candidates_dict.update(candidate_metadata)
+    #     results_dict[mass] = candidates_dict
+    # logging.info('api search final dict: {}'.format(results_dict))
+    # results_df = pd.read_json(json.dumps(results_dict))
+    logging.info("final ms ready batch result reached")
+    #return results_df
+    return None
 
 @response_log_wrapper('DSSTOX')
 def api_search_formulas(formulas, jobID = "00000"):
