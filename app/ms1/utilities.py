@@ -98,7 +98,7 @@ def api_search_mass_batch(mass_list, accuracy):
     http_headers = {'x-api-key': CCD_API_KEY, 'content-type': 'application/json'}
     post_data = {"masses": mass_list, "error": accuracy}
     response = requests.post(api_url, data=post_data, headers=http_headers)
-    candidate_list = json.loads(response.json())
+    candidate_list = response.json()
     logger.info(candidate_list)
     return candidate_list
 
