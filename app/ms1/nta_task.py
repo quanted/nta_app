@@ -596,12 +596,12 @@ class NtaRun:
         return
 
     def cv_scatterplot(self, input_dfs):
+        # Set defaults
         plt.rcdefaults()
-
+        # Set title
         titleText = "CV vs. Abundance"
-
+        # Get user input CV threshold, convert to float
         max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
-        # convert to float
         max_replicate_cv_value = float(max_replicate_cv_value)
 
         # get dataframe 'Feature_statistics_positive' if it exists else None
@@ -610,21 +610,19 @@ class NtaRun:
             if "Feature_statistics_positive" in self.data_map
             else None
         )
-
         # get dataframe 'Feature_statistics_negative' if it exists else None
         dfNeg = (
             self.data_map["Feature_statistics_negative"]
             if "Feature_statistics_negative" in self.data_map
             else None
         )
-
+        # get 'Tracer_Sample_Results' if it exists else None
         dfTracer = (
             self.data_map["Tracer_Sample_Results"]
             if "Tracer_Sample_Results" in self.data_map
             else None
         )
-
-        # Add conditional for if tracers exist:
+        # Add conditional; if tracer exists reformat
         if dfTracer is not None:
             tracers = dfTracer[["Observed_Mass", "Observed_Retention_Time"]].copy()
             tracers.rename({"Observed_Mass": "Mass"}, axis=1, inplace=True)
@@ -632,8 +630,7 @@ class NtaRun:
                 {"Observed_Retention_Time": "Retention_Time"}, axis=1, inplace=True
             )
             tracers["spike"] = 1
-
-        # combine the two dataframes. Ignnore non-existing dataframes
+        # combine the two dataframes, ignore non-existing dataframes
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
             if dfPos is not None and dfNeg is not None
@@ -643,81 +640,20 @@ class NtaRun:
             if dfNeg is not None
             else None
         )
-
-        # # log the dataframes if not None
-        # if dfPos is not None:
-        #     logger.info("dfPos= {}".format(dfPos.columns.values))
-        # if dfNeg is not None:
-        #     logger.info("dfNeg= {}".format(dfNeg.columns.values))
-        # if dfCombined is not None:
-        #     logger.info("dfCombined= {}".format(dfCombined.columns.values))
-
         # Get sample headers
         all_headers = task_fun.parse_headers(dfCombined)
-        # logger.info("all_headers= {}".format(all_headers))
         sam_headers = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
-        # logger.info("sam_headers= {}".format(sam_headers))
-
         # Isolate sample_groups from stats columns
         prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_"]
         sample_groups = [
             item for item in sam_headers if not any(x in item for x in prefixes)
         ]
-        # logger.info("sample_groups= {}".format(sample_groups))
-
-        # Blank_MDL - need to check what the blank samples are actually named
-        blank_strings = ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"]
-        blank_col = [
-            item for item in sample_groups if any(x in item for x in blank_strings)
-        ]
-        # logger.info("blank_col= {}".format(blank_col))
-
-        blank_mean = "Mean_" + blank_col[0]
-        # logger.info("blank_mean= {}".format(blank_mean))
-        blank_std = "STD_" + blank_col[0]
-        # logger.info("blank_std= {}".format(blank_std))
-
-        dfCombined["MDL"] = dfCombined[blank_mean] + 3 * dfCombined[blank_std]
-        # logger.info("dfCombined['MDL']= {}".format(dfCombined['MDL']))
-        # logger.info("dfCombined= {}".format(dfCombined.columns.values))
-
-        # Find CV cols from df
+        # Find CV cols from df, subset cv_df from df
         cv_cols = ["CV_" + col for col in sample_groups]
-        # logger.info("cv_cols= {}".format(cv_cols))
-        rper_cols = ["Replicate_Percent_" + col for col in sample_groups]
-        # logger.info("rper_cols= {}".format(rper_cols))
-        med_cols = ["Median_" + col for col in sample_groups]
-        # logger.info("med_cols= {}".format(med_cols))
-
-        # Grab CV cols from df
         cv_df = dfCombined[cv_cols]
-        # logger.info("cv_df= {}".format(cv_df.columns.values))
-        rper_df = dfCombined[rper_cols]
-        # logger.info("rper_df= {}".format(rper_df.columns.values))
-        med_df = dfCombined[med_cols]
-        # logger.info("med_df= {}".format(med_df.columns.values))
-
-        # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
-        for x, y, z in zip(cv_cols, rper_cols, med_cols):
-            # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
-            cv_df.loc[dfCombined[y] < 0.67, x] = np.nan
-            cv_df.loc[dfCombined[z] <= dfCombined["MDL"], x] = np.nan
-        # logger.info("#1 cv_df= {}".format(cv_df.values))
-
-        # Find CV cols from df
-        cv_cols = ["CV_" + col for col in sample_groups]
-
-        # Grab CV cols from df
-        cv_df = dfCombined[cv_cols]
+        # Carry over Mass and Retention_Time
         cv_df["Mass"] = dfCombined["Mass"]
         cv_df["Retention_Time"] = dfCombined["Retention_Time"]
-
-        # Find mean cols from df
-        mean_cols = ["Mean_" + col for col in sample_groups]
-
-        # Grab mean cols from df
-        mean_df = dfCombined[mean_cols]
-
         # AC 2/8/2024 Get minimum and maximum abundance values of dataframe (mean columns) for the purposes of setting the x-axis range
         min_abundance_value = mean_df.min(numeric_only=True).min()
         max_abundance_value = mean_df.max(numeric_only=True).max()
@@ -728,36 +664,26 @@ class NtaRun:
         else:
             min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
         max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
-
+        # Create list, define blank strings
         li = []
         blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
-        # stds=['Standard','Pooled', 'SSC', 'BSD', 'BS2', 'MSD', 'MS']
-
-        # Take each sample's CV and mean, store in dummy variable
-        # Add sample type, and whether or not native samples are present or not
-        # Append to list
+        # Loop through sample groups
         for x in sample_groups:
+            # Take each sample's CV and mean, store in dummy variable
             cv = "CV_" + x
             mean = "Mean_" + x
-
             dum = pd.concat([cv_df[cv], mean_df[mean]], axis=1)
             dum.rename({cv: "CV"}, axis=1, inplace=True)
             dum.rename({mean: "Mean"}, axis=1, inplace=True)
-
             dum["sample"] = x
             dum["Mass"] = cv_df["Mass"]
             dum["Retention_Time"] = cv_df["Retention_Time"]
-
+            # Add sample type (blank or sample)
             if any(i in x for i in blanks):
                 dum["type"] = "blank"
-                # dum['native'] = 0
-            # elif any(i in x for i in stds):
-            #     dum['type'] = 'spiked'
-            #     dum['native'] = 1
             else:
                 dum["type"] = "sample"
-                # dum['native'] = 0
-
+            # Append to list
             li.append(dum)
 
         # Concatenate plot, drop NAs
@@ -774,15 +700,13 @@ class NtaRun:
             plot2 = plot.copy()
 
         plot2.replace(np.nan, 0, inplace=True)
-
+        # Define subplots, set height and width
         f, axes = plt.subplots(1, 2)
-
         f.set_figheight(5)
         f.set_figwidth(15)
-
+        # Set palette
         palette = ["whitesmoke", "firebrick"]
         sns.set_palette(palette, 2)
-
         # Blank plot
         a = sns.scatterplot(
             data=plot2.loc[((plot2["type"] == "blank")), :].sort_values("spike"),
@@ -794,7 +718,6 @@ class NtaRun:
             legend=False,
             ax=axes[0],
         )
-
         # Add CV red dashed line
         a.axhline(
             y=max_replicate_cv_value,
@@ -810,20 +733,18 @@ class NtaRun:
             ha="center",
             va="center_baseline",
             weight="bold",
-            size=12,
+            size=14,
         )
-
         # Adjust axes labels
         axes[0].set_title(titleText + ": Blanks", weight="bold")
-        axes[0].set_xlabel("Mean Abundance", fontsize=12)
-        axes[0].set_ylabel("CV", fontsize=12)
+        axes[0].set_xlabel("Mean Abundance", fontsize=14)
+        axes[0].set_ylabel("CV", fontsize=14)
         axes[0].set_ylim(0, 2.5)
         axes[0].set_xlim(
             min_abundance_limit, max_abundance_limit
         )  # Set x-axis to scale based on the min/max data points
         axes[0].set(xscale="log")
         axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
-
         # Sample plot
         b = sns.scatterplot(
             data=plot2.loc[((plot2["type"] != "blank")), :].sort_values("spike"),
@@ -834,7 +755,6 @@ class NtaRun:
             alpha=0.5,
             ax=axes[1],
         )
-
         # Add CV red dashed line
         b.axhline(
             y=max_replicate_cv_value,
@@ -850,9 +770,8 @@ class NtaRun:
             ha="center",
             va="center_baseline",
             weight="bold",
-            size=12,
+            size=14,
         )
-
         # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
         legend = b.legend(title="Features")
         # Set legend labels
@@ -866,27 +785,22 @@ class NtaRun:
         frame.set_facecolor("lightgray")  # color of legend
         frame.set_edgecolor("black")  # edge color of legend
         frame.set_alpha(1)  # deals with transparency
-
         # Adjust axes labels
         axes[1].set_title(titleText + ": Non-blanks", weight="bold")
-        axes[1].set_xlabel("Mean Abundance", fontsize=12)
-        axes[1].set_ylabel("CV", fontsize=12)
+        axes[1].set_xlabel("Mean Abundance", fontsize=14)
+        axes[1].set_ylabel("CV", fontsize=14)
         axes[1].set_ylim(0, 2.5)
         axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
         axes[1].set(xscale="log")
         axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
-
-        # plt.savefig('./outputTest02/cv_scatterplot.png', bbox_inches='tight')
-
         # Convert the plot to a bytes-like object
         buffer = io.BytesIO()
         plt.savefig(buffer)
         # buffer.seek(0)
-
+        # Store in class variable
         self.cv_scatterplots_out.append(buffer.getvalue())
-
+        # Map to outputs
         self.cv_scatterplot_map["cv_scatterplot"] = self.cv_scatterplots_out[0]
-
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
             "&&".join(self.cv_scatterplot_map.keys()),
@@ -897,40 +811,34 @@ class NtaRun:
         self.mongo_save(
             self.cv_scatterplot_map["cv_scatterplot"], step="cv_scatterplot"
         )
-
         # reset plt
         plt.clf()
 
     def occurrence_heatmap(self, input_dfs):
         plt.rcdefaults()
-
+        # Get user input CV and Replicate thresholds
         max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
         min_replicate_hits_percent = self.parameters["min_replicate_hits"][1]
-
         # convert max_replicate_cv_value to a numeric value
         max_replicate_cv_value = pd.to_numeric(
             self.parameters["max_replicate_cv"][1], errors="coerce"
         )
-
         # convert min_replicate_hits_percent to a numeric value
         min_replicate_hits_percent = pd.to_numeric(
             self.parameters["min_replicate_hits"][1], errors="coerce"
         )
-
         # get dataframe 'Feature_statistics_positive' if it exists else None
         dfPos = (
             self.data_map["Feature_statistics_positive"]
             if "Feature_statistics_positive" in self.data_map
             else None
         )
-
         # get dataframe 'Feature_statistics_negative' if it exists else None
         dfNeg = (
             self.data_map["Feature_statistics_negative"]
             if "Feature_statistics_negative" in self.data_map
             else None
         )
-
         # combine the two dataframes. Ignnore non-existing dataframes
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
@@ -948,125 +856,72 @@ class NtaRun:
                 max_replicate_cv_value, min_replicate_hits_percent
             )
         )
-
-        # # log the dataframes if not None
-        # if dfPos is not None:
-        #     logger.info("dfPos= {}".format(dfPos.columns.values))
-        # if dfNeg is not None:
-        #     logger.info("dfNeg= {}".format(dfNeg.columns.values))
-        # if dfCombined is not None:
-        #     logger.info("dfCombined= {}".format(dfCombined.columns.values))
-
         # Get sample headers
         all_headers = task_fun.parse_headers(dfCombined)
-        # logger.info("all_headers= {}".format(all_headers))
         sam_headers = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
-        # logger.info("sam_headers= {}".format(sam_headers))
-
         # Isolate sample_groups from stats columns
         prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_"]
         sample_groups = [
             item for item in sam_headers if not any(x in item for x in prefixes)
         ]
         logger.info("sample_groups= {}".format(sample_groups))
-
         # Blank_MDL - need to check what the blank samples are actually named
         blank_strings = ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"]
         blank_col = [
             item for item in sample_groups if any(x in item for x in blank_strings)
         ]
         logger.info("blank_col= {}".format(blank_col))
-
         blank_mean = "Mean_" + blank_col[0]
-        # logger.info("blank_mean= {}".format(blank_mean))
         blank_std = "STD_" + blank_col[0]
-        # logger.info("blank_std= {}".format(blank_std))
-
+        # Calculate MDL
         dfCombined["MDL"] = dfCombined[blank_mean] + 3 * dfCombined[blank_std]
-        # logger.info("dfCombined['MDL']= {}".format(dfCombined['MDL']))
-        # logger.info("dfCombined= {}".format(dfCombined.columns.values))
-
-        # Find CV cols from df
+        dfCombined["MDL"] = dfCombined["MDL"].fillna(df[blank_mean])
+        dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
+        # Find CV, Rep_Percent, and Mean cols from df
         cv_cols = ["CV_" + col for col in sample_groups]
-        # logger.info("cv_cols= {}".format(cv_cols))
         rper_cols = ["Replicate_Percent_" + col for col in sample_groups]
-        # logger.info("rper_cols= {}".format(rper_cols))
-        med_cols = ["Median_" + col for col in sample_groups]
-        # logger.info("med_cols= {}".format(med_cols))
-
-        # Grab CV cols from df
+        mean_cols = ["Mean_" + col for col in sample_groups]
+        # Subset CV cols from df
         cv_df = dfCombined[cv_cols]
-        # logger.info("cv_df= {}".format(cv_df.columns.values))
-        rper_df = dfCombined[rper_cols]
-        # logger.info("rper_df= {}".format(rper_df.columns.values))
-        med_df = dfCombined[med_cols]
-        # logger.info("med_df= {}".format(med_df.columns.values))
-
-        logger.info("cv_df shape= {}".format(cv_df.shape))
-        logger.info("rper_df shape= {}".format(rper_df.shape))
-        logger.info("med_df shape= {}".format(med_df.shape))
-        logger.info("dfCombined shape= {}".format(dfCombined.shape))
-
-        # Blank out cvs in samples with <2 samples -- NEED TO UPDATE TO REPLICATE PERCENT
-        for x, y, z in zip(cv_cols, rper_cols, med_cols):
+        # Blank out cvs in samples with <2 samples
+        for x, y, z in zip(cv_cols, rper_cols, mean_cols):
             # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
             cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
             cv_df.loc[dfCombined[z] <= dfCombined["MDL"], x] = np.nan
-        # logger.info("#1 cv_df= {}".format(cv_df.values))
-
         # Add sum of Trues for condition applied to cv dataframe
         cv_df["below count"] = (cv_df <= max_replicate_cv_value).sum(axis=1)
-        # logger.info("#2 cv_df= {}".format(cv_df.values))
-
-        # Sort values by medians
+        # Sort values by how many detects are present
         cv_df = cv_df.sort_values("below count")
-        # logger.info("#3 cv_df= {}".format(cv_df.values))
-
-        # Remove median column
+        # Remove below count column
         del cv_df[cv_df.columns[-1]]
-        # logger.info("#4 cv_df= {}".format(cv_df.values))
-
         # Create masks for CV cutoffs
         above = cv_df > max_replicate_cv_value
         below = cv_df <= max_replicate_cv_value
         nan_ = cv_df.isna()
-
-        # Get sum values for each group (use these in colorbar labels)
-        print(above.sum().sum())
-        print(below.sum().sum())
-        print(nan_.sum().sum())
-
         # Use masks to changes values in cv_df to 1, 0, -1
         dum = np.where(above, 1, cv_df)
         dum = np.where(below, 0, dum)
         dum = np.where(nan_, -1, dum)
-        logger.info("#5 cv_df= {}".format(cv_df.values))
-
         # Create matrix from discretized dataframe
-        cv_df_discrete = pd.DataFrame(dum, index=cv_df.index, columns=cv_df.columns)
+        cv_df_discrete = pd.DataFrame(
+            dum, index=cv_df.index, columns=[col[3:] for col in cv_df.columns]
+        )
         cv_df_trans = cv_df_discrete.transpose()
-
         # Set Figure size and title
         plt.figure(figsize=(40, 15))
         plt.title(titleText, fontsize=36)
         plt.yticks(fontsize=20, rotation=90)
-        plt.ylabel("Sample Set", fontsize=28)
-        plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
-        # plt.title('CA Data MS1 Feature Heatmap (post-blank subtraction), ESI- (n='+str(cv_df.size)+')\nSorted by # samples below CV threshold (lowest[left] to highest[right])', fontsize = 36)
-
         # Create custom color mapping
         myColors = ((0.8, 0.8, 0.8, 1.0), (1.0, 1.0, 1.0, 1.0), (1, 0.0, 0.2, 1.0))
         cmap = LinearSegmentedColormap.from_list("Custom", myColors, len(myColors))
-
         # Plot heatmap
         ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
-
         ax.set(xticklabels=[])
-
+        plt.ylabel("Sample Set", fontsize=28)
+        plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
         # Add outside border
         ax.patch.set_edgecolor("black")
         ax.patch.set_linewidth(2)
-
         # Manually specify colorbar labelling after it's been generated
         colorbar = ax.collections[0].colorbar
         colorbar.ax.tick_params(labelsize=24)
@@ -1078,20 +933,16 @@ class NtaRun:
                 "CV > {} ({})".format(max_replicate_cv_value, above.sum().sum()),
             ]
         )
-
-        # plt.savefig('./outputTest02/occurrence_heatmap.png', bbox_inches='tight')
-
         # Convert the plot to a bytes-like object
         buffer = io.BytesIO()
         plt.savefig(buffer)
         # buffer.seek(0)
-
+        # Store in class variable
         self.occurrence_heatmaps_out.append(buffer.getvalue())
-
+        # Map to outputs
         self.occurrence_heatmap_map[
             "occurrence_heatmap"
         ] = self.occurrence_heatmaps_out[0]
-
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
             "&&".join(self.occurrence_heatmap_map.keys()),
@@ -1102,7 +953,6 @@ class NtaRun:
         self.mongo_save(
             self.occurrence_heatmap_map["occurrence_heatmap"], step="occurrence_heatmap"
         )
-
         # reset plt
         plt.clf()
 
