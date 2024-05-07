@@ -259,7 +259,7 @@ class NtaRun:
             # print(self.tracer_dfs_out)
         # counting occrrences of each feature after cleaning
 
-        # 3.1: CV Scatterplog
+        # 3.1: CV Scatterplot
         self.step = "Create scatterplot"
         self.cv_scatterplot(self.dfs)
 
