@@ -920,7 +920,7 @@ class NtaRun:
         # Plot heatmap
         ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
         ax.set(xticklabels=[])
-        plt.ylabel("Sample Set", fontsize=28)
+        # plt.ylabel("Sample Set", fontsize=28)
         plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
         # Add outside border
         ax.patch.set_edgecolor("black")
