@@ -651,6 +651,9 @@ class NtaRun:
         # Find CV cols from df, subset cv_df from df
         cv_cols = ["CV_" + col for col in sample_groups]
         cv_df = dfCombined[cv_cols]
+        # Find CV cols from df, subset cv_df from df
+        mean_cols = ["Mean_" + col for col in sample_groups]
+        mean_df = dfCombined[mean_cols]
         # Carry over Mass and Retention_Time
         cv_df["Mass"] = dfCombined["Mass"]
         cv_df["Retention_Time"] = dfCombined["Retention_Time"]
