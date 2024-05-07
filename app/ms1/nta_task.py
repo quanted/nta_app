@@ -875,7 +875,7 @@ class NtaRun:
         blank_std = "STD_" + blank_col[0]
         # Calculate MDL
         dfCombined["MDL"] = dfCombined[blank_mean] + 3 * dfCombined[blank_std]
-        dfCombined["MDL"] = dfCombined["MDL"].fillna(df[blank_mean])
+        dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
         dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
         # Find CV, Rep_Percent, and Mean cols from df
         cv_cols = ["CV_" + col for col in sample_groups]
