@@ -790,7 +790,7 @@ class NtaRun:
         frame.set_edgecolor("black")  # edge color of legend
         frame.set_alpha(1)  # deals with transparency
         # Adjust axes labels
-        axes[1].set_title(titleText + ": Non-blanks", weight="bold")
+        axes[1].set_title(titleText + ": Non-blanks", fontsize=18, weight="bold")
         axes[1].set_xlabel("Mean Abundance", fontsize=14)
         axes[1].set_ylabel("CV", fontsize=14)
         axes[1].set_ylim(0, 2.5)
@@ -915,13 +915,13 @@ class NtaRun:
         # Set Figure size and title
         plt.figure(figsize=(40, 15))
         plt.title(titleText, fontsize=40)
-        plt.ylabel("Sample Set", fontsize=28)
-        plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
         # Create custom color mapping
         myColors = ((0.8, 0.8, 0.8, 1.0), (1.0, 1.0, 1.0, 1.0), (1, 0.0, 0.2, 1.0))
         cmap = LinearSegmentedColormap.from_list("Custom", myColors, len(myColors))
         # Plot heatmap
         ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
+        ax.set_ylabel("Sample Set", fontsize=28)
+        ax.set_xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
         ax.set(xticklabels=[])
         ax.tick_params(axis="both", which="both", labelsize=20, labelrotation=90)
         # Add outside border
