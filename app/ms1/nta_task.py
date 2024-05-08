@@ -1286,7 +1286,7 @@ class NtaRun:
                 orient="split",
                 dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
             )
-        dsstox_search_df = self.mpp_ready[
+        dsstox_search_df = self.mpp_ready_flagged[
             ["Feature_ID", "Mass", "Retention_Time"]
         ].merge(dsstox_search_df, how="right", left_on="Mass", right_on="INPUT")
         self.data_map["chemical_results"] = dsstox_search_df
