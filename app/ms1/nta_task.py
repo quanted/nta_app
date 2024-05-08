@@ -739,7 +739,7 @@ class NtaRun:
             size=14,
         )
         # Adjust axes labels
-        axes[0].set_title(titleText + ": Blanks", weight="bold")
+        axes[0].set_title(titleText + ": Blanks", fontsize=18, weight="bold")
         axes[0].set_xlabel("Mean Abundance", fontsize=14)
         axes[0].set_ylabel("CV", fontsize=14)
         axes[0].set_ylim(0, 2.5)
@@ -748,6 +748,7 @@ class NtaRun:
         )  # Set x-axis to scale based on the min/max data points
         axes[0].set(xscale="log")
         axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
+        axes[0].tick_params(axis="both", which="both", labelsize=12)
         # Sample plot
         b = sns.scatterplot(
             data=plot2.loc[((plot2["type"] != "blank")), :].sort_values("spike"),
@@ -796,6 +797,7 @@ class NtaRun:
         axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
         axes[1].set(xscale="log")
         axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
+        axes[1].tick_params(axis="both", which="both", labelsize=12)
         # Convert the plot to a bytes-like object
         buffer = io.BytesIO()
         plt.savefig(buffer)
@@ -912,16 +914,16 @@ class NtaRun:
         cv_df_trans = cv_df_discrete.transpose()
         # Set Figure size and title
         plt.figure(figsize=(40, 15))
-        plt.title(titleText, fontsize=36)
-        plt.yticks(fontsize=20, rotation=90)
+        plt.title(titleText, fontsize=40)
+        plt.ylabel("Sample Set", fontsize=28)
+        plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
         # Create custom color mapping
         myColors = ((0.8, 0.8, 0.8, 1.0), (1.0, 1.0, 1.0, 1.0), (1, 0.0, 0.2, 1.0))
         cmap = LinearSegmentedColormap.from_list("Custom", myColors, len(myColors))
         # Plot heatmap
         ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
         ax.set(xticklabels=[])
-        plt.ylabel("Sample Set", fontsize=28)
-        plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
+        ax.tick_params(axis="both", which="both", labelsize=20, labelrotation=90)
         # Add outside border
         ax.patch.set_edgecolor("black")
         ax.patch.set_linewidth(2)
