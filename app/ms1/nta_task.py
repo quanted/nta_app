@@ -923,13 +923,13 @@ class NtaRun:
         ax.set_ylabel("Sample Set", fontsize=28)
         ax.set_xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
         ax.set(xticklabels=[])
-        ax.tick_params(axis="y", which="both", labelsize=20, labelrotation=0)
+        ax.tick_params(axis="y", which="both", labelsize=24, labelrotation=0)
         # Add outside border
         ax.patch.set_edgecolor("black")
         ax.patch.set_linewidth(2)
         # Manually specify colorbar labelling after it's been generated
         colorbar = ax.collections[0].colorbar
-        colorbar.ax.tick_params(labelsize=24)
+        colorbar.ax.tick_params(labelsize=32)
         colorbar.set_ticks([-0.667, 0, 0.667])
         colorbar.set_ticklabels(
             [
