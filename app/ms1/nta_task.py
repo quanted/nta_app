@@ -799,7 +799,7 @@ class NtaRun:
         # Convert the plot to a bytes-like object
         buffer = io.BytesIO()
         plt.savefig(buffer)
-        # buffer.seek(0)
+        buffer.seek(0)
         # Store in class variable
         self.cv_scatterplots_out.append(buffer.getvalue())
         # Map to outputs
@@ -920,7 +920,7 @@ class NtaRun:
         # Plot heatmap
         ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
         ax.set(xticklabels=[])
-        # plt.ylabel("Sample Set", fontsize=28)
+        plt.ylabel("Sample Set", fontsize=28)
         plt.xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
         # Add outside border
         ax.patch.set_edgecolor("black")
@@ -939,7 +939,7 @@ class NtaRun:
         # Convert the plot to a bytes-like object
         buffer = io.BytesIO()
         plt.savefig(buffer)
-        # buffer.seek(0)
+        buffer.seek(0)
         # Store in class variable
         self.occurrence_heatmaps_out.append(buffer.getvalue())
         # Map to outputs
