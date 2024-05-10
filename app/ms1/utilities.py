@@ -122,6 +122,9 @@ def api_search_hcd(dtxsid_list):
     url = 'https://hcd.rtpnc.epa.gov/api/hazard'
     for dtxsid in dtxsid_list: 
         post_data['chemicals'].append({'chemical': {'sid': dtxsid, "checked": True}, "properties": {}})
+    logger.info(url)
+    logger.info(headers)
+    logger.info(post_data)
     return requests.post(url, data=json.dumps(post_data), headers=headers)
             
 def batch_search_hcd(dtxsid_list, batchsize = 200):
