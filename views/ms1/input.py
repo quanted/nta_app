@@ -56,6 +56,7 @@ def input_page(request, form_data=None, form_files=None):
         "min_replicate_hits": ["Min replicate hits", None],
         "min_replicate_hits_blanks": ["Min replicate hits in blanks", None],
         "max_replicate_cv": ["Max replicate CV", None],
+        "mrl_std_multiplier": ["MRL standard deviation multiplie", None],
         "parent_ion_mass_accuracy": ["Parent ion mass accuracy (ppm)", None],
         "minimum_rt": ["Discard features below this retention time (mins)", None],
         "search_dsstox": ["Search DSSTox for possible structures", None],
@@ -134,6 +135,7 @@ def input_page(request, form_data=None, form_files=None):
                 "min_replicate_hits_blanks"
             ]
             inputParameters["max_replicate_cv"][1] = parameters["max_replicate_cv"]
+            inputParameters["mrl_std_multiplier"][1] = parameters["mrl_std_multiplier"]
             inputParameters["parent_ion_mass_accuracy"][1] = parameters[
                 "parent_ion_mass_accuracy"
             ]
