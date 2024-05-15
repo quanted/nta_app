@@ -680,7 +680,7 @@ def statistics(df_in):
     return output
 
 
-def chunk_stats(df_in):
+def chunk_stats(df_in, mrl_multiplier=3):
     """
     Wrapper function for passing manageable-sized dataframe chunks to 'statistics' -- TMF 10/27/23
     """
@@ -712,7 +712,7 @@ def chunk_stats(df_in):
     Std = output.columns[output.columns.str.contains(pat="STD_")].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
     # Calculate feature MRL
-    output["MRL"] = (3 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL"] = (mrl_multiplier * output[Std_MB[0]]) + output[Mean_MB[0]]
     output["MRL"] = output["MRL"].fillna(output[Mean_MB[0]])
     output["MRL"] = output["MRL"].fillna(0)
     # Return dataframe with statistics calculated and MRL included, to be output as data_feature_stats
@@ -938,40 +938,44 @@ def cv_flag(df, docs, controls, Mean_Samples, CV_Samples, missing):
     return docs
 
 
-def MDL_calc(df, docs, df_flagged, Mean_Samples, Mean_MB, Std_MB):
+def MRL_calc(df, docs, df_flagged, controls, Mean_Samples, Mean_MB, Std_MB):
     """
     Function that calculates a MRL (BlkStd_cutoff) in df, df_flagged, and
     sets it to docs. MRL is 1) mean + 3*std, then 2) mean, then 3) 0. Finally,
     a mask is generated that finds detects in df. -- TMF 04/19/24
     """
-    # Calculate feature MDL
-    df["BlkStd_cutoff"] = (3 * df[Std_MB[0]]) + df[Mean_MB[0]]
+    # Get mrl_std_multiplier
+    multiplier = controls[3]
+    # Calculate feature MRL
+    df["BlkStd_cutoff"] = (multiplier * df[Std_MB[0]]) + df[Mean_MB[0]]
     df["BlkStd_cutoff"] = df["BlkStd_cutoff"].fillna(df[Mean_MB[0]])
     df["BlkStd_cutoff"] = df["BlkStd_cutoff"].fillna(0)
-    df_flagged["BlkStd_cutoff"] = (3 * df_flagged[Std_MB[0]]) + df_flagged[Mean_MB[0]]
+    df_flagged["BlkStd_cutoff"] = (multiplier * df_flagged[Std_MB[0]]) + df_flagged[
+        Mean_MB[0]
+    ]
     df_flagged["BlkStd_cutoff"] = df_flagged["BlkStd_cutoff"].fillna(
         df_flagged[Mean_MB[0]]
     )
     df_flagged["BlkStd_cutoff"] = df_flagged["BlkStd_cutoff"].fillna(0)
     docs["BlkStd_cutoff"] = df["BlkStd_cutoff"]
-    # Create a mask for docs based on sample-level MDL threshold
-    MDL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])
+    # Create a mask for docs based on sample-level MRL threshold
+    MRL_sample_mask = pd.DataFrame().reindex_like(df[Mean_Samples])
     for x in Mean_Samples:
         # Count the number of detects
-        MDL_sample_mask[x] = df[x] > df["BlkStd_cutoff"]
-    return df, docs, df_flagged, MDL_sample_mask
+        MRL_sample_mask[x] = df[x] > df["BlkStd_cutoff"]
+    return df, docs, df_flagged, MRL_sample_mask
 
 
 def calculate_detection_counts(
-    df, docs, df_flagged, MDL_sample_mask, Std_MB, Mean_MB, Mean_Samples
+    df, docs, df_flagged, MRL_sample_mask, Std_MB, Mean_MB, Mean_Samples
 ):
     """
-    Function that takes df, docs, controls, and the MDL_sample_mask and calculates
+    Function that takes df, docs, controls, and the MRL_sample_mask and calculates
     detection counts in df and df_flagged. -- TMF 04/19/24
     """
     # Calculate Detection_Count - sum mask
-    df["Detection_Count(non-blank_samples)"] = MDL_sample_mask.sum(axis=1)
-    df_flagged["Detection_Count(non-blank_samples)"] = MDL_sample_mask.sum(axis=1)
+    df["Detection_Count(non-blank_samples)"] = MRL_sample_mask.sum(axis=1)
+    df_flagged["Detection_Count(non-blank_samples)"] = MRL_sample_mask.sum(axis=1)
     # Determine total number of samples
     mean_samples = len(Mean_Samples)
     # Calculate percentage of samples that have a value and store in new column 'Detection_Count(non-blank_samples)(%)'
@@ -997,19 +1001,19 @@ def calculate_detection_counts(
     return df, docs, df_flagged
 
 
-def MRL_flag(docs, Mean_Samples, MDL_sample_mask, missing):
+def MRL_flag(docs, Mean_Samples, MRL_sample_mask, missing):
     """
-    Function that takes docs, missing, and the MDL_sample_mask and flags
-    non-detects in df (via the MDL_sample_mask) as ND. -- TMF 04/19/24
+    Function that takes docs, missing, and the MRL_sample_mask and flags
+    non-detects in df (via the MRL_sample_mask) as ND. -- TMF 04/19/24
     """
     # Update empty cell masks from the docs and df dataframes
     cell_empty = docs[Mean_Samples].isnull()
-    # append ND flag (occurrence < MDL) to documentation dataframe
+    # append ND flag (occurrence < MRL) to documentation dataframe
     docs[Mean_Samples] = np.where(
-        ~MDL_sample_mask & cell_empty & ~missing, "ND", docs[Mean_Samples]
+        ~MRL_sample_mask & cell_empty & ~missing, "ND", docs[Mean_Samples]
     )
     docs[Mean_Samples] = np.where(
-        ~MDL_sample_mask & ~cell_empty & ~missing,
+        ~MRL_sample_mask & ~cell_empty & ~missing,
         docs[Mean_Samples] + ", ND",
         docs[Mean_Samples],
     )
@@ -1193,19 +1197,19 @@ def clean_features(df_in, controls, tracer_df=False):
     """CV FLAG"""
     # Implement CV flag
     docs = cv_flag(df, docs, controls, Mean_Samples, CV_Samples, missing)
-    """MDL CALCULATION/MDL MASK GENERATION"""
-    # Calculate feature MDL
-    df, docs, df_flagged, MDL_sample_mask = MDL_calc(
-        df, docs, df_flagged, Mean_Samples, Mean_MB, Std_MB
+    """MRL CALCULATION/MRL MASK GENERATION"""
+    # Calculate feature MRL
+    df, docs, df_flagged, MRL_sample_mask = MRL_calc(
+        df, docs, df_flagged, controls, Mean_Samples, Mean_MB, Std_MB
     )
     """CALCULATE DETECTION COUNTS"""
     # Calculate Detection_Count
     df, docs, df_flagged = calculate_detection_counts(
-        df, docs, df_flagged, MDL_sample_mask, Std_MB, Mean_MB, Mean_Samples
+        df, docs, df_flagged, MRL_sample_mask, Std_MB, Mean_MB, Mean_Samples
     )
-    """MDL/ND FLAG"""
+    """MRL/ND FLAG"""
     # Implement MRL flag
-    docs = MRL_flag(docs, Mean_Samples, MDL_sample_mask, missing)
+    docs = MRL_flag(docs, Mean_Samples, MRL_sample_mask, missing)
     """ADD VALUES TO DOC"""
     # Populate docs values
     docs = populate_doc_values(df, docs, Mean_Samples, Mean_MB)

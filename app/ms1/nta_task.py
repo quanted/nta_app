@@ -549,12 +549,14 @@ class NtaRun:
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
+        mrl_multiplier = float(self.parameters["mrl_std_multiplier"][1])
         self.dfs = [
-            task_fun.chunk_stats(df) if df is not None else None for df in self.dfs
+            task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None
+            for df in self.dfs
         ]
         if self.dup_remove:
             self.dupes = [
-                task_fun.chunk_stats(df) if df is not None else None
+                task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None
                 for df in self.dupes
             ]
 
@@ -1117,6 +1119,7 @@ class NtaRun:
             float(self.parameters["min_replicate_hits"][1]),
             float(self.parameters["max_replicate_cv"][1]),
             float(self.parameters["min_replicate_hits_blanks"][1]),
+            float(self.parameters["mrl_std_multiplier"][1]),
         ]
         tracer_df_bool = False
         if self.tracer_df is not None:
