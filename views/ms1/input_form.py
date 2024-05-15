@@ -47,6 +47,15 @@ class NtaInputs(forms.Form):
         initial=0.05,
         validators=[MinValueValidator(0)],
     )
+    pos_adduct_selection = forms.CheckboxSelectMultiple(
+        choices=(
+            ("'Na', 22.989218", "Na"),
+            ("'K', 38.963158", "K"),
+            ("'NH4', 18.033823", "NH4"),
+            ("'FA', 44.99820", "FA"),
+            ("'HFA', 46.00550", "HFA"),
+        ),
+    )
     run_sequence_pos_file = forms.FileField(
         label="Run sequence positive mode file (csv; optional)",
         required=False,
