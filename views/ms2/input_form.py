@@ -50,11 +50,11 @@ class MS2ParametersInput(forms.Form):
         required=True,
     )
 
-    test_files = forms.ChoiceField(
-        label="Run test files only (debugging)",
-        choices=(("no", "no"), ("yes", "yes")),
-        initial="no",
-    )
+    # test_files = forms.ChoiceField(
+    #     label="Run test files only (debugging)",
+    #     choices=(("no", "no"), ("yes", "yes")),
+    #     initial="no",
+    # )
 
     precursor_mass_accuracy = forms.FloatField(
         label="Precursor mass accuracy (ppm)",
