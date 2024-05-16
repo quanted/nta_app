@@ -14,11 +14,11 @@ class MS2FileInput(forms.Form):
         initial="Example ms2 nta",
         required=True,
     )
-    test_files = forms.ChoiceField(
-        label="Run test files only (debugging)",
-        choices=(("no", "no"), ("yes", "yes")),
-        initial="no",
-    )
+    # test_files = forms.ChoiceField(
+    #     label="Run test files only (debugging)",
+    #     choices=(("no", "no"), ("yes", "yes")),
+    #     initial="no",
+    # )
     pos_inputs = MultipleFileField(
         label="Positive mode MS2 files (mgf)",
         validators=[FileExtensionValidator(["mgf"])],
@@ -67,9 +67,9 @@ class MS2ParametersInput(forms.Form):
         initial=0.02,
         validators=[MinValueValidator(0)],
     )
-    classification_file = forms.FileField(
-        widget=forms.ClearableFileInput(),
-        label="Fragment Classifications (csv)",
-        validators=[FileExtensionValidator(["csv"])],
-        required=False,
-    )
+    # classification_file = forms.FileField(
+    #     widget=forms.ClearableFileInput(),
+    #     label="Fragment Classifications (csv)",
+    #     validators=[FileExtensionValidator(["csv"])],
+    #     required=False,
+    # )
