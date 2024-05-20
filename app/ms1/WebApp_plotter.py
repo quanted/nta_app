@@ -1185,12 +1185,16 @@ class WebApp_plotter:
                                 pass
                         except:
                             pass
-            # store matplot figure as a PNG
-            buffer = io.BytesIO()
-            plt.savefig(buffer, bbox_inches="tight")  # , format='png')
 
-            # append to list of PNGs
-            listOfPNGs.append(buffer.getvalue())
+            # 5/20/2024 AC: Add this code to address tracer plot bug
+            listOfPNGs.append(fig)
+
+            # 5/20/2024 AC: Comment out below code to address tracer plot bug
+            ### store matplot figure as a PNG
+            # buffer = io.BytesIO()
+            # plt.savefig(buffer, bbox_inches="tight")  # , format='png')
+            # # append to list of PNGs
+            # listOfPNGs.append(buffer.getvalue())
 
             # close plt to prevent resource leaks
             # plt.close()
