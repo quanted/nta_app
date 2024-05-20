@@ -1153,12 +1153,12 @@ class NtaRun:
             for index, df in enumerate(self.dfs_flagged)
         ]
         # Remove flagged duplicates from dfs
-        if self.dup_remove == False:
-            self.dfs = [
-                df.loc[df["Duplicate feature?"] == 0, :] if df is not None else None
-                for df in self.dfs
-            ]
-            return
+        # if self.dup_remove == False:
+        #    self.dfs = [
+        #        df.loc[df["Duplicate feature?"] == 0, :] if df is not None else None
+        #        for df in self.dfs
+        #    ]
+        #    return
         return
 
     def merge_columns_onto_tracers(self):
