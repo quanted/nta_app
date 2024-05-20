@@ -1291,23 +1291,14 @@ def combine_doc(doc1, doc2, tracer_df=False):
         Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
         dfc = pd.concat([doc1, doc2], sort=True)  # fixing pandas FutureWarning
         dfc = dfc.reindex(columns=doc1.columns)
-        dfc["Feature_removed"] = np.where(
-            dfc["Duplicate feature?"] == 1, "D", dfc["Feature_removed"]
-        )
     elif doc1 is not None:
         # Get Mean columns
         Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
         dfc = doc1.copy()
-        dfc["Feature_removed"] = np.where(
-            dfc["Duplicate feature?"] == 1, "D", dfc["Feature_removed"]
-        )
     else:
         # Get Mean columns
         Mean = doc2.columns[doc2.columns.str.contains(pat="Mean_")].tolist()
         dfc = doc2.copy()
-        dfc["Feature_removed"] = np.where(
-            dfc["Duplicate feature?"] == 1, "D", dfc["Feature_removed"]
-        )
     # Select columns for keeping, with tracer conditional
     if tracer_df:
         to_keep = [
@@ -1385,6 +1376,9 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
                     "Tracer_chemical_match",
+                    "Has_Adduct_or_Loss",
+                    "Is_Adduct_or_Loss",
+                    "Adduct_or_Loss_Info",
                 ]
                 + pt_cols
                 + raw_samples
@@ -1401,6 +1395,9 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Duplicate feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
+                    "Has_Adduct_or_Loss",
+                    "Is_Adduct_or_Loss",
+                    "Adduct_or_Loss_Info",
                 ]
                 + pt_cols
                 + raw_samples
@@ -1418,6 +1415,9 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
                     "Tracer_chemical_match",
+                    "Has_Adduct_or_Loss",
+                    "Is_Adduct_or_Loss",
+                    "Adduct_or_Loss_Info",
                 ]
                 + pt_cols
                 + raw_samples
@@ -1433,6 +1433,9 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Duplicate feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
+                    "Has_Adduct_or_Loss",
+                    "Is_Adduct_or_Loss",
+                    "Adduct_or_Loss_Info",
                 ]
                 + pt_cols
                 + raw_samples
