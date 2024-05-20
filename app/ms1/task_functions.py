@@ -1162,6 +1162,7 @@ def clean_features(df_in, controls, tracer_df=False):
     docs["Mass"] = df["Mass"]
     docs["Retention_Time"] = df["Retention_Time"]
     docs["Feature_ID"] = df["Feature_ID"]
+    docs["Duplicate feature?"] = df["Duplicate feature?"]
     if tracer_df:
         docs["Tracer_chemical_match"] = df["Tracer_chemical_match"]
     # Define lists
