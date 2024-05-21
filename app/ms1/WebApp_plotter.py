@@ -532,6 +532,25 @@ class WebApp_plotter:
             abundance = [
                 item for sublist in headers for item in sublist if len(sublist) > 1
             ]
+
+            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
+            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
+            # Remove these from the sample list below
+            column_prefixes_to_remove = [
+                "Mean_",
+                "Median_",
+                "STD_",
+                "N_Abun_",
+                "Replicate_Percent_",
+            ]
+            abundance = [
+                entry
+                for entry in abundance
+                if not any(
+                    entry.startswith(prefix) for prefix in column_prefixes_to_remove
+                )
+            ]
+
             df_loc_seq = pd.DataFrame()
             df_loc_seq["Sample Sequence"] = abundance
             order_samples = False
