@@ -1103,6 +1103,15 @@ class NtaRun:
                         "tracer_plot_neg_" + str(i + 1)
                     ] = self.tracer_plots_out[1][i]
 
+        # 5/21/2024 AC: Convert the figure objects in tracer_map into PNGs that can be stored in gridfs
+        for key in self.tracer_map.keys():
+            buf = BytesIO()
+            # fig.savefig(buf, format='png', )
+            # Save the figure in buffer as png
+            self.tracer_map[key].savefig(buf, bbox_inches="tight", format="png")
+            buf.seek(0)
+            self.tracer_map[key] = buf.read()
+
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
             "&&".join(self.tracer_map.keys()),

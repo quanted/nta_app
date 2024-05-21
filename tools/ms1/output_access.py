@@ -148,40 +148,45 @@ class OutputServer:
             .decode("utf-8")
             .split("&&")
         )
+
+        # #5/21/2024 AC: Save figures into buffer before zippping
+        # for name in tracer_plots:
+        #     try:
+        #         tracer_id = jobid + "_" + name
+        #         db_record = self.gridfs.get(tracer_id)
+
+        #         # Grab the figure from storage
+        #         buffer = db_record.read()
+
+        #         # Save the figure into a buffer
+        #         buf = io.BytesIO()
+        #         buffer.savefig(buf, bbox_inches="tight", format="png")
+        #         plt.close(buffer)
+        #         buf.seek(0)
+
+        #         project_name = db_record.project_name
+        #         if project_name:
+        #             filename = project_name.replace(" ", "_") + "_" + name + ".png"
+        #         else:
+        #             filename = tracer_id + ".png"
+        #         zipf.writestr(filename, buf.read())
+        #         # zipf.writestr(filename, buffer)
+        #     except (OperationFailure, TypeError, NoFile) as e:
+        #         break
+        # 5/20/2024 AC: Comment out to debug tracer plots
         for name in tracer_plots:
             try:
                 tracer_id = jobid + "_" + name
                 db_record = self.gridfs.get(tracer_id)
                 buffer = db_record.read()
-
-                buf = io.BytesIO()
-                buffer.savefig(buf, bbox_inches="tight", format="png")
-                plt.close(buffer)
-                buf.seek(0)
-
                 project_name = db_record.project_name
                 if project_name:
                     filename = project_name.replace(" ", "_") + "_" + name + ".png"
                 else:
                     filename = tracer_id + ".png"
-                zipf.writestr(filename, buf.read())
-                # zipf.writestr(filename, buffer)
+                zipf.writestr(filename, buffer)
             except (OperationFailure, TypeError, NoFile) as e:
                 break
-        # 5/20/2024 AC: Comment out to debug tracer plots
-        # for name in tracer_plots:
-        #     try:
-        #         tracer_id = jobid + "_" + name
-        #         db_record = self.gridfs.get(tracer_id)
-        #         buffer = db_record.read()
-        #         project_name = db_record.project_name
-        #         if project_name:
-        #             filename = project_name.replace(" ", "_") + '_' + name + '.png'
-        #         else:
-        #             filename = tracer_id + '.png'
-        #         zipf.writestr(filename, buffer)
-        #     except (OperationFailure, TypeError, NoFile) as e:
-        #         break
 
     def add_cv_scatterplot_to_zip(self, zipf, jobid):
         try:
