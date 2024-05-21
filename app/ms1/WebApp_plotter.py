@@ -608,6 +608,24 @@ class WebApp_plotter:
             )  # AC 1/4/2024 Add in chemical name column to dataframe
             # abundance.remove('Detection_Count(all_samples)')
             # abundance.remove('Detection_Count(all_samples)(%)')
+            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
+            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
+            # Remove these from the sample list below
+            column_prefixes_to_remove = [
+                "Mean_",
+                "Median_",
+                "STD_",
+                "N_Abun_",
+                "Replicate_Percent_",
+            ]
+            abundance = [
+                entry
+                for entry in abundance
+                if not any(
+                    entry.startswith(prefix) for prefix in column_prefixes_to_remove
+                )
+            ]
+
             df = df_in[abundance].copy()
 
         # our list of final chemical names with appropriate capitalization
