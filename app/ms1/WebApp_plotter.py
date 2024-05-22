@@ -520,6 +520,9 @@ class WebApp_plotter:
         """
 
         listOfPNGs = []
+        debug_list = (
+            []
+        )  # List of lists/dataframes/etc to export out of function for debugging purposes
 
         ##########################################################
         ###     set df_tracer and check for sequence data      ###
@@ -552,6 +555,10 @@ class WebApp_plotter:
                     entry.startswith(prefix) for prefix in column_prefixes_to_remove
                 )
             ]
+
+            # Debug_list
+            debug_list.append("First abundance")
+            debug_list.append(abundance)
 
             df_loc_seq = pd.DataFrame()
             df_loc_seq["Sample Sequence"] = abundance
@@ -650,6 +657,14 @@ class WebApp_plotter:
             ]
 
             df = df_in[abundance].copy()
+
+            # Debug_list
+            debug_list.append("Second abundance")
+            debug_list.append(abundance)
+
+        # Debug_list
+        debug_list.append("Clean the data df columns")
+        debug_list.append(df.columns.values)
 
         # our list of final chemical names with appropriate capitalization
         chemical_names = df_in["Chemical_Name"]

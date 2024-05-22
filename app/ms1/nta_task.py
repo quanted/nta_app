@@ -1044,6 +1044,15 @@ class NtaRun:
 
         # plot
         if self.tracer_dfs_out[1] is not None:
+            logger.info(
+                "self.tracer_dfs_out[1] shape= {}".format(self.tracer_dfs_out[1].shape)
+            )
+            logger.info(
+                "self.tracer_dfs_out[1] columns= {}".format(
+                    self.tracer_dfs_out[1].columns.values
+                )
+            )
+
             listOfPNGs, df_debug = df_WA.make_seq_scatter(
                 # data_path='./input/summary_tracer.xlsx',
                 df_in=self.tracer_dfs_out[1],
