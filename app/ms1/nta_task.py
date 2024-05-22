@@ -1064,8 +1064,10 @@ class NtaRun:
 
             self.tracer_plots_out.append(listOfPNGs)
             # logger.info("df_debug.head(20)= {}".format(df_debug.head(20)))
-            # logger.info("df_debug columns= {}".format(df_debug.columns.values))
-            logger.info("chem_names= {}".format(df_debug))
+            logger.info("df_debug shape= {}".format(df_debug.shape))
+            logger.info("df_debug columns= {}".format(df_debug.columns.values))
+
+            # logger.info("chem_names= {}".format(df_debug))
         else:
             self.tracer_plots_out.append(None)
 
