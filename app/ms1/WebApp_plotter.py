@@ -1258,7 +1258,7 @@ class WebApp_plotter:
             # iterate to the next figure
             sublist_index += 1
 
-        return listOfPNGs, df
+        return listOfPNGs, df, debug_list
         # return listOfPNGs, chem_names
 
     def make_loc_plot(
