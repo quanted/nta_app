@@ -524,6 +524,10 @@ class WebApp_plotter:
             []
         )  # List of lists/dataframes/etc to export out of function for debugging purposes
 
+        # Debug_list
+        debug_list.append("Beginning of make_seq_scatter: df_in columns")
+        debug_list.append(df_in.columns.values)
+
         ##########################################################
         ###     set df_tracer and check for sequence data      ###
         ##########################################################
@@ -533,11 +537,19 @@ class WebApp_plotter:
             # Sort dataframe columns alphabetically prior to parsing headers
             df_in = df_in.reindex(sorted(df_in.columns), axis=1)
 
+            # Debug_list
+            debug_list.append("After sorting: df_in columns")
+            debug_list.append(df_in.columns.values)
+
             # If there is no sequence file, create a dummy sequence dataframe containing the sample names straight from the input data file
             headers = parse_headers(df_in)
             abundance = [
                 item for sublist in headers for item in sublist if len(sublist) > 1
             ]
+
+            # Debug_list
+            debug_list.append("Samples from parse_headers")
+            debug_list.append(abundance)
 
             # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
             # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
@@ -560,7 +572,9 @@ class WebApp_plotter:
             ]
 
             # Debug_list
-            debug_list.append("First abundance")
+            debug_list.append(
+                "Abundance after removing specific prefix-matching columns"
+            )
             debug_list.append(abundance)
 
             df_loc_seq = pd.DataFrame()
@@ -665,12 +679,12 @@ class WebApp_plotter:
             df = df_in[abundance].copy()
 
             # Debug_list
-            debug_list.append("Second abundance")
-            debug_list.append(abundance)
+            # debug_list.append("Second abundance")
+            # debug_list.append(abundance)
 
         # Debug_list
-        debug_list.append("Clean the data df columns")
-        debug_list.append(df.columns.values)
+        # debug_list.append("Clean the data df columns")
+        # debug_list.append(df.columns.values)
 
         # our list of final chemical names with appropriate capitalization
         chemical_names = df_in["Chemical_Name"]
