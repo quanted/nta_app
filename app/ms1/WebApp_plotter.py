@@ -541,6 +541,7 @@ class WebApp_plotter:
                 "Median_",
                 "STD_",
                 "N_Abun_",
+                "CV_",
                 "Replicate_Percent_",
             ]
             abundance = [
@@ -635,6 +636,7 @@ class WebApp_plotter:
                 "Median_",
                 "STD_",
                 "N_Abun_",
+                "CV_",
                 "Replicate_Percent_",
             ]
             abundance = [
