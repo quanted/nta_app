@@ -1012,7 +1012,7 @@ class NtaRun:
 
         # plot
         if self.tracer_dfs_out[0] is not None:
-            listOfPNGs, df_debug = df_WA.make_seq_scatter(
+            listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 # data_path='./input/summary_tracer.xlsx',
                 df_in=self.tracer_dfs_out[0],
                 seq_csv=self.run_sequence_pos_df,
@@ -1053,7 +1053,7 @@ class NtaRun:
                 )
             )
 
-            listOfPNGs, df_debug = df_WA.make_seq_scatter(
+            listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 # data_path='./input/summary_tracer.xlsx',
                 df_in=self.tracer_dfs_out[1],
                 seq_csv=self.run_sequence_neg_df,
@@ -1075,6 +1075,10 @@ class NtaRun:
             # logger.info("df_debug.head(20)= {}".format(df_debug.head(20)))
             logger.info("df_debug shape= {}".format(df_debug.shape))
             logger.info("df_debug columns= {}".format(df_debug.columns.values))
+
+            # Print debug list
+            for item in debug_list:
+                print(item)
 
             # logger.info("chem_names= {}".format(df_debug))
         else:
