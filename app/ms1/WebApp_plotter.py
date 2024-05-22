@@ -543,6 +543,7 @@ class WebApp_plotter:
                 "N_Abun_",
                 "CV_",
                 "Replicate_Percent_",
+                "Occurrence_Count",
             ]
             abundance = [
                 entry
@@ -638,6 +639,7 @@ class WebApp_plotter:
                 "N_Abun_",
                 "CV_",
                 "Replicate_Percent_",
+                "Occurrence_Count",
             ]
             abundance = [
                 entry
