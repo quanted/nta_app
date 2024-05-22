@@ -1078,7 +1078,7 @@ class NtaRun:
 
             # Print debug list
             for item in debug_list:
-                print(item)
+                logger.info(item)
 
             # logger.info("chem_names= {}".format(df_debug))
         else:
