@@ -530,6 +530,9 @@ class WebApp_plotter:
 
         # check if there is a sequence csv file
         if seq_csv is None:
+            # Sort dataframe columns alphabetically prior to parsing headers
+            df_in = df_in.reindex(sorted(df_in.columns), axis=1)
+
             # If there is no sequence file, create a dummy sequence dataframe containing the sample names straight from the input data file
             headers = parse_headers(df_in)
             abundance = [
@@ -627,6 +630,9 @@ class WebApp_plotter:
             # col_names.insert(0, 'Chemical_Name')
             df = df_in[col_names].copy()
         else:
+            # Sort dataframe columns alphabetically prior to parsing headers
+            df_in = df_in.reindex(sorted(df_in.columns), axis=1)
+
             headers = parse_headers(df_in)
             abundance = [
                 item for sublist in headers for item in sublist if len(sublist) > 1
