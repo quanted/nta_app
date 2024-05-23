@@ -940,7 +940,7 @@ def populate_doc_values(df, docs, Mean_Samples, Mean_MB):
     return docs
 
 
-def feat_removal_flag(docs, Mean_Samples):
+def feat_removal_flag(docs, Mean_Samples, missing):
     """
     Function that takes docs, and determines whether features should be removed
     by counting the number real occurrences and then labels Feature_removed by counting
@@ -954,6 +954,8 @@ def feat_removal_flag(docs, Mean_Samples):
         axis=1,
     )
     docs["# of real occurrences"] = num_mask.sum(axis=1)
+    # Count number of missing samples from missing mask
+    docs["# of missing occurrences"] = missing.sum(axis=1)
     # Count # of times an occurrence flag contains R, CV, or ND, and count # of just CV flags
     contains_R = pd.concat([docs[mean].str.contains("R") for mean in Mean_Samples], axis=1)
     contains_CV = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1)
@@ -970,10 +972,14 @@ def feat_removal_flag(docs, Mean_Samples):
         0,
     )
     # Append feature level flags to features with no real occurrences
+    # Feature flag because no occurrences present in input data
+    docs["Feature_removed"] = np.where(
+        docs["# of missing occurrences"] == len(Mean_Samples), "NO DATA ", docs["Feature_removed"]
+    )
     # Feature flag because occurrences fail detection threshold
     docs["Feature_removed"] = np.where(
         (docs["# of real occurrences"] == 0) & (docs["# contains ND flag"] > 0),
-        "BLK ",
+        docs["Feature_removed"] + "BLK ",
         docs["Feature_removed"],
     )
     # Feature flag because occurrences fail CV threshold
@@ -1102,7 +1108,7 @@ def clean_features(df_in, controls, tracer_df=False):
     docs = populate_doc_values(df, docs, Mean_Samples, Mean_MB)
     """DOCUMENT DROP FEATURES FROM DF"""
     # Annotation feature removal
-    docs = feat_removal_flag(docs, Mean_Samples)
+    docs = feat_removal_flag(docs, Mean_Samples, missing)
     """DROP OCCURRENCES FROM DF"""
     # Remove proper occurrences from df and df_flagged
     df, df_flagged = occ_drop_df(df, docs, df_flagged, Mean_Samples)
@@ -1342,6 +1348,6 @@ def calc_toxcast_percent_active(df):
     dft["TOXCAST_PERCENT_ACTIVE"] = dft["TOXCAST_PERCENT_ACTIVE"].apply(lambda x: round(x, 2))
 
     # Clean up and remove the temporary value columns
-    dft = dft.drop(["TOTAL_ASSAYS_TESTED", "NUMBER_ACTIVE_ASSAYS"], 1)
+    dft = dft.drop(["TOTAL_ASSAYS_TESTED", "NUMBER_ACTIVE_ASSAYS"], axis=1)
 
     return dft
