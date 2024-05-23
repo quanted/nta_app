@@ -1324,6 +1324,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
 
 def calc_toxcast_percent_active(df):
     dft = df.copy()
+
+    # Extract out the total and active numeric values from the TOTAL_ASSAYS_TESTED column
     TOTAL_ASSAYS = "\/([0-9]+)"  # a regex to find the digits after a slash
     dft["TOTAL_ASSAYS_TESTED"] = (
         dft["TOXCAST_NUMBER_OF_ASSAYS/TOTAL"].astype("str").str.extract(TOTAL_ASSAYS, expand=True)
@@ -1333,9 +1335,13 @@ def calc_toxcast_percent_active(df):
         dft["TOXCAST_NUMBER_OF_ASSAYS/TOTAL"].astype("str").str.extract(NUMBER_ASSAYS, expand=True)
     )
 
+    # Convert the value columns to floats and do division to get the percent active value
     dft["TOTAL_ASSAYS_TESTED"] = dft["TOTAL_ASSAYS_TESTED"].astype(float)
     dft["NUMBER_ACTIVE_ASSAYS"] = dft["NUMBER_ACTIVE_ASSAYS"].astype(float)
-
     dft["TOXCAST_PERCENT_ACTIVE"] = dft["NUMBER_ACTIVE_ASSAYS"] / dft["TOTAL_ASSAYS_TESTED"] * 100
     dft["TOXCAST_PERCENT_ACTIVE"] = dft["TOXCAST_PERCENT_ACTIVE"].apply(lambda x: round(x, 2))
+
+    # Clean up and remove the temporary value columns
+    dft = dft.drop(["TOTAL_ASSAYS_TESTED", "NUMBER_ACTIVE_ASSAYS"], 1)
+
     return dft
