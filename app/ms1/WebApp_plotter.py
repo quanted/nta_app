@@ -535,7 +535,10 @@ class WebApp_plotter:
         # check if there is a sequence csv file
         if seq_csv is None:
             # Sort dataframe columns alphabetically prior to parsing headers
-            df_in = df_in.reindex(sorted(df_in.columns), axis=1)
+            df_in = df_in.reindex(sorted(df_in.columns), axis=1)  # Remove sorting to
+            df_in = df_in[
+                ["Mass"] + [col for col in df_in.columns if col != "Mass"]
+            ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
 
             # Debug_list
             debug_list.append("After sorting: df_in columns")
@@ -570,12 +573,6 @@ class WebApp_plotter:
                     entry.startswith(prefix) for prefix in column_prefixes_to_remove
                 )
             ]
-
-            # Debug_list
-            debug_list.append(
-                "Abundance after removing specific prefix-matching columns"
-            )
-            debug_list.append(abundance)
 
             df_loc_seq = pd.DataFrame()
             df_loc_seq["Sample Sequence"] = abundance
@@ -677,14 +674,6 @@ class WebApp_plotter:
             ]
 
             df = df_in[abundance].copy()
-
-            # Debug_list
-            # debug_list.append("Second abundance")
-            # debug_list.append(abundance)
-
-        # Debug_list
-        # debug_list.append("Clean the data df columns")
-        # debug_list.append(df.columns.values)
 
         # our list of final chemical names with appropriate capitalization
         chemical_names = df_in["Chemical_Name"]
