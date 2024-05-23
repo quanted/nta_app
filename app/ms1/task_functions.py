@@ -944,7 +944,7 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     """
     Function that takes docs, and determines whether features should be removed
     by counting the number real occurrences and then labels Feature_removed by counting
-    the number of each type of occurrence flag. Return docs. -- TMF 04/19/24
+    the number of each type of occurrence flag. Return docs. -- TMF 05/23/24
     """
     # Set all values of feature removed to ""
     docs["Feature_removed"] = ""
