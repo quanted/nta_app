@@ -7,10 +7,9 @@ Known Issues:
 *************
 1) ToxCast percent active column: There is a known issue where the toxcast percent active column is not calculated correctly.
 2) Adduct matching: There is a known issue where the adduct matching columns are referencing incorrect features as matches.
-3) MS2 test file run: This option is currently not functional.
-4) Merge workflow: The new version of the MS1 results is causing the merge workflow to throw an error.
-5) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
-6) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
+3) Merge workflow: The new version of the MS1 results is causing the merge workflow to throw an error.
+4) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
+5) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
 
 ************************
 Version 0.1.X - X/X/2024
