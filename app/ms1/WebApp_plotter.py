@@ -1015,7 +1015,13 @@ class WebApp_plotter:
                                 zorder=100,
                             )
 
-                        ax[row_index, col_index].set_title(chem, fontsize=18, fontweight=600)
+                        # Adjust fontsize of subplot based on chemical name length
+                        if len(chem) > 20:
+                            chem_plot_fontsize = 360 / len(chem)
+                        else:
+                            chem_plot_fontsize = 18
+
+                        ax[row_index, col_index].set_title(chem, fontsize=chem_plot_fontsize, fontweight=600)
 
                         # add a quadratic fits to plot
                         if fit == True:
@@ -1097,7 +1103,12 @@ class WebApp_plotter:
                                 zorder=100,
                             )
 
-                        ax[row_index, column_index].set_title(chem, fontsize=18, fontweight=600)
+                        # Adjust fontsize of subplot based on chemical name length
+                        if len(chem) > 20:
+                            chem_plot_fontsize = 360 / len(chem)
+                        else:
+                            chem_plot_fontsize = 18
+                        ax[row_index, column_index].set_title(chem, fontsize=chem_plot_fontsize, fontweight=600)
 
                         # add a quadratic fits to plot
                         if fit == True:
