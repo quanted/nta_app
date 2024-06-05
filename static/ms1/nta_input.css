@@ -4,5 +4,13 @@
 
 input[type=checkbox]
 {
-  -webkit-appearance:checkbox;
+    -webkit-appearance:checkbox;
+    position: static
 }
+
+div.two > div { /* arrange check boxes in columns of 2 */
+    width:50%;
+    float:left;
+    display:inline;
+}
+

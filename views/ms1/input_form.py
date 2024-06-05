@@ -1,6 +1,7 @@
 from django import forms
 from django.core.validators import MinValueValidator, FileExtensionValidator
 from django.forms.widgets import NumberInput
+from django.utils.safestring import mark_safe
 
 
 class RangeInput(NumberInput):
@@ -27,6 +28,28 @@ class NtaInputs(forms.Form):
         label="Negative mode file (csv)",
         required=False,
         validators=[FileExtensionValidator(["csv"])],
+    )
+    pos_adducts = forms.MultipleChoiceField(
+        label="Positive mode adducts",
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'two'}),
+        choices=(
+            ('Na','Na'),
+            ('K','K'),
+            ('NH4',mark_safe('NH<sub>4</sub>')),
+        ),
+        initial=['Na', 'K', 'NH4'],
+    )
+    neg_adducts = forms.MultipleChoiceField(
+        label="Negative mode adducts",
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'two'}),
+        choices=(
+            ('Cl','Cl'),
+            ('Br','Br'),
+            ('HCO2', mark_safe('HCO<sub>2</sub>')),
+            ('CH3CO2',mark_safe('CH<sub>3</sub>CO<sub>2</sub>')),
+            ('CF3CO2',mark_safe('CF<sub>3</sub>CO<sub>2</sub>')),
+        ),
+        initial=['Cl', 'Br', 'HCO2', 'CH3CO2', 'CF3CO2'],
     )
     mass_accuracy_units = forms.ChoiceField(
         choices=(

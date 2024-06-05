@@ -36,6 +36,8 @@ def input_page(request, form_data=None, form_files=None):
         "test_files": ["Run test files only (debugging)", None],
         "pos_input": ["Positive MPP file (csv)", None],
         "neg_input": ["Negative MPP file (csv)", None],
+        "pos_adducts": ["Positive mode adducts", None],
+        "neg_adducts": ["Negative mode adducts", None],
         "mass_accuracy_units": ["Adduct mass accuracy units", None],
         "mass_accuracy": ["Adduct mass accuracy", None],
         "rt_accuracy": ["Adduct retention time accuracy (mins)", None],
@@ -109,7 +111,7 @@ def input_page(request, form_data=None, form_files=None):
                 # parameters[key] = value
 
             # save the Request parameters in the inputParameters dictionary [0] is the label, [1] is the value
-            # This does not inclute the uploaded files, pos_input, neg_input, run_sequence_pos_file,
+            # This does not include the uploaded files, pos_input, neg_input, run_sequence_pos_file,
             # run_sequence_neg_file, and tracer_input, which are handled separately
             inputParameters["project_name"][1] = parameters["project_name"]
             inputParameters["test_files"][1] = parameters["test_files"]
@@ -142,6 +144,8 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
             inputParameters["top_result_only"][1] = parameters["top_result_only"]
+            inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
+            inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
 
             # two basic scenarios are possible: 1) the user has selected to run the test files, or 2) the user
             # has not selected to run the test files. If the user has selected to run the test files, then the
