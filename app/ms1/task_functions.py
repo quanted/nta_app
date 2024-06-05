@@ -302,6 +302,40 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     df["Rounded RT"] = df["Retention_Time"].round(1)
     # Create tuple of 'Rounded RT' and 'Rounded Mass'
     df["Rounded_RT_Mass_Pair"] = list(zip(df["Rounded RT"], df["Rounded Mass"]))
+    """
+    # Define pos/neg/neutral adduct lists
+    # Proton subtracted - we observe Mass+(H+) and Mass+(Adduct)
+    pos_adduct_li = [("Na", 21.981942),
+                 ("K", 37.995882),
+                 ("NH4", 17.026547),
+                 #("FA", 44.99820),
+                 #("HFA", 46.00550),
+                 #("HAc", 60.02110),
+                 #("MeOH", 32.02620),
+                 #("ACN", 41.02650),
+                 #("O", 15.99490),
+                 #("IsoProp", 60.05810)
+                 ]
+    # Proton added - we observe Mass-(H+) and Mass+(Adduct)
+    neg_adduct_li = [("Cl", 35.976678),
+                 ("Br", 79.926161),
+                 ("HCO2", 46.005477),
+                 ("CH3CO2", 60.021127),
+                 ("CF3CO2", 113.992862),
+                 #("C2H4", 28.03130),
+                 #("MeOH", 32.02620),
+                 #("ACN", 41.02650)
+                 ]
+    # no change to neutral losses
+    neutral_adduct_li = [("H2O", 18.010565),
+                     ("2H2O", 36.02113),
+                     ("3H2O", 54.031695),
+                     ("4H2O", 72.04226),
+                     ("5H2O", 90.052825),
+                     ("CO", 29.00220),
+                     ("CO2", 43.989829),
+                     ]
+    """
     # Define pos/neg/neutral adduct dictionaries, proton
     pos_adduct_deltas = {"Na": 22.989218, "K": 38.963158, "NH4": 18.033823}
     neg_adduct_deltas = {
@@ -311,7 +345,7 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
         "CH3CO2": 59.013851,
         "CF3CO2": 112.985586,
     }
-    neutral_loss_deltas = {"H2O": -18.010565, "CO2": -43.989829}
+    neutral_loss_deltas = {"H2O": 18.010565, "CO2": 43.989829}
     proton_mass = 1.007276
     # Determine possible adduct dictionary according to ionization
     if ionization == "positive":

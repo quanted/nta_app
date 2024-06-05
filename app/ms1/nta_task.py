@@ -529,6 +529,10 @@ class NtaRun:
         if self.dup_remove:
             self.dupes = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dupes]
 
+        # pos_adducts_selected = self.parameters["pos_adducts"][1]
+        # neg_adducts_selected = self.parameters["neg_adducts"][1]
+        # neutral_losses_selected = self.parameters["neutral_losses"][1]
+
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.adduct_identifier(
                 self.dfs[0], mass_accuracy, rt_accuracy, ppm, ionization="positive"
