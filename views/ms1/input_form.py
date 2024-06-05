@@ -136,6 +136,15 @@ class NtaInputs(forms.Form):
         initial=0.8,
         validators=[MinValueValidator(0)],
     )
+    mrl_std_multiplier = forms.ChoiceField(
+        choices=(
+            ("3", 3),
+            ("5", 5),
+            ("10", 10),
+        ),
+        label="MRL standard deviation multiplier",
+        initial="3",
+    )
     parent_ion_mass_accuracy = forms.IntegerField(
         widget=RangeInput(attrs={"max": "10", "min": "1", "class": "slider_bar"}),
         label="Parent ion mass accuracy (ppm)",

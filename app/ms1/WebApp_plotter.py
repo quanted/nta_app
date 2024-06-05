@@ -147,11 +147,7 @@ class WebApp_plotter:
             pool_indices = locs.index[locs.str.startswith("Pooled")]
             # set marker colors for plot
             mark_colors = [
-                c_aes[1]
-                if i in mb_indices
-                else c_aes[2]
-                if i in pool_indices
-                else c_aes[0]
+                c_aes[1] if i in mb_indices else c_aes[2] if i in pool_indices else c_aes[0]
                 for i in range(0, len(locs))
             ]
         # in case there is an error above... this can probably be removed
@@ -358,9 +354,7 @@ class WebApp_plotter:
                 else:
                     try:
                         # plot once to get lines with no markers
-                        ax[row_index, col_index].plot(
-                            x_values, y_values, color=c_aes[0]
-                        )
+                        ax[row_index, col_index].plot(x_values, y_values, color=c_aes[0])
                         # need to iterate through each color
                         for x, y, col in zip(x_values, y_values, mark_colors):
                             ax[row_index, col_index].plot(
@@ -372,9 +366,7 @@ class WebApp_plotter:
                                 markeredgecolor=col,
                                 markerfacecolor=col,
                             )
-                        ax[row_index, col_index].set_title(
-                            chem, fontsize=18, fontweight=600
-                        )
+                        ax[row_index, col_index].set_title(chem, fontsize=18, fontweight=600)
                         col_index += 1
                     except:
                         row_index += 1
@@ -520,6 +512,11 @@ class WebApp_plotter:
         """
 
         listOfPNGs = []
+        debug_list = []  # List of lists/dataframes/etc to export out of function for debugging purposes
+
+        # Debug_list
+        debug_list.append("Beginning of make_seq_scatter: df_in columns")
+        debug_list.append(df_in.columns.values)
 
         ##########################################################
         ###     set df_tracer and check for sequence data      ###
@@ -527,11 +524,42 @@ class WebApp_plotter:
 
         # check if there is a sequence csv file
         if seq_csv is None:
+            # Sort dataframe columns alphabetically prior to parsing headers
+            df_in = df_in.reindex(sorted(df_in.columns), axis=1)  # Remove sorting to
+            df_in = df_in[
+                ["Feature_ID"] + [col for col in df_in.columns if col != "Feature_ID"]
+            ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
+
+            # Debug_list
+            debug_list.append("After sorting: df_in columns")
+            debug_list.append(df_in.columns.values)
+
             # If there is no sequence file, create a dummy sequence dataframe containing the sample names straight from the input data file
             headers = parse_headers(df_in)
-            abundance = [
-                item for sublist in headers for item in sublist if len(sublist) > 1
+            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
+
+            # Debug_list
+            debug_list.append("Samples from parse_headers")
+            debug_list.append(abundance)
+
+            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
+            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
+            # Remove these from the sample list below
+            column_prefixes_to_remove = [
+                "Mean_",
+                "Median_",
+                "STD_",
+                "N_Abun_",
+                "CV_",
+                "Replicate_Percent_",
+                "Occurrence_Count",
             ]
+            abundance = [
+                entry
+                for entry in abundance
+                if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
+            ]
+
             df_loc_seq = pd.DataFrame()
             df_loc_seq["Sample Sequence"] = abundance
             order_samples = False
@@ -581,9 +609,7 @@ class WebApp_plotter:
         # AC Loop through sample group column and get indices of samples for each sample group
         indices_list = []
         for i in range(len(sample_group_unique)):
-            temp_indices = df_loc_seq.index[
-                df_loc_seq.iloc[:, 1] == sample_group_unique[i]
-            ].tolist()
+            temp_indices = df_loc_seq.index[df_loc_seq.iloc[:, 1] == sample_group_unique[i]].tolist()
             indices_list.append(temp_indices)
 
         ################################################
@@ -593,21 +619,39 @@ class WebApp_plotter:
         # start by getting df with chemical names and abundance at each location in sequential order
         if order_samples:
             col_names = [x for x in df_loc_seq.iloc[:, 0]]
-            col_names.insert(
-                0, "Chemical_Name"
-            )  # AC 1/4/2024 Add in chemical name column to dataframe
+            col_names.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
             # col_names.insert(0, 'Chemical_Name')
             df = df_in[col_names].copy()
         else:
+            # Sort dataframe columns alphabetically prior to parsing headers
+            df_in = df_in.reindex(sorted(df_in.columns), axis=1)
+            df_in = df_in[
+                ["Feature_ID"] + [col for col in df_in.columns if col != "Feature_ID"]
+            ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
+
             headers = parse_headers(df_in)
-            abundance = [
-                item for sublist in headers for item in sublist if len(sublist) > 1
-            ]
-            abundance.insert(
-                0, "Chemical_Name"
-            )  # AC 1/4/2024 Add in chemical name column to dataframe
+            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
+            abundance.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
             # abundance.remove('Detection_Count(all_samples)')
             # abundance.remove('Detection_Count(all_samples)(%)')
+            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
+            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
+            # Remove these from the sample list below
+            column_prefixes_to_remove = [
+                "Mean_",
+                "Median_",
+                "STD_",
+                "N_Abun_",
+                "CV_",
+                "Replicate_Percent_",
+                "Occurrence_Count",
+            ]
+            abundance = [
+                entry
+                for entry in abundance
+                if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
+            ]
+
             df = df_in[abundance].copy()
 
         # our list of final chemical names with appropriate capitalization
@@ -729,9 +773,7 @@ class WebApp_plotter:
                 # legend innards
                 # AC Loop through legend label generation
                 legend_x_coord = []  # List of x-coordinates for sample group in legend
-                character_increment = (
-                    0.018  # How much to increment x-coordinate per character
-                )
+                character_increment = 0.018  # How much to increment x-coordinate per character
 
                 for b in range(len(sample_group_unique)):
                     # Get x coordinate of sample group legend text based on number of characters
@@ -916,9 +958,7 @@ class WebApp_plotter:
                                 if y_fit[0] < 0:
                                     y_fit = y_fit[1:]
                                     x_fit = x_fit[1:]
-                                ax[row_index].plot(
-                                    x_fit, y_fit, color=c_aes[b], lw=3, zorder=100
-                                )
+                                ax[row_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
 
                     # # add a quadratic fits to plot
                     # if fit == True:
@@ -975,9 +1015,13 @@ class WebApp_plotter:
                                 zorder=100,
                             )
 
-                        ax[row_index, col_index].set_title(
-                            chem, fontsize=18, fontweight=600
-                        )
+                        # Adjust fontsize of subplot based on chemical name length
+                        if len(chem) > 20:
+                            chem_plot_fontsize = 360 / len(chem)
+                        else:
+                            chem_plot_fontsize = 18
+
+                        ax[row_index, col_index].set_title(chem, fontsize=chem_plot_fontsize, fontweight=600)
 
                         # add a quadratic fits to plot
                         if fit == True:
@@ -998,9 +1042,7 @@ class WebApp_plotter:
                                     if y_fit[0] < 0:
                                         y_fit = y_fit[1:]
                                         x_fit = x_fit[1:]
-                                    ax[row_index, col_index].plot(
-                                        x_fit, y_fit, color=c_aes[b], lw=3, zorder=100
-                                    )
+                                    ax[row_index, col_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
                         # # add a quadratic fits to plot
                         # if fit == True:
                         #     if len(x_values_sample) > 2:
@@ -1061,9 +1103,12 @@ class WebApp_plotter:
                                 zorder=100,
                             )
 
-                        ax[row_index, column_index].set_title(
-                            chem, fontsize=18, fontweight=600
-                        )
+                        # Adjust fontsize of subplot based on chemical name length
+                        if len(chem) > 20:
+                            chem_plot_fontsize = 360 / len(chem)
+                        else:
+                            chem_plot_fontsize = 18
+                        ax[row_index, column_index].set_title(chem, fontsize=chem_plot_fontsize, fontweight=600)
 
                         # add a quadratic fits to plot
                         if fit == True:
@@ -1084,9 +1129,7 @@ class WebApp_plotter:
                                     if y_fit[0] < 0:
                                         y_fit = y_fit[1:]
                                         x_fit = x_fit[1:]
-                                    ax[row_index, column_index].plot(
-                                        x_fit, y_fit, color=c_aes[b], lw=3, zorder=100
-                                    )
+                                    ax[row_index, column_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
                         # # add a quadratic fits to plot
                         # if fit == True:
                         #     if len(x_values_sample) > 2:
@@ -1185,12 +1228,16 @@ class WebApp_plotter:
                                 pass
                         except:
                             pass
-            # store matplot figure as a PNG
-            buffer = io.BytesIO()
-            plt.savefig(buffer, bbox_inches="tight")  # , format='png')
 
-            # append to list of PNGs
-            listOfPNGs.append(buffer.getvalue())
+            # 5/20/2024 AC: Add this code to address tracer plot bug
+            listOfPNGs.append(fig)
+
+            # 5/20/2024 AC: Comment out below code to address tracer plot bug
+            ### store matplot figure as a PNG
+            # buffer = io.BytesIO()
+            # plt.savefig(buffer, bbox_inches="tight")  # , format='png')
+            # # append to list of PNGs
+            # listOfPNGs.append(buffer.getvalue())
 
             # close plt to prevent resource leaks
             # plt.close()
@@ -1198,7 +1245,7 @@ class WebApp_plotter:
             # iterate to the next figure
             sublist_index += 1
 
-        return listOfPNGs, df
+        return listOfPNGs, df, debug_list
         # return listOfPNGs, chem_names
 
     def make_loc_plot(
@@ -1407,9 +1454,7 @@ class WebApp_plotter:
                 dark_mode=dark_mode,
             )
         else:
-            figs_axes = make_subplots(
-                chem_names, same_frame=same_frame, dark_mode=dark_mode
-            )
+            figs_axes = make_subplots(chem_names, same_frame=same_frame, dark_mode=dark_mode)
 
         # if plot_type='loc', we should set our df to df_loc... this wasn't done earlier because of
         # the y_max and y_min variables for y_fixed since df_loc has lists of entries
@@ -1479,9 +1524,7 @@ class WebApp_plotter:
                 0,
                 0,
             )  # indices for which subplot to put a chemical in
-            while (
-                chem_index - 16 * sublist_index
-            ) < ax_count:  # and (chem_index < n_chems):
+            while (chem_index - 16 * sublist_index) < ax_count:  # and (chem_index < n_chems):
                 # for loop to set up x and y values for each plot in a figure
                 x_values, y_values = [], []
                 for i, v in enumerate(df.iloc[chem_index, 1:]):
@@ -1512,9 +1555,7 @@ class WebApp_plotter:
                             ha="right",
                         )
                         ax.set_xlim(0, tick_pos[-1] + 0.75)
-                        ax.set_title(
-                            chemical_names.iloc[chem_index], fontsize=18, fontweight=600
-                        )
+                        ax.set_title(chemical_names.iloc[chem_index], fontsize=18, fontweight=600)
                         i += 1  # iterate to next location for plotting this chemical
 
                 # now deal with 2 and 3 chemicals
@@ -1540,9 +1581,7 @@ class WebApp_plotter:
                             ha="right",
                         )
                         ax[row_index].set_xlim(0, tick_pos[-1] + 0.75)
-                        ax[row_index].set_title(
-                            chemical_names.iloc[chem_index], fontsize=18, fontweight=600
-                        )
+                        ax[row_index].set_title(chemical_names.iloc[chem_index], fontsize=18, fontweight=600)
                         # set up the shared x-axis
                         if row_index == nrows - 1:
                             ax[row_index].set_xticks(
@@ -1591,9 +1630,7 @@ class WebApp_plotter:
                             ha="right",
                         )
                         ax[row_index, col_index].set_xlim(0, tick_pos[-1] + 0.75)
-                        ax[row_index, col_index].set_title(
-                            chemical_names.iloc[chem_index], fontsize=18, fontweight=600
-                        )
+                        ax[row_index, col_index].set_title(chemical_names.iloc[chem_index], fontsize=18, fontweight=600)
                         i += 1  # iterate to next location for plotting this chemical
 
                     # set x_ticks -- need to make sure the axis is so labels go to the highest row of plots
@@ -1750,9 +1787,7 @@ def make_subplots(
     # ensure each list within chem_names is the right length
     for c_list in chem_names:
         if len(c_list) > 16:
-            raise Exception(
-                "You have a list within chem_names whose length is longer than 16"
-            )
+            raise Exception("You have a list within chem_names whose length is longer than 16")
 
     # rcParams must be set before any plt objects are created!
     # Now set parameters that are needed for dark_mode=True
@@ -1914,10 +1949,7 @@ def make_subplots(
                 # pick the tick locations and labels
                 ax.set_yticks(
                     ticks=[10**x for x in np.linspace(y_min_pow, y_max_pow, n)],
-                    labels=[
-                        f"$10^{{{int(x)}}}$"
-                        for x in np.linspace(y_min_pow, y_max_pow, n)
-                    ],
+                    labels=[f"$10^{{{int(x)}}}$" for x in np.linspace(y_min_pow, y_max_pow, n)],
                 )
         else:
             # generate the subtitle for the plot to state which chemicals are being plotted
@@ -1925,9 +1957,7 @@ def make_subplots(
             subtitle = f"Chemicals {subtitle_i+1}-{subtitle_f}"
             subtitle_i = subtitle_f
             # get shape of axis object
-            axe = (
-                ax.ravel()
-            )  # have to unpack gridspec object (from subplots() function)
+            axe = ax.ravel()  # have to unpack gridspec object (from subplots() function)
             gs = axe[0].get_gridspec()
             shape = (gs.nrows, gs.ncols)
 
@@ -1951,10 +1981,7 @@ def make_subplots(
                     # pick the tick locations and labels
                     axe[j].set_yticks(
                         ticks=[10**x for x in np.linspace(y_min_pow, y_max_pow, n)],
-                        labels=[
-                            f"$10^{{{int(x)}}}$"
-                            for x in np.linspace(y_min_pow, y_max_pow, n)
-                        ],
+                        labels=[f"$10^{{{int(x)}}}$" for x in np.linspace(y_min_pow, y_max_pow, n)],
                     )
 
         # a few more fig aesthetics, append our list of tupples to return, then iterate to next figure
