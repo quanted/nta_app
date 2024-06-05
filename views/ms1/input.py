@@ -38,6 +38,7 @@ def input_page(request, form_data=None, form_files=None):
         "neg_input": ["Negative MPP file (csv)", None],
         "pos_adducts": ["Positive mode adducts", None],
         "neg_adducts": ["Negative mode adducts", None],
+        "neutral_losses": ["Neutral losses (both modes)", None],
         "mass_accuracy_units": ["Adduct mass accuracy units", None],
         "mass_accuracy": ["Adduct mass accuracy", None],
         "rt_accuracy": ["Adduct retention time accuracy (mins)", None],
@@ -148,6 +149,7 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["top_result_only"][1] = parameters["top_result_only"]
             inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
             inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
+            inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
 
             # two basic scenarios are possible: 1) the user has selected to run the test files, or 2) the user
             # has not selected to run the test files. If the user has selected to run the test files, then the

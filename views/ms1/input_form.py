@@ -35,7 +35,7 @@ class NtaInputs(forms.Form):
         choices=(
             ('Na','Na'),
             ('K','K'),
-            ('NH4',mark_safe('NH<sub>4</sub>')),
+            ('NH4', mark_safe('NH<sub>4</sub>')),
         ),
         initial=['Na', 'K', 'NH4'],
     )
@@ -46,10 +46,19 @@ class NtaInputs(forms.Form):
             ('Cl','Cl'),
             ('Br','Br'),
             ('HCO2', mark_safe('HCO<sub>2</sub>')),
-            ('CH3CO2',mark_safe('CH<sub>3</sub>CO<sub>2</sub>')),
-            ('CF3CO2',mark_safe('CF<sub>3</sub>CO<sub>2</sub>')),
+            ('CH3CO2', mark_safe('CH<sub>3</sub>CO<sub>2</sub>')),
+            ('CF3CO2', mark_safe('CF<sub>3</sub>CO<sub>2</sub>')),
         ),
         initial=['Cl', 'Br', 'HCO2', 'CH3CO2', 'CF3CO2'],
+    )
+    neutral_losses = forms.MultipleChoiceField(
+        label="Neutral losses (both modes)",
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'two'}),
+        choices=(
+            ('H2O', mark_safe('H<sub>2</sub>O')),
+            ('CO2', mark_safe('CO<sub>2</sub>')),
+        ),
+        initial=['H2O', 'CO2'],
     )
     mass_accuracy_units = forms.ChoiceField(
         choices=(
