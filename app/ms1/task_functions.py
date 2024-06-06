@@ -373,7 +373,7 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
     # Create empty list to hold mass shift/RT tuples
     list_of_mass_shifts_RT_pairs = []
     # Logic gate for no adducts selected
-    if len(possible_adduct_deltas > 0):
+    if len(possible_adduct_deltas) > 0:
         # Loop through possible adducts, add/subtract adduct mass from each feature, append
         # 'Rounded RT', 'Rounded Mass' tuples to 'list_of_mass_shifts_RT_pairs' for both addition
         # and subtraction.
