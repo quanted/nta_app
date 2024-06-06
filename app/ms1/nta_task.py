@@ -529,16 +529,17 @@ class NtaRun:
         if self.dup_remove:
             self.dupes = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dupes]
 
-        # pos_adducts_selected = self.parameters["pos_adducts"][1]
-        # neg_adducts_selected = self.parameters["neg_adducts"][1]
-        # neutral_losses_selected = self.parameters["neutral_losses"][1]
+        pos_adducts_selected = self.parameters["pos_adducts"][1]
+        neg_adducts_selected = self.parameters["neg_adducts"][1]
+        neutral_losses_selected = self.parameters["neutral_losses"][1]
+        adduct_selections = [pos_adducts_selected, neg_adducts_selected, neutral_losses_selected]
 
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.adduct_identifier(
-                self.dfs[0], mass_accuracy, rt_accuracy, ppm, ionization="positive"
+                self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
             )
             self.dfs[1] = task_fun.adduct_identifier(
-                self.dfs[1], mass_accuracy, rt_accuracy, ppm, ionization="negative"
+                self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
             self.data_map["Feature_statistics_positive"] = task_fun.column_sort_DFS(
                 pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature_ID"])
@@ -548,14 +549,14 @@ class NtaRun:
             )
         elif self.dfs[0] is not None:
             self.dfs[0] = task_fun.adduct_identifier(
-                self.dfs[0], mass_accuracy, rt_accuracy, ppm, ionization="positive"
+                self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
             )
             self.data_map["Feature_statistics_positive"] = task_fun.column_sort_DFS(
                 pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature_ID"])
             )
         else:
             self.dfs[1] = task_fun.adduct_identifier(
-                self.dfs[1], mass_accuracy, rt_accuracy, ppm, ionization="negative"
+                self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
             self.data_map["Feature_statistics_negative"] = task_fun.column_sort_DFS(
                 pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature_ID"])

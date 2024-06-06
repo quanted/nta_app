@@ -289,7 +289,7 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
     return output
 
 
-def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionization):
+def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Difference, ppm, ionization):
     """
     Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
     features that are near to adduct distance from another feature. This shortened dataframe is used to
@@ -302,39 +302,42 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     df["Rounded RT"] = df["Retention_Time"].round(1)
     # Create tuple of 'Rounded RT' and 'Rounded Mass'
     df["Rounded_RT_Mass_Pair"] = list(zip(df["Rounded RT"], df["Rounded Mass"]))
-    """
+
     # Define pos/neg/neutral adduct lists
     # Proton subtracted - we observe Mass+(H+) and Mass+(Adduct)
-    pos_adduct_li = [("Na", 21.981942),
-                 ("K", 37.995882),
-                 ("NH4", 17.026547),
-                 #("FA", 44.99820),
-                 #("HFA", 46.00550),
-                 #("HAc", 60.02110),
-                 #("MeOH", 32.02620),
-                 #("ACN", 41.02650),
-                 #("O", 15.99490),
-                 #("IsoProp", 60.05810)
-                 ]
+    pos_adduct_li = [
+        ("Na", 21.981942),
+        ("K", 37.995882),
+        ("NH4", 17.026547),
+        # ("FA", 44.99820),
+        # ("HFA", 46.00550),
+        # ("HAc", 60.02110),
+        # ("MeOH", 32.02620),
+        # ("ACN", 41.02650),
+        # ("O", 15.99490),
+        # ("IsoProp", 60.05810)
+    ]
     # Proton added - we observe Mass-(H+) and Mass+(Adduct)
-    neg_adduct_li = [("Cl", 35.976678),
-                 ("Br", 79.926161),
-                 ("HCO2", 46.005477),
-                 ("CH3CO2", 60.021127),
-                 ("CF3CO2", 113.992862),
-                 #("C2H4", 28.03130),
-                 #("MeOH", 32.02620),
-                 #("ACN", 41.02650)
-                 ]
+    neg_adduct_li = [
+        ("Cl", 35.976678),
+        ("Br", 79.926161),
+        ("HCO2", 46.005477),
+        ("CH3CO2", 60.021127),
+        ("CF3CO2", 113.992862),
+        # ("C2H4", 28.03130),
+        # ("MeOH", 32.02620),
+        # ("ACN", 41.02650)
+    ]
     # no change to neutral losses
-    neutral_adduct_li = [("H2O", 18.010565),
-                     ("2H2O", 36.02113),
-                     ("3H2O", 54.031695),
-                     ("4H2O", 72.04226),
-                     ("5H2O", 90.052825),
-                     ("CO", 29.00220),
-                     ("CO2", 43.989829),
-                     ]
+    neutral_losses_li = [
+        ("H2O", 18.010565),
+        ("2H2O", 36.02113),
+        ("3H2O", 54.031695),
+        ("4H2O", 72.04226),
+        ("5H2O", 90.052825),
+        ("CO", 29.00220),
+        ("CO2", 43.989829),
+    ]
     """
     # Define pos/neg/neutral adduct dictionaries, proton
     pos_adduct_deltas = {"Na": 22.989218, "K": 38.963158, "NH4": 18.033823}
@@ -347,74 +350,87 @@ def adduct_identifier(df_in, Mass_Difference, Retention_Difference, ppm, ionizat
     }
     neutral_loss_deltas = {"H2O": 18.010565, "CO2": 43.989829}
     proton_mass = 1.007276
+    """
     # Determine possible adduct dictionary according to ionization
     if ionization == "positive":
+        possible_adduct_deltas = [item for item in pos_adduct_li if item[0] in adduct_selections[0]]
+        possible_adduct_deltas = possible_adduct_deltas + [
+            item for item in neutral_losses_li if item[0] in adduct_selections[2]
+        ]
+        possible_adduct_deltas = dict(possible_adduct_deltas)
         # we observe Mass+(H+) and Mass+(Adduct)
-        possible_adduct_deltas = {k: v - proton_mass for (k, v) in pos_adduct_deltas.items()}
+        # possible_adduct_deltas = {k: v - proton_mass for (k, v) in pos_adduct_deltas.items()}
     else:
+        possible_adduct_deltas = [item for item in neg_adduct_li if item[0] in adduct_selections[1]]
+        possible_adduct_deltas = possible_adduct_deltas + [
+            item for item in neutral_losses_li if item[0] in adduct_selections[2]
+        ]
+        possible_adduct_deltas = dict(possible_adduct_deltas)
         # we observe Mass-(H+) and Mass+(Adduct)
-        possible_adduct_deltas = {k: v + proton_mass for (k, v) in neg_adduct_deltas.items()}
+        # possible_adduct_deltas = {k: v + proton_mass for (k, v) in neg_adduct_deltas.items()}
         # add neutral loss adducts
-        possible_adduct_deltas.update(neutral_loss_deltas)
+        # possible_adduct_deltas.update(neutral_loss_deltas)
     # Create empty list to hold mass shift/RT tuples
     list_of_mass_shifts_RT_pairs = []
-    # Loop through possible adducts, add/subtract adduct mass from each feature, append
-    # 'Rounded RT', 'Rounded Mass' tuples to 'list_of_mass_shifts_RT_pairs' for both addition
-    # and subtraction.
-    for k, v in possible_adduct_deltas.items():
-        col1 = "Mass - " + k
-        col2 = "Mass + " + k
-        df[col1] = (df["Mass"] - v).round(2)
-        df[col2] = (df["Mass"] + v).round(2)
-        list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col1])))
-        list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col2])))
-    # Extend list
-    list_of_mass_shifts_RT_pairs = [item for sublist in list_of_mass_shifts_RT_pairs for item in sublist]
-    # Remove duplicate tuples (sets don't carry duplicates)
-    list_of_mass_shifts_RT_pairs = list(set(list_of_mass_shifts_RT_pairs))
-    # Filter df for features to check for adducts
-    to_test = df[df["Rounded_RT_Mass_Pair"].isin(list_of_mass_shifts_RT_pairs)]
-    to_test = to_test.sort_values("Mass", ignore_index=True)
-    # Add columns to be changed by 'adduct_matrix'
-    to_test["Has_Adduct_or_Loss"] = 0
-    to_test["Is_Adduct_or_Loss"] = 0
-    to_test["Adduct_or_Loss_Info"] = ""
-    # Set 'n' to tested memory capacity of WebApp for number of features in 'adduct_matrix'
-    n = 12000
-    # If 'to_test' is less than n, send it straight to 'adduct_matrix'
-    if to_test.shape[0] <= n:
-        for a_name, delta in possible_adduct_deltas.items():
-            to_test = adduct_matrix(to_test, a_name, delta, Mass_Difference, Retention_Difference, ppm)
-    # Else, calculate the moving window size and send 'to_test' to 'chunk_adducts'
-    else:
-        step = n - window_size(to_test)
-        # Loop through possible adducts, perform 'adduct_matrix'
-        for a_name, delta in possible_adduct_deltas.items():
-            to_test = chunk_adducts(
-                to_test,
-                n,
-                step,
-                a_name,
-                delta,
-                Mass_Difference,
-                Retention_Difference,
-                ppm,
-            )
-    # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
-    df_in = pd.merge(
-        df_in,
-        to_test[
-            [
-                "Mass",
-                "Retention_Time",
-                "Has_Adduct_or_Loss",
-                "Is_Adduct_or_Loss",
-                "Adduct_or_Loss_Info",
-            ]
-        ],
-        how="left",
-        on=["Mass", "Retention_Time"],
-    )
+    # Logic gate for no adducts selected
+    if len(possible_adduct_deltas > 0):
+        # Loop through possible adducts, add/subtract adduct mass from each feature, append
+        # 'Rounded RT', 'Rounded Mass' tuples to 'list_of_mass_shifts_RT_pairs' for both addition
+        # and subtraction.
+        for k, v in possible_adduct_deltas.items():
+            col1 = "Mass - " + k
+            col2 = "Mass + " + k
+            df[col1] = (df["Mass"] - v).round(2)
+            df[col2] = (df["Mass"] + v).round(2)
+            list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col1])))
+            list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col2])))
+        # Extend list
+        list_of_mass_shifts_RT_pairs = [item for sublist in list_of_mass_shifts_RT_pairs for item in sublist]
+        # Remove duplicate tuples (sets don't carry duplicates)
+        list_of_mass_shifts_RT_pairs = list(set(list_of_mass_shifts_RT_pairs))
+        # Filter df for features to check for adducts
+        to_test = df[df["Rounded_RT_Mass_Pair"].isin(list_of_mass_shifts_RT_pairs)]
+        to_test = to_test.sort_values("Mass", ignore_index=True)
+        # Add columns to be changed by 'adduct_matrix'
+        to_test["Has_Adduct_or_Loss"] = 0
+        to_test["Is_Adduct_or_Loss"] = 0
+        to_test["Adduct_or_Loss_Info"] = ""
+        # Set 'n' to tested memory capacity of WebApp for number of features in 'adduct_matrix'
+        n = 12000
+        # If 'to_test' is less than n, send it straight to 'adduct_matrix'
+        if to_test.shape[0] <= n:
+            for a_name, delta in possible_adduct_deltas.items():
+                to_test = adduct_matrix(to_test, a_name, delta, Mass_Difference, Retention_Difference, ppm)
+        # Else, calculate the moving window size and send 'to_test' to 'chunk_adducts'
+        else:
+            step = n - window_size(to_test)
+            # Loop through possible adducts, perform 'adduct_matrix'
+            for a_name, delta in possible_adduct_deltas.items():
+                to_test = chunk_adducts(
+                    to_test,
+                    n,
+                    step,
+                    a_name,
+                    delta,
+                    Mass_Difference,
+                    Retention_Difference,
+                    ppm,
+                )
+        # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
+        df_in = pd.merge(
+            df_in,
+            to_test[
+                [
+                    "Mass",
+                    "Retention_Time",
+                    "Has_Adduct_or_Loss",
+                    "Is_Adduct_or_Loss",
+                    "Adduct_or_Loss_Info",
+                ]
+            ],
+            how="left",
+            on=["Mass", "Retention_Time"],
+        )
     # Return dataframe with three adduct info columns added
     return df_in
 
