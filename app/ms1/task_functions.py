@@ -307,7 +307,7 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
     # Proton subtracted - we observe Mass+(H+) and Mass+(Adduct)
     pos_adduct_li = [
         ("Na", 21.981942),
-        ("K", 37.995882),
+        ("K", 37.955882),
         ("NH4", 17.026547),
         # ("FA", 44.99820),
         # ("HFA", 46.00550),
