@@ -21,7 +21,7 @@ def upload_page(request, form_data=None, form_files=None):
     print("Entered upload_page")
 
     model = "ms2"
-    header = "Run MS2 CFMID Tool"
+    header = "Run MS2 CFM-ID workflow"
     page = "run_model"
 
     # generate a timestamp with the current time and date
@@ -81,17 +81,11 @@ def upload_page(request, form_data=None, form_files=None):
             job_id = parameters["jobID"]
             inputParameters["jobID"][1] = job_id
             inputParameters["project_name"][1] = parameters["project_name"]
-            inputParameters["precursor_mass_accuracy"][1] = parameters[
-                "precursor_mass_accuracy"
-            ]
-            inputParameters["fragment_mass_accuracy"][1] = parameters[
-                "fragment_mass_accuracy"
-            ]
+            inputParameters["precursor_mass_accuracy"][1] = parameters["precursor_mass_accuracy"]
+            inputParameters["fragment_mass_accuracy"][1] = parameters["fragment_mass_accuracy"]
             # inputParameters['classification_file'][1] = parameters['classification_file']
             # inputParameters['test_files'][1] = parameters['test_files']
-            inputParameters["csrfmiddlewaretoken"][1] = parameters[
-                "csrfmiddlewaretoken"
-            ]
+            inputParameters["csrfmiddlewaretoken"][1] = parameters["csrfmiddlewaretoken"]
             parameters["inputParameters"] = inputParameters
             print("Final parameters: {}".format(parameters))
             run_ms2_dask(parameters, job_id)
@@ -134,7 +128,7 @@ def upload_page(request, form_data=None, form_files=None):
 
 def upload_page_job(request, jobid="000000", form_data=None, form_files=None):
     model = "ms2"
-    header = "Run MS2 CFMID Tool"
+    header = "Run MS2 CFM-ID workflow"
     page = "run_model"
     if request.method == "POST":
         parameters = request.POST

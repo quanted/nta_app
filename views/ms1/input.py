@@ -23,7 +23,7 @@ example_run_sequence_neg_filename = "pooled_blood_run_sequence_neg.csv"
 
 def input_page(request, form_data=None, form_files=None):
     model = "ms1"
-    header = "Run NTA MS1 Tool"
+    header = "Run NTA MS1 workflow"
     page = "run_model"
 
     # generate a timestamp with the current time and date
@@ -117,31 +117,19 @@ def input_page(request, form_data=None, form_files=None):
             # run_sequence_neg_file, and tracer_input, which are handled separately
             inputParameters["project_name"][1] = parameters["project_name"]
             inputParameters["test_files"][1] = parameters["test_files"]
-            inputParameters["mass_accuracy_units"][1] = parameters[
-                "mass_accuracy_units"
-            ]
+            inputParameters["mass_accuracy_units"][1] = parameters["mass_accuracy_units"]
             inputParameters["mass_accuracy"][1] = parameters["mass_accuracy"]
             inputParameters["rt_accuracy"][1] = parameters["rt_accuracy"]
-            inputParameters["mass_accuracy_units_tr"][1] = parameters[
-                "mass_accuracy_units_tr"
-            ]
+            inputParameters["mass_accuracy_units_tr"][1] = parameters["mass_accuracy_units_tr"]
             inputParameters["mass_accuracy_tr"][1] = parameters["mass_accuracy_tr"]
             inputParameters["rt_accuracy_tr"][1] = parameters["rt_accuracy_tr"]
-            inputParameters["tracer_plot_yaxis_format"][1] = parameters[
-                "tracer_plot_yaxis_format"
-            ]
-            inputParameters["tracer_plot_trendline"][1] = parameters[
-                "tracer_plot_trendline"
-            ]
+            inputParameters["tracer_plot_yaxis_format"][1] = parameters["tracer_plot_yaxis_format"]
+            inputParameters["tracer_plot_trendline"][1] = parameters["tracer_plot_trendline"]
             inputParameters["min_replicate_hits"][1] = parameters["min_replicate_hits"]
-            inputParameters["min_replicate_hits_blanks"][1] = parameters[
-                "min_replicate_hits_blanks"
-            ]
+            inputParameters["min_replicate_hits_blanks"][1] = parameters["min_replicate_hits_blanks"]
             inputParameters["max_replicate_cv"][1] = parameters["max_replicate_cv"]
             inputParameters["mrl_std_multiplier"][1] = parameters["mrl_std_multiplier"]
-            inputParameters["parent_ion_mass_accuracy"][1] = parameters[
-                "parent_ion_mass_accuracy"
-            ]
+            inputParameters["parent_ion_mass_accuracy"][1] = parameters["parent_ion_mass_accuracy"]
             inputParameters["minimum_rt"][1] = parameters["minimum_rt"]
             inputParameters["search_dsstox"][1] = parameters["search_dsstox"]
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
@@ -159,18 +147,12 @@ def input_page(request, form_data=None, form_files=None):
             if parameters["test_files"] == "yes":
                 # handle case 1: the user has selected to run the test files
                 # get the path and filename of the test files
-                example_data_dir = os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), "..", "..", "input/ms1"
-                )
+                example_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "input/ms1")
                 pos_input = os.path.join(example_data_dir, example_pos_filename)
                 neg_input = os.path.join(example_data_dir, example_neg_filename)
                 tracer_file = os.path.join(example_data_dir, example_tracer_filename)
-                run_sequence_pos_file = os.path.join(
-                    example_data_dir, example_run_sequence_pos_filename
-                )
-                run_sequence_neg_file = os.path.join(
-                    example_data_dir, example_run_sequence_neg_filename
-                )
+                run_sequence_pos_file = os.path.join(example_data_dir, example_run_sequence_pos_filename)
+                run_sequence_neg_file = os.path.join(example_data_dir, example_run_sequence_neg_filename)
                 # save the name of the files to the inputParameters dictionary
                 inputParameters["pos_input"][1] = pos_input
                 inputParameters["neg_input"][1] = neg_input
@@ -209,25 +191,17 @@ def input_page(request, form_data=None, form_files=None):
 
                 try:
                     run_sequence_pos_file = request.FILES["run_sequence_pos_file"]
-                    run_sequence_pos_df = file_manager.tracer_handler(
-                        run_sequence_pos_file
-                    )
+                    run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
                     # save the name of the file to the inputParameters dictionary
-                    inputParameters["run_sequence_pos_file"][
-                        1
-                    ] = run_sequence_pos_file.name
+                    inputParameters["run_sequence_pos_file"][1] = run_sequence_pos_file.name
                 except Exception:
                     run_sequence_pos_df = None
 
                 try:
                     run_sequence_neg_file = request.FILES["run_sequence_neg_file"]
-                    run_sequence_neg_df = file_manager.tracer_handler(
-                        run_sequence_neg_file
-                    )
+                    run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
                     # save the name of the file to the inputParameters dictionary
-                    inputParameters["run_sequence_neg_file"][
-                        1
-                    ] = run_sequence_neg_file.name
+                    inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file.name
                 except Exception:
                     run_sequence_neg_df = None
 
@@ -249,9 +223,7 @@ def input_page(request, form_data=None, form_files=None):
             print("input_page: inputParameters: {} ".format(inputParameters))
 
             # create a job ID
-            job_id = "".join(
-                random.choices(string.ascii_uppercase + string.digits, k=8)
-            )
+            job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
             print("job ID: " + job_id)
 
             run_nta_dask(
