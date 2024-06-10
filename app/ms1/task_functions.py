@@ -448,7 +448,7 @@ def chunk_dup_remove(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
     to_test_list = [df[i : i + n] for i in range(0, df.shape[0], step)]
     # Remove small remainder tail, if present
     to_test_list = [i for i in to_test_list if (i.shape[0] > n / 2)]
-    # Create list and duplicate list
+    # Create list and ese list
     li = []
     dupe_li = []
     # Pass list to 'dup_matrix'
