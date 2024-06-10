@@ -9,9 +9,12 @@ def ordered_list(model=None, page=None):
                 "Tools",
                 OrderedDict(
                     [
-                        ("MS1 Tool", "ms1"),
-                        ("MS2 CFMID Tool", "ms2"),
-                        ("Merge MS1 and MS2 Data", "merge"),
+                        # ("MS1 Tool", "ms1"), # AC 6/10/2024 - NTAW-448 update link text
+                        # ("MS2 CFMID Tool", "ms2"),
+                        # ("Merge MS1 and MS2 Data", "merge"),
+                        ("MS1 workflow", "ms1"),
+                        ("MS2 CFM-ID workflow", "ms2"),
+                        ("MS1 and MS2 merge workflow", "merge"),
                     ]
                 ),
             ),

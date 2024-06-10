@@ -315,7 +315,7 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
         # ("MeOH", 32.02620),
         # ("ACN", 41.02650),
         # ("O", 15.99490),
-        # ("IsoProp", 60.05810)
+        # ("IsoProp", 60.05810),
     ]
     # Proton added - we observe Mass-(H+) and Mass+(Adduct)
     neg_adduct_li = [
@@ -326,7 +326,7 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
         ("CF3CO2", 113.992862),
         # ("C2H4", 28.03130),
         # ("MeOH", 32.02620),
-        # ("ACN", 41.02650)
+        # ("ACN", 41.02650),
     ]
     # no change to neutral losses
     neutral_losses_li = [
