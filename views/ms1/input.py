@@ -141,7 +141,7 @@ def input_page(request, form_data=None, form_files=None):
             # inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
             # inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
             # inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
-            inputParameters["pos_adducts"][1] = parameters["pos_adducts"].cleaned_data
+            inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
             inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
             inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
 
