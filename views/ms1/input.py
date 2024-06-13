@@ -135,7 +135,13 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
             inputParameters["top_result_only"][1] = parameters["top_result_only"]
-            inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
+
+            # NTAW-387 - AC: Update passing of adducts into input parameters
+            # Comment out old code
+            # inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
+            # inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
+            # inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
+            inputParameters["pos_adducts"][1] = parameters["pos_adducts"].cleaned_data
             inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
             inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
 
