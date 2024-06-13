@@ -373,64 +373,56 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
     # Create empty list to hold mass shift/RT tuples
     list_of_mass_shifts_RT_pairs = []
     # Logic gate for no adducts selected
-    if len(possible_adduct_deltas) > 0:
-        # Loop through possible adducts, add/subtract adduct mass from each feature, append
-        # 'Rounded RT', 'Rounded Mass' tuples to 'list_of_mass_shifts_RT_pairs' for both addition
-        # and subtraction.
-        for k, v in possible_adduct_deltas.items():
-            col1 = "Mass - " + k
-            col2 = "Mass + " + k
-            df[col1] = (df["Mass"] - v).round(2)
-            df[col2] = (df["Mass"] + v).round(2)
-            list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col1])))
-            list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col2])))
-        # Extend list
-        list_of_mass_shifts_RT_pairs = [item for sublist in list_of_mass_shifts_RT_pairs for item in sublist]
-        # Remove duplicate tuples (sets don't carry duplicates)
-        list_of_mass_shifts_RT_pairs = list(set(list_of_mass_shifts_RT_pairs))
-        # Filter df for features to check for adducts
-        to_test = df[df["Rounded_RT_Mass_Pair"].isin(list_of_mass_shifts_RT_pairs)]
-        to_test = to_test.sort_values("Mass", ignore_index=True)
-        # Add columns to be changed by 'adduct_matrix'
-        to_test["Has_Adduct_or_Loss"] = 0
-        to_test["Is_Adduct_or_Loss"] = 0
-        to_test["Adduct_or_Loss_Info"] = ""
-        # Set 'n' to tested memory capacity of WebApp for number of features in 'adduct_matrix'
-        n = 12000
-        # If 'to_test' is less than n, send it straight to 'adduct_matrix'
-        if to_test.shape[0] <= n:
-            for a_name, delta in possible_adduct_deltas.items():
-                to_test = adduct_matrix(to_test, a_name, delta, Mass_Difference, Retention_Difference, ppm)
-        # Else, calculate the moving window size and send 'to_test' to 'chunk_adducts'
-        else:
-            step = n - window_size(to_test)
-            # Loop through possible adducts, perform 'adduct_matrix'
-            for a_name, delta in possible_adduct_deltas.items():
-                to_test = chunk_adducts(
-                    to_test,
-                    n,
-                    step,
-                    a_name,
-                    delta,
-                    Mass_Difference,
-                    Retention_Difference,
-                    ppm,
-                )
-        # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
-        df_in = pd.merge(
-            df_in,
-            to_test[
-                [
-                    "Mass",
-                    "Retention_Time",
-                    "Has_Adduct_or_Loss",
-                    "Is_Adduct_or_Loss",
-                    "Adduct_or_Loss_Info",
-                ]
-            ],
-            how="left",
-            on=["Mass", "Retention_Time"],
-        )
+    # if len(possible_adduct_deltas) > 0:
+
+    # Loop through possible adducts, add/subtract adduct mass from each feature, append
+    # 'Rounded RT', 'Rounded Mass' tuples to 'list_of_mass_shifts_RT_pairs' for both addition
+    # and subtraction.
+    for k, v in possible_adduct_deltas.items():
+        col1 = "Mass - " + k
+        col2 = "Mass + " + k
+        df[col1] = (df["Mass"] - v).round(2)
+        df[col2] = (df["Mass"] + v).round(2)
+        list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col1])))
+        list_of_mass_shifts_RT_pairs.append(list(zip(df["Rounded RT"], df[col2])))
+    # Extend list
+    list_of_mass_shifts_RT_pairs = [item for sublist in list_of_mass_shifts_RT_pairs for item in sublist]
+    # Remove duplicate tuples (sets don't carry duplicates)
+    list_of_mass_shifts_RT_pairs = list(set(list_of_mass_shifts_RT_pairs))
+    # Filter df for features to check for adducts
+    to_test = df[df["Rounded_RT_Mass_Pair"].isin(list_of_mass_shifts_RT_pairs)]
+    to_test = to_test.sort_values("Mass", ignore_index=True)
+    # Add columns to be changed by 'adduct_matrix'
+    to_test["Has_Adduct_or_Loss"] = 0
+    to_test["Is_Adduct_or_Loss"] = 0
+    to_test["Adduct_or_Loss_Info"] = ""
+    # Set 'n' to tested memory capacity of WebApp for number of features in 'adduct_matrix'
+    n = 12000
+    # If 'to_test' is less than n, send it straight to 'adduct_matrix'
+    if to_test.shape[0] <= n:
+        for a_name, delta in possible_adduct_deltas.items():
+            to_test = adduct_matrix(to_test, a_name, delta, Mass_Difference, Retention_Difference, ppm)
+    # Else, calculate the moving window size and send 'to_test' to 'chunk_adducts'
+    else:
+        step = n - window_size(to_test)
+        # Loop through possible adducts, perform 'adduct_matrix'
+        for a_name, delta in possible_adduct_deltas.items():
+            to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm)
+    # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
+    df_in = pd.merge(
+        df_in,
+        to_test[
+            [
+                "Mass",
+                "Retention_Time",
+                "Has_Adduct_or_Loss",
+                "Is_Adduct_or_Loss",
+                "Adduct_or_Loss_Info",
+            ]
+        ],
+        how="left",
+        on=["Mass", "Retention_Time"],
+    )
     # Return dataframe with three adduct info columns added
     return df_in
 
