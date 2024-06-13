@@ -530,13 +530,13 @@ class NtaRun:
             self.dupes = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dupes]
         # Get user-selected adducts
         pos_adducts_selected = self.parameters["pos_adducts"][1]
-        logger.info("pos adducts list length: {}".format(len(self.parameters["pos_adducts"][1])))
+        logger.info("pos adducts list length: {}".format(self.parameters["pos_adducts"][1]))
         # print(pos_adducts_selected)
         neg_adducts_selected = self.parameters["neg_adducts"][1]
-        logger.info("neg adducts list length: {}".format(len(self.parameters["neg_adducts"][1])))
+        logger.info("neg adducts list length: {}".format(self.parameters["neg_adducts"][1]))
         # print(neg_adducts_selected)
         neutral_losses_selected = self.parameters["neutral_losses"][1]
-        logger.info("neutral losses list length: {}".format(len(self.parameters["neutral_losses"][1])))
+        logger.info("neutral losses list length: {}".format(self.parameters["neutral_losses"][1]))
         # print(neutral_losses_selected)
         adduct_selections = [pos_adducts_selected, neg_adducts_selected, neutral_losses_selected]
 
