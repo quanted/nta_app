@@ -142,8 +142,8 @@ def input_page(request, form_data=None, form_files=None):
             # inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
             # inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
             inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts")
-            inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
-            inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
+            inputParameters["neg_adducts"][1] = request.POST.getlist("neg_adducts")
+            inputParameters["neutral_losses"][1] = request.POST.getlist("neutral_losses")
 
             # two basic scenarios are possible: 1) the user has selected to run the test files, or 2) the user
             # has not selected to run the test files. If the user has selected to run the test files, then the
