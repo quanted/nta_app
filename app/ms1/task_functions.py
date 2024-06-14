@@ -309,13 +309,6 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
         ("Na", 21.981942),
         ("K", 37.955882),
         ("NH4", 17.026547),
-        # ("FA", 44.99820),
-        # ("HFA", 46.00550),
-        # ("HAc", 60.02110),
-        # ("MeOH", 32.02620),
-        # ("ACN", 41.02650),
-        # ("O", 15.99490),
-        # ("IsoProp", 60.05810),
     ]
     # Proton added - we observe Mass-(H+) and Mass+(Adduct)
     neg_adduct_li = [
@@ -324,9 +317,7 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
         ("HCO2", 46.005477),
         ("CH3CO2", 60.021127),
         ("CF3CO2", 113.992862),
-        # ("C2H4", 28.03130),
-        # ("MeOH", 32.02620),
-        # ("ACN", 41.02650),
+        ("FA", 46.00550),
     ]
     # no change to neutral losses
     neutral_losses_li = [
@@ -335,22 +326,17 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
         ("3H2O", 54.031695),
         ("4H2O", 72.04226),
         ("5H2O", 90.052825),
+        ("NH3", 17.0265),
+        ("O", 15.99490),
         ("CO", 29.00220),
         ("CO2", 43.989829),
+        ("C2H4", 28.03130),
+        ("HFA", 46.00550),
+        ("HAc", 60.02110),
+        ("MeOH", 32.02620),
+        ("ACN", 41.02650),
+        ("IsoProp", 60.05810),
     ]
-    """
-    # Define pos/neg/neutral adduct dictionaries, proton
-    pos_adduct_deltas = {"Na": 22.989218, "K": 38.963158, "NH4": 18.033823}
-    neg_adduct_deltas = {
-        "Cl": 34.969402,
-        "Br": 78.918885,
-        "HCO2": 44.998201,
-        "CH3CO2": 59.013851,
-        "CF3CO2": 112.985586,
-    }
-    neutral_loss_deltas = {"H2O": 18.010565, "CO2": 43.989829}
-    proton_mass = 1.007276
-    """
     # Determine possible adduct dictionary according to ionization
     if ionization == "positive":
         possible_adduct_deltas = [item for item in pos_adduct_li if item[0] in adduct_selections[0]]
@@ -358,18 +344,12 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
             item for item in neutral_losses_li if item[0] in adduct_selections[2]
         ]
         possible_adduct_deltas = dict(possible_adduct_deltas)
-        # we observe Mass+(H+) and Mass+(Adduct)
-        # possible_adduct_deltas = {k: v - proton_mass for (k, v) in pos_adduct_deltas.items()}
     else:
         possible_adduct_deltas = [item for item in neg_adduct_li if item[0] in adduct_selections[1]]
         possible_adduct_deltas = possible_adduct_deltas + [
             item for item in neutral_losses_li if item[0] in adduct_selections[2]
         ]
         possible_adduct_deltas = dict(possible_adduct_deltas)
-        # we observe Mass-(H+) and Mass+(Adduct)
-        # possible_adduct_deltas = {k: v + proton_mass for (k, v) in neg_adduct_deltas.items()}
-        # add neutral loss adducts
-        # possible_adduct_deltas.update(neutral_loss_deltas)
     # Create empty list to hold mass shift/RT tuples
     list_of_mass_shifts_RT_pairs = []
     # Logic gate for no adducts selected
