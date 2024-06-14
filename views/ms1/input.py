@@ -141,7 +141,7 @@ def input_page(request, form_data=None, form_files=None):
             # inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
             # inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
             # inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
-            inputParameters["pos_adducts"][1] = request.POST.getlist("Positive mode adducts")
+            inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts")
             inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
             inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
 
