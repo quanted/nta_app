@@ -72,7 +72,7 @@ class NtaInputs(forms.Form):
             ("ACN", "[M+ACN]"),
             ("IsoProp", "[M+IsoProp]"),
         ),
-        initial=[],
+        initial=["H2O", "CO2"],
     )
     mass_accuracy_units = forms.ChoiceField(
         choices=(
