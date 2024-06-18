@@ -1,6 +1,7 @@
 import os
 import string, random
 import datetime
+import logging
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -12,6 +13,10 @@ from .. import links_left
 from ...tools.ms1 import file_manager
 from .input_form import NtaInputs
 from ...app.ms1.nta_task import run_nta_dask
+
+# set up logging
+logger = logging.getLogger("nta_app.views")
+logger.setLevel(logging.INFO)
 
 # hard-coded example file names for testing found in nta_app/input/ms1/
 example_pos_filename = "pooled_blood_pos_MPP.csv"
@@ -67,10 +72,10 @@ def input_page(request, form_data=None, form_files=None):
         "search_mode": ["Search dashboard by", None],
         "top_result_only": ["Save top result only?", None],
     }
-    print("input_page: inputParameters: {} ".format(inputParameters))
+    logger.debug("input_page: inputParameters: {} ".format(inputParameters))
 
     if request.method == "POST":
-        print("POST: {}".format(request.POST))
+        logger.debug("POST: {}".format(request.POST))
 
         # the form data is sent as a combination of two types of data: POST data and FILES data. The
         # POST data contains the form fields' values, while the FILES data contains any uploaded files.In
@@ -93,23 +98,21 @@ def input_page(request, form_data=None, form_files=None):
                 form.fields["pos_input"].required = False
 
         if form.is_valid():
-            print("form is valid")
+            logger.info("form is valid")
 
             # get parameters from the Request object. Note that the parameters are in the form of a QueryDict.
             parameters = request.POST
-            print("1. parameters: {}".format(parameters))
             parameters = parameters.dict()
-            print("2. parameters: {}".format(parameters))
 
             # get the uploaded files from the Request object. Note that the files are in the form of a
             # MultiValueDict. The MultiValueDict is a subclass of the standard Python dictionary that
             # provides a multiple values for the same key. This is necessary because some HTML form elements,
             # such as <select multiple>, pass multiple values for the same key.
-            print("3. request.FILES.keys: {}".format(request.FILES.keys()))
+            logger.debug("3. request.FILES.keys: {}".format(request.FILES.keys()))
             # loop through request.FILES and print out the keys and values
             for key, value in request.FILES.items():
-                print("key: {}".format(key))
-                print("value: {}".format(value))
+                logger.debug("key: {}".format(key))
+                logger.debug("value: {}".format(value))
                 # parameters[key] = value
 
             # save the Request parameters in the inputParameters dictionary [0] is the label, [1] is the value
@@ -213,24 +216,21 @@ def input_page(request, form_data=None, form_files=None):
 
             # create a list of the input files
             inputs = [pos_input, neg_input]
-            print("len(inputs)= ", len(inputs))
-            print("inputs: {} ".format(inputs))
+            logger.info("Input Files: {} ".format(inputs))
 
             input_dfs = []
             for index, df in enumerate(inputs):
-                print("indx=", index)
                 if df is not None:
                     input_dfs.append(file_manager.input_handler(df, index))
                 else:
                     input_dfs.append(None)
             # input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs) if df is not None]
 
-            print("len(input_dfs)= ", len(input_dfs))
-            print("input_page: inputParameters: {} ".format(inputParameters))
+            logger.info("input_page: Final Input parameters: {} ".format(inputParameters))
 
             # create a job ID
             job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
-            print("job ID: " + job_id)
+            logger.info("job ID: " + job_id)
 
             run_nta_dask(
                 inputParameters,
@@ -242,7 +242,7 @@ def input_page(request, form_data=None, form_files=None):
             )
             return redirect("/nta/ms1/processing/" + job_id, permanent=True)
         else:
-            print("form is NOT valid")
+            logger.info("form is NOT valid")
             form_data = request.POST
             form_files = request.FILES
 

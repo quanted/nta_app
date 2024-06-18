@@ -19,7 +19,7 @@ from nta_app.views.merge import processing as merge_processing
 from nta_app.views.merge import results_api as merge_results_api
 from nta_app.views.data_handler import data_api as data_api
 from nta_app.views.misc import github
-from nta_app.views.misc import version_info
+from nta_app.views.version_info import version_info_page
 import nta_app.login_middleware as login_middleware
 import os
 
@@ -41,15 +41,13 @@ urlpatterns = [
     path("ms1/ms1_test_files/", ms1_test_files.test_files_page),
     path("ms1/formulas/download", ms1_formulas.download_msready_formulas),
     path("ms1/ms1_test_files/download", ms1_test_files.download_test_files),
-    path(
-        "ms1/results/decision_tree/<slug:jobid>", ms1_decision_tree.decision_tree_page
-    ),
+    path("ms1/results/decision_tree/<slug:jobid>", ms1_decision_tree.decision_tree_page),
     path(
         "ms1/results/decision_tree_data/<slug:jobid>",
         ms1_results_api.decision_tree_data,
     ),
     path("github/", github),
-    path("version_info/", version_info),
+    path("version_info/", version_info_page),
     #
     # ms2 tool
     path("ms2", ms2_upload.upload_page),

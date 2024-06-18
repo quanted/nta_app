@@ -18,8 +18,6 @@ example_neg_filename_1 = "EntactEnv_Neg_MS1_Dust1IDA_01_Debug.mgf"
 
 
 def upload_page(request, form_data=None, form_files=None):
-    print("Entered upload_page")
-
     model = "ms2"
     header = "Run MS2 CFM-ID workflow"
     page = "run_model"
@@ -39,15 +37,10 @@ def upload_page(request, form_data=None, form_files=None):
         "fragment_mass_accuracy": ["fragment_mass_accuracy", None],
         #'classification_file': ['classification_file', None]
     }
-    print("views/ms2/upload.py: inputParameters: {} ".format(inputParameters))
+    logger.debug("views/ms2/upload.py: inputParameters: {} ".format(inputParameters))
 
     if request.method == "POST":
         form = MS2ParametersInput(request.POST)
-        # if request.POST['test_files'] == 'no':
-        #     print('no test files')
-        # else:
-        #     print('test files Selected')
-
         if form.is_valid():
             # if request.POST['test_files'] != 'no':
             #     print('test files Selected')
@@ -87,7 +80,7 @@ def upload_page(request, form_data=None, form_files=None):
             # inputParameters['test_files'][1] = parameters['test_files']
             inputParameters["csrfmiddlewaretoken"][1] = parameters["csrfmiddlewaretoken"]
             parameters["inputParameters"] = inputParameters
-            print("Final parameters: {}".format(parameters))
+            logger.info("Final parameters: {}".format(parameters))
             run_ms2_dask(parameters, job_id)
             return redirect("/nta/ms2/processing/" + job_id, permanent=True)
         else:
