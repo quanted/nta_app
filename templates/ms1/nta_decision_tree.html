@@ -4,13 +4,14 @@
 
 <script src="{% static 'js/d3.v7.min.js' %}" type="text/javascript"></script>
 
-<script src="{% static 'js/sunburst.js' %}" type="text/javascript"></script>
+<!--<script src="{% static 'js/sunburst.js' %}" type="text/javascript"></script>-->
 
 <script src="{% static 'ms1/nta_decision_tree.js' %}" type="text/javascript"></script>
 
 {{ jobid|json_script:'jobid' }}
 
 <!DOCTYPE html>
+
 <html lang="en" xmlns:xlink="http://www.w3.org/1999/xlink">
 <head>
   <meta charset="UTF-8">
@@ -18,99 +19,198 @@
 
   <!--<link rel="stylesheet" href="./decisionTree-styles.css">-->
   
-  <!--<link rel="stylesheet" href="{% static 'ms1/decisionTree-styles.css' %}">-->
+  <link rel="stylesheet" href="{% static 'ms1/decisionTree-styles.css' %}">
   
-  <link type="text/css" rel="stylesheet" href="{% static 'login_page.css' %}" media="all" />
-  <link type="text/css" rel="stylesheet" href="{% static 'ms1/decisionTree-styles.css' %}" media="all" />
-
+  <!--<link type="text/css" rel="stylesheet" href="{% static 'login_page.css' %}" media="all" />-->
+  
+  
+<!--  <link type="text/css" rel="stylesheet" href="{% static 'ms1/decisionTree-styles.css' %}" media="all" />-->
   <title>NTA WebApp Logic Tree</title>
 </head>
 <body>
   <!-- set up container with all elements within -->
   <h1>Decision Tree</h1>
 
-  <div class="grid-container" id="grid-container">
+  <div class="logicTreeGrid-container logicTree" id="grid-container">
 
-    <div class="repThreshSliderA">
+    <div class="repThreshSliderA logicTree">
       <span style="font-size: 30px">Replicate Threshold ( A ):</span><br>
 
-      <input class="slider slider_rep" id="ThreshSliderRange_repA" type="range" min="0.0" max="100.0" step="0.1" value="66.7">
-      <input id="ThreshSliderNumber_repA"  type="number" min="0.0" max="100.0" step="0.1" placeholder="66.7" value="66.7"> %
+      <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_repA" type="range" min="0.0" max="100.0" step="0.1" value="66.7">
+      <input class="logicTree" id="ThreshSliderNumber_repA"  type="number" min="0.0" max="100.0" step="0.1" placeholder="66.7" value="66.7"> %
     </div>
     
-    <div class="cvThreshSliderA">
+    <div class="cvThreshSliderA logicTree logicTree">
       <span style="font-size: 30px">CV Threshold ( A ):</span><br>
 
-      <input class="slider slider_cv" id="ThreshSliderRange_cvA" type="range" min="0.0" max="5" step="0.01" value="1.25">
-      <input id="ThreshSliderNumber_cvA"  type="number" min="0.0" max="5.00" step="0.01" placeholder="1.25" value="1.25"> &nbsp;&nbsp; 
+      <input class="logicTreeSlider slider_cv" id="ThreshSliderRange_cvA" type="range" min="0.0" max="5" step="0.01" value="1.25">
+      <input class="logicTree" id="ThreshSliderNumber_cvA"  type="number" min="0.0" max="5.00" step="0.01" placeholder="1.25" value="1.25"> &nbsp;&nbsp; 
     </div>
 
-    <div class="downloadA"></div>
+    <div class="downloadA logicTree"></div>
 
-    <div class="myTable" id="myTable"></div>
+    <div class="myLogicTreeTable logicTree" id="myTable"></div>
 
-    <div class="repThreshSliderB">
+    <div class="repThreshSliderB logicTree">
       <span style="font-size: 30px">Replicate Threshold ( B ):</span><br>
 
-      <input class="slider slider_rep" id="ThreshSliderRange_repB" type="range" min="0.0" max="100.0" step="0.1" value="50.0">
-      <input id="ThreshSliderNumber_repB"  type="number" min="0.0" max="100.0" step="0.1" placeholder="50.0" value="50.0"> %
+      <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_repB" type="range" min="0.0" max="100.0" step="0.1" value="50.0">
+      <input class="logicTree" id="ThreshSliderNumber_repB"  type="number" min="0.0" max="100.0" step="0.1" placeholder="50.0" value="50.0"> %
     </div>
 
-    <div class="cvThreshSliderB">
+    <div class="cvThreshSliderB logicTree">
       <span style="font-size: 30px">CV Threshold ( B ):</span><br>
 
-      <input class="slider slider_cv" id="ThreshSliderRange_cvB" type="range" min="0.0" max="5" step="0.01" value="0.80">
-      <input id="ThreshSliderNumber_cvB"  type="number" min="0.0" max="5.00" step="0.01" placeholder="0.80" value="0.80"> &nbsp;&nbsp;
+      <input class="logicTreeSlider slider_cv" id="ThreshSliderRange_cvB" type="range" min="0.0" max="5" step="0.01" value="0.80">
+      <input class="logicTree" id="ThreshSliderNumber_cvB"  type="number" min="0.0" max="5.00" step="0.01" placeholder="0.80" value="0.80"> &nbsp;&nbsp;
     </div>
     
-    <div class="downloadB"></div>
-    
-    <div class="occTreeA" id="occTreeABox">
+    <div class="occTreeA logicTree" id="occTreeABox">
         <svg id="occTreeASVG"></svg>
     </div>
-    <div class="occTreeB" id="occTreeBBox">
+    <div class="occTreeB logicTree" id="occTreeBBox">
         <svg id="occTreeBSVG"></svg>
     </div>
-    <div class="featTreeA" id="featTreeABox">
+    <div class="featTreeA logicTree" id="featTreeABox">
         <svg id="featTreeASVG"></svg>
     </div>
-    <div class="featTreeB" id="featTreeBBox">
+    <div class="featTreeB logicTree" id="featTreeBBox">
         <svg id="featTreeBSVG"></svg>
     </div>
 
-    <div class="downloadA">
-        <button class="download" id="downloadOccA">
+    <div class="downloadA logicTree">
+        <button class="downloadLogicTree logicTree" id="downloadOccA">
             <span style="font-size: 24px;">Download Occ A</span>
         </button>
-        <button class="download" id="downloadFeatA">
+        <button class="downloadLogicTree logicTree" id="downloadFeatA">
             <span style="font-size: 24px;">Download Feat A</span>
         </button>
     </div>
 
-    <div class="downloadB">
-        <button class="download" id="downloadOccB">
+    <div class="downloadB logicTree">
+        <button class="downloadLogicTree logicTree" id="downloadOccB">
             <span style="font-size: 24px;">Download Occ B</span>
         </button>
-        <button class="download" id="downloadFeatB">
+        <button class="downloadLogicTree logicTree" id="downloadFeatB">
             <span style="font-size: 24px;">Download Feat B</span>
         </button>
     </div>
 
-    <div class="toggleButtons">
-      <button class="toggle" id="toggleTreeType">
+    <div class="logicTreeToggleButtons">
+      <button class="toggleLogicTree" id="toggleTreeType">
           <span style="font-size: 24px;">Toggle Icicle</span>
       </button>
+  </div>
+  </div>
+  <!-- canvas element needed to draw SVG in to then save as PNG -->
+  <canvas id="logicTreeCanvas" style="display: none;"></canvas>
+</body>
+
+<!--<script src="./js/d3.v7.min.js"></script>-->
+<!--<script src="./js/main-v0.5.2.js"></script>-->
+
+</html>
+
+<!--<html lang="en" xmlns:xlink="http://www.w3.org/1999/xlink">-->
+<!--<head>-->
+<!--  <meta charset="UTF-8">-->
+<!--  <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+
+  <!--<link rel="stylesheet" href="./decisionTree-styles.css">-->
+  
+  <!--<link rel="stylesheet" href="{% static 'ms1/decisionTree-styles.css' %}">-->
+  
+<!--  <link type="text/css" rel="stylesheet" href="{% static 'login_page.css' %}" media="all" />-->
+<!--  <link type="text/css" rel="stylesheet" href="{% static 'ms1/decisionTree-styles.css' %}" media="all" />-->
+
+<!--  <title>NTA WebApp Logic Tree</title>-->
+<!--</head>-->
+<!--<body>-->
+  <!-- set up container with all elements within -->
+<!--  <h1>Decision Tree</h1>-->
+
+<!--  <div class="grid-container" id="grid-container">-->
+
+<!--    <div class="repThreshSliderA">-->
+<!--      <span style="font-size: 30px">Replicate Threshold ( A ):</span><br>-->
+
+<!--      <input class="slider slider_rep" id="ThreshSliderRange_repA" type="range" min="0.0" max="100.0" step="0.1" value="66.7">-->
+<!--      <input id="ThreshSliderNumber_repA"  type="number" min="0.0" max="100.0" step="0.1" placeholder="66.7" value="66.7"> %-->
+<!--    </div>-->
+    
+<!--    <div class="cvThreshSliderA">-->
+<!--      <span style="font-size: 30px">CV Threshold ( A ):</span><br>-->
+
+<!--      <input class="slider slider_cv" id="ThreshSliderRange_cvA" type="range" min="0.0" max="5" step="0.01" value="1.25">-->
+<!--      <input id="ThreshSliderNumber_cvA"  type="number" min="0.0" max="5.00" step="0.01" placeholder="1.25" value="1.25"> &nbsp;&nbsp; -->
+<!--    </div>-->
+
+<!--    <div class="downloadA"></div>-->
+
+<!--    <div class="myTable" id="myTable"></div>-->
+
+<!--    <div class="repThreshSliderB">-->
+<!--      <span style="font-size: 30px">Replicate Threshold ( B ):</span><br>-->
+
+<!--      <input class="slider slider_rep" id="ThreshSliderRange_repB" type="range" min="0.0" max="100.0" step="0.1" value="50.0">-->
+<!--      <input id="ThreshSliderNumber_repB"  type="number" min="0.0" max="100.0" step="0.1" placeholder="50.0" value="50.0"> %-->
+<!--    </div>-->
+
+<!--    <div class="cvThreshSliderB">-->
+<!--      <span style="font-size: 30px">CV Threshold ( B ):</span><br>-->
+
+<!--      <input class="slider slider_cv" id="ThreshSliderRange_cvB" type="range" min="0.0" max="5" step="0.01" value="0.80">-->
+<!--      <input id="ThreshSliderNumber_cvB"  type="number" min="0.0" max="5.00" step="0.01" placeholder="0.80" value="0.80"> &nbsp;&nbsp;-->
+<!--    </div>-->
+    
+<!--    <div class="downloadB"></div>-->
+    
+<!--    <div class="occTreeA" id="occTreeABox">-->
+<!--        <svg id="occTreeASVG"></svg>-->
+<!--    </div>-->
+<!--    <div class="occTreeB" id="occTreeBBox">-->
+<!--        <svg id="occTreeBSVG"></svg>-->
+<!--    </div>-->
+<!--    <div class="featTreeA" id="featTreeABox">-->
+<!--        <svg id="featTreeASVG"></svg>-->
+<!--    </div>-->
+<!--    <div class="featTreeB" id="featTreeBBox">-->
+<!--        <svg id="featTreeBSVG"></svg>-->
+<!--    </div>-->
+
+<!--    <div class="downloadA">-->
+<!--        <button class="download" id="downloadOccA">-->
+<!--            <span style="font-size: 24px;">Download Occ A</span>-->
+<!--        </button>-->
+<!--        <button class="download" id="downloadFeatA">-->
+<!--            <span style="font-size: 24px;">Download Feat A</span>-->
+<!--        </button>-->
+<!--    </div>-->
+
+<!--    <div class="downloadB">-->
+<!--        <button class="download" id="downloadOccB">-->
+<!--            <span style="font-size: 24px;">Download Occ B</span>-->
+<!--        </button>-->
+<!--        <button class="download" id="downloadFeatB">-->
+<!--            <span style="font-size: 24px;">Download Feat B</span>-->
+<!--        </button>-->
+<!--    </div>-->
+
+<!--    <div class="toggleButtons">-->
+<!--      <button class="toggle" id="toggleTreeType">-->
+<!--          <span style="font-size: 24px;">Toggle Icicle</span>-->
+<!--      </button>-->
       <!-- <button class="download" id="downloadFeatB"> -->
           <!-- <span style="font-size: 24px;">Download Feat B</span> -->
       <!-- </button> -->
-  </div>
-  </div>
-</body>
+<!--  </div>-->
+<!--  </div>-->
+<!--</body>-->
 
 <!--<script src="./js/d3.v7.min.js"></script>-->
 <!--<script src="./js/main-v0.5.1.js"></script>-->
 
-</html>
+<!--</html>-->
 
 <!--<!DOCTYPE html>-->
 <!--<html lang="en" xmlns:xlink="http://www.w3.org/1999/xlink">-->

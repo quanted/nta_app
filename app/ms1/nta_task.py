@@ -811,6 +811,7 @@ class NtaRun:
         blank_mean = "Mean_" + blank_col[0]
         blank_std = "STD_" + blank_col[0]
         # Calculate MDL
+        # AC 6/18/2024: Need to pull in MRL multiplier for MRL calculation
         dfCombined["MDL"] = dfCombined[blank_mean] + 3 * dfCombined[blank_std]
         dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
         dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
@@ -873,7 +874,7 @@ class NtaRun:
         colorbar.set_ticks([-0.667, 0, 0.667])
         colorbar.set_ticklabels(
             [
-                "non detect ({})".format(nan_.sum().sum()),
+                "non-detect ({})".format(nan_.sum().sum()),
                 "CV <= {} ({})".format(max_replicate_cv_value, below.sum().sum()),
                 "CV > {} ({})".format(max_replicate_cv_value, above.sum().sum()),
             ]
