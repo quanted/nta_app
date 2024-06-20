@@ -207,6 +207,7 @@ button.downloadLogicTree {
   transition: background-color 0.2s, border 0.2s, color 0.2s;
   margin-left: 10px;
   margin-right: 10px;
+  color: rgb(0, 0, 0); /* Set button text to black - AC 6/20/2024 */
 }
 button.downloadLogicTree:hover {
   background-color: #2e7ebc;
