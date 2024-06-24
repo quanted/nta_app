@@ -28,9 +28,11 @@ text.logicTree {
 .myLogicTreeTable { grid-area: myLogicTreeTable; }
 .repThreshSliderA { grid-area: repThreshSliderA; }
 .cvThreshSliderA { grid-area: cvThreshSliderA; }
+.mrlThreshSliderA { grid-area: mrlThreshSliderA; }
 .downloadA { grid-area: downloadA; }
 .repThreshSliderB { grid-area: repThreshSliderB; }
 .cvThreshSliderB { grid-area: cvThreshSliderB; }
+.mrlThreshSliderB { grid-area: mrlThreshSliderB; }
 .downloadB { grid-area: downloadB; }
 .occTreeA { grid-area: occTreeA; }
 .featTreeA { grid-area: featTreeA; }
@@ -46,6 +48,7 @@ text.logicTree {
   grid-template-areas: 
     'occTreeA repThreshSliderA featTreeA'  
     'occTreeA cvThreshSliderA featTreeA'
+    'occTreeA mrlThreshSliderA featTreeA'
     'occTreeA downloadA featTreeA'
     'occTreeA myLogicTreeTable featTreeA'
     'occTreeA myLogicTreeTable featTreeA'
@@ -54,7 +57,8 @@ text.logicTree {
     'occTreeB myLogicTreeTable featTreeB'
     'occTreeB repThreshSliderB featTreeB'  
     'occTreeB cvThreshSliderB featTreeB'
-    'occTreeB downloadB featTreeB' /* featTreeA */
+    'occTreeB mrlThreshSliderB featTreeB'
+    'occTreeB downloadB featTreeB' 
     'occTreeB toggleButtons featTreeB';
   gap: 3px;
   background-color: #313131;
@@ -185,6 +189,10 @@ tr.logicTree:nth-child(3) {
   background: #5cbfc6;
 }
 
+.slider_mrl::-webkit-slider-thumb {
+  background: #daa2c8;
+}
+
 button.logicTree, button.toggleLogicTree {
   font-size: 29px;
   padding: 6px;
@@ -207,7 +215,6 @@ button.downloadLogicTree {
   transition: background-color 0.2s, border 0.2s, color 0.2s;
   margin-left: 10px;
   margin-right: 10px;
-  color: rgb(0, 0, 0); /* Set button text to black - AC 6/20/2024 */
 }
 button.downloadLogicTree:hover {
   background-color: #2e7ebc;

@@ -674,6 +674,18 @@ def chunk_stats(df_in, mrl_multiplier=3):
     output["MRL"] = (mrl_multiplier * output[Std_MB[0]]) + output[Mean_MB[0]]
     output["MRL"] = output["MRL"].fillna(output[Mean_MB[0]])
     output["MRL"] = output["MRL"].fillna(0)
+
+    # Calculate 3x, 5x, 10x MRL values explicitly for use by the logic tree - NTAW-377 AC 6/24/2024
+    output["MRL_3x"] = (3 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL_3x"] = output["MRL_3x"].fillna(output[Mean_MB[0]])
+    output["MRL_3x"] = output["MRL_3x"].fillna(0)
+    output["MRL_5x"] = (5 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL_5x"] = output["MRL_5x"].fillna(output[Mean_MB[0]])
+    output["MRL_5x"] = output["MRL_5x"].fillna(0)
+    output["MRL_10x"] = (10 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL_10x"] = output["MRL_10x"].fillna(output[Mean_MB[0]])
+    output["MRL_10x"] = output["MRL_10x"].fillna(0)
+
     # Return dataframe with statistics calculated and MRL included, to be output as data_feature_stats
     return output
 

@@ -6,6 +6,9 @@ var jobid = window.location.pathname.split("/").pop();
 var csv_path = '/nta/ms1/results/decision_tree_data/' + jobid;
 
 /**
+ * Changes in v0.5.3
+ *  - Added MDL multiplier sliders for x3, x5, x10
+ * 
  * Changes in v0.5.2
  *  - Added styling for center column.
  * 
@@ -25,7 +28,8 @@ var countData = {
   "A": {
     "threshold": {
       "rep": 66.7,
-      "cv": 1.25
+      "cv": 1.25,
+      "mrl": 3
     },
     "counts": {
       "occ": {
@@ -60,7 +64,8 @@ var countData = {
   "B": {
     "threshold": {
       "rep": 50.0,
-      "cv": 0.80
+      "cv": 0.80,
+      "mrl": 3
     },
     "counts": {
       "occ": {
@@ -282,6 +287,60 @@ d3.csv(csv_path).then(function(data) {
     sliderCVB.value = Number(inputBoxCVB.value);
 
     countData["B"]["threshold"]["cv"] = sliderCVB.value
+
+    countData = get_counts(countData)
+
+    tableCreate(countData, true)
+    if (sunburstToggle) {
+      createSunburst(countData, 'occTreeBBox', 'occTreeBSVG', "B", "occ")
+      createSunburst(countData, 'featTreeBBox', 'featTreeBSVG', "B", "feat")
+    } else {
+      createOccTree(countData, 'occTreeBBox', 'occTreeBSVG', "B")
+      createFeatTree(countData, 'featTreeBBox', 'featTreeBSVG', "B")
+    }
+  }
+
+  // MRL Threshold A
+  var sliderMRLA = document.getElementById("ThreshSliderRange_mrlA"),
+    inputBoxMRLA = document.getElementById("ThreshSliderNumber_mrlA");
+  sliderMRLA.oninput = function() {
+    // First set the possible values for the slider
+    if (sliderMRLA.value < 4.5) {
+      sliderMRLA.value = 3;
+    } else if (sliderMRLA.value < 7.5) {
+      sliderMRLA.value = 5;
+    } else {
+      sliderMRLA.value = 10;
+    }
+    inputBoxMRLA.value = sliderMRLA.value
+    countData["A"]["threshold"]["mrl"] = sliderMRLA.value
+
+    countData = get_counts(countData)
+
+    tableCreate(countData, true)
+    if (sunburstToggle) {
+      createSunburst(countData, 'occTreeABox', 'occTreeASVG', "A", "occ")
+      createSunburst(countData, 'featTreeABox', 'featTreeASVG', "A", "feat")
+    } else {
+      createOccTree(countData, 'occTreeABox', 'occTreeASVG', "A")
+      createFeatTree(countData, 'featTreeABox', 'featTreeASVG', "A")
+    }
+  }
+
+  // MRL Threshold B
+  var sliderMRLB = document.getElementById("ThreshSliderRange_mrlB"),
+    inputBoxMRLB = document.getElementById("ThreshSliderNumber_mrlB");
+  sliderMRLB.oninput = function() {
+    // First set the possible values for the slider
+    if (sliderMRLB.value < 4.5) {
+      sliderMRLB.value = 3;
+    } else if (sliderMRLB.value < 7.5) {
+      sliderMRLB.value = 5;
+    } else {
+      sliderMRLB.value = 10;
+    }
+    inputBoxMRLB.value = sliderMRLB.value
+    countData["B"]["threshold"]["mrl"] = sliderMRLB.value
 
     countData = get_counts(countData)
 
@@ -746,7 +805,7 @@ d3.csv(csv_path).then(function(data) {
           //**********************************************//           
 
           // check if this occurrence within the feature passes MRL check (and hence causes the feature to pass)
-          var mrl_threshold_header = "Blank_MRL"; // change to "MRL" for alex // change to "Blank_MDL for tyler"
+          var mrl_threshold_header = `MRL_${countData[threshID]['threshold']['mrl']}x`; 
           var sample_mean_header = "Mean" + sample_name;
           if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
             mrlPass = true;
@@ -769,7 +828,7 @@ d3.csv(csv_path).then(function(data) {
               }
 
               // check if this occurrence passes MRL check
-              var mrl_threshold_header = "Blank_MRL"; // change to "MRL" for alex // change to "Blank_MDL for tyler"
+              var mrl_threshold_header = `MRL_${countData[threshID]['threshold']['mrl']}x`; 
               var sample_mean_header = "Mean" + sample_name;
               if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
                 // pass MRL (pass replicate-->pass CV-->pass MRL)
@@ -789,7 +848,7 @@ d3.csv(csv_path).then(function(data) {
               }
 
               // check if this occurrence passes MRL check
-              var mrl_threshold_header = "Blank_MRL"; // change to "MRL" for alex // change to "Blank_MDL for tyler"
+              var mrl_threshold_header = `MRL_${countData[threshID]['threshold']['mrl']}x`
               var sample_mean_header = "Mean" + sample_name;
               if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
                 // pass MRL (pass replicate-->pass CV-->pass MRL)
@@ -1016,7 +1075,7 @@ d3.csv(csv_path).then(function(data) {
       svgWidth = Math.min(windowWidth*0.42, 1600),
       svgHeight = windowHeight*0.55,
       svgWidth = 1400,
-      svgHeight = 780;
+      svgHeight = 900;
 
     // get y-positions of each row of the decision tree
     var contentPaddingTopFactor = 0.22,
@@ -1124,9 +1183,11 @@ d3.csv(csv_path).then(function(data) {
     svg = addBifurcatingArrow(svg, `nOverCV${tag}`, `nOverCVOverMRL${tag}`, `nOverCVUnderMRL${tag}`, 27, fail_arrow_ec, fail_arrow_fc, fail_arrow_ec, fail_arrow_fc, nonDetect_arrow_ec, nonDetect_arrow_fc, "", "MRL Flag");
 
     // add text for Threshold values on SVG
-    var replicateText = addText(30, 245, `<tspan text-decoration="underline">Replicate Threshold = ${countData[threshID]["threshold"]["rep"]}%</tspan>`, 28, "black");
+    var replicateText = addText(30, 285, `<tspan text-decoration="underline">Replicate Threshold = ${countData[threshID]["threshold"]["rep"]}%</tspan>`, 28, "black");
     svg.appendChild(replicateText);
-    var replicateText = addText(40, 430, `<tspan text-decoration="underline">CV Threshold = ${countData[threshID]["threshold"]["cv"]}</tspan>`, 28, "black");
+    var replicateText = addText(40, 505, `<tspan text-decoration="underline">CV Threshold = ${countData[threshID]["threshold"]["cv"]}</tspan>`, 28, "black");
+    svg.appendChild(replicateText);
+    var replicateText = addText(20, 680, `<tspan text-decoration="underline">Blank MRL Multiplier = ${countData[threshID]["threshold"]["mrl"]}</tspan>`, 28, "black");
     svg.appendChild(replicateText);
 
     // append svg to our container div
@@ -1152,7 +1213,7 @@ d3.csv(csv_path).then(function(data) {
       svgWidth = Math.min(windowWidth*0.42, 1600),
       svgHeight = windowHeight*0.55,
       svgWidth = 1400,
-      svgHeight = 780;
+      svgHeight = 900;
 
     // get y-positions of each row of the decision tree
     var contentPaddingTopFactor = 0.22,
@@ -1256,9 +1317,11 @@ d3.csv(csv_path).then(function(data) {
     svg = addBifurcatingArrow(svg, `nOverCV${tag}`, `nOverCVOverMRL${tag}`, `nOverCVUnderMRL${tag}`, 27, fail_arrow_ec, fail_arrow_fc, fail_arrow_ec, fail_arrow_fc, nonDetect_arrow_ec, nonDetect_arrow_fc, "", "MRL Flag");
 
     // add text for Threshold values on SVG
-    var replicateText = addText(30, 245, `<tspan text-decoration="underline">Replicate Threshold = ${countData[threshID]["threshold"]["rep"]}%</tspan>`, 28, "black");
+    var replicateText = addText(30, 285, `<tspan text-decoration="underline">Replicate Threshold = ${countData[threshID]["threshold"]["rep"]}%</tspan>`, 28, "black");
     svg.appendChild(replicateText);
-    var replicateText = addText(40, 430, `<tspan text-decoration="underline">CV Threshold = ${countData[threshID]["threshold"]["cv"]}</tspan>`, 28, "black");
+    var replicateText = addText(40, 505, `<tspan text-decoration="underline">CV Threshold = ${countData[threshID]["threshold"]["cv"]}</tspan>`, 28, "black");
+    svg.appendChild(replicateText);
+    var replicateText = addText(20, 680, `<tspan text-decoration="underline">Blank MRL Multiplier = ${countData[threshID]["threshold"]["mrl"]}</tspan>`, 28, "black");
     svg.appendChild(replicateText);
 
     // append svg to our container div
