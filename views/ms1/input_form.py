@@ -1,105 +1,212 @@
 from django import forms
 from django.core.validators import MinValueValidator, FileExtensionValidator
 from django.forms.widgets import NumberInput
+from django.utils.safestring import mark_safe
 
 
 class RangeInput(NumberInput):
-    input_type = 'range'
+    input_type = "range"
+
 
 class NtaInputs(forms.Form):
-
     project_name = forms.CharField(
-        widget=forms.Textarea(attrs={'cols': 30, 'rows': 1}),
-        initial='Example nta',
-        required=True)
+        widget=forms.Textarea(attrs={"cols": 30, "rows": 1}),
+        initial="Example nta",
+        required=True,
+    )
     test_files = forms.ChoiceField(
-        label='Run test files only (debugging)',
-        choices=(('no', 'no'),('yes', 'yes')),
-        initial='no')
+        label="Run test files only (debugging)",
+        choices=(("no", "no"), ("yes", "yes")),
+        initial="no",
+    )
     pos_input = forms.FileField(
-        label = 'Positive mode file (csv)',
+        label="Positive mode file (csv)",
         required=False,
-        validators= [FileExtensionValidator(['csv'])])
+        validators=[FileExtensionValidator(["csv"])],
+    )
     neg_input = forms.FileField(
-        label='Negative mode file (csv)',
+        label="Negative mode file (csv)",
         required=False,
-        validators= [FileExtensionValidator(['csv'])])
+        validators=[FileExtensionValidator(["csv"])],
+    )
+    pos_adducts = forms.MultipleChoiceField(
+        label="Positive mode adducts",
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "two"}),
+        choices=(
+            ("Na", "[M+Na]+"),
+            ("K", "[M+K]+"),
+            ("NH4", mark_safe("[M+NH<sub>4</sub>]+")),
+        ),
+        initial=["Na", "K", "NH4"],
+    )
+    neg_adducts = forms.MultipleChoiceField(
+        label="Negative mode adducts",
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "two"}),
+        choices=(
+            ("Cl", "[M+Cl]-"),
+            ("Br", "[M+Br]-"),
+            ("HCO2", mark_safe("[M+HCO<sub>2</sub>]-")),
+            ("CH3CO2", mark_safe("[M+CH<sub>3</sub>CO<sub>2</sub>]-")),
+            ("CF3CO2", mark_safe("[M+CF<sub>3</sub>CO<sub>2</sub>]-")),
+            ("FA", "[M+FA]-"),
+        ),
+        initial=["Cl", "HCO2", "CH3CO2", "FA"],
+    )
+    neutral_losses = forms.MultipleChoiceField(
+        label="Neutral losses (both modes)",
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "two"}),
+        choices=(
+            ("H2O", mark_safe("[M-H<sub>2</sub>O]")),
+            ("2H2O", mark_safe("[M-2H<sub>2</sub>O]")),
+            ("3H2O", mark_safe("[M-3H<sub>2</sub>O]")),
+            ("4H2O", mark_safe("[M-4H<sub>2</sub>O]")),
+            ("5H2O", mark_safe("[M-5H<sub>2</sub>O]")),
+            ("NH3", mark_safe("[M-NH<sub>3</sub>]")),
+            ("O", "[M-O]"),
+            ("CO", "[M-CO]"),
+            ("CO2", mark_safe("[M-CO<sub>2</sub>]")),
+            ("C2H4", mark_safe("[M-C<sub>2</sub>H<sub>4</sub>]")),
+            ("HFA", "[M+HFA]"),
+            ("HAc", "[M+HAc]"),
+            ("MeOH", "[M+MeOH]"),
+            ("ACN", "[M+ACN]"),
+            ("IsoProp", "[M+IsoProp]"),
+        ),
+        initial=["H2O", "CO2"],
+    )
     mass_accuracy_units = forms.ChoiceField(
-        choices=(('ppm', 'ppm'), ('Da', 'Da'),),
-        label = 'Adduct mass accuracy units',
-        initial = 'ppm')
+        choices=(
+            ("ppm", "ppm"),
+            ("Da", "Da"),
+        ),
+        label="Adduct / duplicate mass accuracy units",
+        initial="ppm",
+    )
     mass_accuracy = forms.FloatField(
-        label='Adduct mass accuracy',
+        label="Adduct / duplicate mass accuracy",
         initial=10,
-        validators=[MinValueValidator(0)])
+        validators=[MinValueValidator(0)],
+    )
     rt_accuracy = forms.FloatField(
-        widget=forms.NumberInput(attrs={'step': 0.01}),
-        label='Adduct retention time accuracy (mins)',
+        widget=forms.NumberInput(attrs={"step": 0.01}),
+        label="Adduct / duplicate retention time accuracy (mins)",
         initial=0.05,
-        validators=[MinValueValidator(0)])
+        validators=[MinValueValidator(0)],
+    )
     run_sequence_pos_file = forms.FileField(
-        label='Run sequence positive mode file (csv; optional)',
+        label="Run sequence positive mode file (csv; optional)",
         required=False,
-        validators= [FileExtensionValidator(['csv'])])
+        validators=[FileExtensionValidator(["csv"])],
+    )
     run_sequence_neg_file = forms.FileField(
-        label='Run sequence negative mode file (csv; optional)',
+        label="Run sequence negative mode file (csv; optional)",
         required=False,
-        validators= [FileExtensionValidator(['csv'])])
+        validators=[FileExtensionValidator(["csv"])],
+    )
     tracer_input = forms.FileField(
-        label='Tracer file (csv; optional)',
+        label="Tracer file (csv; optional)",
         required=False,
-        validators= [FileExtensionValidator(['csv'])])
+        validators=[FileExtensionValidator(["csv"])],
+    )
     mass_accuracy_units_tr = forms.ChoiceField(
-        choices=(('ppm', 'ppm'), ('Da', 'Da'),),
-        label='Tracer mass accuracy units',
-        initial='ppm')
-    mass_accuracy_tr = forms.FloatField(
-        label='Tracer mass accuracy',
-        initial=5,
-        validators=[MinValueValidator(0)])
+        choices=(
+            ("ppm", "ppm"),
+            ("Da", "Da"),
+        ),
+        label="Tracer mass accuracy units",
+        initial="ppm",
+    )
+    mass_accuracy_tr = forms.FloatField(label="Tracer mass accuracy", initial=5, validators=[MinValueValidator(0)])
     rt_accuracy_tr = forms.DecimalField(
-        widget=forms.NumberInput(attrs={'step': 0.1}),
-        label='Tracer retention time accuracy (mins)',
+        widget=forms.NumberInput(attrs={"step": 0.1}),
+        label="Tracer retention time accuracy (mins)",
         initial=0.1,
-        validators=[MinValueValidator(0)])
+        validators=[MinValueValidator(0)],
+    )
+    tracer_plot_yaxis_format = forms.ChoiceField(
+        choices=(
+            ("log", "log"),
+            ("linear", "linear"),
+        ),
+        label="Tracer plot y-axis scaling",
+        initial="log",
+    )
+    tracer_plot_trendline = forms.ChoiceField(
+        choices=(
+            ("yes", "yes"),
+            ("no", "no"),
+        ),
+        label="Tracer plot trendlines shown",
+        initial="yes",
+    )
     min_replicate_hits = forms.IntegerField(
-        widget = RangeInput(attrs={'max': '100', 'min':'1', 'class': 'slider_bar'}),
-        label='Min replicate hits(%)',
+        widget=RangeInput(attrs={"max": "100", "min": "1", "class": "slider_bar"}),
+        label="Min replicate hits(%)",
         initial=66,
-        validators=[MinValueValidator(0)])
+        validators=[MinValueValidator(0)],
+    )
     min_replicate_hits_blanks = forms.IntegerField(
-        widget = RangeInput(attrs={'max': '100', 'min':'1', 'class': 'slider_bar'}),
-        label='Min replicate hits in blanks(%)',
+        widget=RangeInput(attrs={"max": "100", "min": "1", "class": "slider_bar"}),
+        label="Min replicate hits in blanks(%)",
         initial=66,
-        validators=[MinValueValidator(0)])
+        validators=[MinValueValidator(0)],
+    )
     max_replicate_cv = forms.DecimalField(
-        widget=forms.NumberInput(attrs={'step': 0.1}),
-        label='Max replicate CV',
+        widget=forms.NumberInput(attrs={"step": 0.1}),
+        label="Max replicate CV",
         initial=0.8,
-        validators=[MinValueValidator(0)])
+        validators=[MinValueValidator(0)],
+    )
+    mrl_std_multiplier = forms.ChoiceField(
+        choices=(
+            ("3", 3),
+            ("5", 5),
+            ("10", 10),
+        ),
+        label="MRL standard deviation multiplier",
+        initial="3",
+    )
     parent_ion_mass_accuracy = forms.IntegerField(
-        widget = RangeInput(attrs={'max': '10', 'min':'1', 'class': 'slider_bar'}),
-        label='Parent ion mass accuracy (ppm)',
+        widget=RangeInput(attrs={"max": "10", "min": "1", "class": "slider_bar"}),
+        label="Parent ion mass accuracy (ppm)",
         initial=5,
-        validators=[MinValueValidator(0)])
+        validators=[MinValueValidator(0)],
+    )
     minimum_rt = forms.FloatField(
-        widget=forms.NumberInput(attrs={'step': 0.1}),
-        label='Discard features below this retention time (mins)',
+        widget=forms.NumberInput(attrs={"step": 0.1}),
+        label="Discard features below this retention time (mins)",
         initial=0.00,
-        validators=[MinValueValidator(0)])
+        validators=[MinValueValidator(0)],
+    )
     search_dsstox = forms.ChoiceField(
-        label='Search DSSTox for possible structures',
-        choices=(('yes','yes'),('no','no'),),
-        initial='yes')
+        label="Search DSSTox for possible structures",
+        choices=(
+            ("yes", "yes"),
+            ("no", "no"),
+        ),
+        initial="yes",
+    )
     search_hcd = forms.ChoiceField(
-        label='Search Cheminformatics Hazard Module for toxicity data',
-        choices=(('yes','yes'),('no','no'),),
-        initial='no')
+        label="Search Cheminformatics Hazard Module for toxicity data",
+        choices=(
+            ("yes", "yes"),
+            ("no", "no"),
+        ),
+        initial="no",
+    )
     search_mode = forms.ChoiceField(
-        label='Search DSSTox by',
-        choices=(('mass', 'mass'), ('formula', 'formula'),),
-        initial='mass')
+        label="Search DSSTox by",
+        choices=(
+            ("mass", "mass"),
+            ("formula", "formula"),
+        ),
+        initial="mass",
+    )
     top_result_only = forms.ChoiceField(
-        label='Save top result only?',
-        choices=(('yes', 'yes'), ('no', 'no'),),
-        initial='no')
+        label="Save top result only?",
+        choices=(
+            ("yes", "yes"),
+            ("no", "no"),
+        ),
+        initial="no",
+    )
