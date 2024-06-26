@@ -18,9 +18,9 @@ Version 0.2 - 6/26/2024
 - Duplicate feature column ("Duplicate feature") added to the "Filter_documentation" sheet indicating whether a feature was identified as a duplicate.
 - MS1 input page now accepts user input for "Blank MRL multiplier", values of 3, 5, 10 accepted.
 - MS1 workflow now uses the user-defined blank MRL multiplier for calculating a blank MRL value.
-- "Filter_documentation" column "AnySamplesDropped?" now correctly references all three filters when identifying if an occurrence did not meet filter criteria.
 - MS1 input page: Added user-selectable adducts for positive, negative and neutral loss adducts.
 - MS1 workflow now uses the user-selected adducts for identifying adducts in the data.
+- "Filter_documentation" sheet column "AnySamplesDropped?" now correctly references all three filters when identifying if any occurrence did not meet filter criteria.
 - Tracer plots: Resolved an issue where if multiple tracer plots were generated, one of the tracer plots would be empty.
 - Tracer plots: There is now an option to toggle between log and linear scale for the plot scaling.
 - Tracer plots: There is now an option to toggle trendlines on/off on the plots.
@@ -29,11 +29,10 @@ Version 0.2 - 6/26/2024
 - Occurrence heatmap: General aesthetics updated (font sizes, titles, axes labels)
 - MS1 results file ToxCast percent active column: This column is now generating a correct value.
 - MS1 results file "chemical_results" sheet now maps to all flagged features rather than filtered features.
-- Adduct matching: The adduct matching columns are now referencing correct features as matches.
-- Front end UI: Version history document link added.
+- Adduct matching: The adduct matching columns are now referencing correct feature IDs as matches.
 - Clean features function: Logic updated (object-oriented code).
 - Clean features function: Resolved edge-case where feature with no data in any samples would pass all filter criteria.
-- Logic tree v0.5.3: Icicle plots added to logic tree. Blank_MRL sliders added.
+- Logic tree v0.5.3: Icicle plots added to logic tree. Blank_MRL sliders added. Central table updated to group occurrences/features into Initial/Non-detects/Failed CV/Passed All groups for counting.
 
 **********************
 Version 0.1 - 4/4/2024
