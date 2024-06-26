@@ -1,23 +1,39 @@
 NTA WebApp Version History and Known Issues Documentation
-Version 0.1
-Updated 4/4/2024
+Version 0.2
+Updated 6/26/2024
 
 *************
 Known Issues:
 *************
-1) ToxCast percent active column: There is a known issue where the toxcast percent active column is not calculated correctly.
-2) Adduct matching: There is a known issue where the adduct matching columns are referencing incorrect features as matches.
-3) Merge workflow: The new version of the MS1 results is causing the merge workflow to throw an error.
-4) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
-5) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
+1) Merge workflow: The new version of the MS1 results is causing the merge workflow to throw an error.
+2) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
+3) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
 
 ************************
-Version 0.1.X - X/X/2024
+Version 0.2 - 6/26/2024
 ************************
 - MS1 input page now accepts a user input for "Adduct / duplicate" mass accuracy (Da or ppm) and retention time accuracy (min)
 - MS1 workflow now correctly uses the user-defined mass and retention time accuracy parameters for identifying duplicate features
-- Duplicate features are no longer automatically removed. They are kept in the "Results_flagged" sheet, flagged in the "Filter_documentation" sheet, and removed from the "Cleaned_feature_results_reduced" sheet.
+- Duplicate features are no longer automatically removed. They are kept in both the "Results_flagged" and "Cleaned_features" sheets, flagged in the "Filter_documentation" sheet.
+- Duplicate feature column ("Duplicate feature") added to the "Filter_documentation" sheet indicating whether a feature was identified as a duplicate.
+- MS1 input page now accepts user input for "Blank MRL multiplier", values of 3, 5, 10 accepted.
+- MS1 workflow now uses the user-defined blank MRL multiplier for calculating a blank MRL value.
+- "Filter_documentation" column "AnySamplesDropped?" now correctly references all three filters when identifying if an occurrence did not meet filter criteria.
+- MS1 input page: Added user-selectable adducts for positive, negative and neutral loss adducts.
+- MS1 workflow now uses the user-selected adducts for identifying adducts in the data.
 - Tracer plots: Resolved an issue where if multiple tracer plots were generated, one of the tracer plots would be empty.
+- Tracer plots: There is now an option to toggle between log and linear scale for the plot scaling.
+- Tracer plots: There is now an option to toggle trendlines on/off on the plots.
+- Tracer plots: General aesthetics updated (font sizes, titles, axes labels)
+- CV Scatterplot: General aesthetics updated (font sizes, titles, axes labels)
+- Occurrence heatmap: General aesthetics updated (font sizes, titles, axes labels)
+- MS1 results file ToxCast percent active column: This column is now generating a correct value.
+- MS1 results file "chemical_results" sheet now maps to all flagged features rather than filtered features.
+- Adduct matching: The adduct matching columns are now referencing correct features as matches.
+- Front end UI: Version history document link added.
+- Clean features function: Logic updated (object-oriented code).
+- Clean features function: Resolved edge-case where feature with no data in any samples would pass all filter criteria.
+- Logic tree v0.5.3: Icicle plots added to logic tree. Blank_MRL sliders added.
 
 **********************
 Version 0.1 - 4/4/2024
