@@ -221,29 +221,29 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
         unique_adduct_number = np.where(
             has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat
         ).astype(int)
-        # Edit 'df['Has_Adduct_or_Loss']' column
-        df["Has_Adduct_or_Loss"] = np.where(
-            (has_adduct_number_flat > 0) & (df["Is_Adduct_or_Loss"] == 0),
-            df["Has_Adduct_or_Loss"] + 1,
-            df["Has_Adduct_or_Loss"],
+        # Edit 'df['Has Adduct or Loss?']' column
+        df["Has Adduct or Loss?"] = np.where(
+            (has_adduct_number_flat > 0) & (df["Is Adduct or Loss?"] == 0),
+            df["Has Adduct or Loss?"] + 1,
+            df["Has Adduct or Loss?"],
         )
-        # Edit 'df['Is_Adduct_or_Loss']' column
-        df["Is_Adduct_or_Loss"] = np.where(
-            (is_adduct_number_flat > 0) & (df["Has_Adduct_or_Loss"] == 0),
+        # Edit 'df['Is Adduct or Loss?']' column
+        df["Is Adduct or Loss?"] = np.where(
+            (is_adduct_number_flat > 0) & (df["Has Adduct or Loss?"] == 0),
             1,
-            df["Is_Adduct_or_Loss"],
+            df["Is Adduct or Loss?"],
         )
-        # Edit 'df['Adduct_or_Loss_Info']' column
-        df["Adduct_or_Loss_Info"] = np.where(
-            (has_adduct_number_flat > 0) & (df["Is_Adduct_or_Loss"] == 0),
-            df["Adduct_or_Loss_Info"] + unique_adduct_number.astype(str) + "({});".format(a_name),
-            df["Adduct_or_Loss_Info"],
+        # Edit 'df['Adduct or Loss Info']' column
+        df["Adduct or Loss Info"] = np.where(
+            (has_adduct_number_flat > 0) & (df["Is Adduct or Loss?"] == 0),
+            df["Adduct or Loss Info"] + unique_adduct_number.astype(str) + "({});".format(a_name),
+            df["Adduct or Loss Info"],
         )
-        # Edit 'df['Adduct_or_Loss_Info']' column
-        df["Adduct_or_Loss_Info"] = np.where(
-            (is_adduct_number_flat > 0) & (df["Has_Adduct_or_Loss"] == 0),
-            df["Adduct_or_Loss_Info"] + unique_adduct_number.astype(str) + "({});".format(a_name),
-            df["Adduct_or_Loss_Info"],
+        # Edit 'df['Adduct or Loss Info']' column
+        df["Adduct or Loss Info"] = np.where(
+            (is_adduct_number_flat > 0) & (df["Has Adduct or Loss?"] == 0),
+            df["Adduct or Loss Info"] + unique_adduct_number.astype(str) + "({});".format(a_name),
+            df["Adduct or Loss Info"],
         )
     # Return dataframe with three new adduct info columns
     return df
@@ -372,9 +372,9 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
         to_test = df[df["Rounded_RT_Mass_Pair"].isin(list_of_mass_shifts_RT_pairs)]
         to_test = to_test.sort_values("Mass", ignore_index=True)
         # Add columns to be changed by 'adduct_matrix'
-        to_test["Has_Adduct_or_Loss"] = 0
-        to_test["Is_Adduct_or_Loss"] = 0
-        to_test["Adduct_or_Loss_Info"] = ""
+        to_test["Has Adduct or Loss?"] = 0
+        to_test["Is Adduct or Loss?"] = 0
+        to_test["Adduct or Loss Info"] = ""
         # Set 'n' to tested memory capacity of WebApp for number of features in 'adduct_matrix'
         n = 12000
         # If 'to_test' is less than n, send it straight to 'adduct_matrix'
@@ -387,16 +387,16 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
             # Loop through possible adducts, perform 'adduct_matrix'
             for a_name, delta in possible_adduct_deltas.items():
                 to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm)
-        # Concatenate 'Has_Adduct_or_Loss', 'Is_Adduct_or_Loss', 'Adduct_or_Loss_Info' to df
+        # Concatenate 'Has Adduct or Loss?', 'Is Adduct or Loss?', 'Adduct or Loss Info' to df
         df_in = pd.merge(
             df_in,
             to_test[
                 [
                     "Mass",
                     "Retention_Time",
-                    "Has_Adduct_or_Loss",
-                    "Is_Adduct_or_Loss",
-                    "Adduct_or_Loss_Info",
+                    "Has Adduct or Loss?",
+                    "Is Adduct or Loss?",
+                    "Adduct or Loss Info",
                 ]
             ],
             how="left",
@@ -502,7 +502,7 @@ def chunk_dup_flag(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
 def dup_matrix_flag(df_in, mass_cutoff, rt_cutoff, ppm):
     """
     Matrix portion of 'duplicates' function; takes a filtered 'to_test' df, does matrix math,
-    returns 'df' with duplicates flagged in 'Duplicate feature?' column -- TMF 04/11/24
+    returns 'df' with duplicates flagged in 'Duplicate Feature?' column -- TMF 04/11/24
     """
     # Create matrices from df_in
     mass = df_in["Mass"].to_numpy()
@@ -534,7 +534,7 @@ def dup_matrix_flag(df_in, mass_cutoff, rt_cutoff, ppm):
     lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
     # Flag duplicates in new column
     output = df_in.copy()
-    output["Duplicate feature?"] = np.where((row_sums != 0) | (lower_row_sums != 0), 1, 0)
+    output["Duplicate Feature?"] = np.where((row_sums != 0) | (lower_row_sums != 0), 1, 0)
     # Return de-duplicated dataframe (passed) and duplicates (dupes)
     return output
 
@@ -968,11 +968,11 @@ def populate_doc_values(df, docs, Mean_Samples, Mean_MB):
 def feat_removal_flag(docs, Mean_Samples, missing):
     """
     Function that takes docs, and determines whether features should be removed
-    by counting the number real occurrences and then labels Feature_removed by counting
+    by counting the number real occurrences and then labels 'Feature Removed?' by counting
     the number of each type of occurrence flag. Return docs. -- TMF 05/23/24
     """
     # Set all values of feature removed to ""
-    docs["Feature_removed"] = ""
+    docs["Feature Removed?"] = ""
     # Generate mask of float values in docs (i.e., occurrences with flags or NaN are False)
     num_mask = pd.concat(
         [pd.to_numeric(docs[mean], errors="coerce").notnull() for mean in Mean_Samples],
@@ -991,33 +991,33 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     docs["# is CV flag"] = is_CV.sum(axis=1)
     docs["# contains ND flag"] = contains_ND.sum(axis=1)
     # Determine if any samples are dropped for a feature
-    docs["AnySamplesDropped"] = np.where(
+    docs["Any Occurrences Removed?"] = np.where(
         (docs["# contains R flag"] > 0) | (docs["# contains CV flag"] > 0) | (docs["# contains ND flag"] > 0),
         1,
         0,
     )
     # Append feature level flags to features with no real occurrences
     # Feature flag because no occurrences present in input data
-    docs["Feature_removed"] = np.where(
-        docs["# of missing occurrences"] == len(Mean_Samples), "NO DATA ", docs["Feature_removed"]
+    docs["Feature Removed?"] = np.where(
+        docs["# of missing occurrences"] == len(Mean_Samples), "NO DATA ", docs["Feature Removed?"]
     )
     # Feature flag because occurrences fail detection threshold
-    docs["Feature_removed"] = np.where(
+    docs["Feature Removed?"] = np.where(
         (docs["# of real occurrences"] == 0) & (docs["# contains ND flag"] > 0),
-        docs["Feature_removed"] + "BLK ",
-        docs["Feature_removed"],
+        docs["Feature Removed?"] + "BLK ",
+        docs["Feature Removed?"],
     )
     # Feature flag because occurrences fail CV threshold
-    docs["Feature_removed"] = np.where(
+    docs["Feature Removed?"] = np.where(
         (docs["# of real occurrences"] == 0) & (docs["# contains CV flag"] > 0),
-        docs["Feature_removed"] + "CV ",
-        docs["Feature_removed"],
+        docs["Feature Removed?"] + "CV ",
+        docs["Feature Removed?"],
     )
     # Feature flag because occurrences fail Replication threshold
-    docs["Feature_removed"] = np.where(
+    docs["Feature Removed?"] = np.where(
         (docs["# of real occurrences"] == 0) & docs["# contains R flag"] > 0,
-        docs["Feature_removed"] + "R ",
-        docs["Feature_removed"],
+        docs["Feature Removed?"] + "R ",
+        docs["Feature Removed?"],
     )
     return docs
 
@@ -1028,9 +1028,9 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     applied to docs (R, CV, ND). All masks applied to df, only R and ND masks applied
     to df_flagged. Return df and df_flagged. -- TMF 04/19/24
     """
-    # Copy 'AnySamplesDropped' to df and df_flagged
-    df["AnySamplesDropped"] = docs["AnySamplesDropped"]
-    df_flagged["AnySamplesDropped"] = docs["AnySamplesDropped"]
+    # Copy 'Any Occurrences Removed?' to df and df_flagged
+    df["Any Occurrences Removed?"] = docs["Any Occurrences Removed?"]
+    df_flagged["Any Occurrences Removed?"] = docs["Any Occurrences Removed?"]
     # Create mask of occurrences dropped for replicate flag
     rep_fails = pd.concat([docs[mean].str.contains("R") for mean in Mean_Samples], axis=1).fillna(False)
     # Mask df and df_flagged
@@ -1050,20 +1050,20 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
 
 def feat_drop_df(df, docs, df_flagged):
     """
-    Function that takes df, docs, df_flagged, and uses the Feature_removed column
+    Function that takes df, docs, df_flagged, and uses the Feature Removed? column
     from docs to subset df and df_flagged. All features that have a removal flag
     are removed from df, only features with the R, ND, and CV flags are removed
     from df_flagged. -- TMF 04/19/24
     """
-    # Copy 'Feature_removed' column onto df and df_flagged
-    df["Feature_removed"] = docs["Feature_removed"]
-    df_flagged["Feature_removed"] = docs["Feature_removed"]
+    # Copy 'Feature Removed?' column onto df and df_flagged
+    df["Feature Removed?"] = docs["Feature Removed?"]
+    df_flagged["Feature Removed?"] = docs["Feature Removed?"]
     # Subset df and df_flagged
-    df = df.loc[df["Feature_removed"] == "", :]
-    df_flagged = df_flagged.loc[(df_flagged["Feature_removed"] == "") | (docs["# is CV flag"] > 0), :]
-    # Drop 'Feature_removed' from df
-    df.drop(columns=["Feature_removed"], inplace=True)
-    df_flagged.drop(columns=["Feature_removed"], inplace=True)
+    df = df.loc[df["Feature Removed?"] == "", :]
+    df_flagged = df_flagged.loc[(df_flagged["Feature Removed?"] == "") | (docs["# is CV flag"] > 0), :]
+    # Drop 'Feature Removed?' from df
+    df.drop(columns=["Feature Removed?"], inplace=True)
+    df_flagged.drop(columns=["Feature Removed?"], inplace=True)
     return df, df_flagged
 
 
@@ -1078,12 +1078,12 @@ def clean_features(df_in, controls, tracer_df=False):
     """
     # Make dataframe copy, create docs in df's image
     df = df_in.copy()
-    df["AnySamplesDropped"] = np.nan
+    df["Any Occurrences Removed?"] = np.nan
     docs = pd.DataFrame().reindex_like(df)
     docs["Mass"] = df["Mass"]
     docs["Retention_Time"] = df["Retention_Time"]
     docs["Feature_ID"] = df["Feature_ID"]
-    docs["Duplicate feature?"] = df["Duplicate feature?"]
+    docs["Duplicate Feature?"] = df["Duplicate Feature?"]
     if tracer_df:
         docs["Tracer_chemical_match"] = df["Tracer_chemical_match"]
     # Define lists
@@ -1221,9 +1221,9 @@ def combine_doc(doc1, doc2, tracer_df=False):
             "Mass",
             "Retention_Time",
             "BlkStd_cutoff",
-            "AnySamplesDropped",
-            "Duplicate feature?",
-            "Feature_removed",
+            "Any Occurrences Removed?",
+            "Duplicate Feature?",
+            "Feature Removed?",
             "Tracer_chemical_match",
         ] + Mean
     else:
@@ -1232,9 +1232,9 @@ def combine_doc(doc1, doc2, tracer_df=False):
             "Mass",
             "Retention_Time",
             "BlkStd_cutoff",
-            "AnySamplesDropped",
-            "Duplicate feature?",
-            "Feature_removed",
+            "Any Occurrences Removed?",
+            "Duplicate Feature?",
+            "Feature Removed?",
         ] + Mean
     # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
     dfc = dfc[to_keep]
@@ -1279,14 +1279,14 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Formula",
                     "Mass",
                     "Retention_Time",
-                    "AnySamplesDropped",
-                    "Duplicate feature?",
+                    "Any Occurrences Removed?",
+                    "Duplicate Feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
                     "Tracer_chemical_match",
-                    "Has_Adduct_or_Loss",
-                    "Is_Adduct_or_Loss",
-                    "Adduct_or_Loss_Info",
+                    "Has Adduct or Loss?",
+                    "Is Adduct or Loss?",
+                    "Adduct or Loss Info",
                 ]
                 + pt_cols
                 + raw_samples
@@ -1299,13 +1299,13 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Formula",
                     "Mass",
                     "Retention_Time",
-                    "AnySamplesDropped",
-                    "Duplicate feature?",
+                    "Any Occurrences Removed?",
+                    "Duplicate Feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
-                    "Has_Adduct_or_Loss",
-                    "Is_Adduct_or_Loss",
-                    "Adduct_or_Loss_Info",
+                    "Has Adduct or Loss?",
+                    "Is Adduct or Loss?",
+                    "Adduct or Loss Info",
                 ]
                 + pt_cols
                 + raw_samples
@@ -1318,14 +1318,14 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Feature_ID",
                     "Mass",
                     "Retention_Time",
-                    "AnySamplesDropped",
-                    "Duplicate feature?",
+                    "Any Occurrences Removed?",
+                    "Duplicate Feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
                     "Tracer_chemical_match",
-                    "Has_Adduct_or_Loss",
-                    "Is_Adduct_or_Loss",
-                    "Adduct_or_Loss_Info",
+                    "Has Adduct or Loss?",
+                    "Is Adduct or Loss?",
+                    "Adduct or Loss Info",
                 ]
                 + pt_cols
                 + raw_samples
@@ -1337,13 +1337,13 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Feature_ID",
                     "Mass",
                     "Retention_Time",
-                    "AnySamplesDropped",
-                    "Duplicate feature?",
+                    "Any Occurrences Removed?",
+                    "Duplicate Feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
-                    "Has_Adduct_or_Loss",
-                    "Is_Adduct_or_Loss",
-                    "Adduct_or_Loss_Info",
+                    "Has Adduct or Loss?",
+                    "Is Adduct or Loss?",
+                    "Adduct or Loss Info",
                 ]
                 + pt_cols
                 + raw_samples

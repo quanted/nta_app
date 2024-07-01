@@ -1091,7 +1091,7 @@ class NtaRun:
         # Remove flagged duplicates from dfs
         # if self.dup_remove == False:
         #    self.dfs = [
-        #        df.loc[df["Duplicate feature?"] == 0, :] if df is not None else None
+        #        df.loc[df["Duplicate Feature?"] == 0, :] if df is not None else None
         #        for df in self.dfs
         #    ]
         #    return
