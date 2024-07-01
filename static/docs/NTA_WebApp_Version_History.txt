@@ -10,6 +10,11 @@ Known Issues:
 3) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
 
 ************************
+Version 0.2.X - X/X/2024
+************************
+- MS1 results file: Column widths are now auto-scaled to fit the contents within.
+
+************************
 Version 0.2 - 6/26/2024
 ************************
 - MS1 input page now accepts a user input for "Adduct / duplicate" mass accuracy (Da or ppm) and retention time accuracy (min)
