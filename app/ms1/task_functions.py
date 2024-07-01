@@ -771,15 +771,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     df1 = df.copy()
     df2 = tracers_file.copy()
     # Get sample names
-    prefixes = [
-        "Mean_",
-        "Median_",
-        "CV_",
-        "STD_",
-        "N_Abun_",
-        "Replicate_Percent_",
-        "Detection",
-    ]
+    prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_", "Detection", "MRL"]
     all_headers = parse_headers(df1)
     samples = [
         item
