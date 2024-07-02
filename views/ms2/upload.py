@@ -37,7 +37,9 @@ def upload_page(request, form_data=None, form_files=None):
         "fragment_mass_accuracy": ["fragment_mass_accuracy", None],
         #'classification_file': ['classification_file', None]
     }
-    logger.debug("views/ms2/upload.py: inputParameters: {} ".format(inputParameters))
+
+    # Logger statement is throwing error
+    # logger.debug("views/ms2/upload.py: inputParameters: {} ".format(inputParameters))
 
     if request.method == "POST":
         form = MS2ParametersInput(request.POST)

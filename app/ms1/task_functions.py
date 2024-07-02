@@ -823,13 +823,13 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
         columns={
             "Observed_Mass": "Mass",
             "Observed_Retention_Time": "Retention_Time",
-            "Matches": "Tracer_chemical_match",
+            "Matches": "Tracer Chemical Match?",
         },
         inplace=True,
     )
     # Drop columns
     dft.drop(["Rounded_Mass", "Matches"], axis=1, inplace=True)
-    # Returns tracers data (dft) and dataframe with 'Tracer_chemical_match' appended (dfc)
+    # Returns tracers data (dft) and dataframe with 'Tracer Chemical Match?' appended (dfc)
     return dft, dfc
 
 
@@ -1085,7 +1085,7 @@ def clean_features(df_in, controls, tracer_df=False):
     docs["Feature_ID"] = df["Feature_ID"]
     docs["Duplicate Feature?"] = df["Duplicate Feature?"]
     if tracer_df:
-        docs["Tracer_chemical_match"] = df["Tracer_chemical_match"]
+        docs["Tracer Chemical Match?"] = df["Tracer Chemical Match?"]
     # Define lists
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
     Abundance = df.columns[df.columns.str.contains(pat="Replicate_Percent_")].tolist()
@@ -1224,7 +1224,7 @@ def combine_doc(doc1, doc2, tracer_df=False):
             "Any Occurrences Removed?",
             "Duplicate Feature?",
             "Feature Removed?",
-            "Tracer_chemical_match",
+            "Tracer Chemical Match?",
         ] + Mean
     else:
         to_keep = [
@@ -1283,7 +1283,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Duplicate Feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
-                    "Tracer_chemical_match",
+                    "Tracer Chemical Match?",
                     "Has Adduct or Loss?",
                     "Is Adduct or Loss?",
                     "Adduct or Loss Info",
@@ -1322,7 +1322,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Duplicate Feature?",
                     "Detection_Count(non-blank_samples)",
                     "Detection_Count(non-blank_samples)(%)",
-                    "Tracer_chemical_match",
+                    "Tracer Chemical Match?",
                     "Has Adduct or Loss?",
                     "Is Adduct or Loss?",
                     "Adduct or Loss Info",
