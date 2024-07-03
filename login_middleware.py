@@ -61,7 +61,10 @@ class RequireLoginMiddleware:
 
         self.get_response = get_response
         self.login_url = re.compile(settings.LOGIN_URL)
-        self.nta_username = "ntauser"
+        if os.getenv("DEPLOY_ENV", "kube-dev") == "kube-prod":  # set username based on deploy
+            self.nta_username = "ntauser"
+        else:
+            self.nta_username = "ntadev"
         self.open_urls = ["/nta/login"]
 
         nta_password = self.load_password()
