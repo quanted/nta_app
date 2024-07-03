@@ -60,11 +60,11 @@ def process_toxpi(features_df=None, search_df=None, tophit=False, by_mass=True):
     # dfe.fillna('',inplace=True)  # problematic memory use here
     # reorder some columns
     dfe.insert(5, "Rounded_Mass", dfe.pop("Rounded_Mass"))
-    dfe.insert(8, "AnySamplesDropped", dfe.pop("AnySamplesDropped"))
+    dfe.insert(8, "Any Occurrences Removed?", dfe.pop("Any Occurrences Removed?"))
     last_stats_col = dfe.columns.get_loc("Neg_Mass_Defect")
     # 2/23/2023 Comment out below line, sample to blanks ratio is deprecated
     # dfe.insert(last_stats_col-1, 'SampletoBlanks_ratio', dfe.pop('SampletoBlanks_ratio'))
-    dfe.insert(last_stats_col - 1, "Has_Adduct_or_Loss", dfe.pop("Has_Adduct_or_Loss"))
-    dfe.insert(last_stats_col - 1, "Is_Adduct_or_Loss", dfe.pop("Is_Adduct_or_Loss"))
-    dfe.insert(last_stats_col - 1, "Adduct_or_Loss_Info", dfe.pop("Adduct_or_Loss_Info"))
+    dfe.insert(last_stats_col - 1, "Has Adduct or Loss?", dfe.pop("Has Adduct or Loss?"))
+    dfe.insert(last_stats_col - 1, "Is Adduct or Loss?", dfe.pop("Is Adduct or Loss?"))
+    dfe.insert(last_stats_col - 1, "Adduct or Loss Info", dfe.pop("Adduct or Loss Info"))
     return dfe

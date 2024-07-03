@@ -120,18 +120,21 @@ class OutputServer:
             json_string = db_record.read().decode("utf-8")
             df = pd.read_json(json_string, orient="split")
             df.to_excel(writer, sheet_name=name, index=False)
+
+            # Adjust column widths of sheet - NTAW-470 AC 6/26/2024
+            # Get max value of string length for entire column, add one to it, and set the column width to this value
+            for column in df:
+                column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+                col_idx = df.columns.get_loc(column)
+                writer.sheets[name].set_column(col_idx, col_idx, column_width)
+
             stop = time.perf_counter()
             print(f"Time to construct {name}: {stop - start}")
         except Exception as e:
             print(e)
 
     def generate_excel(self):
-        file_names = (
-            self.gridfs.get(f"{self.jobid}_file_names")
-            .read()
-            .decode("utf-8")
-            .split("&&")
-        )
+        file_names = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
         print(f"file_names: {file_names}")
         in_memory_buffer = BytesIO()
         with pd.ExcelWriter(in_memory_buffer, engine="xlsxwriter") as writer:
@@ -142,12 +145,7 @@ class OutputServer:
         return in_memory_buffer.getvalue()
 
     def add_tracer_plots_to_zip(self, zipf, jobid):
-        tracer_plots = (
-            self.gridfs.get(f"{self.jobid}_tracer_files")
-            .read()
-            .decode("utf-8")
-            .split("&&")
-        )
+        tracer_plots = self.gridfs.get(f"{self.jobid}_tracer_files").read().decode("utf-8").split("&&")
 
         # #5/21/2024 AC: Save figures into buffer before zippping
         # for name in tracer_plots:
@@ -224,12 +222,7 @@ class OutputServer:
             excel_data = self.generate_excel()
 
             # Update Excel file name to be named after project name and if not present, after Job ID
-            data_files = (
-                self.gridfs.get(f"{self.jobid}_file_names")
-                .read()
-                .decode("utf-8")
-                .split("&&")
-            )
+            data_files = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
             for name in data_files:
                 try:
                     tracer_id = self.jobid + "_" + name
@@ -238,9 +231,7 @@ class OutputServer:
                     project_name = db_record.project_name
                     if project_name:
                         # filename = project_name.replace(" ", "_") + '_' + name + '.png'
-                        filename = (
-                            project_name.replace(" ", "_") + "_NTA_WebApp_results.xlsx"
-                        )
+                        filename = project_name.replace(" ", "_") + "_NTA_WebApp_results.xlsx"
                     else:
                         # filename = tracer_id + '.png'
                         filename = self.jobid + "_NTA_WebApp_results.xlsx"
@@ -277,9 +268,7 @@ class OutputServer:
                 pass  # do we want to do anything if no cv_scatterplot present?
 
         zip_filename = "nta_results_" + self.jobid + ".zip"
-        response = HttpResponse(
-            in_memory_zip.getvalue(), content_type="application/zip"
-        )
+        response = HttpResponse(in_memory_zip.getvalue(), content_type="application/zip")
         response["Content-Disposition"] = "attachment; filename=" + zip_filename
         response["Content-length"] = in_memory_zip.tell()
         return response
@@ -299,12 +288,8 @@ class OutputServer:
             neg_df = pd.read_json(json_string, orient="split")
         except (OperationFailure, TypeError, NoFile):
             neg_df = pd.DataFrame()  # if neg file does not exist
-        combined_df = pd.concat(
-            [pos_df, neg_df]
-        )  # combine pos and neg mode stats files
+        combined_df = pd.concat([pos_df, neg_df])  # combine pos and neg mode stats files
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=tree_data.csv"
-        combined_df.to_csv(
-            path_or_buf=response, index_label=False, index=False
-        )  # write our csv to the response
+        combined_df.to_csv(path_or_buf=response, index_label=False, index=False)  # write our csv to the response
         return response

@@ -43,7 +43,8 @@ def upload_page(request, form_data=None, form_files=None):
         "fragment_mass_accuracy": ["fragment_mass_accuracy", None],
         #'classification_file': ['classification_file', None]
     }
-    logger.warn("MS2 job submitted. Parameters: {} ".format(inputParameters))
+
+    logger.warning("MS2 job submitted. Parameters: {} ".format(inputParameters))
 
     if request.method == "POST":
         form = MS2ParametersInput(request.POST)

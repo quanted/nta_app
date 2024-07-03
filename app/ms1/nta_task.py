@@ -784,13 +784,7 @@ class NtaRun:
             if dfPos is not None and dfNeg is not None
             else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
         )
-        titleText = (
-            "Heatmap of feature occurrences (n = "
-            + str(dfCombined.size)
-            + ") using filter values of {} maximum CV and {} minimum replicate %".format(
-                max_replicate_cv_value, min_replicate_hits_percent
-            )
-        )
+
         # Get sample headers
         all_headers = task_fun.parse_headers(dfCombined)
         sam_headers = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
@@ -805,6 +799,7 @@ class NtaRun:
         blank_mean = "Mean_" + blank_col[0]
         blank_std = "STD_" + blank_col[0]
         # Calculate MDL
+        # AC 6/18/2024: Need to pull in MRL multiplier for MRL calculation
         dfCombined["MDL"] = dfCombined[blank_mean] + 3 * dfCombined[blank_std]
         dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
         dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
@@ -814,6 +809,16 @@ class NtaRun:
         mean_cols = ["Mean_" + col for col in sample_groups]
         # Subset CV cols from df
         cv_df = dfCombined[cv_cols]
+
+        # Get number of occurrences from the CV dataframe
+        titleText = (
+            "Heatmap of feature occurrences (n = "
+            + str(cv_df.size)
+            + ") using filter values of {} maximum CV and {} minimum replicate %".format(
+                max_replicate_cv_value, min_replicate_hits_percent
+            )
+        )
+
         # Blank out cvs in samples with <2 samples
         for x, y, z in zip(cv_cols, rper_cols, mean_cols):
             # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
@@ -857,7 +862,7 @@ class NtaRun:
         colorbar.set_ticks([-0.667, 0, 0.667])
         colorbar.set_ticklabels(
             [
-                "non detect ({})".format(nan_.sum().sum()),
+                "non-detect ({})".format(nan_.sum().sum()),
                 "CV <= {} ({})".format(max_replicate_cv_value, below.sum().sum()),
                 "CV > {} ({})".format(max_replicate_cv_value, above.sum().sum()),
             ]
@@ -1078,7 +1083,7 @@ class NtaRun:
         # Remove flagged duplicates from dfs
         # if self.dup_remove == False:
         #    self.dfs = [
-        #        df.loc[df["Duplicate feature?"] == 0, :] if df is not None else None
+        #        df.loc[df["Duplicate Feature?"] == 0, :] if df is not None else None
         #        for df in self.dfs
         #    ]
         #    return
