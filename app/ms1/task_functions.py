@@ -8,10 +8,7 @@ import re
 import logging
 
 
-logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
 logger = logging.getLogger("nta_app.ms1")
-logger.setLevel(logging.INFO)
 
 
 """UTILITY FUNCTIONS (many from Functions_Universal_v3)"""

@@ -3,9 +3,8 @@ import gridfs
 import os
 import logging
 
-
-logger = logging.getLogger("nta_app.ms2")
-logger.setLevel(logging.INFO)
+# Set up logging
+logger = logging.getLogger("nta_app.utilities")
 
 DSSTOX_API = os.environ.get("UBERTOOL_REST_SERVER")
 

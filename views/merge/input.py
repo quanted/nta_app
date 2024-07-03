@@ -1,6 +1,6 @@
 import os
 import string, random
-
+import logging
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
@@ -12,6 +12,11 @@ from ...tools.merge import file_manager
 from .input_form import MergeInputs
 from ...app.merge.merge_task import run_merge_dask
 
+# set up logging
+logger = logging.getLogger("nta_app.views.merge")
+if os.getenv("DEPLOY_ENV", "kube-dev") == "kube-prod":
+    logger.setLevel(logging.WARNING)
+
 
 def input_page(request, form_data=None, form_files=None):
     model = "Merge"
@@ -20,11 +25,11 @@ def input_page(request, form_data=None, form_files=None):
     if request.method == "POST":
         form = MergeInputs(request.POST, request.FILES)
         if form.is_valid():
-            print("form is valid")
+            logger.info("form is valid")
             parameters = request.POST
             parameters = parameters.dict()
             job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
-            print("job ID: " + job_id)
+            logger.info("job ID: " + job_id)
             fileParser = file_manager.FileParser()
             input_data = {"MS1": None, "MS2_pos": [], "MS2_neg": []}
             ms1_input = request.FILES.getlist("ms1_inputs")

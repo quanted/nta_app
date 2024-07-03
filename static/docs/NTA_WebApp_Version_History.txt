@@ -18,6 +18,7 @@ Version 0.1.X - X/X/2024
 - MS1 workflow now correctly uses the user-defined mass and retention time accuracy parameters for identifying duplicate features
 - Duplicate features are no longer automatically removed. They are kept in the "Results_flagged" sheet, flagged in the "Filter_documentation" sheet, and removed from the "Cleaned_feature_results_reduced" sheet.
 - Tracer plots: Resolved an issue where if multiple tracer plots were generated, one of the tracer plots would be empty.
+- Added version history documentation web page.
 
 **********************
 Version 0.1 - 4/4/2024

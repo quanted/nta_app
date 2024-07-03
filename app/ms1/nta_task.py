@@ -19,20 +19,17 @@ import io
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
+logger = logging.getLogger("nta_app.ms1")
+
 # import seaborn as sns
 try:
     import seaborn as sns
 except ModuleNotFoundError:
-    print("Seaborn is not installed. Please run 'pip install seaborn' to install it.")
+    logger.error("Seaborn is not installed. Please run 'pip install seaborn' to install it.")
 
 
 # os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
 NO_DASK = False  # set this to true to run locally without test (for debug purposes)
-
-logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
-logger = logging.getLogger("nta_app.ms1")
-logger.setLevel(logging.INFO)
 
 
 def run_nta_dask(
@@ -76,7 +73,7 @@ def run_nta_dask(
     dask_input_dfs_size = len(dask_input_dfs)
     logger.info("After scatter dask_input_dfs_size: {}".format(dask_input_dfs_size))
 
-    logger.info("Submitting Nta Dask task")
+    logger.warning("Submitting Nta Dask task")
     task = dask_client.submit(
         run_nta,
         parameters,
@@ -306,8 +303,6 @@ class NtaRun:
                 self.perform_hcd_search()
             # NTAW-94 comment out the following line. toxpi is no longer being used
             # self.process_toxpi()
-        if self.verbose:
-            logger.info("Final result processed.")
         # if self.verbose:
         #    logger.info("Download files removed, processing complete.")
 
@@ -318,6 +313,7 @@ class NtaRun:
         # 9: set status to completed
         self.step = "Displaying results"
         self.set_status("Completed")
+        logger.warning("MS1 job {}: Processing complete.".format(self.jobid))
 
     def check_existence_of_ionization_mode_column(self, input_dfs):
         """
@@ -594,11 +590,7 @@ class NtaRun:
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
             if dfPos is not None and dfNeg is not None
-            else dfPos
-            if dfPos is not None
-            else dfNeg
-            if dfNeg is not None
-            else None
+            else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
         )
         # Get sample headers
         all_headers = task_fun.parse_headers(dfCombined)
@@ -790,11 +782,7 @@ class NtaRun:
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
             if dfPos is not None and dfNeg is not None
-            else dfPos
-            if dfPos is not None
-            else dfNeg
-            if dfNeg is not None
-            else None
+            else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
         )
         titleText = (
             "Heatmap of feature occurrences (n = "
@@ -904,27 +892,31 @@ class NtaRun:
         yaxis_scale = self.parameters["tracer_plot_yaxis_format"][1]
         trendline_shown = self.parameters["tracer_plot_trendline"][1] == "yes"
         self.tracer_dfs_out = [
-            task_fun.check_feature_tracers(
-                df,
-                self.tracer_df,
-                mass_accuracy_tr,
-                float(self.parameters["rt_accuracy_tr"][1]),
-                ppm,
-            )[0]
-            if df is not None
-            else None
+            (
+                task_fun.check_feature_tracers(
+                    df,
+                    self.tracer_df,
+                    mass_accuracy_tr,
+                    float(self.parameters["rt_accuracy_tr"][1]),
+                    ppm,
+                )[0]
+                if df is not None
+                else None
+            )
             for index, df in enumerate(self.dfs)
         ]
         self.dfs = [
-            task_fun.check_feature_tracers(
-                df,
-                self.tracer_df,
-                mass_accuracy_tr,
-                float(self.parameters["rt_accuracy_tr"][1]),
-                ppm,
-            )[1]
-            if df is not None
-            else None
+            (
+                task_fun.check_feature_tracers(
+                    df,
+                    self.tracer_df,
+                    mass_accuracy_tr,
+                    float(self.parameters["rt_accuracy_tr"][1]),
+                    ppm,
+                )[1]
+                if df is not None
+                else None
+            )
             for index, df in enumerate(self.dfs)
         ]
         # logger.info("self.tracer_dfs_out[0].shape = {}".format(self.tracer_dfs_out[0].shape))
@@ -1150,11 +1142,13 @@ class NtaRun:
         # Check if duplicates are removed - if yes need to combine doc and dupe
         if self.dup_remove:
             self.doc_combined = [
-                task_fun.combine_doc(
-                    doc, dupe, tracer_df=tracer_df_bool
-                )  # This needs revisiting if self.dup_remove = True TMF 04/11/24
-                if doc is not None
-                else None
+                (
+                    task_fun.combine_doc(
+                        doc, dupe, tracer_df=tracer_df_bool
+                    )  # This needs revisiting if self.dup_remove = True TMF 04/11/24
+                    if doc is not None
+                    else None
+                )
                 for doc, dupe in zip(self.docs, self.dupes)
             ]
         else:

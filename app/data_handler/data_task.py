@@ -8,10 +8,7 @@ from .utilities import connect_to_mongo_gridfs, get_mongoDB
 
 NO_DASK = False  # set this to True to run locally without dask (for debug purposes)
 
-logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
-logger = logging.getLogger("nta_app.ms2")
-logger.setLevel(logging.INFO)
+logger = logging.getLogger("nta_app.utilities")
 
 MONGO_SERVER = os.environ.get("MONGO_SERVER")
 
@@ -25,9 +22,7 @@ def delete_data(filename, jobid, ms):
     gridfs = connect_to_mongo_gridfs(MONGO_SERVER)
     mongoDB = get_mongoDB(MONGO_SERVER)
     files = mongoDB.get_collection("fs.files")
-    for ID in files.find({"filename": filename, "jobid": jobid, "ms": ms}).distinct(
-        "_id"
-    ):
+    for ID in files.find({"filename": filename, "jobid": jobid, "ms": ms}).distinct("_id"):
         gridfs.delete(ID)
 
 
@@ -66,9 +61,7 @@ def handle_uploaded_file(file, filename, filetype, ms, mode, jobid):
 
     files.create_index([("uploadDate", 1)], expireAfterSeconds=86400)  # Expires in 24h
 
-    chunks.update_many(
-        {"files_id": file_id}, {"$set": {"uploadDate": datetime.datetime.utcnow()}}
-    )
+    chunks.update_many({"files_id": file_id}, {"$set": {"uploadDate": datetime.datetime.utcnow()}})
     chunks.create_index([("uploadDate", 1)], expireAfterSeconds=86460)  # Expires in 24h
 
     return file_id
