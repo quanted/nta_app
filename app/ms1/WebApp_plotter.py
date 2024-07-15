@@ -3,6 +3,7 @@ Class for producing plots for web app
 2023/02/23
 E. Tyler Carr
 """
+
 from matplotlib.patches import FancyBboxPatch
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -14,10 +15,8 @@ from .task_functions import parse_headers
 import io
 import logging
 
-logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
+# set up logging
 logger = logging.getLogger("nta_app.ms1")
-logger.setLevel(logging.INFO)
 
 
 class WebApp_plotter:

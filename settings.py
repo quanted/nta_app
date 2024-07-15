@@ -2,14 +2,6 @@ import os
 import logging
 import secrets
 
-logger = logging.getLogger(__name__)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-)
-
-logger.info("NTA-APP django:settings.py")
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 TEMPLATE_ROOT = os.path.join(PROJECT_ROOT, "templates/")
@@ -18,28 +10,41 @@ DEPLOY_ENV = os.getenv("DEPLOY_ENV", "kube-dev")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "need-to-set-secret-key")
 
-# logger.info(f"PROJECT_ROOT: {PROJECT_ROOT}")
-logger.info(f"TEMPLATE_ROOT: {TEMPLATE_ROOT}")
-# logger.info(f"DEPLOY_ENV: {DEPLOY_ENV}")
-
 LOGIN_REQUIRED = "true" == os.getenv("LOGIN_REQUIRED", "false").lower()
 LOGIN_URL = "/nta/login"
 LOGIN_VERBOSE = "true" == os.getenv("LOGIN_VERBOSE", "false").lower()
 LOGIN_DURATION = int(os.getenv("LOGIN_DURATION", 86400))
+
+# Set up logging root
+logging.basicConfig(
+    level=logging.WARNING,
+    format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+    datefmt="%d/%b/%Y %H:%M:%S",
+)
+logger = logging.getLogger("nta_app")
+logger.info("NTA-APP django:settings.py")
+
+# Set up deploy specific attributes
+if DEPLOY_ENV == "kube-dev":  # run in dev mode
+    DEBUG = True
+    CORS_ORIGIN_ALLOW_ALL = True
+    logger.setLevel(logging.INFO)
+    logger.warning("Django running in Debug mode!")
+else:  # Run in production mode
+    DEBUG = False
+    CORS_ORIGIN_ALLOW_ALL = False
+    logger.setLevel(logging.WARNING)
+    logger.warning("Django running in Production mode!")
+
+
+# Log some info
+# logger.info(f"PROJECT_ROOT: {PROJECT_ROOT}")
+logger.info(f"TEMPLATE_ROOT: {TEMPLATE_ROOT}")
+# logger.info(f"DEPLOY_ENV: {DEPLOY_ENV}")
 logger.info(
     f"LOGIN_REQUIRED: {LOGIN_REQUIRED}, LOGIN_URL: {LOGIN_URL}, LOGIN_DURATION: {LOGIN_DURATION}, "
     f"LOGIN_VERBOSE: {LOGIN_VERBOSE}"
 )
-
-if DEPLOY_ENV == "kube-dev":  # run in dev mode
-    DEBUG = True
-    CORS_ORIGIN_ALLOW_ALL = True
-    logger.info("Running in Debug mode!")
-else:  # Run in Production mode
-    DEBUG = False
-    CORS_ORIGIN_ALLOW_ALL = False
-    logger.info("Running in Production mode!")
-
 
 ALLOWED_HOSTS = ["*"]
 APPEND_SLASH = True

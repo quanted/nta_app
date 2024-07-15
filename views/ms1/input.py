@@ -15,8 +15,9 @@ from .input_form import NtaInputs
 from ...app.ms1.nta_task import run_nta_dask
 
 # set up logging
-logger = logging.getLogger("nta_app.views")
-logger.setLevel(logging.INFO)
+logger = logging.getLogger("nta_app.views.ms1")
+if os.getenv("DEPLOY_ENV", "kube-dev") == "kube-prod":
+    logger.setLevel(logging.WARNING)
 
 # hard-coded example file names for testing found in nta_app/input/ms1/
 example_pos_filename = "pooled_blood_pos_MPP.csv"
@@ -226,11 +227,12 @@ def input_page(request, form_data=None, form_files=None):
                     input_dfs.append(None)
             # input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs) if df is not None]
 
-            logger.info("input_page: Final Input parameters: {} ".format(inputParameters))
-
             # create a job ID
             job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
             logger.info("job ID: " + job_id)
+
+            # log the submission
+            logger.warn("MS1 Job {} Submitted. Parameters: {} ".format(job_id, inputParameters))
 
             run_nta_dask(
                 inputParameters,

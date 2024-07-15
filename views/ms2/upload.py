@@ -1,6 +1,7 @@
 import os
 import string, random
 import datetime
+import logging
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -10,8 +11,13 @@ from django.utils.encoding import iri_to_uri
 from .input_form import MS2ParametersInput
 from ...app.ms2.ms2_task import run_ms2_dask
 
-
 from .. import links_left
+
+# set up logging
+logger = logging.getLogger("nta_app.views.ms2")
+if os.getenv("DEPLOY_ENV", "kube-dev") == "kube-prod":
+    logger.setLevel(logging.WARNING)
+
 
 example_pos_filename_1 = "EntactEnv_Pos_MS1_Dust1IDA_01_Debug.mgf"
 example_neg_filename_1 = "EntactEnv_Neg_MS1_Dust1IDA_01_Debug.mgf"
@@ -37,7 +43,8 @@ def upload_page(request, form_data=None, form_files=None):
         "fragment_mass_accuracy": ["fragment_mass_accuracy", None],
         #'classification_file': ['classification_file', None]
     }
-    logger.debug("views/ms2/upload.py: inputParameters: {} ".format(inputParameters))
+
+    logger.warning("MS2 job submitted. Parameters: {} ".format(inputParameters))
 
     if request.method == "POST":
         form = MS2ParametersInput(request.POST)

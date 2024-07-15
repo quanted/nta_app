@@ -11,8 +11,8 @@ import os
 import logging
 import subprocess
 
-logger = logging.getLogger("NTA-Login-Logger")
-logger.setLevel(logging.INFO)
+# Set up logging
+logger = logging.getLogger("nta_app.login-middleware")
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
@@ -25,25 +25,28 @@ class Http403Middleware(object):
         response = self.get_response(request)
         if HttpResponseForbidden.status_code == response.status_code:
             logger.info("User login session token timed out")
-            return login(request, "<span style='color:red;'>Your session has timed out, please log back in to refresh your session.</span>")
+            return login(
+                request,
+                "<span style='color:red;'>Your session has timed out, please log back in to refresh your session.</span>",
+            )
         else:
             return response
 
 
 def login(request):
-    next_page = request.GET.get('next')
+    next_page = request.GET.get("next")
     message = ""
     delete_message = False
     if "message" in request.COOKIES.keys():
         message = request.COOKIES["message"]
         delete_message = True
-    html = render_to_string('login_prompt.html', {
-        'TITLE': 'User Login', 'next': next_page, 'TEXT': message
-    }, request=request)
+    html = render_to_string(
+        "login_prompt.html", {"TITLE": "User Login", "next": next_page, "TEXT": message}, request=request
+    )
     response = HttpResponse()
     response.write(html)
     if delete_message:
-        response.delete_cookie('message')
+        response.delete_cookie("message")
     return response
 
 
@@ -58,54 +61,55 @@ class RequireLoginMiddleware:
 
         self.get_response = get_response
         self.login_url = re.compile(settings.LOGIN_URL)
-        self.nta_username = "ntauser"
-        self.open_urls = [
-            '/nta/login'
-        ]
+        if os.getenv("DEPLOY_ENV", "kube-dev") == "kube-prod":  # set username based on deploy
+            self.nta_username = "ntauser"
+        else:
+            self.nta_username = "ntadev"
+        self.open_urls = ["/nta/login"]
 
         nta_password = self.load_password()
         if nta_password is None:
-            logger.warn("NTA login password as not set.")
+            logger.warning("NTA login password as not set.")
             return
 
         try:
             if not User.objects.filter(username=self.nta_username).exists():
-                _user = User.objects.create_user(self.nta_username, 'nta@nta.nta', nta_password)
+                _user = User.objects.create_user(self.nta_username, "nta@nta.nta", nta_password)
                 _user.save()
         except Exception:
-            logger.warn(f"User: {self.nta_username} already exists")
+            logger.warning(f"User: {self.nta_username} already exists")
 
     def __call__(self, request):
         response = self.get_response(request)
         return response
 
     def load_password(self):
-        nta_password = os.getenv('NTA_PASSWORD')
+        nta_password = os.getenv("NTA_PASSWORD")
         if nta_password is None:
             if self.login_verbose:
-                logger.info(f"Unable to get password as NTA_PASSWORD env was not set.")
+                logger.warning(f"Unable to get password as NTA_PASSWORD env was not set.")
             return None
 
         reset_env = ""
-        if os.name == 'posix':
-            reset_env = 'export NTA_PASSWORD=THEANSWERIS42'
-        elif os.name == 'nt':
-            reset_env = 'setx NTA_PASSWORD THEANSWERIS42'
+        if os.name == "posix":
+            reset_env = "export NTA_PASSWORD=THEANSWERIS42"
+        elif os.name == "nt":
+            reset_env = "setx NTA_PASSWORD THEANSWERIS42"
         subprocess.Popen(reset_env, shell=True).wait()
         return nta_password
 
     def login_auth(self, request):
 
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        next_page = request.POST.get('next')
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        next_page = request.POST.get("next")
 
         # Redirect back to login page if username is invalid
         if username != self.nta_username:
             if self.login_verbose:
                 logger.info(f"Login Auth: Username is invalid. Provided username: {username}")
-            response = redirect('/nta/login?next={}'.format(next_page))
-            response.set_cookie('message', "Username is not correct.")
+            response = redirect("/nta/login?next={}".format(next_page))
+            response.set_cookie("message", "Username is not correct.")
             return response
 
         user = authenticate(username=username, password=password)
@@ -113,44 +117,46 @@ class RequireLoginMiddleware:
         if user is not None:
             if user.is_active:
                 if self.login_verbose:
-                    logger.info(f"User login successful, redirecting to {next_page}, session will expire in {session_duration} secs.")
+                    logger.info(
+                        f"User login successful, redirecting to {next_page}, session will expire in {session_duration} secs."
+                    )
                 request.session.set_expiry(session_duration)
                 django_login(request, user)
                 return redirect(next_page)
             else:
                 if self.login_verbose:
                     logger.info(f"User no longer active, must log back in.")
-                response = redirect('/nta/login?next={}'.format(next_page))
-                response.set_cookie('message', "Session has ended, must log back in.")
+                response = redirect("/nta/login?next={}".format(next_page))
+                response.set_cookie("message", "Session has ended, must log back in.")
                 return response
         else:
             if self.login_verbose:
                 logger.info(f"User not logged in.")
-            response = redirect('/nta/login?next={}'.format(next_page))
-            response.set_cookie('message', "Password is not correct.")
+            response = redirect("/nta/login?next={}".format(next_page))
+            response.set_cookie("message", "Password is not correct.")
             return response
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        assert hasattr(request, 'user')
+        assert hasattr(request, "user")
         path = request.path
-        redirect_path = request.POST.get('next', "")
-        token = request.GET.get('token')
+        redirect_path = request.POST.get("next", "")
+        token = request.GET.get("token")
         user = request.user
         if self.login_verbose:
-            logger.info(f"Process view; user: {user}, next: {redirect_path}, token: {token}")
+            logger.debug(f"Process view; user: {user}, next: {redirect_path}, token: {token}")
         if request.POST and self.login_url.match(path):
             return self.login_auth(request)
         elif not user.is_authenticated:
             if self.open_url_check(path=path):
                 if self.login_verbose:
-                    logger.info(f"Process view cleared open url for path: {path}")
+                    logger.debug(f"Process view cleared open url for path: {path}")
                 return
             else:
-                return redirect('/nta/login?next={}'.format(path))
+                return redirect("/nta/login?next={}".format(path))
         elif user.is_authenticated:
             return
         else:
-            return redirect('/nta/login?next={}'.format(path))
+            return redirect("/nta/login?next={}".format(path))
 
     def open_url_check(self, path):
         if any(p in path for p in self.open_urls):

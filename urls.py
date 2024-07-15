@@ -23,7 +23,6 @@ from nta_app.views.version_info import version_info_page
 import nta_app.login_middleware as login_middleware
 import os
 
-print("qed.nta_app.urls")
 
 urlpatterns = [
     #
