@@ -1,6 +1,6 @@
 NTA WebApp Version History and Known Issues Documentation
-Version 0.2
-Updated 6/26/2024
+Version 0.2.1
+Updated 7/15/2024
 
 *************
 Known Issues:
@@ -10,9 +10,10 @@ Known Issues:
 3) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
 
 ************************
-Version 0.2.X - X/X/2024
+Version 0.2.1 - 7/15/2024
 ************************
-- MS1 results file: Column widths are now auto-scaled to fit the contents within.
+- Fixed a bug causing the MS2 workflow page to not load
+- MS1 results files: Various column names updated
 
 ************************
 Version 0.2 - 6/26/2024
