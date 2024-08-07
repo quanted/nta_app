@@ -49,6 +49,9 @@ class MS2_Parser:
                 if line.startswith("BEGIN IONS"):
                     result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
                 elif line.startswith("PEPMASS"):
+                    line = line.split(" ")[
+                        0
+                    ]  # Get rid of extra intensity value that is present in Thermo data after a space
                     # result['MASS'] = float(MS2_Parser._seperate_line(line.split('=')[1])[0])
                     result["MASS"] = float(line.split("=")[1])
                 elif line.startswith("RTINSECONDS"):
