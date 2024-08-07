@@ -24,7 +24,9 @@ logger = logging.getLogger("nta_app.merge")
 
 
 def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2):
-    matched_df = ms1_data if isinstance(ms1_data, pd.DataFrame) else ms1_data["dsstox_search"]
+    # NTAW-158: Adjust sheet names pulled from MS1 results
+    matched_df = ms1_data if isinstance(ms1_data, pd.DataFrame) else ms1_data["chemical_results"]
+    # matched_df = ms1_data if isinstance(ms1_data, pd.DataFrame) else ms1_data["dsstox_search"]
 
     matched_df.rename(columns={"DTXCID_INDIVIDUAL_COMPONENT": "DTXCID"}, inplace=True)
 
