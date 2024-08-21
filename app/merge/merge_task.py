@@ -111,7 +111,10 @@ class MergeRun:
             logger.info("self.input_MS2:")
             logger.info(len(self.input_ms2))
             logger.info(self.input_ms2)
-
+            logger.info("shape file_df:")
+            logger.info(self.input_ms2[0]["file_df"].shape)
+            logger.info("file_df:")
+            logger.info(self.input_ms2[0]["file_df"])
             # NTAW-158: Adjust sheet names pulled from MS1 results
             self.ms1_data_map["chemical_results"] = process_MS2_data(
                 self.input_ms1, self.input_ms2, self.mass_accuracy_tolerance, self.rt_tolerance
