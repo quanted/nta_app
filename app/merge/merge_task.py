@@ -107,6 +107,11 @@ class MergeRun:
     def execute(self):
         self.set_status("Processing", create=True)
         if self.n_files > 0:
+            # NTAW-158: Debugger statements
+            logger.info("self.input_MS2:")
+            logger.info(len(self.input_ms2))
+            logger.info(self.input_ms2)
+
             # NTAW-158: Adjust sheet names pulled from MS1 results
             self.ms1_data_map["chemical_results"] = process_MS2_data(
                 self.input_ms1, self.input_ms2, self.mass_accuracy_tolerance, self.rt_tolerance
