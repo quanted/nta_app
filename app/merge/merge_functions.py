@@ -50,7 +50,9 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
             on="DTXCID",
         )
         matched_df["mass_diff"] = abs(matched_df["Mass"] - matched_df[f"MASS_MGF_{filename}"])
-        matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"])
+        # NTAW-158: Retention time units of input MS1 are in minutes, input MS2 are in seconds, convert MS2 units to minutes by dividing by 60
+        # matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"])
+        matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"] / 60)
         matched_df["sum_diff"] = [
             mass_diff + rt_diff if mass_diff <= mass_accuracy and rt_diff <= rt_accuracy else np.nan
             for mass_diff, rt_diff in zip(matched_df["mass_diff"], matched_df["rt_diff"])
