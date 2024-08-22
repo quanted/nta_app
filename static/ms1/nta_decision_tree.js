@@ -819,7 +819,7 @@ d3.csv(csv_path).then(function(data) {
 
             // now we check the CV threshold
             var sample_cv_header = "CV" + sample_name;
-            if (Number(row[sample_cv_header]) < countData[`${threshID}`]["threshold"]["cv"]) {
+            if (Number(row[sample_cv_header]) <= countData[`${threshID}`]["threshold"]["cv"]) {
               // passed cv
               countData[`${threshID}`]["counts"]["occ"]["underCV"] += 1;
 
