@@ -807,6 +807,7 @@ class NtaRun:
         # Get user input CV and Replicate thresholds
         max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
         min_replicate_hits_percent = self.parameters["min_replicate_hits"][1]
+        MRL_mult = float(self.parameters["mrl_std_multiplier"][1])
         # convert max_replicate_cv_value to a numeric value
         max_replicate_cv_value = pd.to_numeric(self.parameters["max_replicate_cv"][1], errors="coerce")
         # convert min_replicate_hits_percent to a numeric value
@@ -841,7 +842,7 @@ class NtaRun:
         blank_std = "STD_" + blank_col[0]
         # Calculate MDL
         # AC 6/18/2024: Need to pull in MRL multiplier for MRL calculation
-        dfCombined["MDL"] = dfCombined[blank_mean] + 3 * dfCombined[blank_std]
+        dfCombined["MDL"] = dfCombined[blank_mean] + MRL_mult * dfCombined[blank_std]
         dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
         dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
         # Find CV, Rep_Percent, and Mean cols from df
