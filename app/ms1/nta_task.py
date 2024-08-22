@@ -672,7 +672,6 @@ class NtaRun:
             hue="spike",
             edgecolor="black",
             alpha=0.5,
-            legend=False,
             ax=axes[0],
         )
         # Add CV red dashed line
