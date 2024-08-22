@@ -693,9 +693,13 @@ class NtaRun:
         )
         # Perform occurrence counts above and below CV by sample type
         red_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"])
-        red_flag_count = sum(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"] > 1.25)
+        red_flag_count = sum(
+            plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"] > max_replicate_cv_value
+        )
         white_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"])
-        white_flag_count = sum(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"] > 1.25)
+        white_flag_count = sum(
+            plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
+        )
         # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
         legend = a.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
         # Set legend labels
@@ -750,9 +754,13 @@ class NtaRun:
         )
         # Perform occurrence counts above and below CV by sample type
         red_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"])
-        red_flag_count = sum(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"] > 1.25)
+        red_flag_count = sum(
+            plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"] > max_replicate_cv_value
+        )
         white_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"])
-        white_flag_count = sum(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"] > 1.25)
+        white_flag_count = sum(
+            plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
+        )
         # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
         legend = b.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
         # Set legend labels
