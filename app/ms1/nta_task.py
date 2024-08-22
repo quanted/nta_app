@@ -590,7 +590,11 @@ class NtaRun:
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
             if dfPos is not None and dfNeg is not None
-            else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
+            else dfPos
+            if dfPos is not None
+            else dfNeg
+            if dfNeg is not None
+            else None
         )
         # Get sample headers
         all_headers = task_fun.parse_headers(dfCombined)
@@ -688,6 +692,24 @@ class NtaRun:
             weight="bold",
             size=14,
         )
+        # Perform occurrence counts above and below CV by sample type
+        red_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"])
+        red_flag_count = sum(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"] > 1.25)
+        white_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"])
+        white_flag_count = sum(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"] > 1.25)
+        # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
+        legend = a.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
+        # Set legend labels
+        if dfTracer is not None:
+            legend.get_texts()[0].set_text(f"unknowns ({white_flag_count} of {white_count} above line)")
+            legend.get_texts()[1].set_text(
+                f"tracers ({red_flag_count} of {red_count} above line)"
+            )  # If tracers are present, add secondary legend label
+        # Make it pretty
+        frame = legend.get_frame()  # sets up for color, edge, and transparency
+        frame.set_facecolor("lightgray")  # color of legend
+        frame.set_edgecolor("black")  # edge color of legend
+        frame.set_alpha(1)  # deals with transparency
         # Adjust axes labels
         axes[0].set_title(titleText + ": Blanks", fontsize=18, weight="bold")
         axes[0].set_xlabel("Mean Abundance", fontsize=14)
@@ -699,6 +721,7 @@ class NtaRun:
         axes[0].set(xscale="log")
         axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
         axes[0].tick_params(axis="both", which="both", labelsize=12)
+
         # Sample plot
         b = sns.scatterplot(
             data=plot2.loc[((plot2["type"] != "blank")), :].sort_values("spike"),
@@ -726,12 +749,19 @@ class NtaRun:
             weight="bold",
             size=14,
         )
+        # Perform occurrence counts above and below CV by sample type
+        red_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"])
+        red_flag_count = sum(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"] > 1.25)
+        white_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"])
+        white_flag_count = sum(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"] > 1.25)
         # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
-        legend = b.legend(title="Features")
+        legend = b.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
         # Set legend labels
         if dfTracer is not None:
-            legend.get_texts()[0].set_text("Unknowns")
-            legend.get_texts()[1].set_text("Tracers")  # If tracers are present, add secondary legend label
+            legend.get_texts()[0].set_text(f"unknowns ({white_flag_count} of {white_count} above line)")
+            legend.get_texts()[1].set_text(
+                f"tracers ({red_flag_count} of {red_count} above line)"
+            )  # If tracers are present, add secondary legend label
         # Make it pretty
         frame = legend.get_frame()  # sets up for color, edge, and transparency
         frame.set_facecolor("lightgray")  # color of legend
@@ -782,7 +812,11 @@ class NtaRun:
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
             if dfPos is not None and dfNeg is not None
-            else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
+            else dfPos
+            if dfPos is not None
+            else dfNeg
+            if dfNeg is not None
+            else None
         )
 
         # Get sample headers
