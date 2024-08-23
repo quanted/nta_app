@@ -205,7 +205,9 @@ button.logicTree, button.toggleLogicTree {
   font-weight: 600;
 }
 button.downloadLogicTree {
-  background-color: rgb(255, 255, 255); /* set background-color for transition on hover */
+  background-color: #2e7ebc;
+  color: rgb(255, 255, 255);
+  /*background-color: rgb(255, 255, 255);*/ /* set background-color for transition on hover */
   border: 4px solid #2e7ebc;    /* set a border for transition on hover */
   padding-left: 20px;
   padding-right: 20px;
