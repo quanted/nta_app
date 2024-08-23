@@ -773,6 +773,7 @@ class WebApp_plotter:
                 # AC Loop through legend label generation
                 legend_x_coord = []  # List of x-coordinates for sample group in legend
                 character_increment = 0.018  # How much to increment x-coordinate per character
+                base_separation = 0.018  # Flat base amount of separation between group labels
 
                 for b in range(len(sample_group_unique)):
                     # Get x coordinate of sample group legend text based on number of characters
@@ -784,7 +785,7 @@ class WebApp_plotter:
                         last_value = legend_x_coord[-1]
                         legend_x_coord.append(last_value + next_x_increment)
                         char_count = len(sample_group_unique[b])
-                        next_x_increment = char_count * character_increment
+                        next_x_increment = char_count * character_increment + base_separation
 
                 # Display the legend text for each sample group
                 for a in range(len(sample_group_unique)):
