@@ -1187,7 +1187,7 @@ d3.csv(csv_path).then(function(data) {
     svg.appendChild(replicateText);
     var replicateText = addText(40, 505, `<tspan text-decoration="underline">CV Threshold = ${countData[threshID]["threshold"]["cv"]}</tspan>`, 28, "black");
     svg.appendChild(replicateText);
-    var replicateText = addText(20, 680, `<tspan text-decoration="underline">Blank MRL Multiplier = ${countData[threshID]["threshold"]["mrl"]}</tspan>`, 28, "black");
+    var replicateText = addText(20, 680, `<tspan text-decoration="underline">MRL Multiplier = ${countData[threshID]["threshold"]["mrl"]}</tspan>`, 28, "black");
     svg.appendChild(replicateText);
 
     // append svg to our container div
@@ -1321,7 +1321,7 @@ d3.csv(csv_path).then(function(data) {
     svg.appendChild(replicateText);
     var replicateText = addText(40, 505, `<tspan text-decoration="underline">CV Threshold = ${countData[threshID]["threshold"]["cv"]}</tspan>`, 28, "black");
     svg.appendChild(replicateText);
-    var replicateText = addText(20, 680, `<tspan text-decoration="underline">Blank MRL Multiplier = ${countData[threshID]["threshold"]["mrl"]}</tspan>`, 28, "black");
+    var replicateText = addText(20, 680, `<tspan text-decoration="underline">MRL Multiplier = ${countData[threshID]["threshold"]["mrl"]}</tspan>`, 28, "black");
     svg.appendChild(replicateText);
 
     // append svg to our container div
