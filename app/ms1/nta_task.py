@@ -317,10 +317,10 @@ class NtaRun:
 
     def check_existence_of_ionization_mode_column(self, input_dfs):
         """
-        Check and ensure the existence of the 'Ionization_Mode' column in a list of DataFrames.
+        Check and ensure the existence of the 'Ionization Mode' column in a list of DataFrames.
 
         This function iterates through a list of DataFrames, typically representing positive and negative ionization modes,
-        and checks if the 'Ionization_Mode' column is present. If not found, it adds the column to the DataFrame with
+        and checks if the 'Ionization Mode' column is present. If not found, it adds the column to the DataFrame with
         predefined values based on the mode.
 
         Args:
@@ -334,16 +334,16 @@ class NtaRun:
             input_dfs = [positive_mode_df, negative_mode_df]
             checker = IonizationModeChecker()
             checker.check_existence_of_ionization_mode_column(input_dfs)
-            # The 'Ionization_Mode' column will be added to DataFrames if missing, with values 'Esi+' for positive mode
+            # The 'Ionization Mode' column will be added to DataFrames if missing, with values 'Esi+' for positive mode
             # and 'Esi-' for negative mode.
         """
         # the zeroth element of input_dfs is the positive mode dataframe
         ionizationMode = "Esi+"
         for df in input_dfs:
             if df is not None:
-                if "Ionization_Mode" not in df.columns:
-                    # create a new column with the header of "Ionization_Mode" and values of ionizationMode
-                    df["Ionization_Mode"] = ionizationMode
+                if "Ionization Mode" not in df.columns:
+                    # create a new column with the header of "Ionization Mode" and values of ionizationMode
+                    df["Ionization Mode"] = ionizationMode
             # the first element of input_dfs is the negative mode dataframe
             ionizationMode = "Esi-"
         return
@@ -544,24 +544,24 @@ class NtaRun:
                 self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
             self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature_ID"])
+                pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature ID"])
             )
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature_ID"])
+                pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature ID"])
             )
         elif self.dfs[0] is not None:
             self.dfs[0] = task_fun.adduct_identifier(
                 self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
             )
             self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature_ID"])
+                pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature ID"])
             )
         else:
             self.dfs[1] = task_fun.adduct_identifier(
                 self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature_ID"])
+                pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature ID"])
             )
         return
 
@@ -1074,7 +1074,7 @@ class NtaRun:
         # AC 12/7/2023: commented out to move to function after clean_features
         # if 'DTXSID' not in dft.columns:
         #     dft['DTXSID'] = ''
-        # dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
+        # dft = dft[['Feature ID', 'Chemical_Name', 'DTXSID', 'Ionization Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
         # self.data_map['Tracer Summary'] = dft
 
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
@@ -1167,7 +1167,7 @@ class NtaRun:
             temp_df = self.dfs[1]
               
         # Merge combined modes dataframe with tracer dataframe            
-        dft = pd.merge(dft, temp_df[['Feature_ID', 'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']], how='left', on='Feature_ID')
+        dft = pd.merge(dft, temp_df[['Feature ID', 'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']], how='left', on='Feature ID')
         
         # Push new version of tracers dataframe back into data_map
         self.data_map['Tracer Detection Statistics'] = dft
@@ -1179,10 +1179,10 @@ class NtaRun:
             dft["DTXSID"] = ""
         dft = dft[
             [
-                "Feature_ID",
+                "Feature ID",
                 "Chemical_Name",
                 "DTXSID",
-                "Ionization_Mode",
+                "Ionization Mode",
                 "Mass_Error_PPM",
                 "Retention_Time_Difference",
                 "Max_CV_across_sample",
@@ -1269,7 +1269,7 @@ class NtaRun:
                 orient="split",
                 dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
             )
-        dsstox_search_df = self.mpp_ready_flagged[["Feature_ID", "Mass", "Retention_Time"]].merge(
+        dsstox_search_df = self.mpp_ready_flagged[["Feature ID", "Mass", "Retention_Time"]].merge(
             dsstox_search_df, how="right", left_on="Mass", right_on="INPUT"
         )
 

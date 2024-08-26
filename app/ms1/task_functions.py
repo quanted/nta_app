@@ -24,7 +24,7 @@ def assign_feature_id(df_in, start=1):
     df = df_in.copy()
     row_nums = list(range(0, len(df.index)))
     to_assign = [x + start for x in row_nums]
-    df.insert(0, "Feature_ID", to_assign.copy())
+    df.insert(0, "Feature ID", to_assign.copy())
     return df
 
 
@@ -138,16 +138,16 @@ def passthrucol(df_in):
     df = df_in.copy()
     # Parse headers
     all_headers = parse_headers(df)
-    # Define active_cols: Keep 'Feature_ID' in pt_headers to merge later
-    active_cols = ["Retention_Time", "Mass", "Ionization_Mode", "Formula"]
+    # Define active_cols: Keep 'Feature ID' in pt_headers to merge later
+    active_cols = ["Retention_Time", "Mass", "Ionization Mode", "Formula"]
     # Create list of pass through headers that are not in the active columns
-    pt_headers = ["Feature_ID"] + [
+    pt_headers = ["Feature ID"] + [
         item
         for sublist in all_headers
         for item in sublist
         if len(sublist) == 1 and not any(x in sublist for x in active_cols)
     ]
-    headers = ["Feature_ID"] + [
+    headers = ["Feature ID"] + [
         item for sublist in all_headers for item in sublist if not any(x in item for x in pt_headers)
     ]
     # Save pass through columns in df
@@ -165,10 +165,10 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     Modified version of Jeff's 'adduct_identifier' function. This function executes
     the matrix portion of the old function -- TMF 10/27/23
     """
-    # 'Mass' to matrix, 'Retention Time' to matrix, 'Feature_ID' to matrix
+    # 'Mass' to matrix, 'Retention Time' to matrix, 'Feature ID' to matrix
     mass = df["Mass"].to_numpy()
     rts = df["Retention_Time"].to_numpy()
-    ids = df["Feature_ID"].to_numpy()
+    ids = df["Feature ID"].to_numpy()
     # Reshape 'masses', 'rts', and 'ids'
     masses_matrix = np.reshape(mass, (len(mass), 1))
     rts_matrix = np.reshape(rts, (len(rts), 1))
@@ -292,8 +292,8 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
     features that are near to adduct distance from another feature. This shortened dataframe is used to
     calculate a window size, then loop through possible adducts, passing to 'chunk_adducts' -- TMF 10/27/23
     """
-    # Copy df_in, only need 'Feature_ID', 'Mass', and 'Retention Time'
-    df = df_in[["Feature_ID", "Mass", "Retention_Time"]].copy()
+    # Copy df_in, only need 'Feature ID', 'Mass', and 'Retention Time'
+    df = df_in[["Feature ID", "Mass", "Retention_Time"]].copy()
     # Round columns
     df["Rounded Mass"] = df["Mass"].round(2)
     df["Rounded RT"] = df["Retention_Time"].round(1)
@@ -711,8 +711,8 @@ def column_sort_DFS(df_in):
     groups = [item for item in group_cols if not any(x in item for x in prefixes)]
     # Organize front matter
     front_matter = [item for item in all_cols if not any(x in item for x in groups)]
-    ids = ["Feature_ID", "Mass", "Retention_Time", "Ionization_Mode"]
-    # ids = ['Compound Name', 'Mass', 'Retention_Time', 'Ionization_Mode']
+    ids = ["Feature ID", "Mass", "Retention_Time", "Ionization Mode"]
+    # ids = ['Compound Name', 'Mass', 'Retention_Time', 'Ionization Mode']
     front_matter = [item for item in front_matter if not any(x in item for x in ids)]
     front_matter = ids + front_matter
     # Organize stats columns
@@ -736,12 +736,12 @@ def column_sort_TSR(df_in):
     df = df_in.copy()
     all_cols = df.columns.tolist()
     # Create list of prefixes to remove non-samples
-    prefixes = ["Feature_ID", "Mass", "Retention_Time"]
+    prefixes = ["Feature ID", "Mass", "Retention_Time"]
     # Isolate sample_groups from prefixes columns
     back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
     # Organize front matter
     front_matter = [
-        "Feature_ID",
+        "Feature ID",
         "Observed_Mass",
         "Observed_Retention_Time",
         "Monoisotopic_Mass",
@@ -777,10 +777,10 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
         if ((len(subgroup) > 1) and not any(x in item for x in prefixes))
     ]
     # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI+", "Esi+")
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi+", "Esi+")
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI-", "Esi-")
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi-", "Esi-")
+    df2["Ionization Mode"] = df2["Ionization Mode"].replace("ESI+", "Esi+")
+    df2["Ionization Mode"] = df2["Ionization Mode"].replace("esi+", "Esi+")
+    df2["Ionization Mode"] = df2["Ionization Mode"].replace("ESI-", "Esi-")
+    df2["Ionization Mode"] = df2["Ionization Mode"].replace("esi-", "Esi-")
     # Create 'Rounded_Mass' variable to merge on
     df2["Rounded_Mass"] = df2["Monoisotopic_Mass"].round(0)
     df1.rename(
@@ -789,7 +789,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     )
     df1["Rounded_Mass"] = df1["Observed_Mass"].round(0)
     # Merge df and tracers
-    dft = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization_Mode"])
+    dft = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization Mode"])
     if ppm:
         dft["Matches"] = np.where(
             (
@@ -1079,7 +1079,7 @@ def clean_features(df_in, controls, tracer_df=False):
     docs = pd.DataFrame().reindex_like(df)
     docs["Mass"] = df["Mass"]
     docs["Retention_Time"] = df["Retention_Time"]
-    docs["Feature_ID"] = df["Feature_ID"]
+    docs["Feature ID"] = df["Feature ID"]
     docs["Duplicate Feature?"] = df["Duplicate Feature?"]
     if tracer_df:
         docs["Tracer Chemical Match?"] = df["Tracer Chemical Match?"]
@@ -1214,7 +1214,7 @@ def combine_doc(doc1, doc2, tracer_df=False):
     # Select columns for keeping, with tracer conditional
     if tracer_df:
         to_keep = [
-            "Feature_ID",
+            "Feature ID",
             "Mass",
             "Retention_Time",
             "BlkStd_cutoff",
@@ -1225,7 +1225,7 @@ def combine_doc(doc1, doc2, tracer_df=False):
         ] + Mean
     else:
         to_keep = [
-            "Feature_ID",
+            "Feature ID",
             "Mass",
             "Retention_Time",
             "BlkStd_cutoff",
@@ -1251,17 +1251,17 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
     # Assign pass through columns to pt_cols for re_org
     if pts[0] is not None and pts[1] is not None:
         pt_com = pd.concat([pts[0], pts[1]], axis=0)
-        dft = pd.merge(dft, pt_com, how="left", on=["Feature_ID"])
+        dft = pd.merge(dft, pt_com, how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
-        pt_cols = [col for col in pt_cols if "Feature_ID" not in col]
+        pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     elif pts[0] is not None:
-        dft = pd.merge(dft, pts[0], how="left", on=["Feature_ID"])
+        dft = pd.merge(dft, pts[0], how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
-        pt_cols = [col for col in pt_cols if "Feature_ID" not in col]
+        pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     else:
-        dft = pd.merge(dft, pts[1], how="left", on=["Feature_ID"])
+        dft = pd.merge(dft, pts[1], how="left", on=["Feature ID"])
         pt_cols = pts[1].columns.tolist()
-        pt_cols = [col for col in pt_cols if "Feature_ID" not in col]
+        pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     # Parse headers, get sample values and blank subtracted means
     Headers = parse_headers(dft)
     raw_samples = [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ("BlankSub" not in item)]
@@ -1272,7 +1272,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
         if tracer_df:
             dft = dft[
                 [
-                    "Feature_ID",
+                    "Feature ID",
                     "Formula",
                     "Mass",
                     "Retention_Time",
@@ -1292,7 +1292,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
         else:
             dft = dft[
                 [
-                    "Feature_ID",
+                    "Feature ID",
                     "Formula",
                     "Mass",
                     "Retention_Time",
@@ -1312,7 +1312,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
         if tracer_df:
             dft = dft[
                 [
-                    "Feature_ID",
+                    "Feature ID",
                     "Mass",
                     "Retention_Time",
                     "Any Occurrences Removed?",
@@ -1331,7 +1331,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
         else:
             dft = dft[
                 [
-                    "Feature_ID",
+                    "Feature ID",
                     "Mass",
                     "Retention_Time",
                     "Any Occurrences Removed?",
