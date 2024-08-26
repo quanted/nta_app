@@ -431,8 +431,8 @@ class NtaRun:
             value = self.parameters[key][1]
             df_analysis_parameters.loc[len(df_analysis_parameters)] = [label, value]
 
-        # add the dataframe to the data_map with the sheet name of 'Analysis_Parameters'
-        self.data_map["Analysis_Parameters"] = df_analysis_parameters
+        # add the dataframe to the data_map with the sheet name of 'Analysis Parameters'
+        self.data_map["Analysis Parameters"] = df_analysis_parameters
 
         return
 
@@ -543,24 +543,24 @@ class NtaRun:
             self.dfs[1] = task_fun.adduct_identifier(
                 self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
-            self.data_map["Feature_statistics_positive"] = task_fun.column_sort_DFS(
+            self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
                 pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature_ID"])
             )
-            self.data_map["Feature_statistics_negative"] = task_fun.column_sort_DFS(
+            self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
                 pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature_ID"])
             )
         elif self.dfs[0] is not None:
             self.dfs[0] = task_fun.adduct_identifier(
                 self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
             )
-            self.data_map["Feature_statistics_positive"] = task_fun.column_sort_DFS(
+            self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
                 pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature_ID"])
             )
         else:
             self.dfs[1] = task_fun.adduct_identifier(
                 self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
-            self.data_map["Feature_statistics_negative"] = task_fun.column_sort_DFS(
+            self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
                 pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature_ID"])
             )
         return
@@ -574,12 +574,22 @@ class NtaRun:
         max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
         max_replicate_cv_value = float(max_replicate_cv_value)
 
-        # get dataframe 'Feature_statistics_positive' if it exists else None
-        dfPos = self.data_map["Feature_statistics_positive"] if "Feature_statistics_positive" in self.data_map else None
-        # get dataframe 'Feature_statistics_negative' if it exists else None
-        dfNeg = self.data_map["Feature_statistics_negative"] if "Feature_statistics_negative" in self.data_map else None
-        # get 'Tracer_Sample_Results' if it exists else None
-        dfTracer = self.data_map["Tracer_Sample_Results"] if "Tracer_Sample_Results" in self.data_map else None
+        # get dataframe 'All Detection Statistics (Pos)' if it exists else None
+        dfPos = (
+            self.data_map["All Detection Statistics (Pos)"]
+            if "All Detection Statistics (Pos)" in self.data_map
+            else None
+        )
+        # get dataframe 'All Detection Statistics (Neg)' if it exists else None
+        dfNeg = (
+            self.data_map["All Detection Statistics (Neg)"]
+            if "All Detection Statistics (Neg)" in self.data_map
+            else None
+        )
+        # get 'Tracer Detection Statistics' if it exists else None
+        dfTracer = (
+            self.data_map["Tracer Detection Statistics"] if "Tracer Detection Statistics" in self.data_map else None
+        )
         # Add conditional; if tracer exists reformat
         if dfTracer is not None:
             tracers = dfTracer[["Observed_Mass", "Observed_Retention_Time"]].copy()
@@ -812,10 +822,18 @@ class NtaRun:
         max_replicate_cv_value = pd.to_numeric(self.parameters["max_replicate_cv"][1], errors="coerce")
         # convert min_replicate_hits_percent to a numeric value
         min_replicate_hits_percent = pd.to_numeric(self.parameters["min_replicate_hits"][1], errors="coerce")
-        # get dataframe 'Feature_statistics_positive' if it exists else None
-        dfPos = self.data_map["Feature_statistics_positive"] if "Feature_statistics_positive" in self.data_map else None
-        # get dataframe 'Feature_statistics_negative' if it exists else None
-        dfNeg = self.data_map["Feature_statistics_negative"] if "Feature_statistics_negative" in self.data_map else None
+        # get dataframe 'All Detection Statistics (Pos)' if it exists else None
+        dfPos = (
+            self.data_map["All Detection Statistics (Pos)"]
+            if "All Detection Statistics (Pos)" in self.data_map
+            else None
+        )
+        # get dataframe 'All Detection Statistics (Neg)' if it exists else None
+        dfNeg = (
+            self.data_map["All Detection Statistics (Neg)"]
+            if "All Detection Statistics (Neg)" in self.data_map
+            else None
+        )
         # combine the two dataframes. Ignnore non-existing dataframes
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
@@ -1050,14 +1068,14 @@ class NtaRun:
         # remove the columns 'Detection_Count(non-blank_samples)' and 'Detection_Count(non-blank_samples)(%)'
         # dft = dft.drop(columns=['Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'])
 
-        self.data_map["Tracer_Sample_Results"] = task_fun.column_sort_TSR(dft)
+        self.data_map["Tracer Detection Statistics"] = task_fun.column_sort_TSR(dft)
 
         # create summary table
         # AC 12/7/2023: commented out to move to function after clean_features
         # if 'DTXSID' not in dft.columns:
         #     dft['DTXSID'] = ''
         # dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
-        # self.data_map['Tracers_Summary'] = dft
+        # self.data_map['Tracer Summary'] = dft
 
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
         # self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
@@ -1132,12 +1150,12 @@ class NtaRun:
         return
 
     def merge_columns_onto_tracers(self):
-        # self.data_map['Tracer_Sample_Results'] = task_fun.column_sort_TSR(dft)
+        # self.data_map['Tracer Detection Statistics'] = task_fun.column_sort_TSR(dft)
         if self.tracer_df is None:
             logger.info("No tracer file, skipping this step.")
             return
         # Grab the tracer dataframe from self.data_map
-        dft = self.data_map["Tracer_Sample_Results"]
+        dft = self.data_map["Tracer Detection Statistics"]
         logger.info("dft: {}".format(dft.columns))
         """
         # Go through both negative and positive mode dataframes combine when present into a new temp dataframe
@@ -1152,7 +1170,7 @@ class NtaRun:
         dft = pd.merge(dft, temp_df[['Feature_ID', 'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']], how='left', on='Feature_ID')
         
         # Push new version of tracers dataframe back into data_map
-        self.data_map['Tracer_Sample_Results'] = dft
+        self.data_map['Tracer Detection Statistics'] = dft
 
         logger.info("dft post-merge: {}".format(dft.columns))
         """
@@ -1172,7 +1190,7 @@ class NtaRun:
                 "Occurrence_Count(across_all_replicates)(%)",
             ]
         ]
-        self.data_map["Tracers_Summary"] = dft
+        self.data_map["Tracer Summary"] = dft
         return
 
     def create_flags(self):
@@ -1201,13 +1219,13 @@ class NtaRun:
         else:
             self.doc_combined = task_fun.combine_doc(self.docs[0], self.docs[1], tracer_df=tracer_df_bool)
 
-        self.data_map["Filter_documentation"] = self.doc_combined
+        self.data_map["Decision Documentation"] = self.doc_combined
         # self.mongo_save(self.df_combined, FILENAMES['combined'])
         self.mpp_ready = task_fun.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool)
         self.mpp_ready_flagged = task_fun.MPP_Ready(self.df_flagged_combined, self.pass_through, tracer_df_bool)
-        # self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
-        self.data_map["Cleaned_feature_results_reduced"] = reduced_file(self.mpp_ready)
-        self.data_map["Results_flagged"] = reduced_file(self.mpp_ready_flagged)
+        # self.data_map["Final Occurrence Matrix"] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
+        self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready)
+        self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(self.mpp_ready_flagged)
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save=True):
         logging.info(
