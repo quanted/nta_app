@@ -342,8 +342,14 @@ class NtaRun:
         for df in input_dfs:
             if df is not None:
                 if "Ionization Mode" not in df.columns:
-                    # create a new column with the header of "Ionization Mode" and values of ionizationMode
-                    df["Ionization Mode"] = ionizationMode
+                    if "Ionization_Mode" not in df.columns:
+                        # create a new column with the header of "Ionization Mode" and values of ionizationMode
+                        df["Ionization Mode"] = ionizationMode
+                    else:
+                        df.rename(
+                            columns={"Ionization_Mode": "Ionization Mode"},
+                            inplace=True,
+                        )
             # the first element of input_dfs is the negative mode dataframe
             ionizationMode = "Esi-"
         return
