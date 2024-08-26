@@ -139,7 +139,7 @@ def passthrucol(df_in):
     # Parse headers
     all_headers = parse_headers(df)
     # Define active_cols: Keep 'Feature ID' in pt_headers to merge later
-    active_cols = ["Retention_Time", "Mass", "Ionization Mode", "Formula"]
+    active_cols = ["Retention_Time", "Mass", "Ionization_Mode", "Formula"]
     # Create list of pass through headers that are not in the active columns
     pt_headers = ["Feature ID"] + [
         item
@@ -711,8 +711,8 @@ def column_sort_DFS(df_in):
     groups = [item for item in group_cols if not any(x in item for x in prefixes)]
     # Organize front matter
     front_matter = [item for item in all_cols if not any(x in item for x in groups)]
-    ids = ["Feature ID", "Mass", "Retention_Time", "Ionization Mode"]
-    # ids = ['Compound Name', 'Mass', 'Retention_Time', 'Ionization Mode']
+    ids = ["Feature ID", "Mass", "Retention_Time", "Ionization_Mode"]
+    # ids = ['Compound Name', 'Mass', 'Retention_Time', 'Ionization_Mode']
     front_matter = [item for item in front_matter if not any(x in item for x in ids)]
     front_matter = ids + front_matter
     # Organize stats columns
@@ -777,10 +777,10 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
         if ((len(subgroup) > 1) and not any(x in item for x in prefixes))
     ]
     # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
-    df2["Ionization Mode"] = df2["Ionization Mode"].replace("ESI+", "Esi+")
-    df2["Ionization Mode"] = df2["Ionization Mode"].replace("esi+", "Esi+")
-    df2["Ionization Mode"] = df2["Ionization Mode"].replace("ESI-", "Esi-")
-    df2["Ionization Mode"] = df2["Ionization Mode"].replace("esi-", "Esi-")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI+", "Esi+")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi+", "Esi+")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI-", "Esi-")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi-", "Esi-")
     # Create 'Rounded_Mass' variable to merge on
     df2["Rounded_Mass"] = df2["Monoisotopic_Mass"].round(0)
     df1.rename(
@@ -789,7 +789,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     )
     df1["Rounded_Mass"] = df1["Observed_Mass"].round(0)
     # Merge df and tracers
-    dft = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization Mode"])
+    dft = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization_Mode"])
     if ppm:
         dft["Matches"] = np.where(
             (
