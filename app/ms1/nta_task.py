@@ -544,24 +544,24 @@ class NtaRun:
                 self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
             self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature ID"])
+                self.dfs[0], self.pass_through[0]
             )
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature ID"])
+                self.dfs[1], self.pass_through[1]
             )
         elif self.dfs[0] is not None:
             self.dfs[0] = task_fun.adduct_identifier(
                 self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
             )
             self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature ID"])
+                self.dfs[0], self.pass_through[0]
             )
         else:
             self.dfs[1] = task_fun.adduct_identifier(
                 self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature ID"])
+                self.dfs[1], self.pass_through[1]
             )
         return
 

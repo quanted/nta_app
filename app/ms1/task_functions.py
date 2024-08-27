@@ -687,11 +687,13 @@ def chunk_stats(df_in, mrl_multiplier=3):
     return output
 
 
-def column_sort_DFS(df_in):
+def column_sort_DFS(df_in, passthru):
     """
     Function that sorts columns for the data_feature_statistics outputs -- TMF 11/21/23
     """
+    # Copy df and passthru
     df = df_in.copy()
+    pt = passthru.copy()
     # Parse headers
     all_headers = parse_headers(df)
     # Get all cols, group roots (i.e., drop unique value from sample groups)
@@ -711,10 +713,23 @@ def column_sort_DFS(df_in):
     groups = [item for item in group_cols if not any(x in item for x in prefixes)]
     # Organize front matter
     front_matter = [item for item in all_cols if not any(x in item for x in groups)]
-    ids = ["Feature ID", "Mass", "Retention_Time", "Ionization_Mode"]
-    # ids = ['Compound Name', 'Mass', 'Retention_Time', 'Ionization_Mode']
-    front_matter = [item for item in front_matter if not any(x in item for x in ids)]
-    front_matter = ids + front_matter
+    pt_info = pt.columns.tolist()
+    ordering = [
+        "Ionization_Mode",
+        "Mass",
+        "Retention_Time",
+        "Selected MRL",
+        "MRL (3x)",
+        "MRL (5x)",
+        "MRL (10x)",
+        "Duplicate Feature?",
+        "Has Adduct or Loss?",
+        "Is Adduct or Loss?",
+        "Adduct or Loss Info",
+        "Max CV Across Samples",
+    ]
+    front_matter = [item for item in ordering if item in front_matter]
+    front_matter = pt_info + front_matter
     # Organize stats columns
     cols = []
     for sam in groups:
@@ -723,6 +738,8 @@ def column_sort_DFS(df_in):
     stats_cols = sum(cols, [])
     # Combine into new column list
     new_col_org = front_matter + stats_cols
+    # Combine df and passthrough
+    df = pd.merge(df, pt, how="left", on=["Feature ID"])
     # Subset data with new column list
     df_reorg = df[new_col_org]
     # Return re-organized dataframe
