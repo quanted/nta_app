@@ -847,7 +847,10 @@ class NtaRun:
 
         # Get sample headers
         all_headers = task_fun.parse_headers(dfCombined)
-        sam_headers = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
+        non_samples = ["MRL"]
+        sam_headers = [
+            sublist[0][:-1] for sublist in all_headers if len(sublist) > 1 if not any(x in item[0] for x in non_samples)
+        ]
         # Isolate sample_groups from stats columns
         prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_"]
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
