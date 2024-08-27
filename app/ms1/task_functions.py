@@ -660,7 +660,7 @@ def chunk_stats(df_in, mrl_multiplier=3):
     # Sort output mass and add two new columns
     output.sort_values(["Mass", "Retention_Time"], ascending=[True, True], inplace=True)
     output["Rounded_Mass"] = output["Mass"].round(0)
-    output["Max_CV_across_sample"] = output.filter(regex="CV_").max(axis=1)
+    output["Max CV Across Samples"] = output.filter(regex="CV_").max(axis=1)
     # Define lists to calculate MRL for inclusion in 'Feature_statistics' outputs
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
     Mean = output.columns[output.columns.str.contains(pat="Mean_")].tolist()
@@ -723,8 +723,8 @@ def column_sort_DFS(df_in, passthru):
         "MRL (5x)",
         "MRL (10x)",
         "Duplicate Feature?",
-        "Has Adduct or Loss?",
         "Is Adduct or Loss?",
+        "Has Adduct or Loss?",
         "Adduct or Loss Info",
         "Max CV Across Samples",
     ]
