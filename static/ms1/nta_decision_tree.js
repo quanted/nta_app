@@ -760,12 +760,12 @@ d3.csv(csv_path).then(function(data) {
     }
 
     // get 'sample suffixes'. Since we don't have a priori knowledge of the sample names, we need
-    // to find them by looking for the N_Abun column names, which always end with a unique sample name
+    // to find them by looking for the "Detection Count" column names, which always end with a unique sample name
     var column_headers = Object.keys(data[0]); // array of all column headers
     var sample_names = []; // e.g., ['_MB', '_53_T', '_54_T', ...]
     for (let header_i in column_headers) {
-      if (column_headers[header_i].slice(0, 6) === 'N_Abun') {
-        sample_names.push(column_headers[header_i].slice(6));
+      if (column_headers[header_i].slice(0, 16) === 'Detection Count ') {
+        sample_names.push(column_headers[header_i].slice(16));
       }
     }
 
@@ -788,10 +788,10 @@ d3.csv(csv_path).then(function(data) {
       for (let i in sample_names) {
         countData[`${threshID}`]["counts"]["occ"]["total"] += 1;
 
-        // check to see if the sample exists... N_Abun_* is > 0
+        // check to see if the sample exists... "Detection Count" is > 0
         var sample_name = sample_names[i];
-        var n_abun_header = `N_Abun${sample_name}`;
-        if (Number(row[n_abun_header]) > 0) {
+        var detection_count_header = `Detection Count ${sample_name}`;
+        if (Number(row[detection_count_header]) > 0) {
           countData[`${threshID}`]["counts"]["occ"]["present"] += 1;
 
           // update max_pass if needed (I think this not needed here, but for clarity)
@@ -806,19 +806,19 @@ d3.csv(csv_path).then(function(data) {
 
           // check if this occurrence within the feature passes MRL check (and hence causes the feature to pass)
           var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`; 
-          var sample_mean_header = "Mean" + sample_name;
+          var sample_mean_header = "Mean_" + sample_name;
           if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
             mrlPass = true;
           }
 
           // now we need to check the replicate threshold
-          var sample_rep_header = "Replicate_Percent" + sample_name;
+          var sample_rep_header = "Detection Percentage " + sample_name;
           if (Number(row[sample_rep_header]) >= countData[`${threshID}`]["threshold"]["rep"]) {
             // we pass the replicate threshold
             countData[`${threshID}`]["counts"]["occ"]["overRep"] += 1;
 
             // now we check the CV threshold
-            var sample_cv_header = "CV" + sample_name;
+            var sample_cv_header = "CV_" + sample_name;
             if (Number(row[sample_cv_header]) <= countData[`${threshID}`]["threshold"]["cv"]) {
               // passed cv
               countData[`${threshID}`]["counts"]["occ"]["underCV"] += 1;
@@ -829,7 +829,7 @@ d3.csv(csv_path).then(function(data) {
 
               // check if this occurrence passes MRL check
               var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`; 
-              var sample_mean_header = "Mean" + sample_name;
+              var sample_mean_header = "Mean_" + sample_name;
               if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
                 // pass MRL (pass replicate-->pass CV-->pass MRL)
                 countData[`${threshID}`]["counts"]["occ"]["underCVOverMRL"] += 1;
@@ -849,7 +849,7 @@ d3.csv(csv_path).then(function(data) {
 
               // check if this occurrence passes MRL check
               var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`
-              var sample_mean_header = "Mean" + sample_name;
+              var sample_mean_header = "Mean_" + sample_name;
               if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
                 // pass MRL (pass replicate-->pass CV-->pass MRL)
                 countData[`${threshID}`]["counts"]["occ"]["overCVOverMRL"] += 1;
