@@ -1276,16 +1276,16 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
     # If/elif/else to combine pass through columns with dft
     # Assign pass through columns to pt_cols for re_org
     if pts[0] is not None and pts[1] is not None:
-        # pt_com = pd.concat([pts[0], pts[1]], axis=0)
-        # dft = pd.merge(dft, pt_com, how="left", on=["Feature ID"])
+        pt_com = pd.concat([pts[0], pts[1]], axis=0)
+        dft = pd.merge(dft, pt_com, how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
         # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     elif pts[0] is not None:
-        # dft = pd.merge(dft, pts[0], how="left", on=["Feature ID"])
+        dft = pd.merge(dft, pts[0], how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
         # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     else:
-        # dft = pd.merge(dft, pts[1], how="left", on=["Feature ID"])
+        dft = pd.merge(dft, pts[1], how="left", on=["Feature ID"])
         pt_cols = pts[1].columns.tolist()
         # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     # Parse headers, get sample values and blank subtracted means
