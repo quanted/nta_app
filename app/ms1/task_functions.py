@@ -668,20 +668,20 @@ def chunk_stats(df_in, mrl_multiplier=3):
     Std = output.columns[output.columns.str.contains(pat="STD_")].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
     # Calculate feature MRL
-    output["MRL"] = (mrl_multiplier * output[Std_MB[0]]) + output[Mean_MB[0]]
-    output["MRL"] = output["MRL"].fillna(output[Mean_MB[0]])
-    output["MRL"] = output["MRL"].fillna(0)
+    output["Selected MRL"] = (mrl_multiplier * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["Selected MRL"] = output["Selected MRL"].fillna(output[Mean_MB[0]])
+    output["Selected MRL"] = output["Selected MRL"].fillna(0)
 
     # Calculate 3x, 5x, 10x MRL values explicitly for use by the logic tree - NTAW-377 AC 6/24/2024
-    output["MRL_3x"] = (3 * output[Std_MB[0]]) + output[Mean_MB[0]]
-    output["MRL_3x"] = output["MRL_3x"].fillna(output[Mean_MB[0]])
-    output["MRL_3x"] = output["MRL_3x"].fillna(0)
-    output["MRL_5x"] = (5 * output[Std_MB[0]]) + output[Mean_MB[0]]
-    output["MRL_5x"] = output["MRL_5x"].fillna(output[Mean_MB[0]])
-    output["MRL_5x"] = output["MRL_5x"].fillna(0)
-    output["MRL_10x"] = (10 * output[Std_MB[0]]) + output[Mean_MB[0]]
-    output["MRL_10x"] = output["MRL_10x"].fillna(output[Mean_MB[0]])
-    output["MRL_10x"] = output["MRL_10x"].fillna(0)
+    output["MRL (3x)"] = (3 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL (3x)"] = output["MRL (3x)"].fillna(output[Mean_MB[0]])
+    output["MRL (3x)"] = output["MRL (3x)"].fillna(0)
+    output["MRL (5x)"] = (5 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL (5x)"] = output["MRL (5x)"].fillna(output[Mean_MB[0]])
+    output["MRL (5x)"] = output["MRL (5x)"].fillna(0)
+    output["MRL (10x)"] = (10 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL (10x)"] = output["MRL (10x)"].fillna(output[Mean_MB[0]])
+    output["MRL (10x)"] = output["MRL (10x)"].fillna(0)
 
     # Return dataframe with statistics calculated and MRL included, to be output as data_feature_stats
     return output
@@ -768,7 +768,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     df1 = df.copy()
     df2 = tracers_file.copy()
     # Get sample names
-    prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_", "Detection", "MRL"]
+    prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_", "Detection", "Selected MRL"]
     all_headers = parse_headers(df1)
     samples = [
         item
@@ -1235,7 +1235,7 @@ def combine_doc(doc1, doc2, tracer_df=False):
         ] + Mean
     # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
     dfc = dfc[to_keep]
-    dfc.rename({"BlkStd_cutoff": "MRL"}, axis=1, inplace=True)
+    dfc.rename({"BlkStd_cutoff": "Selected MRL"}, axis=1, inplace=True)
     # Sort by 'Mass' and 'Retention_Time'
     dfc = dfc.sort_values(["Mass", "Retention_Time"], ascending=[True, True])
     # Return filter_documentation dataframe with removed duplicates appended
