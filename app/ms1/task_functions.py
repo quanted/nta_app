@@ -1276,99 +1276,94 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
     # If/elif/else to combine pass through columns with dft
     # Assign pass through columns to pt_cols for re_org
     if pts[0] is not None and pts[1] is not None:
-        pt_com = pd.concat([pts[0], pts[1]], axis=0)
-        dft = pd.merge(dft, pt_com, how="left", on=["Feature ID"])
+        # pt_com = pd.concat([pts[0], pts[1]], axis=0)
+        # dft = pd.merge(dft, pt_com, how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
-        pt_cols = [col for col in pt_cols if "Feature ID" not in col]
+        # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     elif pts[0] is not None:
-        dft = pd.merge(dft, pts[0], how="left", on=["Feature ID"])
+        # dft = pd.merge(dft, pts[0], how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
-        pt_cols = [col for col in pt_cols if "Feature ID" not in col]
+        # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     else:
-        dft = pd.merge(dft, pts[1], how="left", on=["Feature ID"])
+        # dft = pd.merge(dft, pts[1], how="left", on=["Feature ID"])
         pt_cols = pts[1].columns.tolist()
-        pt_cols = [col for col in pt_cols if "Feature ID" not in col]
+        # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     # Parse headers, get sample values and blank subtracted means
     Headers = parse_headers(dft)
-    raw_samples = [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ("BlankSub" not in item)]
+    raw_samples = [
+        item
+        for sublist in Headers
+        for item in sublist
+        if (len(sublist) > 2)
+        if ("BlankSub" not in item)
+        if not any(x in item for x in pt_cols)
+    ]
     blank_subtracted_means = dft.columns[dft.columns.str.contains(pat="BlankSub")].tolist()
     # Check for 'Formula' (should be deprecated), then check for tracer_df
     # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
     if "Formula" in dft.columns:
         if tracer_df:
             dft = dft[
-                [
-                    "Feature ID",
+                pt_cols
+                + [
+                    "Ionization_Mode",
                     "Formula",
                     "Mass",
                     "Retention_Time",
-                    "Any Occurrences Removed?",
-                    "Duplicate Feature?",
-                    "Detection_Count(non-blank_samples)",
-                    "Detection_Count(non-blank_samples)(%)",
                     "Tracer Chemical Match?",
-                    "Has Adduct or Loss?",
+                    "Duplicate Feature?",
                     "Is Adduct or Loss?",
+                    "Has Adduct or Loss?",
                     "Adduct or Loss Info",
                 ]
-                + pt_cols
                 + raw_samples
                 + blank_subtracted_means
             ]
         else:
             dft = dft[
-                [
-                    "Feature ID",
+                pt_cols
+                + [
+                    "Ionization_Mode",
                     "Formula",
                     "Mass",
                     "Retention_Time",
-                    "Any Occurrences Removed?",
                     "Duplicate Feature?",
-                    "Detection_Count(non-blank_samples)",
-                    "Detection_Count(non-blank_samples)(%)",
-                    "Has Adduct or Loss?",
                     "Is Adduct or Loss?",
+                    "Has Adduct or Loss?",
                     "Adduct or Loss Info",
                 ]
-                + pt_cols
                 + raw_samples
                 + blank_subtracted_means
             ]
     else:
         if tracer_df:
             dft = dft[
-                [
-                    "Feature ID",
+                pt_cols
+                + [
+                    "Ionization_Mode",
                     "Mass",
                     "Retention_Time",
-                    "Any Occurrences Removed?",
-                    "Duplicate Feature?",
-                    "Detection_Count(non-blank_samples)",
-                    "Detection_Count(non-blank_samples)(%)",
                     "Tracer Chemical Match?",
-                    "Has Adduct or Loss?",
+                    "Duplicate Feature?",
                     "Is Adduct or Loss?",
+                    "Has Adduct or Loss?",
                     "Adduct or Loss Info",
                 ]
-                + pt_cols
                 + raw_samples
                 + blank_subtracted_means
             ]
         else:
             dft = dft[
-                [
-                    "Feature ID",
+                pt_cols
+                + [
+                    "Ionization_Mode",
                     "Mass",
                     "Retention_Time",
-                    "Any Occurrences Removed?",
                     "Duplicate Feature?",
-                    "Detection_Count(non-blank_samples)",
-                    "Detection_Count(non-blank_samples)(%)",
-                    "Has Adduct or Loss?",
                     "Is Adduct or Loss?",
+                    "Has Adduct or Loss?",
                     "Adduct or Loss Info",
                 ]
-                + pt_cols
                 + raw_samples
                 + blank_subtracted_means
             ]
