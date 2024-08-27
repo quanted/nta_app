@@ -1303,7 +1303,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
     # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
     if "Formula" in dft.columns:
         if tracer_df:
-            dft = dft[
+            cols = (
                 pt_cols
                 + [
                     "Ionization_Mode",
@@ -1318,9 +1318,10 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                 ]
                 + raw_samples
                 + blank_subtracted_means
-            ]
+            )
+            dft = dft[cols]
         else:
-            dft = dft[
+            cols = (
                 pt_cols
                 + [
                     "Ionization_Mode",
@@ -1334,10 +1335,11 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                 ]
                 + raw_samples
                 + blank_subtracted_means
-            ]
+            )
+            dft = dft[cols]
     else:
         if tracer_df:
-            dft = dft[
+            cols = (
                 pt_cols
                 + [
                     "Ionization_Mode",
@@ -1351,9 +1353,10 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                 ]
                 + raw_samples
                 + blank_subtracted_means
-            ]
+            )
+            dft = dft[cols]
         else:
-            dft = dft[
+            cols = (
                 pt_cols
                 + [
                     "Ionization_Mode",
@@ -1366,7 +1369,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                 ]
                 + raw_samples
                 + blank_subtracted_means
-            ]
+            )
+            dft = dft[cols]
     # Return re-combined, sorted dataframe for output as 'Cleaned_feature_results_reduced' and 'Results_flagged'
     return dft
 
