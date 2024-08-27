@@ -616,7 +616,7 @@ class NtaRun:
             if not any(x in sublist[0] for x in non_samples)
         ]
         # Isolate sample_groups from stats columns
-        prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_"]
+        prefixes = ["Mean_", "Median_", "CV_", "STD_", "Detection Count ", "Detection Percentage "]
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
         # Find CV cols from df, subset cv_df from df
         cv_cols = ["CV_" + col for col in sample_groups]
@@ -861,7 +861,7 @@ class NtaRun:
             if not any(x in sublist[0] for x in non_samples)
         ]
         # Isolate sample_groups from stats columns
-        prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_"]
+        prefixes = ["Mean_", "Median_", "CV_", "STD_", "Detection Count ", "Detection Percentage "]
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
         logger.info("sample_groups= {}".format(sample_groups))
         # Blank_MDL - need to check what the blank samples are actually named
@@ -877,7 +877,7 @@ class NtaRun:
         dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
         # Find CV, Rep_Percent, and Mean cols from df
         cv_cols = ["CV_" + col for col in sample_groups]
-        rper_cols = ["Replicate_Percent_" + col for col in sample_groups]
+        rper_cols = ["Detection Percentage " + col for col in sample_groups]
         mean_cols = ["Mean_" + col for col in sample_groups]
         # Subset CV cols from df
         cv_df = dfCombined[cv_cols]

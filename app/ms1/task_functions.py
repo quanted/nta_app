@@ -600,8 +600,8 @@ def statistics(df_in):
     med_cols = ["Median_" + i[0][:-1] for i in sam_headers]
     std_cols = ["STD_" + i[0][:-1] for i in sam_headers]
     cv_cols = ["CV_" + i[0][:-1] for i in sam_headers]
-    nabun_cols = ["N_Abun_" + i[0][:-1] for i in sam_headers]
-    rper_cols = ["Replicate_Percent_" + i[0][:-1] for i in sam_headers]
+    nabun_cols = ["Detection Count " + i[0][:-1] for i in sam_headers]
+    rper_cols = ["Detection Percentage " + i[0][:-1] for i in sam_headers]
     # Concatenate list comprehensions to calculate each statistic for each sample
     means = pd.concat(
         [df[x].mean(axis=1).round(4).rename(col) for x, col in zip(sam_headers, mean_cols)],
@@ -703,8 +703,8 @@ def column_sort_DFS(df_in):
         "Median_",
         "CV_",
         "STD_",
-        "N_Abun_",
-        "Replicate_Percent_",
+        "Detection Count ",
+        "Detection Percentage ",
         "Detection",
     ]
     # Isolate sample_groups from prefixes columns
@@ -768,7 +768,16 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     df1 = df.copy()
     df2 = tracers_file.copy()
     # Get sample names
-    prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_", "Detection", "Selected MRL"]
+    prefixes = [
+        "Mean_",
+        "Median_",
+        "CV_",
+        "STD_",
+        "Detection Count ",
+        "Detection Percentage ",
+        "Detection",
+        "Selected MRL",
+    ]
     all_headers = parse_headers(df1)
     samples = [
         item
@@ -1085,7 +1094,7 @@ def clean_features(df_in, controls, tracer_df=False):
         docs["Tracer Chemical Match?"] = df["Tracer Chemical Match?"]
     # Define lists
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
-    Abundance = df.columns[df.columns.str.contains(pat="Replicate_Percent_")].tolist()
+    Abundance = df.columns[df.columns.str.contains(pat="Detection Percentage ")].tolist()
     Replicate_Percent_MB = [N for N in Abundance if any(x in N for x in blanks)]
     Replicate_Percent_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
     Mean = df.columns[df.columns.str.contains(pat="Mean_")].tolist()
