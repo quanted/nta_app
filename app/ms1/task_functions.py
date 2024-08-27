@@ -698,7 +698,10 @@ def column_sort_DFS(df_in, passthru):
     all_headers = parse_headers(df)
     # Get all cols, group roots (i.e., drop unique value from sample groups)
     all_cols = df.columns.tolist()
-    group_cols = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
+    non_samples = ["MRL"]
+    group_cols = [
+        sublist[0][:-1] for sublist in all_headers if len(sublist) > 1 if not any(x in sublist[0] for x in non_samples)
+    ]
     # Create list of prefixes to remove non-samples
     prefixes = [
         "Mean_",
