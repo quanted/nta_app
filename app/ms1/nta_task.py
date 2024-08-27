@@ -1086,7 +1086,7 @@ class NtaRun:
         # AC 12/7/2023: commented out to move to function after clean_features
         # if 'DTXSID' not in dft.columns:
         #     dft['DTXSID'] = ''
-        # dft = dft[['Feature ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
+        # dft = dft[['Feature ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max CV Across Samples']]
         # self.data_map['Tracer Summary'] = dft
 
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
@@ -1197,7 +1197,7 @@ class NtaRun:
                 "Ionization_Mode",
                 "Mass_Error_PPM",
                 "Retention_Time_Difference",
-                "Max_CV_across_sample",
+                "Max CV Across Samples",
                 "Occurrence_Count(across_all_replicates)",
                 "Occurrence_Count(across_all_replicates)(%)",
             ]
