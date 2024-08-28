@@ -616,7 +616,7 @@ class NtaRun:
             if not any(x in sublist[0] for x in non_samples)
         ]
         # Isolate sample_groups from stats columns
-        prefixes = ["Mean_", "Median_", "CV_", "STD_", "Detection Count ", "Detection Percentage "]
+        prefixes = ["Mean_", "Median_", "CV_", "STD ", "Detection Count ", "Detection Percentage "]
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
         # Find CV cols from df, subset cv_df from df
         cv_cols = ["CV_" + col for col in sample_groups]
@@ -861,7 +861,7 @@ class NtaRun:
             if not any(x in sublist[0] for x in non_samples)
         ]
         # Isolate sample_groups from stats columns
-        prefixes = ["Mean_", "Median_", "CV_", "STD_", "Detection Count ", "Detection Percentage "]
+        prefixes = ["Mean_", "Median_", "CV_", "STD ", "Detection Count ", "Detection Percentage "]
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
         logger.info("sample_groups= {}".format(sample_groups))
         # Blank_MDL - need to check what the blank samples are actually named
@@ -869,7 +869,7 @@ class NtaRun:
         blank_col = [item for item in sample_groups if any(x in item for x in blank_strings)]
         logger.info("blank_col= {}".format(blank_col))
         blank_mean = "Mean_" + blank_col[0]
-        blank_std = "STD_" + blank_col[0]
+        blank_std = "STD " + blank_col[0]
         # Calculate MDL
         # AC 6/18/2024: Need to pull in MRL multiplier for MRL calculation
         dfCombined["MDL"] = dfCombined[blank_mean] + MRL_mult * dfCombined[blank_std]
