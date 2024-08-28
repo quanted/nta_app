@@ -1076,11 +1076,14 @@ class NtaRun:
 
         # implements part of NTAW-143
         dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
-
+        if self.pass_through[0] is not None:
+            passthru = self.pass_through[0]
+        else:
+            passthru = self.pass_through[1]
         # remove the columns 'Detection_Count(non-blank_samples)' and 'Detection_Count(non-blank_samples)(%)'
         # dft = dft.drop(columns=['Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'])
 
-        self.data_map["Tracer Detection Statistics"] = task_fun.column_sort_TSR(dft)
+        self.data_map["Tracer Detection Statistics"] = task_fun.column_sort_TSR(dft, passthru)
 
         # create summary table
         # AC 12/7/2023: commented out to move to function after clean_features
