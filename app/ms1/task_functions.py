@@ -795,6 +795,8 @@ def column_sort_TSR(df_in, passthru):
     front_matter = pt_info + front_matter
     # Combine into new column list
     new_col_org = front_matter + back_matter
+    # Combine df and passthrough
+    df = pd.merge(df, pt, how="left", on=["Feature ID"])
     # Subset data with new column list
     df_reorg = df[new_col_org]
     # Return re-organized dataframe
