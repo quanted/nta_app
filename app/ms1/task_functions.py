@@ -749,26 +749,50 @@ def column_sort_DFS(df_in, passthru):
     return df_reorg
 
 
-def column_sort_TSR(df_in):
+def column_sort_TSR(df_in, passthru):
     """
     Function that sorts columns for the tracer_sample_results outputs -- TMF 11/21/23
     """
     df = df_in.copy()
+    pt = passthru.copy()
     all_cols = df.columns.tolist()
+    pt_info = pt.columns.tolist()
     # Create list of prefixes to remove non-samples
-    prefixes = ["Feature ID", "Mass", "Retention_Time"]
+    prefixes = [
+        "Feature ID",
+        "Mass",
+        "Retention_Time",
+        "Ionization_Mode",
+        "MRL",
+        "Adduct",
+        "Duplicate",
+        "Count",
+        "Max CV",
+    ]
     # Isolate sample_groups from prefixes columns
     back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
     # Organize front matter
     front_matter = [
-        "Feature ID",
-        "Observed_Mass",
-        "Observed_Retention_Time",
+        "Ionization_Mode",
         "Monoisotopic_Mass",
-        "Retention_Time",
+        "Observed_Mass",
         "Mass_Error_PPM",
+        "Retention_Time",
+        "Observed_Retention_Time",
         "Retention_Time_Difference",
+        "Selected MRL",
+        "MRL (3x)",
+        "MRL (5x)",
+        "MRL (10x)",
+        "Duplicate Feature?",
+        "Is Adduct or Loss?",
+        "Has Adduct or Loss?",
+        "Adduct or Loss Info",
+        "Occurrence_Count(across_all_replicates)",
+        "Occurrence_Count(across_all_replicates)(%)",
+        "Max CV Across Samples",
     ]
+    front_matter = pt_info + front_matter
     # Combine into new column list
     new_col_org = front_matter + back_matter
     # Subset data with new column list
