@@ -1499,9 +1499,9 @@ def determine_string_width(input_string):
         "0",
     ]
     skinny_letters = ["I", "J", "f", "i", "j", "l", "r", "t", "1"]
-    big_increment = 0.018
+    big_increment = 0.019
     medium_increment = 0.015
-    skinny_increment = 0.009
+    skinny_increment = 0.008
 
     temp_increment = 0
     for j in range(len(input_string)):
