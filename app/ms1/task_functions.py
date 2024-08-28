@@ -776,6 +776,8 @@ def column_sort_TSR(df_in, passthru):
     back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
     # Organize front matter
     front_matter = [
+        "Chemical_Name",
+        "DTXSID",
         "Ionization_Mode",
         "Monoisotopic_Mass",
         "Observed_Mass",
@@ -801,8 +803,10 @@ def column_sort_TSR(df_in, passthru):
     # Combine df and passthrough
     df = pd.merge(df, pt, how="left", on=["Feature ID"])
     # Subset data with new column list
+    if "DTXSID" not in df.columns:
+        df["DTXSID"] = ""
     df_reorg = df[new_col_org]
-    df_reorg.rename(columns={"Monoisotopic_Mass": "Mass"}, inplace=True)
+    df_reorg.rename(columns={"Monoisotopic_Mass": "Mass", "Chemical_Name": "Chemical Name"}, inplace=True)
     # Return re-organized dataframe
     return df_reorg
 

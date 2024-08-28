@@ -1195,7 +1195,7 @@ class NtaRun:
         dft = dft[
             [
                 "Feature ID",
-                "Chemical_Name",
+                "Chemical Name",
                 "DTXSID",
                 "Ionization_Mode",
                 "Mass_Error_PPM",
@@ -1291,7 +1291,7 @@ class NtaRun:
         # 5/23/2024 AC - Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
 
-        self.data_map["chemical_results"] = dsstox_search_df
+        self.data_map["Chemical Results"] = dsstox_search_df
         self.search_results = dsstox_search_df
 
     def perform_hcd_search(self):
@@ -1300,7 +1300,7 @@ class NtaRun:
             dtxsid_list = self.search_results["DTXSID"].unique()
             hcd_results = batch_search_hcd(dtxsid_list)
             self.search_results = self.search_results.merge(hcd_results, how="left", on="DTXSID")
-            self.data_map["chemical_results"] = self.search_results
+            self.data_map["Chemical Results"] = self.search_results
             self.data_map["hcd_search"] = hcd_results
 
     def store_data(self):
