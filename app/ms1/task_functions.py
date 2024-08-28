@@ -598,7 +598,7 @@ def statistics(df_in):
     # Create column names for each statistics from sam_headers
     mean_cols = ["Mean_" + i[0][:-1] for i in sam_headers]
     med_cols = ["Median_" + i[0][:-1] for i in sam_headers]
-    std_cols = ["STD_" + i[0][:-1] for i in sam_headers]
+    std_cols = ["STD " + i[0][:-1] for i in sam_headers]
     cv_cols = ["CV_" + i[0][:-1] for i in sam_headers]
     nabun_cols = ["Detection Count " + i[0][:-1] for i in sam_headers]
     rper_cols = ["Detection Percentage " + i[0][:-1] for i in sam_headers]
@@ -665,7 +665,7 @@ def chunk_stats(df_in, mrl_multiplier=3):
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
     Mean = output.columns[output.columns.str.contains(pat="Mean_")].tolist()
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
-    Std = output.columns[output.columns.str.contains(pat="STD_")].tolist()
+    Std = output.columns[output.columns.str.contains(pat="STD ")].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
     # Calculate feature MRL
     output["Selected MRL"] = (mrl_multiplier * output[Std_MB[0]]) + output[Mean_MB[0]]
@@ -707,7 +707,7 @@ def column_sort_DFS(df_in, passthru):
         "Mean_",
         "Median_",
         "CV_",
-        "STD_",
+        "STD ",
         "Detection Count ",
         "Detection Percentage ",
         "Detection",
@@ -826,7 +826,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
         "Mean_",
         "Median_",
         "CV_",
-        "STD_",
+        "STD ",
         "Detection Count ",
         "Detection Percentage ",
         "Detection",
@@ -1153,7 +1153,7 @@ def clean_features(df_in, controls, tracer_df=False):
     Mean = df.columns[df.columns.str.contains(pat="Mean_")].tolist()
     Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
-    Std = df.columns[df.columns.str.contains(pat="STD_")].tolist()
+    Std = df.columns[df.columns.str.contains(pat="STD ")].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
     CV = df.columns[df.columns.str.startswith("CV_")].tolist()
     CV_Samples = [C for C in CV if not any(x in C for x in blanks)]
@@ -1499,9 +1499,9 @@ def determine_string_width(input_string):
         "0",
     ]
     skinny_letters = ["I", "J", "f", "i", "j", "l", "r", "t", "1"]
-    big_increment = 0.019
+    big_increment = 0.02
     medium_increment = 0.015
-    skinny_increment = 0.008
+    skinny_increment = 0.007
 
     temp_increment = 0
     for j in range(len(input_string)):
