@@ -770,7 +770,7 @@ d3.csv(csv_path).then(function(data) {
     }
 
     // ensure we are not looking at an empty row at the end of CSV.
-    if (row['Feature_ID']) {
+    if (row['Feature ID']) {
       // FOR THE FEATURE CHECK
       // we want to first check if the feature has a given occurrence that passes
       // both the replicate and CV checks (if 1 or more occurrence passes, the feature passes).
