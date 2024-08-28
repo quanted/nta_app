@@ -274,8 +274,8 @@ class OutputServer:
         return response
 
     def decision_tree(self):
-        data_pos_id = self.jobid + "_" + "Feature_statistics_positive"
-        data_neg_id = self.jobid + "_" + "Feature_statistics_negative"
+        data_pos_id = self.jobid + "_" + "All Detection Statistics (Pos)"
+        data_neg_id = self.jobid + "_" + "All Detection Statistics (Neg)"
         try:  #
             data_pos = self.gridfs.get(data_pos_id)
             json_string = data_pos.read().decode("utf-8")
