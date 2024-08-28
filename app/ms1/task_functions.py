@@ -799,6 +799,7 @@ def column_sort_TSR(df_in, passthru):
     df = pd.merge(df, pt, how="left", on=["Feature ID"])
     # Subset data with new column list
     df_reorg = df[new_col_org]
+    df_reorg.rename(columns={"Monoisotopic_Mass": "Mass"}, inplace=True)
     # Return re-organized dataframe
     return df_reorg
 
@@ -822,6 +823,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
         "Detection Count ",
         "Detection Percentage ",
         "Detection",
+        "MRL",
         "Selected MRL",
     ]
     all_headers = parse_headers(df1)
