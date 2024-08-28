@@ -1201,8 +1201,8 @@ class NtaRun:
                 "Mass_Error_PPM",
                 "Retention_Time_Difference",
                 "Max CV Across Samples",
-                "Occurrence_Count(across_all_replicates)",
-                "Occurrence_Count(across_all_replicates)(%)",
+                "Total Detection Count",
+                "Total Detection Percentage",
             ]
         ]
         self.data_map["Tracer Summary"] = dft

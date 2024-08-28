@@ -788,8 +788,8 @@ def column_sort_TSR(df_in, passthru):
         "Is Adduct or Loss?",
         "Has Adduct or Loss?",
         "Adduct or Loss Info",
-        "Occurrence_Count(across_all_replicates)",
-        "Occurrence_Count(across_all_replicates)(%)",
+        "Total Detection Count",
+        "Total Detection Percentage",
         "Max CV Across Samples",
     ]
     front_matter = pt_info + front_matter
@@ -864,10 +864,8 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
         )
     dft = dft[dft["Matches"] == 1]
     # Caculate Occurrence Count and % in tracers
-    dft["Occurrence_Count(across_all_replicates)"] = dft[samples].count(axis=1)
-    dft["Occurrence_Count(across_all_replicates)(%)"] = (
-        dft["Occurrence_Count(across_all_replicates)"] / len(samples)
-    ) * 100
+    dft["Total Detection Count"] = dft[samples].count(axis=1)
+    dft["Total Detection Percentage"] = (dft["Total Detection Count"] / len(samples)) * 100
     # Get 'Matches' info into main df
     dum = dft[["Observed_Mass", "Observed_Retention_Time", "Matches"]].copy()
     dfc = pd.merge(df1, dum, how="left", on=["Observed_Mass", "Observed_Retention_Time"])
