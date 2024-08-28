@@ -139,7 +139,7 @@ def passthrucol(df_in):
     # Parse headers
     all_headers = parse_headers(df)
     # Define active_cols: Keep 'Feature ID' in pt_headers to merge later
-    active_cols = ["Retention_Time", "Mass", "Ionization_Mode", "Formula"]
+    active_cols = ["Retention_Time", "Mass", "Ionization_Mode"]
     # Create list of pass through headers that are not in the active columns
     pt_headers = ["Feature ID"] + [
         item
@@ -768,6 +768,9 @@ def column_sort_TSR(df_in, passthru):
         "Duplicate",
         "Count",
         "Max CV",
+        "Chemical_Name",
+        "Formula",
+        "DTXSID",
     ]
     # Isolate sample_groups from prefixes columns
     back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
