@@ -1427,3 +1427,84 @@ def calc_toxcast_percent_active(df):
     dft = dft.drop(["TOTAL_ASSAYS_TESTED", "NUMBER_ACTIVE_ASSAYS"], axis=1)
 
     return dft
+
+
+# The following function calculates a "width" of a string based on the characters within, as some characters are large, medium or skinny
+# These widths are used to determine the spacing of the group labels on the run sequence plot
+def determine_string_width(input_string):
+    big_letters = [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "m",
+    ]
+    medium_letters = [
+        "E",
+        "F",
+        "L",
+        "N",
+        "P",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "g",
+        "h",
+        "k",
+        "n",
+        "o",
+        "p",
+        "q",
+        "s",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "0",
+    ]
+    skinny_letters = ["I", "J", "f", "i", "j", "l", "r", "t", "1"]
+    big_increment = 0.06
+    medium_increment = 0.05
+    skinny_increment = 0.03
+
+    temp_increment = 0
+    for j in range(len(input_string)):
+        if input_string[j] in big_letters:
+            temp_increment = temp_increment + big_increment
+            print("big")
+        elif input_string[j] in medium_letters:
+            temp_increment = temp_increment + medium_increment
+            print("medium")
+        else:
+            print("skinny")
+            temp_increment = temp_increment + skinny_increment
+    return temp_increment
