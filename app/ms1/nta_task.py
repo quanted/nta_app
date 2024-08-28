@@ -934,7 +934,7 @@ class NtaRun:
         colorbar.set_ticks([-0.667, 0, 0.667])
         colorbar.set_ticklabels(
             [
-                "non-detect ({})".format(nan_.sum().sum()),
+                "no occurrence ({})".format(nan_.sum().sum()),
                 "CV <= {} ({})".format(max_replicate_cv_value, below.sum().sum()),
                 "CV > {} ({})".format(max_replicate_cv_value, above.sum().sum()),
             ]
