@@ -766,7 +766,7 @@ def column_sort_TSR(df_in, passthru):
         "MRL",
         "Adduct",
         "Duplicate",
-        "Count",
+        "Total",
         "Max CV",
         "Chemical_Name",
         "Formula",
