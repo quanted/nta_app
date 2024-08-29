@@ -820,7 +820,9 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     are a tracer, and which samples the tracers are present in -- TMF 12/11/23
     """
     df1 = df.copy()
+    logger.info("cft df columns= {}".format(df1.columns.values))
     df2 = tracers_file.copy()
+    logger.info("cft tracers columns= {}".format(df2.columns.values))
     # Get sample names
     prefixes = [
         "Mean ",
@@ -854,6 +856,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     df1["Rounded_Mass"] = df1["Observed Mass"].round(0)
     # Merge df and tracers
     dft = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization_Mode"])
+    logger.info("cft dfts columns= {}".format(dft.columns.values))
     if ppm:
         dft["Matches"] = np.where(
             (
@@ -877,7 +880,9 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     dft["Total Detection Percentage"] = (dft["Total Detection Count"] / len(samples)) * 100
     # Get 'Matches' info into main df
     dum = dft[["Observed Mass", "Observed Retention Time", "Matches"]].copy()
+    logger.info("cft dum columns= {}".format(dum.columns.values))
     dfc = pd.merge(df1, dum, how="left", on=["Observed Mass", "Observed Retention Time"])
+    logger.info("cft dfc columns= {}".format(dfc.columns.values))
     dfc.rename(
         columns={
             "Observed Mass": "Mass",
@@ -889,6 +894,8 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     # Drop columns
     dft.drop(["Rounded_Mass", "Matches"], axis=1, inplace=True)
     # Returns tracers data (dft) and dataframe with 'Tracer Chemical Match?' appended (dfc)
+    logger.info("cft dfts columns= {}".format(dft.columns.values))
+    logger.info("cft dfc columns= {}".format(dfc.columns.values))
     return dft, dfc
 
 
