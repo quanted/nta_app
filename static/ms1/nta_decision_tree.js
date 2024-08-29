@@ -806,7 +806,7 @@ d3.csv(csv_path).then(function(data) {
 
           // check if this occurrence within the feature passes MRL check (and hence causes the feature to pass)
           var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`; 
-          var sample_mean_header = "Mean_" + sample_name;
+          var sample_mean_header = "Mean " + sample_name;
           if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
             mrlPass = true;
           }
@@ -818,7 +818,7 @@ d3.csv(csv_path).then(function(data) {
             countData[`${threshID}`]["counts"]["occ"]["overRep"] += 1;
 
             // now we check the CV threshold
-            var sample_cv_header = "CV " + sample_name;
+            var sample_cv_header = "CV_" + sample_name;
             if (Number(row[sample_cv_header]) <= countData[`${threshID}`]["threshold"]["cv"]) {
               // passed cv
               countData[`${threshID}`]["counts"]["occ"]["underCV"] += 1;
@@ -829,7 +829,7 @@ d3.csv(csv_path).then(function(data) {
 
               // check if this occurrence passes MRL check
               var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`; 
-              var sample_mean_header = "Mean_" + sample_name;
+              var sample_mean_header = "Mean " + sample_name;
               if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
                 // pass MRL (pass replicate-->pass CV-->pass MRL)
                 countData[`${threshID}`]["counts"]["occ"]["underCVOverMRL"] += 1;
@@ -849,7 +849,7 @@ d3.csv(csv_path).then(function(data) {
 
               // check if this occurrence passes MRL check
               var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`
-              var sample_mean_header = "Mean_" + sample_name;
+              var sample_mean_header = "Mean " + sample_name;
               if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
                 // pass MRL (pass replicate-->pass CV-->pass MRL)
                 countData[`${threshID}`]["counts"]["occ"]["overCVOverMRL"] += 1;
