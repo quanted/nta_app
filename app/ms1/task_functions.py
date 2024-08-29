@@ -597,7 +597,7 @@ def statistics(df_in):
     sam_headers = [i for i in all_headers if len(i) > 1]
     # Create column names for each statistics from sam_headers
     mean_cols = ["Mean_" + i[0][:-1] for i in sam_headers]
-    med_cols = ["Median_" + i[0][:-1] for i in sam_headers]
+    med_cols = ["Median " + i[0][:-1] for i in sam_headers]
     std_cols = ["STD " + i[0][:-1] for i in sam_headers]
     cv_cols = ["CV_" + i[0][:-1] for i in sam_headers]
     nabun_cols = ["Detection Count " + i[0][:-1] for i in sam_headers]
@@ -705,7 +705,7 @@ def column_sort_DFS(df_in, passthru):
     # Create list of prefixes to remove non-samples
     prefixes = [
         "Mean_",
-        "Median_",
+        "Median ",
         "CV_",
         "STD ",
         "Detection Count ",
@@ -824,7 +824,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     # Get sample names
     prefixes = [
         "Mean_",
-        "Median_",
+        "Median ",
         "CV_",
         "STD ",
         "Detection Count ",
