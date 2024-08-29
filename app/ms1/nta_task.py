@@ -592,9 +592,9 @@ class NtaRun:
         )
         # Add conditional; if tracer exists reformat
         if dfTracer is not None:
-            tracers = dfTracer[["Observed_Mass", "Observed_Retention_Time"]].copy()
-            tracers.rename({"Observed_Mass": "Mass"}, axis=1, inplace=True)
-            tracers.rename({"Observed_Retention_Time": "Retention_Time"}, axis=1, inplace=True)
+            tracers = dfTracer[["Observed Mass", "Observed Retention Time"]].copy()
+            tracers.rename({"Observed Mass": "Mass"}, axis=1, inplace=True)
+            tracers.rename({"Observed Retention Time": "Retention_Time"}, axis=1, inplace=True)
             tracers["spike"] = 1
         # combine the two dataframes, ignore non-existing dataframes
         dfCombined = (
@@ -1089,7 +1089,7 @@ class NtaRun:
         # AC 12/7/2023: commented out to move to function after clean_features
         # if 'DTXSID' not in dft.columns:
         #     dft['DTXSID'] = ''
-        # dft = dft[['Feature ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max CV Across Samples']]
+        # dft = dft[['Feature ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass Error (PPM)', 'Retention Time Difference', 'Max CV Across Samples']]
         # self.data_map['Tracer Summary'] = dft
 
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
@@ -1198,8 +1198,8 @@ class NtaRun:
                 "Chemical Name",
                 "DTXSID",
                 "Ionization_Mode",
-                "Mass_Error_PPM",
-                "Retention_Time_Difference",
+                "Mass Error (PPM)",
+                "Retention Time Difference",
                 "Max CV Across Samples",
                 "Total Detection Count",
                 "Total Detection Percentage",

@@ -780,11 +780,11 @@ def column_sort_TSR(df_in, passthru):
         "DTXSID",
         "Ionization_Mode",
         "Monoisotopic_Mass",
-        "Observed_Mass",
-        "Mass_Error_PPM",
+        "Observed Mass",
+        "Mass Error (PPM)",
         "Retention_Time",
-        "Observed_Retention_Time",
-        "Retention_Time_Difference",
+        "Observed Retention Time",
+        "Retention Time Difference",
         "Selected MRL",
         "MRL (3x)",
         "MRL (5x)",
@@ -848,26 +848,26 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     # Create 'Rounded_Mass' variable to merge on
     df2["Rounded_Mass"] = df2["Monoisotopic_Mass"].round(0)
     df1.rename(
-        columns={"Mass": "Observed_Mass", "Retention_Time": "Observed_Retention_Time"},
+        columns={"Mass": "Observed Mass", "Retention_Time": "Observed Retention Time"},
         inplace=True,
     )
-    df1["Rounded_Mass"] = df1["Observed_Mass"].round(0)
+    df1["Rounded_Mass"] = df1["Observed Mass"].round(0)
     # Merge df and tracers
     dft = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization_Mode"])
     if ppm:
         dft["Matches"] = np.where(
             (
-                abs((dft["Monoisotopic_Mass"] - dft["Observed_Mass"]) / dft["Monoisotopic_Mass"]) * 1000000
+                abs((dft["Monoisotopic_Mass"] - dft["Observed Mass"]) / dft["Monoisotopic_Mass"]) * 1000000
                 <= Mass_Difference
             )
-            & (abs(dft["Retention_Time"] - dft["Observed_Retention_Time"]) <= Retention_Difference),
+            & (abs(dft["Retention_Time"] - dft["Observed Retention Time"]) <= Retention_Difference),
             1,
             0,
         )
     else:
         dft["Matches"] = np.where(
-            (abs(dft["Monoisotopic_Mass"] - dft["Observed_Mass"]) <= Mass_Difference)
-            & (abs(dft["Retention_Time"] - dft["Observed_Retention_Time"]) <= Retention_Difference),
+            (abs(dft["Monoisotopic_Mass"] - dft["Observed Mass"]) <= Mass_Difference)
+            & (abs(dft["Retention_Time"] - dft["Observed Retention Time"]) <= Retention_Difference),
             1,
             0,
         )
@@ -876,12 +876,12 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     dft["Total Detection Count"] = dft[samples].count(axis=1)
     dft["Total Detection Percentage"] = (dft["Total Detection Count"] / len(samples)) * 100
     # Get 'Matches' info into main df
-    dum = dft[["Observed_Mass", "Observed_Retention_Time", "Matches"]].copy()
-    dfc = pd.merge(df1, dum, how="left", on=["Observed_Mass", "Observed_Retention_Time"])
+    dum = dft[["Observed Mass", "Observed Retention Time", "Matches"]].copy()
+    dfc = pd.merge(df1, dum, how="left", on=["Observed Mass", "Observed Retention Time"])
     dfc.rename(
         columns={
-            "Observed_Mass": "Mass",
-            "Observed_Retention_Time": "Retention_Time",
+            "Observed Mass": "Mass",
+            "Observed Retention Time": "Retention_Time",
             "Matches": "Tracer Chemical Match?",
         },
         inplace=True,
