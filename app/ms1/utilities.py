@@ -175,7 +175,7 @@ def format_tracer_file(df_in):
     # df = df.drop(columns=['Compound', 'Score'])
     rt_diff = df["Observed Retention Time"] - df["Retention_Time"]
     mass_diff = ((df["Observed Mass"] - df["Monoisotopic_Mass"]) / df["Monoisotopic_Mass"]) * 1000000
-    df.insert(7, "Mass Error PPM", mass_diff)
+    df.insert(7, "Mass Error (PPM)", mass_diff)
     df.insert(9, "Retention Time Difference", rt_diff)
     return df
 
