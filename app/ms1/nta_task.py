@@ -594,7 +594,7 @@ class NtaRun:
         if dfTracer is not None:
             tracers = dfTracer[["Observed Mass", "Observed Retention Time"]].copy()
             tracers.rename({"Observed Mass": "Mass"}, axis=1, inplace=True)
-            # tracers.rename({"Observed Retention Time": "Retention_Time"}, axis=1, inplace=True)
+            tracers.rename({"Observed Retention Time": "Retention_Time"}, axis=1, inplace=True)
             tracers["spike"] = 1
             logger.info("cv scatterplot tracers columns= {}".format(tracers.columns.values))
         # combine the two dataframes, ignore non-existing dataframes
