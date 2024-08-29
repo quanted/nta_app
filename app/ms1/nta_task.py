@@ -616,10 +616,10 @@ class NtaRun:
             if not any(x in sublist[0] for x in non_samples)
         ]
         # Isolate sample_groups from stats columns
-        prefixes = ["Mean_", "Median ", "CV_", "STD ", "Detection Count ", "Detection Percentage "]
+        prefixes = ["Mean_", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
         # Find CV cols from df, subset cv_df from df
-        cv_cols = ["CV_" + col for col in sample_groups]
+        cv_cols = ["CV " + col for col in sample_groups]
         cv_df = dfCombined[cv_cols]
         # Find CV cols from df, subset cv_df from df
         mean_cols = ["Mean_" + col for col in sample_groups]
@@ -643,7 +643,7 @@ class NtaRun:
         # Loop through sample groups
         for x in sample_groups:
             # Take each sample's CV and mean, store in dummy variable
-            cv = "CV_" + x
+            cv = "CV " + x
             mean = "Mean_" + x
             dum = pd.concat([cv_df[cv], mean_df[mean]], axis=1)
             dum.rename({cv: "CV"}, axis=1, inplace=True)
@@ -861,7 +861,7 @@ class NtaRun:
             if not any(x in sublist[0] for x in non_samples)
         ]
         # Isolate sample_groups from stats columns
-        prefixes = ["Mean_", "Median ", "CV_", "STD ", "Detection Count ", "Detection Percentage "]
+        prefixes = ["Mean_", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
         logger.info("sample_groups= {}".format(sample_groups))
         # Blank_MDL - need to check what the blank samples are actually named
@@ -876,7 +876,7 @@ class NtaRun:
         dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
         dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
         # Find CV, Rep_Percent, and Mean cols from df
-        cv_cols = ["CV_" + col for col in sample_groups]
+        cv_cols = ["CV " + col for col in sample_groups]
         rper_cols = ["Detection Percentage " + col for col in sample_groups]
         mean_cols = ["Mean_" + col for col in sample_groups]
         # Subset CV cols from df

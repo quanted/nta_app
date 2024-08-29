@@ -599,7 +599,7 @@ def statistics(df_in):
     mean_cols = ["Mean_" + i[0][:-1] for i in sam_headers]
     med_cols = ["Median " + i[0][:-1] for i in sam_headers]
     std_cols = ["STD " + i[0][:-1] for i in sam_headers]
-    cv_cols = ["CV_" + i[0][:-1] for i in sam_headers]
+    cv_cols = ["CV " + i[0][:-1] for i in sam_headers]
     nabun_cols = ["Detection Count " + i[0][:-1] for i in sam_headers]
     rper_cols = ["Detection Percentage " + i[0][:-1] for i in sam_headers]
     # Concatenate list comprehensions to calculate each statistic for each sample
@@ -655,12 +655,12 @@ def chunk_stats(df_in, mrl_multiplier=3):
         # iterate through list_df, calculating 'statistics' on chunks and appending to li
         for df in list_df:
             li.append(statistics(df))
-        # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max_CV_across_sample'
+        # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max CV Across Samples'
         output = pd.concat(li, axis=0)
     # Sort output mass and add two new columns
     output.sort_values(["Mass", "Retention_Time"], ascending=[True, True], inplace=True)
     output["Rounded_Mass"] = output["Mass"].round(0)
-    output["Max CV Across Samples"] = output.filter(regex="CV_").max(axis=1)
+    output["Max CV Across Samples"] = output.filter(regex="CV ").max(axis=1)
     # Define lists to calculate MRL for inclusion in 'Feature_statistics' outputs
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
     Mean = output.columns[output.columns.str.contains(pat="Mean_")].tolist()
@@ -706,7 +706,7 @@ def column_sort_DFS(df_in, passthru):
     prefixes = [
         "Mean_",
         "Median ",
-        "CV_",
+        "CV ",
         "STD ",
         "Detection Count ",
         "Detection Percentage ",
@@ -825,7 +825,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     prefixes = [
         "Mean_",
         "Median ",
-        "CV_",
+        "CV ",
         "STD ",
         "Detection Count ",
         "Detection Percentage ",
@@ -1155,7 +1155,7 @@ def clean_features(df_in, controls, tracer_df=False):
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
     Std = df.columns[df.columns.str.contains(pat="STD ")].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
-    CV = df.columns[df.columns.str.startswith("CV_")].tolist()
+    CV = df.columns[df.columns.str.startswith("CV ")].tolist()
     CV_Samples = [C for C in CV if not any(x in C for x in blanks)]
     missing = df[Mean_Samples].isnull()
     """REPLICATE FLAG"""
