@@ -596,6 +596,7 @@ class NtaRun:
             tracers.rename({"Observed Mass": "Mass"}, axis=1, inplace=True)
             tracers.rename({"Observed Retention Time": "Retention_Time"}, axis=1, inplace=True)
             tracers["spike"] = 1
+            logger.info("cv scatterplot tracers columns= {}".format(tracers.columns.values))
         # combine the two dataframes, ignore non-existing dataframes
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
@@ -662,6 +663,7 @@ class NtaRun:
         # Concatenate plot, drop NAs
         plot = pd.concat(li)
         plot.dropna(axis=0, subset=["CV", "Mean"], how="any", inplace=True)
+        logger.info("cv scatterplot plot columns= {}".format(plot.columns.values))
 
         # Conditional for if tracers are present:
         if dfTracer is not None:
