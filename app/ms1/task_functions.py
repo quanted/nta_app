@@ -596,7 +596,7 @@ def statistics(df_in):
     all_headers = parse_headers(df_in)
     sam_headers = [i for i in all_headers if len(i) > 1]
     # Create column names for each statistics from sam_headers
-    mean_cols = ["Mean_" + i[0][:-1] for i in sam_headers]
+    mean_cols = ["Mean " + i[0][:-1] for i in sam_headers]
     med_cols = ["Median " + i[0][:-1] for i in sam_headers]
     std_cols = ["STD " + i[0][:-1] for i in sam_headers]
     cv_cols = ["CV " + i[0][:-1] for i in sam_headers]
@@ -663,7 +663,7 @@ def chunk_stats(df_in, mrl_multiplier=3):
     output["Max CV Across Samples"] = output.filter(regex="CV ").max(axis=1)
     # Define lists to calculate MRL for inclusion in 'Feature_statistics' outputs
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
-    Mean = output.columns[output.columns.str.contains(pat="Mean_")].tolist()
+    Mean = output.columns[output.columns.str.contains(pat="Mean ")].tolist()
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
     Std = output.columns[output.columns.str.contains(pat="STD ")].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
@@ -704,7 +704,7 @@ def column_sort_DFS(df_in, passthru):
     ]
     # Create list of prefixes to remove non-samples
     prefixes = [
-        "Mean_",
+        "Mean ",
         "Median ",
         "CV ",
         "STD ",
@@ -823,7 +823,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     df2 = tracers_file.copy()
     # Get sample names
     prefixes = [
-        "Mean_",
+        "Mean ",
         "Median ",
         "CV ",
         "STD ",
@@ -1150,7 +1150,7 @@ def clean_features(df_in, controls, tracer_df=False):
     Abundance = df.columns[df.columns.str.contains(pat="Detection Percentage ")].tolist()
     Replicate_Percent_MB = [N for N in Abundance if any(x in N for x in blanks)]
     Replicate_Percent_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
-    Mean = df.columns[df.columns.str.contains(pat="Mean_")].tolist()
+    Mean = df.columns[df.columns.str.contains(pat="Mean ")].tolist()
     Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
     Std = df.columns[df.columns.str.contains(pat="STD ")].tolist()
@@ -1210,7 +1210,7 @@ def Blank_Subtract_Mean(df_in):
     df = df_in.copy()
     # Define lists; blanks, means, sample means, and blank means
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
-    Mean = df.columns[df.columns.str.contains(pat="Mean_")].tolist()
+    Mean = df.columns[df.columns.str.contains(pat="Mean ")].tolist()
     Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
     # Iterate through sample means, subtracting blank mean into new column
@@ -1243,7 +1243,7 @@ def combine(df1, df2):
     dfc = dfc.drop_duplicates(subset=["Mass", "Retention_Time"])
     # Get sample Means
     Mean_list = dfc.columns[
-        (dfc.columns.str.contains(pat="Mean_") == True)
+        (dfc.columns.str.contains(pat="Mean ") == True)
         & (dfc.columns.str.contains(pat="MB|blank|blanks|BlankSub|_x|_y") == False)
     ].tolist()
     # Count sample-level occurrences and median of means
@@ -1262,16 +1262,16 @@ def combine_doc(doc1, doc2, tracer_df=False):
     # Recombine doc and dupe
     if doc1 is not None and doc2 is not None:
         # Get Mean columns
-        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
+        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean ")].tolist()
         dfc = pd.concat([doc1, doc2], sort=True)  # fixing pandas FutureWarning
         dfc = dfc.reindex(columns=doc1.columns)
     elif doc1 is not None:
         # Get Mean columns
-        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
+        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean ")].tolist()
         dfc = doc1.copy()
     else:
         # Get Mean columns
-        Mean = doc2.columns[doc2.columns.str.contains(pat="Mean_")].tolist()
+        Mean = doc2.columns[doc2.columns.str.contains(pat="Mean ")].tolist()
         dfc = doc2.copy()
     # Select columns for keeping, with tracer conditional
     if tracer_df:
