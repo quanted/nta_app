@@ -399,6 +399,9 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
             how="left",
             on=["Mass", "Retention_Time"],
         )
+    # Use np.where to fill in 0s
+    df_in = np.where(df_in["Is Adduct or Loss?"].isna(), 0, df_in["Is Adduct or Loss?"])
+    df_in = np.where(df_in["Has Adduct or Loss?"].isna(), 0, df_in["Has Adduct or Loss?"])
     # Return dataframe with three adduct info columns added
     return df_in
 
@@ -577,6 +580,8 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, remove):
         dupe_df.drop(["all_sample_mean"], axis=1, inplace=True)
         # Return output dataframe with duplicates removed and duplicate dataframe
         return output, dupe_df
+    # np.where to replace nans with 0s
+    output = np.where(output["Duplicate Feature?"].isna(), 0, output["Duplicate Feature?"])
     # Return output dataframe with duplicates flagged
     return output
 
@@ -902,6 +907,8 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     )
     # Drop columns
     dft.drop(["Rounded_Mass", "Matches"], axis=1, inplace=True)
+    # np.where to replace nans with 0s
+    dfc = np.where(dfc["Tracer Chemical Match?"].isna(), 0, dfc["Tracer Chemical Match?"])
     # Returns tracers data (dft) and dataframe with 'Tracer Chemical Match?' appended (dfc)
     # logger.info("cft dfts columns= {}".format(dft.columns.values))
     # logger.info("cft dfc columns= {}".format(dfc.columns.values))
