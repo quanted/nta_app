@@ -979,8 +979,8 @@ d3.csv(csv_path).then(function(data) {
 
     // setup column/row labels
     var row_names = [
-      'Inital Input',
-      "Non-Detects",
+      'Initial Input',
+      "No Occurrences",
       'Failed CV',
       'Passed All'
     ];
