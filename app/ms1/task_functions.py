@@ -1065,7 +1065,7 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     docs["Final Occurrence Count"] = num_mask.sum(axis=1)
     # Generate mask of str values in docs (i.e., occurrences with flags are True)
     str_mask = pd.concat([docs[mean].str.contains("R|CV|ND") for mean in Mean_Samples], axis=1)
-    docs[" Possible Occurrences Removed Count"] = str_mask.sum(axis=1) + missing.sum(axis=1)
+    docs["Possible Occurrences Removed Count"] = str_mask.sum(axis=1) + missing.sum(axis=1)
     # Count number of missing samples from missing mask
     docs["# of missing occurrences"] = missing.sum(axis=1)
     # Count # of times an occurrence flag contains R, CV, or ND, and count # of just CV flags
