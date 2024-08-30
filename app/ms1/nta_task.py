@@ -594,7 +594,7 @@ class NtaRun:
         if dfTracer is not None:
             tracers = dfTracer[["Observed Mass", "Observed Retention Time"]].copy()
             tracers.rename({"Observed Mass": "Mass"}, axis=1, inplace=True)
-            tracers.rename({"Observed Retention Time": "Retention_Time"}, axis=1, inplace=True)
+            tracers.rename({"Observed Retention Time": "Retention Time"}, axis=1, inplace=True)
             tracers["spike"] = 1
             logger.info("cv scatterplot tracers columns= {}".format(tracers.columns.values))
         # combine the two dataframes, ignore non-existing dataframes
@@ -627,7 +627,7 @@ class NtaRun:
         mean_df = dfCombined[mean_cols]
         # Carry over Mass and Retention_Time
         cv_df["Mass"] = dfCombined["Mass"]
-        cv_df["Retention_Time"] = dfCombined["Retention_Time"]
+        cv_df["Retention Time"] = dfCombined["Retention Time"]
         # AC 2/8/2024 Get minimum and maximum abundance values of dataframe (mean columns) for the purposes of setting the x-axis range
         min_abundance_value = mean_df.min(numeric_only=True).min()
         max_abundance_value = mean_df.max(numeric_only=True).max()
@@ -651,7 +651,7 @@ class NtaRun:
             dum.rename({mean: "Mean"}, axis=1, inplace=True)
             dum["sample"] = x
             dum["Mass"] = cv_df["Mass"]
-            dum["Retention_Time"] = cv_df["Retention_Time"]
+            dum["Retention Time"] = cv_df["Retention Time"]
             # Add sample type (blank or sample)
             if any(i in x for i in blanks):
                 dum["type"] = "blank"
@@ -668,7 +668,7 @@ class NtaRun:
         # Conditional for if tracers are present:
         if dfTracer is not None:
             # Merge df with tracers to get labels
-            plot2 = pd.merge(plot, tracers, how="left", on=["Mass", "Retention_Time"])
+            plot2 = pd.merge(plot, tracers, how="left", on=["Mass", "Retention Time"])
         else:
             # If tracer plot doesn't exist, still need to create a spike column that is empty
             plot["spike"] = ""

@@ -745,7 +745,7 @@ def column_sort_DFS(df_in, passthru):
     df = pd.merge(df, pt, how="left", on=["Feature ID"])
     # Subset data with new column list
     df_reorg = df[new_col_org]
-    df_reorg.rename(columns={"Ionization_Mode": "Ionization Mode"}, inplace=True)
+    df_reorg.rename(columns={"Ionization_Mode": "Ionization Mode", "Retention_Time": "Retention Time"}, inplace=True)
     # Return re-organized dataframe
     return df_reorg
 
@@ -808,7 +808,12 @@ def column_sort_TSR(df_in, passthru):
         df["DTXSID"] = ""
     df_reorg = df[new_col_org]
     df_reorg.rename(
-        columns={"Monoisotopic_Mass": "Mass", "Chemical_Name": "Chemical Name", "Ionization_Mode": "Ionization Mode"},
+        columns={
+            "Monoisotopic_Mass": "Mass",
+            "Chemical_Name": "Chemical Name",
+            "Ionization_Mode": "Ionization Mode",
+            "Retention_Time": "Retention Time",
+        },
         inplace=True,
     )
     # Return re-organized dataframe
