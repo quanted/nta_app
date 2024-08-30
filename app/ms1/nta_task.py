@@ -1202,11 +1202,12 @@ class NtaRun:
                 "Ionization_Mode",
                 "Mass Error (PPM)",
                 "Retention Time Difference",
-                "Max CV Across Samples",
                 "Total Detection Count",
                 "Total Detection Percentage",
+                "Max CV Across Samples",
             ]
         ]
+        dft.rename(columns={"Ionization_Mode": "Ionization Mode"}, inplace=True)
         self.data_map["Tracer Summary"] = dft
         return
 
