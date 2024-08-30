@@ -1334,7 +1334,7 @@ def combine_doc(doc1, doc2, tracer_df=False):
     dfc = dfc[to_keep]
     dfc.rename({"BlkStd_cutoff": "Selected MRL"}, axis=1, inplace=True)
     # Sort by 'Mass' and 'Retention_Time'
-    dfc = dfc.sort_values(["Feature ID"], ascending=[True, True])
+    dfc = dfc.sort_values(["Feature ID"], ascending=[True])
     # Return filter_documentation dataframe with removed duplicates appended
     return dfc
 
