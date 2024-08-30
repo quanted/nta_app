@@ -1199,7 +1199,7 @@ class NtaRun:
                 "Feature ID",
                 "Chemical Name",
                 "DTXSID",
-                "Ionization_Mode",
+                "Ionization Mode",
                 "Mass Error (PPM)",
                 "Retention Time Difference",
                 "Total Detection Count",
@@ -1207,7 +1207,7 @@ class NtaRun:
                 "Max CV Across Samples",
             ]
         ]
-        dft.rename(columns={"Ionization_Mode": "Ionization Mode"}, inplace=True)
+        # dft.rename(columns={"Ionization_Mode": "Ionization Mode"}, inplace=True)
         self.data_map["Tracer Summary"] = dft
         return
 
