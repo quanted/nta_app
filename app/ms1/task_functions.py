@@ -1055,12 +1055,17 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     """
     # Set all values of feature removed to ""
     docs["Feature Removed?"] = ""
+    # Set Possible Occurrence Count to len of Mean_Samples
+    docs["Possible Occurrence Count"] = len(Mean_Samples)
     # Generate mask of float values in docs (i.e., occurrences with flags or NaN are False)
     num_mask = pd.concat(
         [pd.to_numeric(docs[mean], errors="coerce").notnull() for mean in Mean_Samples],
         axis=1,
     )
-    docs["# of real occurrences"] = num_mask.sum(axis=1)
+    docs["Final Occurrence Count"] = num_mask.sum(axis=1)
+    # Generate mask of str values in docs (i.e., occurrences with flags are True)
+    str_mask = pd.concat([docs[mean].str.contains("R|CV|ND") for mean in Mean_Samples], axis=1)
+    docs[" Possible Occurrences Removed Count"] = str_mask.sum(axis=1) + missing.sum(axis=1)
     # Count number of missing samples from missing mask
     docs["# of missing occurrences"] = missing.sum(axis=1)
     # Count # of times an occurrence flag contains R, CV, or ND, and count # of just CV flags
@@ -1085,19 +1090,19 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     )
     # Feature flag because occurrences fail detection threshold
     docs["Feature Removed?"] = np.where(
-        (docs["# of real occurrences"] == 0) & (docs["# contains ND flag"] > 0),
+        (docs["Final Occurrence Count"] == 0) & (docs["# contains ND flag"] > 0),
         docs["Feature Removed?"] + "BLK ",
         docs["Feature Removed?"],
     )
     # Feature flag because occurrences fail CV threshold
     docs["Feature Removed?"] = np.where(
-        (docs["# of real occurrences"] == 0) & (docs["# contains CV flag"] > 0),
+        (docs["Final Occurrence Count"] == 0) & (docs["# contains CV flag"] > 0),
         docs["Feature Removed?"] + "CV ",
         docs["Feature Removed?"],
     )
     # Feature flag because occurrences fail Replication threshold
     docs["Feature Removed?"] = np.where(
-        (docs["# of real occurrences"] == 0) & docs["# contains R flag"] > 0,
+        (docs["Final Occurrence Count"] == 0) & docs["# contains R flag"] > 0,
         docs["Feature Removed?"] + "R ",
         docs["Feature Removed?"],
     )
@@ -1127,6 +1132,13 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     cv_fails = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1).fillna(False)
     # Mask df
     df[Mean_Samples] = df[Mean_Samples].mask(cv_fails)
+    # Add columns from docs to df / df_flagged
+    df["Possible Occurrence Count"] = docs["Possible Occurrence Count"]
+    df_flagged["Possible Occurrence Count"] = docs["Possible Occurrence Count"]
+    df["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
+    df_flagged["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
+    df["Final Occurrence Count"] = docs["Final Occurrence Count"]
+    df_flagged["Final Occurrence Count"] = docs["Final Occurrence Count"]
     return df, df_flagged
 
 
@@ -1300,23 +1312,23 @@ def combine_doc(doc1, doc2, tracer_df=False):
     if tracer_df:
         to_keep = [
             "Feature ID",
-            "Mass",
-            "Retention_Time",
             "BlkStd_cutoff",
-            "Any Occurrences Removed?",
+            "Tracer Chemical Match?",
             "Duplicate Feature?",
             "Feature Removed?",
-            "Tracer Chemical Match?",
+            "Possible Occurrence Count",
+            "Possible Occurrences Removed Count",
+            "Final Occurrence Count",
         ] + Mean
     else:
         to_keep = [
             "Feature ID",
-            "Mass",
-            "Retention_Time",
             "BlkStd_cutoff",
-            "Any Occurrences Removed?",
             "Duplicate Feature?",
             "Feature Removed?",
+            "Possible Occurrence Count",
+            "Possible Occurrences Removed Count",
+            "Final Occurrence Count",
         ] + Mean
     # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
     dfc = dfc[to_keep]
