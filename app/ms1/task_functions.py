@@ -1086,7 +1086,7 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     # Append feature level flags to features with no real occurrences
     # Feature flag because no occurrences present in input data
     docs["Feature Removed?"] = np.where(
-        docs["# of missing occurrences"] == len(Mean_Samples), "NO DATA ", docs["Feature Removed?"]
+        docs["# of missing occurrences"] == len(Mean_Samples), "NO DETECTIONS ", docs["Feature Removed?"]
     )
     # Feature flag because occurrences fail detection threshold
     docs["Feature Removed?"] = np.where(
