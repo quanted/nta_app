@@ -1394,7 +1394,6 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                 pt_cols
                 + [
                     "Ionization_Mode",
-                    "Formula",
                     "Mass",
                     "Retention_Time",
                     "Tracer Chemical Match?",
@@ -1402,6 +1401,9 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
+                    "Possible Occurrence Count",
+                    "Possible Occurrences Removed Count",
+                    "Final Occurrence Count",
                 ]
                 + raw_samples
                 + blank_subtracted_means
@@ -1412,13 +1414,15 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                 pt_cols
                 + [
                     "Ionization_Mode",
-                    "Formula",
                     "Mass",
                     "Retention_Time",
                     "Duplicate Feature?",
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
+                    "Possible Occurrence Count",
+                    "Possible Occurrences Removed Count",
+                    "Final Occurrence Count",
                 ]
                 + raw_samples
                 + blank_subtracted_means
@@ -1437,6 +1441,9 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
+                    "Possible Occurrence Count",
+                    "Possible Occurrences Removed Count",
+                    "Final Occurrence Count",
                 ]
                 + raw_samples
                 + blank_subtracted_means
@@ -1453,11 +1460,16 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
+                    "Possible Occurrence Count",
+                    "Possible Occurrences Removed Count",
+                    "Final Occurrence Count",
                 ]
                 + raw_samples
                 + blank_subtracted_means
             )
             dft = dft[cols]
+    # Rename columns
+    dft.rename({"Ionization_Mode": "Ionization Mode", "Retention_Time": "Retention Time"}, axis=1, inplace=True)
     # Return re-combined, sorted dataframe for output as 'Cleaned_feature_results_reduced' and 'Results_flagged'
     return dft
 
