@@ -1386,6 +1386,10 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
         if not any(x in item for x in pt_cols)
     ]
     blank_subtracted_means = dft.columns[dft.columns.str.contains(pat="BlankSub")].tolist()
+
+    # Calculate Final Occurrence Percentage
+    dft["Final Occurrence Percentage"] = dft["Final Occurrence Count"] / dft["Possible Occurrence Count"]
+
     # Check for 'Formula' (should be deprecated), then check for tracer_df
     # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
     if "Formula" in dft.columns:
@@ -1401,9 +1405,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
-                    "Possible Occurrence Count",
-                    "Possible Occurrences Removed Count",
                     "Final Occurrence Count",
+                    "Final Occurrence Percentage",
                 ]
                 + raw_samples
                 + blank_subtracted_means
@@ -1420,9 +1423,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
-                    "Possible Occurrence Count",
-                    "Possible Occurrences Removed Count",
                     "Final Occurrence Count",
+                    "Final Occurrence Percentage",
                 ]
                 + raw_samples
                 + blank_subtracted_means
@@ -1441,9 +1443,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
-                    "Possible Occurrence Count",
-                    "Possible Occurrences Removed Count",
                     "Final Occurrence Count",
+                    "Final Occurrence Percentage",
                 ]
                 + raw_samples
                 + blank_subtracted_means
@@ -1460,9 +1461,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
-                    "Possible Occurrence Count",
-                    "Possible Occurrences Removed Count",
                     "Final Occurrence Count",
+                    "Final Occurrence Percentage",
                 ]
                 + raw_samples
                 + blank_subtracted_means
