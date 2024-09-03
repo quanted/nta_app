@@ -1294,42 +1294,58 @@ def combine_doc(doc1, doc2, tracer_df=False):
     """
     Function to combine positive and negative mode docs for filter_documentation sheet
     """
+    # Define blank sub-strings
+    blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
     # Recombine doc and dupe
     if doc1 is not None and doc2 is not None:
-        # Get Mean columns
+        # Get Mean columns for blanks and samples
         Mean = doc1.columns[doc1.columns.str.contains(pat="Mean ")].tolist()
+        Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
         dfc = pd.concat([doc1, doc2], sort=True)  # fixing pandas FutureWarning
         dfc = dfc.reindex(columns=doc1.columns)
     elif doc1 is not None:
-        # Get Mean columns
+        # Get Mean columns for blanks and samples
         Mean = doc1.columns[doc1.columns.str.contains(pat="Mean ")].tolist()
+        Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
         dfc = doc1.copy()
     else:
-        # Get Mean columns
+        # Get Mean columns for blanks and samples
         Mean = doc2.columns[doc2.columns.str.contains(pat="Mean ")].tolist()
+        Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
         dfc = doc2.copy()
     # Select columns for keeping, with tracer conditional
     if tracer_df:
-        to_keep = [
-            "Feature ID",
-            "BlkStd_cutoff",
-            "Tracer Chemical Match?",
-            "Duplicate Feature?",
-            "Feature Removed?",
-            "Possible Occurrence Count",
-            "Possible Occurrences Removed Count",
-            "Final Occurrence Count",
-        ] + Mean
+        to_keep = (
+            [
+                "Feature ID",
+                "BlkStd_cutoff",
+                "Tracer Chemical Match?",
+                "Duplicate Feature?",
+                "Feature Removed?",
+                "Possible Occurrence Count",
+                "Possible Occurrences Removed Count",
+                "Final Occurrence Count",
+            ]
+            + Mean_MB
+            + Mean_Samples
+        )
     else:
-        to_keep = [
-            "Feature ID",
-            "BlkStd_cutoff",
-            "Duplicate Feature?",
-            "Feature Removed?",
-            "Possible Occurrence Count",
-            "Possible Occurrences Removed Count",
-            "Final Occurrence Count",
-        ] + Mean
+        to_keep = (
+            [
+                "Feature ID",
+                "BlkStd_cutoff",
+                "Duplicate Feature?",
+                "Feature Removed?",
+                "Possible Occurrence Count",
+                "Possible Occurrences Removed Count",
+                "Final Occurrence Count",
+            ]
+            + Mean_MB
+            + Mean_Samples
+        )
     # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
     dfc = dfc[to_keep]
     dfc.rename({"BlkStd_cutoff": "Selected MRL"}, axis=1, inplace=True)
