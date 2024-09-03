@@ -1091,19 +1091,19 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     # Feature flag because occurrences fail detection threshold
     docs["Feature Removed?"] = np.where(
         (docs["Final Occurrence Count"] == 0) & (docs["# contains MRL flag"] > 0),
-        docs["Feature Removed?"] + "MRL ",
+        docs["Feature Removed?"] + "MRL, ",
         docs["Feature Removed?"],
     )
     # Feature flag because occurrences fail CV threshold
     docs["Feature Removed?"] = np.where(
         (docs["Final Occurrence Count"] == 0) & (docs["# contains CV flag"] > 0),
-        docs["Feature Removed?"] + "CV ",
+        docs["Feature Removed?"] + "CV, ",
         docs["Feature Removed?"],
     )
     # Feature flag because occurrences fail Replication threshold
     docs["Feature Removed?"] = np.where(
         (docs["Final Occurrence Count"] == 0) & docs["# contains R flag"] > 0,
-        docs["Feature Removed?"] + "R ",
+        docs["Feature Removed?"] + "R, ",
         docs["Feature Removed?"],
     )
     return docs
