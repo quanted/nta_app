@@ -109,7 +109,7 @@ def flags(df):
     # df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '0')
     df["For_Dashboard_Search"] = np.where(
         ((df.Formula_Match_Above90 == "1") | (df.X_NegMassDef_Below90 == "1")), "1", "1"
-    )  # REMOVE THIS LINE AND UNCOMMENT ABOVE
+    )  # REMOVE THIS LINE AMRL UNCOMMENT ABOVE
     df.sort_values(
         [
             "Formula_Match",
@@ -1019,15 +1019,15 @@ def calculate_detection_counts(df, docs, df_flagged, MRL_sample_mask, Std_MB, Me
 def MRL_flag(docs, Mean_Samples, MRL_sample_mask, missing):
     """
     Function that takes docs, missing, and the MRL_sample_mask and flags
-    non-detects in df (via the MRL_sample_mask) as ND. -- TMF 04/19/24
+    non-detects in df (via the MRL_sample_mask) as MRL. -- TMF 04/19/24
     """
     # Update empty cell masks from the docs and df dataframes
     cell_empty = docs[Mean_Samples].isnull()
-    # append ND flag (occurrence < MRL) to documentation dataframe
-    docs[Mean_Samples] = np.where(~MRL_sample_mask & cell_empty & ~missing, "ND", docs[Mean_Samples])
+    # append MRL flag (occurrence < MRL) to documentation dataframe
+    docs[Mean_Samples] = np.where(~MRL_sample_mask & cell_empty & ~missing, "MRL", docs[Mean_Samples])
     docs[Mean_Samples] = np.where(
         ~MRL_sample_mask & ~cell_empty & ~missing,
-        docs[Mean_Samples] + ", ND",
+        docs[Mean_Samples] + ", MRL",
         docs[Mean_Samples],
     )
     return docs
@@ -1064,22 +1064,22 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     )
     docs["Final Occurrence Count"] = num_mask.sum(axis=1)
     # Generate mask of str values in docs (i.e., occurrences with flags are True)
-    str_mask = pd.concat([docs[mean].str.contains("R|CV|ND") for mean in Mean_Samples], axis=1)
+    str_mask = pd.concat([docs[mean].str.contains("R|CV|MRL") for mean in Mean_Samples], axis=1)
     docs["Possible Occurrences Removed Count"] = str_mask.sum(axis=1) + missing.sum(axis=1)
     # Count number of missing samples from missing mask
     docs["# of missing occurrences"] = missing.sum(axis=1)
-    # Count # of times an occurrence flag contains R, CV, or ND, and count # of just CV flags
+    # Count # of times an occurrence flag contains R, CV, or MRL, and count # of just CV flags
     contains_R = pd.concat([docs[mean].str.contains("R") for mean in Mean_Samples], axis=1)
     contains_CV = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1)
     is_CV = docs[Mean_Samples] == "CV"
-    contains_ND = pd.concat([docs[mean].str.contains("ND") for mean in Mean_Samples], axis=1)
+    contains_MRL = pd.concat([docs[mean].str.contains("MRL") for mean in Mean_Samples], axis=1)
     docs["# contains R flag"] = contains_R.sum(axis=1)
     docs["# contains CV flag"] = contains_CV.sum(axis=1)
     docs["# is CV flag"] = is_CV.sum(axis=1)
-    docs["# contains ND flag"] = contains_ND.sum(axis=1)
+    docs["# contains MRL flag"] = contains_MRL.sum(axis=1)
     # Determine if any samples are dropped for a feature
     docs["Any Occurrences Removed?"] = np.where(
-        (docs["# contains R flag"] > 0) | (docs["# contains CV flag"] > 0) | (docs["# contains ND flag"] > 0),
+        (docs["# contains R flag"] > 0) | (docs["# contains CV flag"] > 0) | (docs["# contains MRL flag"] > 0),
         1,
         0,
     )
@@ -1090,8 +1090,8 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     )
     # Feature flag because occurrences fail detection threshold
     docs["Feature Removed?"] = np.where(
-        (docs["Final Occurrence Count"] == 0) & (docs["# contains ND flag"] > 0),
-        docs["Feature Removed?"] + "BLK ",
+        (docs["Final Occurrence Count"] == 0) & (docs["# contains MRL flag"] > 0),
+        docs["Feature Removed?"] + "MRL ",
         docs["Feature Removed?"],
     )
     # Feature flag because occurrences fail CV threshold
@@ -1112,7 +1112,7 @@ def feat_removal_flag(docs, Mean_Samples, missing):
 def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     """
     Function that takes df, docs, df_flagged and creates a mask for each filter
-    applied to docs (R, CV, ND). All masks applied to df, only R and ND masks applied
+    applied to docs (R, CV, MRL). All masks applied to df, only R and MRL masks applied
     to df_flagged. Return df and df_flagged. -- TMF 04/19/24
     """
     # Copy 'Any Occurrences Removed?' to df and df_flagged
@@ -1124,7 +1124,7 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     df[Mean_Samples] = df[Mean_Samples].mask(rep_fails)
     df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(rep_fails)
     # Create mask of occurrences dropped for replicate flag
-    non_detects = pd.concat([docs[mean].str.contains("ND") for mean in Mean_Samples], axis=1).fillna(False)
+    non_detects = pd.concat([docs[mean].str.contains("MRL") for mean in Mean_Samples], axis=1).fillna(False)
     # Mask df and df_flagged
     df[Mean_Samples] = df[Mean_Samples].mask(non_detects)
     df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(non_detects)
@@ -1146,7 +1146,7 @@ def feat_drop_df(df, docs, df_flagged):
     """
     Function that takes df, docs, df_flagged, and uses the Feature Removed? column
     from docs to subset df and df_flagged. All features that have a removal flag
-    are removed from df, only features with the R, ND, and CV flags are removed
+    are removed from df, only features with the R, MRL, and CV flags are removed
     from df_flagged. -- TMF 04/19/24
     """
     # Copy 'Feature Removed?' column onto df and df_flagged
@@ -1219,7 +1219,7 @@ def clean_features(df_in, controls, tracer_df=False):
     df, docs, df_flagged = calculate_detection_counts(
         df, docs, df_flagged, MRL_sample_mask, Std_MB, Mean_MB, Mean_Samples
     )
-    """MRL/ND FLAG"""
+    """MRL FLAG"""
     # Implement MRL flag
     docs = MRL_flag(docs, Mean_Samples, MRL_sample_mask, missing)
     """ADD VALUES TO DOC"""
