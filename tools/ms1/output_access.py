@@ -293,3 +293,18 @@ class OutputServer:
         response["Content-Disposition"] = "attachment; filename=tree_data.csv"
         combined_df.to_csv(path_or_buf=response, index_label=False, index=False)  # write our csv to the response
         return response
+
+    def decision_tree_analysis_parameters(self):
+        data_analysis_parameters_id = self.jobid + "_" + "Analysis Parameters"
+        try:  #
+            data_analysis_parameters = self.gridfs.get(data_analysis_parameters_id)
+            json_string = data_analysis_parameters.read().decode("utf-8")
+            analysis_parameters_df = pd.read_json(json_string, orient="split")
+        except (OperationFailure, TypeError, NoFile):
+            analysis_parameters_df = pd.DataFrame()  # if pos file does not exist
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=tree_data.csv"
+        analysis_parameters_df.to_csv(
+            path_or_buf=response, index_label=False, index=False
+        )  # write our csv to the response
+        return response
