@@ -179,20 +179,14 @@ class NtaRun:
 
     def execute(self):
         self.step = "Check for existence of required columns"
-        logger.info("pos df columns= {}".format(self.dfs[0].columns.values))
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         # 0: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         # 0: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         # 0: check for alternate spellings of 'Retention_Time' column
         self.check_retention_time_column(self.dfs)
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         # 0: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         # 0: create a status in mongo
         self.set_status("Processing", create=True)
         # 0: create an analysis_parameters sheet
@@ -200,13 +194,9 @@ class NtaRun:
         # 1: drop duplicates and throw out void volume
         self.step = "Dropping duplicates"
         self.assign_id()
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         self.pass_through_cols()
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         self.filter_void_volume(float(self.parameters["minimum_rt"][1]))  # throw out features below this (void volume)
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         self.filter_duplicates()
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         if self.verbose:
             logger.info("Dropped duplicates.")
             logger.info("dfs.size(): {}".format(len(self.dfs)))
@@ -221,7 +211,6 @@ class NtaRun:
         # 2: statistics
         self.step = "Calculating statistics"
         self.calc_statistics()
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         if self.verbose:
             logger.info("Calculated statistics.")
             if self.dfs[0] is not None:
@@ -248,12 +237,10 @@ class NtaRun:
         # 2.1: Occurrence heatmap
         self.step = "Create heatmap"
         self.occurrence_heatmap(self.dfs)
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
 
         # 3: check tracers (optional)
         self.step = "Checking tracers"
         self.check_tracers()
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         if self.verbose:
             logger.info("Checked tracers.")
             # print(self.tracer_dfs_out)
@@ -262,12 +249,10 @@ class NtaRun:
         # 3.1: CV Scatterplot
         self.step = "Create scatterplot"
         self.cv_scatterplot(self.dfs)
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
 
         # 4: clean features
         self.step = "Cleaning features"
         self.clean_features()
-        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
 
         if self.verbose:
             logger.info("Cleaned features.")
