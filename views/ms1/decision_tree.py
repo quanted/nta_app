@@ -10,8 +10,9 @@ from .. import links_left
 def decision_tree_page(request, model="nta", header="NTA", jobid="00000000"):
     header = "NTA"
     model = "ms1"
-    decision_tree_content_html = "<h3> Job ID: " + jobid + "</h3> <br>"
-    decision_tree_content_html += "<div class=decision_tree> </div>"
+    # decision_tree_content_html = "<h3> Job ID: " + jobid + "</h3> <br>"
+    # decision_tree_content_html += "<div class=decision_tree> </div>"
+    decision_tree_content_html = "<div class=decision_tree> </div>"
     # decision_tree_content_html += {{ jobid|json_script:'jobid' }} # pass job id to the javascript
     decision_tree_content_html += render_to_string(
         "ms1/nta_decision_tree.html", {"jobid": jobid}
@@ -53,7 +54,9 @@ def decision_tree_page_html(header, model, decision_tree_html):
 
     # NTAW-561: Sole code for loading decision tree html
     html = render_to_string(
-        "nta_main_content.html", {"TITLE": header + " Output", "TEXT_PARAGRAPH": decision_tree_html}
+        # "nta_main_content.html", {"TITLE": header + " Output", "TEXT_PARAGRAPH": decision_tree_html}
+        "nta_main_content.html",
+        {"TEXT_PARAGRAPH": decision_tree_html},
     )
 
     return html
