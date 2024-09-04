@@ -857,10 +857,10 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
         if ((len(subgroup) > 1) and not any(x in item for x in prefixes))
     ]
     # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("Esi+", "ESI+")
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi+", "ESI+")
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("Esi-", "ESI-")
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi-", "ESI-")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI+", "Esi+")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi+", "Esi+")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI-", "Esi-")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi-", "Esi-")
     # Create 'Rounded_Mass' variable to merge on
     df2["Rounded_Mass"] = df2["Monoisotopic_Mass"].round(0)
     df1.rename(

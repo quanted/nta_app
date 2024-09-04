@@ -338,14 +338,14 @@ class NtaRun:
             # and 'Esi-' for negative mode.
         """
         # the zeroth element of input_dfs is the positive mode dataframe
-        ionizationMode = "ESI+"
+        ionizationMode = "Esi+"
         for df in input_dfs:
             if df is not None:
                 if "Ionization_Mode" not in df.columns:
                     # create a new column with the header of "Ionization_Mode" and values of ionizationMode
                     df["Ionization_Mode"] = ionizationMode
             # the first element of input_dfs is the negative mode dataframe
-            ionizationMode = "ESI-"
+            ionizationMode = "Esi-"
         return
 
     def check_existence_of_mass_column(self, input_dfs):
