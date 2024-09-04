@@ -179,6 +179,8 @@ class NtaRun:
 
     def execute(self):
         self.step = "Check for existence of required columns"
+
+        logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         # 0: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
         logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
