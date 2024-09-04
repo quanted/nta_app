@@ -201,7 +201,7 @@ class NtaRun:
         self.step = "Dropping duplicates"
         self.assign_id()
         logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
-        self.pass_through_cols
+        self.pass_through_cols()
         logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         self.filter_void_volume(float(self.parameters["minimum_rt"][1]))  # throw out features below this (void volume)
         logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
