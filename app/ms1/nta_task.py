@@ -179,7 +179,7 @@ class NtaRun:
 
     def execute(self):
         self.step = "Check for existence of required columns"
-
+        logger.info("pos df columns= {}".format(self.dfs[0].columns.values))
         logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         # 0: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
@@ -201,7 +201,7 @@ class NtaRun:
         self.step = "Dropping duplicates"
         self.assign_id()
         logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
-        self.pass_through_cols()
+        self.pass_through_cols
         logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
         self.filter_void_volume(float(self.parameters["minimum_rt"][1]))  # throw out features below this (void volume)
         logger.info("Ionization Mode cell count: {}".format(self.dfs[0]["Ionization_Mode"].count()))
