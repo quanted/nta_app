@@ -1077,7 +1077,9 @@ class NtaRun:
 
         # implements part of NTAW-143
         dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
-        if self.pass_through[0] is not None:
+        if self.pass_through[0] is not None and self.pass_through[1] is not None:
+            passthru = pd.concat([self.pass_through[0], self.pass_through[1]])
+        elif self.pass_through[0] is not None:
             passthru = self.pass_through[0]
         else:
             passthru = self.pass_through[1]
