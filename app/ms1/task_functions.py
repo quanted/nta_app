@@ -1072,12 +1072,10 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     docs["Unfiltered Occurrence Count"] = docs["Possible Occurrence Count"] - docs["# of missing occurrences"]
     # Generate mask of str values in docs (i.e., occurrences with ANY flags are True)
     str_mask = pd.concat([docs[mean].str.contains("R|CV|MRL") for mean in Mean_Samples], axis=1)
-    docs["Unfiltered Occurrence Removed Count"] = docs["Unfiltered Occurrence Count"] - str_mask.sum(axis=1)
+    docs["Unfiltered Occurrence Removed Count"] = str_mask.sum(axis=1)
     # Generate mask of str values in docs (i.e., occurrences with R and MRL flags are True)
     str_mask = pd.concat([docs[mean].str.contains("R|MRL") for mean in Mean_Samples], axis=1)
-    docs["Unfiltered Occurrence Removed Count (with flags)"] = docs["Unfiltered Occurrence Count"] - str_mask.sum(
-        axis=1
-    )
+    docs["Unfiltered Occurrence Removed Count (with flags)"] = str_mask.sum(axis=1)
     docs["Final Occurrence Count (with flags)"] = (
         docs["Unfiltered Occurrence Count"] - docs["Unfiltered Occurrence Removed Count (with flags)"]
     )
