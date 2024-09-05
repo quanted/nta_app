@@ -1348,10 +1348,8 @@ def combine_doc(doc1, doc2, tracer_df=False):
                 "Feature Removed?",
                 "Possible Occurrence Count",
                 "Unfiltered Occurrence Count",
-                "Unfiltered Occurrence Removed Count",
-                "Final Occurrence Count",
-                "Unfiltered Occurrence Removed Count (with flags)",
                 "Final Occurrence Count (with flags)",
+                "Final Occurrence Count",
             ]
             + Mean_MB
             + Mean_Samples
@@ -1365,10 +1363,8 @@ def combine_doc(doc1, doc2, tracer_df=False):
                 "Feature Removed?",
                 "Possible Occurrence Count",
                 "Unfiltered Occurrence Count",
-                "Unfiltered Occurrence Removed Count",
-                "Final Occurrence Count",
-                "Unfiltered Occurrence Removed Count (with flags)",
                 "Final Occurrence Count (with flags)",
+                "Final Occurrence Count",
             ]
             + Mean_MB
             + Mean_Samples
