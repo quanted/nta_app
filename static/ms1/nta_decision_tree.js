@@ -6,6 +6,17 @@ var jobid = window.location.pathname.split("/").pop();
 var csv_path = '/nta/ms1/results/decision_tree_data/' + jobid;
 
 /**
+ * Changes in v0.5.5
+ *  - Removed the mrlPass variable for the feature level tree. It used to pass a feature if at least 1 occurrence passed CV and ANY occurrence passed MRL.
+ *    Now a feature only passes if at least 1 occurence passes all 3 checks --> Replicate, CV, MRL
+ * 
+ * Changes in v0.5.4a
+ *  - Fixed bug where the feature-level trees would never put a feature in the "< Replicate Threshold" leaf-node
+ *  - Fixed bug where the header row of the input csv was being fed into the count functions, which would return undefined values
+ *  - Added the ability to set default threshold values for the "A" trees by providing an "Analysis Parameters.csv" file 
+ *  - Fixed bug where the positions of the bifurcating arrows in the feature-level trees were being calculated from the positions of the
+ *    boxes from the occurence-level trees, which would cause them to sometimes not be centered depending on count values.
+ * 
  * Changes in v0.5.3
  *  - Added MDL multiplier sliders for x3, x5, x10
  * 
@@ -108,6 +119,52 @@ var thresholdData = {
 
 // we must wrap the rest of the script in the d3.csv function because
 // it is asyncronous, meaning that we can not return data from it
+try {
+  d3.csv(init_parmaeters_path).then(function(init_parameter_data) {
+
+    // update the default parameters of the "A" thresholds
+    for (let iRow in init_parameter_data) {
+      row = init_parameter_data[iRow];
+      if (!(Array.isArray(row))) {
+        if (row['Parameter'] === 'Min replicate hits (%)') {
+          countData['A']['threshold']['rep'] = Number(row['Value'])
+        } else if (row['Parameter'] === 'Max replicate CV') {
+          countData['A']['threshold']['cv'] = Number(row['Value'])
+        } else if (row['Parameter'] === 'MRL standard deviation multiplier') {
+          countData['A']['threshold']['mrl'] = Number(row['Value'])
+        }
+      }
+    }
+  })
+
+  // Data validation
+  //// Replicate
+  if (countData["A"]["threshold"]["rep"] > thresholdData["repMax"]) {
+    countData["A"]["threshold"]["rep"] = thresholdData["repMax"];
+  } else if (countData["A"]["threshold"]["rep"] < thresholdData["repMin"]) {
+    countData["A"]["threshold"]["rep"] = thresholdData["repMin"];
+  }
+
+  //// CV
+  if (countData["A"]["threshold"]["cv"] > thresholdData["cvMax"]) {
+    countData["A"]["threshold"]["cv"] = thresholdData["cvMax"];
+  } else if (countData["A"]["threshold"]["cv"] < thresholdData["cvMin"]) {
+    countData["A"]["threshold"]["cv"] = thresholdData["cvMin"];
+  }
+
+  //// MRL
+  if (countData["A"]["threshold"]["mrl"] < 4) {
+    countData["A"]["threshold"]["mrl"] = 3;
+  } else if (countData["A"]["threshold"]["mrl"] < 7.5) {
+    countData["A"]["threshold"]["mrl"] = 5;
+  } else {
+    countData["A"]["threshold"]["mrl"] = 10;
+  }
+}
+catch(err) {
+  console.log('No default parameter file found')
+}
+
 d3.csv(csv_path).then(function(data) {
 
   /** *******************************************
@@ -119,15 +176,18 @@ d3.csv(csv_path).then(function(data) {
   // Replicate Threshold A
   var sliderRepA = document.getElementById("ThreshSliderRange_repA"),
     inputBoxRepA = document.getElementById("ThreshSliderNumber_repA");
+  //// update with default threshold values if applicable
+  sliderRepA.value = countData["A"]["threshold"]["rep"]; // update with initial input value
+  inputBoxRepA.value = sliderRepA.value;
   sliderRepA.oninput = function() {
     if (sliderRepA.value > thresholdData["repMax"]) {
       sliderRepA.value = thresholdData["repMax"];
     } else if (sliderRepA.value < thresholdData["repMin"]) {
       sliderRepA.value = thresholdData["repMin"];
     }
-    inputBoxRepA.value = sliderRepA.value;
+    inputBoxRepA.value = Number(sliderRepA.value);
 
-    countData["A"]["threshold"]["rep"] = sliderRepA.value
+    countData["A"]["threshold"]["rep"] = Number(sliderRepA.value)
 
     countData = get_counts(countData)
 
@@ -146,9 +206,9 @@ d3.csv(csv_path).then(function(data) {
     } else if (inputBoxRepA.value < thresholdData["repMin"]) {
       inputBoxRepA.value = thresholdData["repMin"];
     }
-    sliderRepA.value = inputBoxRepA.value;
+    sliderRepA.value = Number(inputBoxRepA.value);
 
-    countData["A"]["threshold"]["rep"] = sliderRepA.value
+    countData["A"]["threshold"]["rep"] = Number(sliderRepA.value)
 
     countData = get_counts(countData)
 
@@ -165,6 +225,8 @@ d3.csv(csv_path).then(function(data) {
   // CV Threshold A
   var sliderCVA = document.getElementById("ThreshSliderRange_cvA"),
     inputBoxCVA = document.getElementById("ThreshSliderNumber_cvA");
+  sliderCVA.value = countData["A"]["threshold"]["cv"]; // update with initial input value
+  inputBoxCVA.value = sliderCVA.value;
   sliderCVA.oninput = function() {
     if (sliderCVA.value > thresholdData["cvMax"]) {
       sliderCVA.value = thresholdData["cvMax"];
@@ -303,9 +365,11 @@ d3.csv(csv_path).then(function(data) {
   // MRL Threshold A
   var sliderMRLA = document.getElementById("ThreshSliderRange_mrlA"),
     inputBoxMRLA = document.getElementById("ThreshSliderNumber_mrlA");
+  sliderMRLA.value = countData["A"]["threshold"]["mrl"]; // update with initial input value
+  inputBoxMRLA.value = sliderMRLA.value;
   sliderMRLA.oninput = function() {
     // First set the possible values for the slider
-    if (sliderMRLA.value < 4.5) {
+    if (sliderMRLA.value < 4) {
       sliderMRLA.value = 3;
     } else if (sliderMRLA.value < 7.5) {
       sliderMRLA.value = 5;
@@ -332,7 +396,7 @@ d3.csv(csv_path).then(function(data) {
     inputBoxMRLB = document.getElementById("ThreshSliderNumber_mrlB");
   sliderMRLB.oninput = function() {
     // First set the possible values for the slider
-    if (sliderMRLB.value < 4.5) {
+    if (sliderMRLB.value < 4) {
       sliderMRLB.value = 3;
     } else if (sliderMRLB.value < 7.5) {
       sliderMRLB.value = 5;
@@ -738,6 +802,12 @@ d3.csv(csv_path).then(function(data) {
   /**
    * Updates the countData object for a single row of data
    * March 14, 2024
+   *  Updated: August 30, 2024
+   *    - Issue where max_pass variable was always being overwritten to be one of ['underCVOverMRL', 'underCVUnderMRL', 'overCVOverMRL', 'overCVUnderMRL']
+   *      Fixed by adding an if statement to only overwrite max_pass to one of these four leaf-nodes when max_pass does NOT equal 'underRep' or 'missing'.
+   *  Updated: September 4, 2024
+   *    - Previously a feature passed if at least 1 occurence passed replicate + CV and ANY occurrence passed MRL. Now it only passes
+   *      if at least one occurrence passes all 3 checks.
    * @param {Object} countData Main object of count data
    * @param {Object} row The current row (feature)
    * @param {String} threshID The key, if we are looking at threshold "A" or "B"
@@ -751,12 +821,10 @@ d3.csv(csv_path).then(function(data) {
       'missing': 0,
       'present': 1,
       'underRep': 2,
-      'overCV': 3,
-      'overCVUnderMRL': 4,
-      'overCVOverMRL' : 5,
-      'underCV': 6,
-      'underCVUnderMRL': 7,
-      'underCVOverMRL': 8
+      'overCVUnderMRL': 3,
+      'overCVOverMRL' : 4,
+      'underCVUnderMRL': 5,
+      'underCVOverMRL': 6
     }
 
     // get 'sample suffixes'. Since we don't have a priori knowledge of the sample names, we need
@@ -772,17 +840,8 @@ d3.csv(csv_path).then(function(data) {
     // ensure we are not looking at an empty row at the end of CSV.
     if (row['Feature ID']) {
       // FOR THE FEATURE CHECK
-      // we want to first check if the feature has a given occurrence that passes
-      // both the replicate and CV checks (if 1 or more occurrence passes, the feature passes).
-      // If the feature fails one of these, then we do nothing further.
-      // If the feature passes replicate and CV checks, then we will check if the
-      // feature passes the MRL check -- if any occurrence passes the MRL check, then
-      // the feature passes the MRL check. To prevent ourselves from having to 
-      // reiterate back over the occurrences of a feature, we will create an mrlPass 
-      // flag variable whose value will only be used in the case that the feature
-      // passes the replicate and CV thresholds.
+      //  A feature passes if at least one occurence in that feature passes replicat + CV + MRL
       var max_pass = 'missing';
-      var mrlPass = false;
 
       // iterate over sample names (occurrences)
       for (let i in sample_names) {
@@ -807,13 +866,14 @@ d3.csv(csv_path).then(function(data) {
           // check if this occurrence within the feature passes MRL check (and hence causes the feature to pass)
           var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`; 
           var sample_mean_header = "Mean " + sample_name;
-          if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
-            mrlPass = true;
-          }
 
           // now we need to check the replicate threshold
           var sample_rep_header = "Detection Percentage " + sample_name;
           if (Number(row[sample_rep_header]) >= countData[`${threshID}`]["threshold"]["rep"]) {
+            
+            // if (threshID === 'A') {
+            //   console.log(Number(row[sample_rep_header]), countData[`${threshID}`]["threshold"]["rep"])
+            // }
             // we pass the replicate threshold
             countData[`${threshID}`]["counts"]["occ"]["overRep"] += 1;
 
@@ -823,39 +883,40 @@ d3.csv(csv_path).then(function(data) {
               // passed cv
               countData[`${threshID}`]["counts"]["occ"]["underCV"] += 1;
 
-              if (pass_hierarchy['underCV'] > pass_hierarchy[max_pass]) {
-                max_pass = 'underCV';
-              }
-
               // check if this occurrence passes MRL check
               var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`; 
               var sample_mean_header = "Mean " + sample_name;
               if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
-                // pass MRL (pass replicate-->pass CV-->pass MRL)
+                // pass MRL (pass replicate-->pass CV-->pass MRL) = (overRep,underCV,overMRL)
                 countData[`${threshID}`]["counts"]["occ"]["underCVOverMRL"] += 1;
+                max_pass = 'underCVOverMRL' // highest level of pass, so no need to check before assigning
               } else {
-                // fail MRL (pass replicate-->pass CV-->fail MRL)
+                // fail MRL (pass replicate-->pass CV-->fail MRL) = (overRep,underCV,underMRL)
                 countData[`${threshID}`]["counts"]["occ"]["underCVUnderMRL"] += 1;
+                if (pass_hierarchy['underCVUnderMRL'] > pass_hierarchy[max_pass]) {
+                  max_pass = 'underCVUnderMRL'
+                }
               }
 
             } else {
               // failed cv
               countData[`${threshID}`]["counts"]["occ"]["overCV"] += 1;
 
-              // if we failed CV check, we should update max_pass
-              if (pass_hierarchy['overCV'] > pass_hierarchy[max_pass]) {
-                max_pass = 'overCV';
-              }
-
               // check if this occurrence passes MRL check
               var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`
               var sample_mean_header = "Mean " + sample_name;
               if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
-                // pass MRL (pass replicate-->pass CV-->pass MRL)
+                // pass MRL (pass replicate-->fail CV-->pass MRL) = (overRep,overCV,overMRL)
                 countData[`${threshID}`]["counts"]["occ"]["overCVOverMRL"] += 1;
+                if (pass_hierarchy['overCVOverMRL'] > pass_hierarchy[max_pass]) {
+                  max_pass = 'overCVOverMRL'
+                }
               } else {
-                // fail MRL (pass replicate-->pass CV-->fail MRL)
+                // fail MRL (pass replicate-->fail CV-->fail MRL) = (overRep,overCV,underMRL)
                 countData[`${threshID}`]["counts"]["occ"]["overCVUnderMRL"] += 1;
+                if (pass_hierarchy['overCVUnderMRL'] > pass_hierarchy[max_pass]) {
+                  max_pass = 'overCVUnderMRL'
+                }
               }
             }
           } else {
@@ -871,22 +932,11 @@ d3.csv(csv_path).then(function(data) {
           countData[`${threshID}`]["counts"]["occ"]["missing"] += 1
         }
       }
-
-      // Now check for MRL IF the feature passed replicate and CV checks
-      if (max_pass === 'underCV') {
-        if (mrlPass === true) {
-          max_pass = 'underCVOverMRL';
-        } else {
-          max_pass = 'underCVUnderMRL';
-        }
-      } else {
-        if (mrlPass === true) {
-          max_pass = 'overCVOverMRL';
-        } else {
-          max_pass = 'overCVUnderMRL';
-        }
-      }
     } // END OF FEATURE
+
+    // if ((threshID === 'A') && (max_pass === 'overCVOverMRL')) {
+    //   console.log(row['Feature ID'])
+    // }
 
     return countData, max_pass
 
@@ -938,6 +988,9 @@ d3.csv(csv_path).then(function(data) {
   /**
    * Function for getting counts at both the occurence and Feature level simultaneously for both set of threshold values
    * March 14, 2024
+   *  Updated: August 30, 2024
+   *    - Error where header row was being usedas a feature, returning undefined values. Fixed by checking
+   *      if the row is an array -- it should be an object.
    * @param {Object} countData 
    * @returns {Object} the updated myData object with new counts
    */
@@ -948,15 +1001,19 @@ d3.csv(csv_path).then(function(data) {
     // iterate over rows (features)
     for (let iRow in data) {
       var row = data[iRow];
+      if (!(Array.isArray(row))) {
+        countData, max_pass = get_counts_by_row(countData, row, "A")
+        if (max_pass === 'missing') {
+          // console.log(row['Feature ID'])
+        }
+        if (max_pass) {
+          countData = update_feature_count(countData, max_pass, "A")
+        }
 
-      countData, max_pass = get_counts_by_row(countData, row, "A")
-      if (max_pass) {
-        countData = update_feature_count(countData, max_pass, "A")
-      }
-
-      countData, max_pass = get_counts_by_row(countData, row, "B")
-      if (max_pass) {
-        countData = update_feature_count(countData, max_pass, "B")
+        countData, max_pass = get_counts_by_row(countData, row, "B")
+        if (max_pass) {
+          countData = update_feature_count(countData, max_pass, "B")
+        }
       }
     }
 
