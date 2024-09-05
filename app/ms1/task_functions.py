@@ -1155,10 +1155,12 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     df_flagged["Final Occurrence Count (with flags)"] = docs["Final Occurrence Count (with flags)"]
     # Calculate Final Occurrence Percentage
     df["Final Occurrence Percentage"] = (
-        (df["Final Occurrence Count"] / df["Possible Occurrence Count"]).float().round(2)
+        (df["Final Occurrence Count"] / df["Possible Occurrence Count"]).astype(float).round(2)
     )
     df_flagged["Final Occurrence Percentage (with flags)"] = (
-        (df_flagged["Final Occurrence Count (with flags)"] / df_flagged["Possible Occurrence Count"]).float().round(2)
+        (df_flagged["Final Occurrence Count (with flags)"] / df_flagged["Possible Occurrence Count"])
+        .astype(float)
+        .round(2)
     )
     return df, df_flagged
 
