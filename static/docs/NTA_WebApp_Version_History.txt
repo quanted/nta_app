@@ -1,13 +1,40 @@
 NTA WebApp Version History and Known Issues Documentation
-Version 0.2.2
-Updated 7/30/2024
+Version 0.3
+Updated 9/5/2024
 
 *************
 Known Issues:
 *************
-1) Merge workflow: The new version of the MS1 results is causing the merge workflow to throw an error.
-2) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
-3) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
+1) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
+2) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
+3) Decision tree: An MRL threshold is applied to the data even if blank samples do not meet the blank sample replicate threshold
+
+************************
+Version 0.3 - 9/5/2024
+************************
+- MS1 results file:
+  - Sheet names updated
+  - Column names and order updated throughout all sheets
+  - True/False column (i.e. "Duplicate Feature?") values updated: Nan values replaced with 0
+  - Analysis parameters sheet: Text fields updated
+  - Decision documentation sheet: Filter labels updated/standardized
+  - Decision documentation sheet: Additional occurrence count columns added
+  - Final Occurrence Matrix sheets: Additional occurrence count columns added
+- Tracer plots:
+  - General aesthetics updated
+- CV scatterplot:
+  - Count data for occurrences added to legend
+- Occurrence heatmap:
+  - Updated to reflect results from user defined MRL multiplier
+  - Legend text updated
+- Decision tree (formally referred to as logic tree):
+  - General aesthetics updated
+  - Filtering logic fixed for replicate and CV branches
+  - Download image aesthetics updated
+- MS2 workflow:
+  - Parser updated to handle Thermo MGF format
+- Merge workflow: 
+  - Now properly merging output from MS1 and MS2 workflows
 
 ************************
 Version 0.2.2 - 7/30/2024
