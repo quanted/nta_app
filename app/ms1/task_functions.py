@@ -750,6 +750,8 @@ def column_sort_DFS(df_in, passthru):
     df = pd.merge(df, pt, how="left", on=["Feature ID"])
     # Subset data with new column list
     df_reorg = df[new_col_org]
+    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
+    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
     df_reorg.rename(columns={"Ionization_Mode": "Ionization Mode", "Retention_Time": "Retention Time"}, inplace=True)
     # Return re-organized dataframe
     return df_reorg
@@ -812,6 +814,8 @@ def column_sort_TSR(df_in, passthru):
     if "DTXSID" not in df.columns:
         df["DTXSID"] = ""
     df_reorg = df[new_col_org]
+    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
+    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
     df_reorg.rename(
         columns={
             "Monoisotopic_Mass": "Mass",
@@ -1139,6 +1143,11 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     df_flagged["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
     df["Final Occurrence Count"] = docs["Final Occurrence Count"]
     df_flagged["Final Occurrence Count"] = docs["Final Occurrence Count"]
+    # Calculate Final Occurrence Percentage
+    df["Final Occurrence Percentage"] = (df["Final Occurrence Count"] / df["Possible Occurrence Count"]).round(2)
+    df_flagged["Final Occurrence Percentage"] = (
+        df_flagged["Final Occurrence Count"] / df_flagged["Possible Occurrence Count"]
+    ).round(2)
     return df, df_flagged
 
 
@@ -1387,9 +1396,6 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
     ]
     blank_subtracted_means = dft.columns[dft.columns.str.contains(pat="BlankSub")].tolist()
 
-    # Calculate Final Occurrence Percentage
-    dft["Final Occurrence Percentage"] = dft["Final Occurrence Count"] / dft["Possible Occurrence Count"]
-
     # Check for 'Formula' (should be deprecated), then check for tracer_df
     # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
     if "Formula" in dft.columns:
@@ -1469,6 +1475,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
             )
             dft = dft[cols]
     # Rename columns
+    dft["Ionization_Mode"] = dft["Ionization_Mode"].replace("Esi+", "ESI+")
+    dft["Ionization_Mode"] = dft["Ionization_Mode"].replace("Esi-", "ESI-")
     dft.rename({"Ionization_Mode": "Ionization Mode", "Retention_Time": "Retention Time"}, axis=1, inplace=True)
     # Return re-combined, sorted dataframe for output as 'Cleaned_feature_results_reduced' and 'Results_flagged'
     return dft
