@@ -601,12 +601,12 @@ def statistics(df_in):
     all_headers = parse_headers(df_in)
     sam_headers = [i for i in all_headers if len(i) > 1]
     # Create column names for each statistics from sam_headers
-    mean_cols = ["Mean " + i[0][:-2] for i in sam_headers]
-    med_cols = ["Median " + i[0][:-2] for i in sam_headers]
-    std_cols = ["STD " + i[0][:-2] for i in sam_headers]
-    cv_cols = ["CV " + i[0][:-2] for i in sam_headers]
-    nabun_cols = ["Detection Count " + i[0][:-2] for i in sam_headers]
-    rper_cols = ["Detection Percentage " + i[0][:-2] for i in sam_headers]
+    mean_cols = ["Mean " + i[0][:-1] for i in sam_headers]
+    med_cols = ["Median " + i[0][:-1] for i in sam_headers]
+    std_cols = ["STD " + i[0][:-1] for i in sam_headers]
+    cv_cols = ["CV " + i[0][:-1] for i in sam_headers]
+    nabun_cols = ["Detection Count " + i[0][:-1] for i in sam_headers]
+    rper_cols = ["Detection Percentage " + i[0][:-1] for i in sam_headers]
     # Concatenate list comprehensions to calculate each statistic for each sample
     means = pd.concat(
         [df[x].mean(axis=1).round(4).rename(col) for x, col in zip(sam_headers, mean_cols)],
