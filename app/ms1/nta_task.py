@@ -1240,8 +1240,10 @@ class NtaRun:
 
         self.data_map["Decision Documentation"] = self.doc_combined
         # self.mongo_save(self.df_combined, FILENAMES['combined'])
-        self.mpp_ready = task_fun.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool)
-        self.mpp_ready_flagged = task_fun.MPP_Ready(self.df_flagged_combined, self.pass_through, tracer_df_bool)
+        self.mpp_ready = task_fun.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool, flagged=False)
+        self.mpp_ready_flagged = task_fun.MPP_Ready(
+            self.df_flagged_combined, self.pass_through, tracer_df_bool, flagged=True
+        )
         # self.data_map["Final Occurrence Matrix"] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
         self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready)
         self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(self.mpp_ready_flagged)

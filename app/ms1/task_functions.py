@@ -1072,6 +1072,10 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     docs["Possible Occurrences Removed Count"] = str_mask.sum(axis=1) + missing.sum(axis=1)
     # Count number of missing samples from missing mask
     docs["# of missing occurrences"] = missing.sum(axis=1)
+    docs["Unfiltered Occurrence Count"] = docs["Possible Occurrence Count"] - docs["# of missing occurrences"]
+    docs["Unfiltered Occurrence Removed Count"] = (
+        docs["Unfiltered Occurrence Count"] - docs["Possible Occurrences Removed Count"]
+    )
     # Count # of times an occurrence flag contains R, CV, or MRL, and count # of just CV flags
     contains_R = pd.concat([docs[mean].str.contains("R") for mean in Mean_Samples], axis=1)
     contains_CV = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1)
@@ -1080,6 +1084,10 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     docs["# contains R flag"] = contains_R.sum(axis=1)
     docs["# contains CV flag"] = contains_CV.sum(axis=1)
     docs["# is CV flag"] = is_CV.sum(axis=1)
+    docs["Unfiltered Occurrence Removed Count (with flags)"] = docs["# is CV flag"]
+    docs["Final Occurrence Count (with flags)"] = (
+        docs["Unfiltered Occurrence Removed Count (with flags)"] + docs["Final Occurrence Count"]
+    )
     docs["# contains MRL flag"] = contains_MRL.sum(axis=1)
     # Determine if any samples are dropped for a feature
     docs["Any Occurrences Removed?"] = np.where(
@@ -1139,14 +1147,14 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     # Add columns from docs to df / df_flagged
     df["Possible Occurrence Count"] = docs["Possible Occurrence Count"]
     df_flagged["Possible Occurrence Count"] = docs["Possible Occurrence Count"]
-    df["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
-    df_flagged["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
+    # df["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
+    # df_flagged["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
     df["Final Occurrence Count"] = docs["Final Occurrence Count"]
-    df_flagged["Final Occurrence Count"] = docs["Final Occurrence Count"]
+    df_flagged["Final Occurrence Count (with flags)"] = docs["Final Occurrence Count (with flags)"]
     # Calculate Final Occurrence Percentage
     df["Final Occurrence Percentage"] = (df["Final Occurrence Count"] / df["Possible Occurrence Count"]).round(2)
-    df_flagged["Final Occurrence Percentage"] = (
-        df_flagged["Final Occurrence Count"] / df_flagged["Possible Occurrence Count"]
+    df_flagged["Final Occurrence Percentage (with flags)"] = (
+        df_flagged["Final Occurrence Count (with flags)"] / df_flagged["Possible Occurrence Count"]
     ).round(2)
     return df, df_flagged
 
@@ -1335,8 +1343,11 @@ def combine_doc(doc1, doc2, tracer_df=False):
                 "Duplicate Feature?",
                 "Feature Removed?",
                 "Possible Occurrence Count",
-                "Possible Occurrences Removed Count",
+                "Unfiltered Occurrence Count",
+                "Unfiltered Occurrence Removed Count",
                 "Final Occurrence Count",
+                "Unfiltered Occurrence Removed Count (with flags)",
+                "Final Occurrence Count (with flags)",
             ]
             + Mean_MB
             + Mean_Samples
@@ -1349,8 +1360,11 @@ def combine_doc(doc1, doc2, tracer_df=False):
                 "Duplicate Feature?",
                 "Feature Removed?",
                 "Possible Occurrence Count",
-                "Possible Occurrences Removed Count",
+                "Unfiltered Occurrence Count",
+                "Unfiltered Occurrence Removed Count",
                 "Final Occurrence Count",
+                "Unfiltered Occurrence Removed Count (with flags)",
+                "Final Occurrence Count (with flags)",
             ]
             + Mean_MB
             + Mean_Samples
@@ -1364,7 +1378,7 @@ def combine_doc(doc1, doc2, tracer_df=False):
     return dfc
 
 
-def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
+def MPP_Ready(dft, pts, tracer_df=False, flagged=False, directory="", file=""):
     """
     Function that re-combines the pass-through columns with the processed dataframe
     plus some final column sorting
@@ -1398,7 +1412,7 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
 
     # Check for 'Formula' (should be deprecated), then check for tracer_df
     # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
-    if "Formula" in dft.columns:
+    if flagged:
         if tracer_df:
             cols = (
                 pt_cols
@@ -1411,8 +1425,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
-                    "Final Occurrence Count",
-                    "Final Occurrence Percentage",
+                    "Final Occurrence Count (with flags)",
+                    "Final Occurrence Percentage (with flags)",
                 ]
                 + raw_samples
                 + blank_subtracted_means
@@ -1429,8 +1443,8 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
                     "Is Adduct or Loss?",
                     "Has Adduct or Loss?",
                     "Adduct or Loss Info",
-                    "Final Occurrence Count",
-                    "Final Occurrence Percentage",
+                    "Final Occurrence Count (with flags)",
+                    "Final Occurrence Percentage (with flags)",
                 ]
                 + raw_samples
                 + blank_subtracted_means
