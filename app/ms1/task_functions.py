@@ -1067,15 +1067,21 @@ def feat_removal_flag(docs, Mean_Samples, missing):
         axis=1,
     )
     docs["Final Occurrence Count"] = num_mask.sum(axis=1)
-    # Generate mask of str values in docs (i.e., occurrences with flags are True)
-    str_mask = pd.concat([docs[mean].str.contains("R|CV|MRL") for mean in Mean_Samples], axis=1)
-    docs["Possible Occurrences Removed Count"] = str_mask.sum(axis=1) + missing.sum(axis=1)
     # Count number of missing samples from missing mask
     docs["# of missing occurrences"] = missing.sum(axis=1)
     docs["Unfiltered Occurrence Count"] = docs["Possible Occurrence Count"] - docs["# of missing occurrences"]
-    docs["Unfiltered Occurrence Removed Count"] = (
-        docs["Unfiltered Occurrence Count"] - docs["Possible Occurrences Removed Count"]
+    # Generate mask of str values in docs (i.e., occurrences with ANY flags are True)
+    str_mask = pd.concat([docs[mean].str.contains("R|CV|MRL") for mean in Mean_Samples], axis=1)
+    docs["Unfiltered Occurrence Removed Count"] = docs["Unfiltered Occurrence Count"] - str_mask.sum(axis=1)
+    # Generate mask of str values in docs (i.e., occurrences with R and MRL flags are True)
+    str_mask = pd.concat([docs[mean].str.contains("R|MRL") for mean in Mean_Samples], axis=1)
+    docs["Unfiltered Occurrence Removed Count (with flags)"] = docs["Unfiltered Occurrence Count"] - str_mask.sum(
+        axis=1
     )
+    docs["Final Occurrence Count (with flags)"] = (
+        docs["Unfiltered Occurrence Count"] - docs["Unfiltered Occurrence Removed Count (with flags)"]
+    )
+
     # Count # of times an occurrence flag contains R, CV, or MRL, and count # of just CV flags
     contains_R = pd.concat([docs[mean].str.contains("R") for mean in Mean_Samples], axis=1)
     contains_CV = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1)
@@ -1084,10 +1090,6 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     docs["# contains R flag"] = contains_R.sum(axis=1)
     docs["# contains CV flag"] = contains_CV.sum(axis=1)
     docs["# is CV flag"] = is_CV.sum(axis=1)
-    docs["Unfiltered Occurrence Removed Count (with flags)"] = docs["# is CV flag"]
-    docs["Final Occurrence Count (with flags)"] = (
-        docs["Unfiltered Occurrence Removed Count (with flags)"] + docs["Final Occurrence Count"]
-    )
     docs["# contains MRL flag"] = contains_MRL.sum(axis=1)
     # Determine if any samples are dropped for a feature
     docs["Any Occurrences Removed?"] = np.where(
