@@ -53,10 +53,10 @@ def reduced_file(df_in):
     to_drop = [
         item for sublist in headers for item in sublist if (len(sublist) > 1) & (not any(x in item for x in keeps_str))
     ]
-    to_drop.extend(df.columns[(df.columns.str.contains(pat="CV_|N_Abun_|Median_|STD_") == True)].tolist())
+    to_drop.extend(df.columns[(df.columns.str.contains(pat="CV |Detection Count |Median |STD ") == True)].tolist())
     to_drop.extend(
         df.columns[
-            (df.columns.str.contains(pat="Mean_") == True)
+            (df.columns.str.contains(pat="Mean ") == True)
             & (df.columns.str.contains(pat="MB|blank|blanks|BLANK|Blank|Sub") == False)
         ].tolist()
     )
@@ -173,10 +173,10 @@ def format_tracer_file(df_in):
     df = df_in.copy()
     # NTAW-94 comment out the following line. Compound is no longer being used
     # df = df.drop(columns=['Compound', 'Score'])
-    rt_diff = df["Observed_Retention_Time"] - df["Retention_Time"]
-    mass_diff = ((df["Observed_Mass"] - df["Monoisotopic_Mass"]) / df["Monoisotopic_Mass"]) * 1000000
-    df.insert(7, "Mass_Error_PPM", mass_diff)
-    df.insert(9, "Retention_Time_Difference", rt_diff)
+    rt_diff = df["Observed Retention Time"] - df["Retention_Time"]
+    mass_diff = ((df["Observed Mass"] - df["Monoisotopic_Mass"]) / df["Monoisotopic_Mass"]) * 1000000
+    df.insert(7, "Mass Error (PPM)", mass_diff)
+    df.insert(9, "Retention Time Difference", rt_diff)
     return df
 
 

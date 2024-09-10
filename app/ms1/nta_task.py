@@ -185,7 +185,6 @@ class NtaRun:
         self.check_existence_of_mass_column(self.dfs)
         # 0: check for alternate spellings of 'Retention_Time' column
         self.check_retention_time_column(self.dfs)
-
         # 0: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
         # 0: create a status in mongo
@@ -431,8 +430,8 @@ class NtaRun:
             value = self.parameters[key][1]
             df_analysis_parameters.loc[len(df_analysis_parameters)] = [label, value]
 
-        # add the dataframe to the data_map with the sheet name of 'Analysis_Parameters'
-        self.data_map["Analysis_Parameters"] = df_analysis_parameters
+        # add the dataframe to the data_map with the sheet name of 'Analysis Parameters'
+        self.data_map["Analysis Parameters"] = df_analysis_parameters
 
         return
 
@@ -543,25 +542,25 @@ class NtaRun:
             self.dfs[1] = task_fun.adduct_identifier(
                 self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
-            self.data_map["Feature_statistics_positive"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature_ID"])
+            self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
+                self.dfs[0], self.pass_through[0]
             )
-            self.data_map["Feature_statistics_negative"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature_ID"])
+            self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
+                self.dfs[1], self.pass_through[1]
             )
         elif self.dfs[0] is not None:
             self.dfs[0] = task_fun.adduct_identifier(
                 self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
             )
-            self.data_map["Feature_statistics_positive"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[0], self.pass_through[0], how="left", on=["Feature_ID"])
+            self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
+                self.dfs[0], self.pass_through[0]
             )
         else:
             self.dfs[1] = task_fun.adduct_identifier(
                 self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
             )
-            self.data_map["Feature_statistics_negative"] = task_fun.column_sort_DFS(
-                pd.merge(self.dfs[1], self.pass_through[1], how="left", on=["Feature_ID"])
+            self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
+                self.dfs[1], self.pass_through[1]
             )
         return
 
@@ -574,39 +573,60 @@ class NtaRun:
         max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
         max_replicate_cv_value = float(max_replicate_cv_value)
 
-        # get dataframe 'Feature_statistics_positive' if it exists else None
-        dfPos = self.data_map["Feature_statistics_positive"] if "Feature_statistics_positive" in self.data_map else None
-        # get dataframe 'Feature_statistics_negative' if it exists else None
-        dfNeg = self.data_map["Feature_statistics_negative"] if "Feature_statistics_negative" in self.data_map else None
-        # get 'Tracer_Sample_Results' if it exists else None
-        dfTracer = self.data_map["Tracer_Sample_Results"] if "Tracer_Sample_Results" in self.data_map else None
+        # get dataframe 'All Detection Statistics (Pos)' if it exists else None
+        dfPos = (
+            self.data_map["All Detection Statistics (Pos)"]
+            if "All Detection Statistics (Pos)" in self.data_map
+            else None
+        )
+        # get dataframe 'All Detection Statistics (Neg)' if it exists else None
+        dfNeg = (
+            self.data_map["All Detection Statistics (Neg)"]
+            if "All Detection Statistics (Neg)" in self.data_map
+            else None
+        )
+        # get 'Tracer Detection Statistics' if it exists else None
+        dfTracer = (
+            self.data_map["Tracer Detection Statistics"] if "Tracer Detection Statistics" in self.data_map else None
+        )
         # Add conditional; if tracer exists reformat
         if dfTracer is not None:
-            tracers = dfTracer[["Observed_Mass", "Observed_Retention_Time"]].copy()
-            tracers.rename({"Observed_Mass": "Mass"}, axis=1, inplace=True)
-            tracers.rename({"Observed_Retention_Time": "Retention_Time"}, axis=1, inplace=True)
+            tracers = dfTracer[["Observed Mass", "Observed Retention Time"]].copy()
+            tracers.rename({"Observed Mass": "Mass"}, axis=1, inplace=True)
+            tracers.rename({"Observed Retention Time": "Retention Time"}, axis=1, inplace=True)
             tracers["spike"] = 1
+            logger.info("cv scatterplot tracers columns= {}".format(tracers.columns.values))
         # combine the two dataframes, ignore non-existing dataframes
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
             if dfPos is not None and dfNeg is not None
-            else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
+            else dfPos
+            if dfPos is not None
+            else dfNeg
+            if dfNeg is not None
+            else None
         )
         # Get sample headers
         all_headers = task_fun.parse_headers(dfCombined)
-        sam_headers = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
+        non_samples = ["MRL"]
+        sam_headers = [
+            sublist[0][:-1]
+            for sublist in all_headers
+            if len(sublist) > 1
+            if not any(x in sublist[0] for x in non_samples)
+        ]
         # Isolate sample_groups from stats columns
-        prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_"]
+        prefixes = ["Mean ", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
         # Find CV cols from df, subset cv_df from df
-        cv_cols = ["CV_" + col for col in sample_groups]
+        cv_cols = ["CV " + col for col in sample_groups]
         cv_df = dfCombined[cv_cols]
         # Find CV cols from df, subset cv_df from df
-        mean_cols = ["Mean_" + col for col in sample_groups]
+        mean_cols = ["Mean " + col for col in sample_groups]
         mean_df = dfCombined[mean_cols]
         # Carry over Mass and Retention_Time
         cv_df["Mass"] = dfCombined["Mass"]
-        cv_df["Retention_Time"] = dfCombined["Retention_Time"]
+        cv_df["Retention Time"] = dfCombined["Retention Time"]
         # AC 2/8/2024 Get minimum and maximum abundance values of dataframe (mean columns) for the purposes of setting the x-axis range
         min_abundance_value = mean_df.min(numeric_only=True).min()
         max_abundance_value = mean_df.max(numeric_only=True).max()
@@ -623,14 +643,14 @@ class NtaRun:
         # Loop through sample groups
         for x in sample_groups:
             # Take each sample's CV and mean, store in dummy variable
-            cv = "CV_" + x
-            mean = "Mean_" + x
+            cv = "CV " + x
+            mean = "Mean " + x
             dum = pd.concat([cv_df[cv], mean_df[mean]], axis=1)
             dum.rename({cv: "CV"}, axis=1, inplace=True)
             dum.rename({mean: "Mean"}, axis=1, inplace=True)
             dum["sample"] = x
             dum["Mass"] = cv_df["Mass"]
-            dum["Retention_Time"] = cv_df["Retention_Time"]
+            dum["Retention Time"] = cv_df["Retention Time"]
             # Add sample type (blank or sample)
             if any(i in x for i in blanks):
                 dum["type"] = "blank"
@@ -642,11 +662,12 @@ class NtaRun:
         # Concatenate plot, drop NAs
         plot = pd.concat(li)
         plot.dropna(axis=0, subset=["CV", "Mean"], how="any", inplace=True)
+        logger.info("cv scatterplot plot columns= {}".format(plot.columns.values))
 
         # Conditional for if tracers are present:
         if dfTracer is not None:
             # Merge df with tracers to get labels
-            plot2 = pd.merge(plot, tracers, how="left", on=["Mass", "Retention_Time"])
+            plot2 = pd.merge(plot, tracers, how="left", on=["Mass", "Retention Time"])
         else:
             # If tracer plot doesn't exist, still need to create a spike column that is empty
             plot["spike"] = ""
@@ -668,7 +689,6 @@ class NtaRun:
             hue="spike",
             edgecolor="black",
             alpha=0.5,
-            legend=False,
             ax=axes[0],
         )
         # Add CV red dashed line
@@ -688,6 +708,28 @@ class NtaRun:
             weight="bold",
             size=14,
         )
+        # Perform occurrence counts above and below CV by sample type
+        red_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"])
+        red_flag_count = sum(
+            plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"] > max_replicate_cv_value
+        )
+        white_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"])
+        white_flag_count = sum(
+            plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
+        )
+        # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
+        legend = a.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
+        # Set legend labels
+        if dfTracer is not None:
+            legend.get_texts()[0].set_text(f"unknowns ({white_flag_count} of {white_count} above line)")
+            legend.get_texts()[1].set_text(
+                f"tracers ({red_flag_count} of {red_count} above line)"
+            )  # If tracers are present, add secondary legend label
+        # Make it pretty
+        frame = legend.get_frame()  # sets up for color, edge, and transparency
+        frame.set_facecolor("lightgray")  # color of legend
+        frame.set_edgecolor("black")  # edge color of legend
+        frame.set_alpha(1)  # deals with transparency
         # Adjust axes labels
         axes[0].set_title(titleText + ": Blanks", fontsize=18, weight="bold")
         axes[0].set_xlabel("Mean Abundance", fontsize=14)
@@ -699,6 +741,7 @@ class NtaRun:
         axes[0].set(xscale="log")
         axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
         axes[0].tick_params(axis="both", which="both", labelsize=12)
+
         # Sample plot
         b = sns.scatterplot(
             data=plot2.loc[((plot2["type"] != "blank")), :].sort_values("spike"),
@@ -726,12 +769,23 @@ class NtaRun:
             weight="bold",
             size=14,
         )
+        # Perform occurrence counts above and below CV by sample type
+        red_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"])
+        red_flag_count = sum(
+            plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"] > max_replicate_cv_value
+        )
+        white_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"])
+        white_flag_count = sum(
+            plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
+        )
         # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
-        legend = b.legend(title="Features")
+        legend = b.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
         # Set legend labels
         if dfTracer is not None:
-            legend.get_texts()[0].set_text("Unknowns")
-            legend.get_texts()[1].set_text("Tracers")  # If tracers are present, add secondary legend label
+            legend.get_texts()[0].set_text(f"unknowns ({white_flag_count} of {white_count} above line)")
+            legend.get_texts()[1].set_text(
+                f"tracers ({red_flag_count} of {red_count} above line)"
+            )  # If tracers are present, add secondary legend label
         # Make it pretty
         frame = legend.get_frame()  # sets up for color, edge, and transparency
         frame.set_facecolor("lightgray")  # color of legend
@@ -770,43 +824,62 @@ class NtaRun:
         # Get user input CV and Replicate thresholds
         max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
         min_replicate_hits_percent = self.parameters["min_replicate_hits"][1]
+        MRL_mult = float(self.parameters["mrl_std_multiplier"][1])
         # convert max_replicate_cv_value to a numeric value
         max_replicate_cv_value = pd.to_numeric(self.parameters["max_replicate_cv"][1], errors="coerce")
         # convert min_replicate_hits_percent to a numeric value
         min_replicate_hits_percent = pd.to_numeric(self.parameters["min_replicate_hits"][1], errors="coerce")
-        # get dataframe 'Feature_statistics_positive' if it exists else None
-        dfPos = self.data_map["Feature_statistics_positive"] if "Feature_statistics_positive" in self.data_map else None
-        # get dataframe 'Feature_statistics_negative' if it exists else None
-        dfNeg = self.data_map["Feature_statistics_negative"] if "Feature_statistics_negative" in self.data_map else None
+        # get dataframe 'All Detection Statistics (Pos)' if it exists else None
+        dfPos = (
+            self.data_map["All Detection Statistics (Pos)"]
+            if "All Detection Statistics (Pos)" in self.data_map
+            else None
+        )
+        # get dataframe 'All Detection Statistics (Neg)' if it exists else None
+        dfNeg = (
+            self.data_map["All Detection Statistics (Neg)"]
+            if "All Detection Statistics (Neg)" in self.data_map
+            else None
+        )
         # combine the two dataframes. Ignnore non-existing dataframes
         dfCombined = (
             pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
             if dfPos is not None and dfNeg is not None
-            else dfPos if dfPos is not None else dfNeg if dfNeg is not None else None
+            else dfPos
+            if dfPos is not None
+            else dfNeg
+            if dfNeg is not None
+            else None
         )
 
         # Get sample headers
         all_headers = task_fun.parse_headers(dfCombined)
-        sam_headers = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
+        non_samples = ["MRL"]
+        sam_headers = [
+            sublist[0][:-1]
+            for sublist in all_headers
+            if len(sublist) > 1
+            if not any(x in sublist[0] for x in non_samples)
+        ]
         # Isolate sample_groups from stats columns
-        prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_"]
+        prefixes = ["Mean ", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
         sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
         logger.info("sample_groups= {}".format(sample_groups))
         # Blank_MDL - need to check what the blank samples are actually named
         blank_strings = ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"]
         blank_col = [item for item in sample_groups if any(x in item for x in blank_strings)]
         logger.info("blank_col= {}".format(blank_col))
-        blank_mean = "Mean_" + blank_col[0]
-        blank_std = "STD_" + blank_col[0]
+        blank_mean = "Mean " + blank_col[0]
+        blank_std = "STD " + blank_col[0]
         # Calculate MDL
         # AC 6/18/2024: Need to pull in MRL multiplier for MRL calculation
-        dfCombined["MDL"] = dfCombined[blank_mean] + 3 * dfCombined[blank_std]
+        dfCombined["MDL"] = dfCombined[blank_mean] + MRL_mult * dfCombined[blank_std]
         dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
         dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
         # Find CV, Rep_Percent, and Mean cols from df
-        cv_cols = ["CV_" + col for col in sample_groups]
-        rper_cols = ["Replicate_Percent_" + col for col in sample_groups]
-        mean_cols = ["Mean_" + col for col in sample_groups]
+        cv_cols = ["CV " + col for col in sample_groups]
+        rper_cols = ["Detection Percentage " + col for col in sample_groups]
+        mean_cols = ["Mean " + col for col in sample_groups]
         # Subset CV cols from df
         cv_df = dfCombined[cv_cols]
 
@@ -862,7 +935,7 @@ class NtaRun:
         colorbar.set_ticks([-0.667, 0, 0.667])
         colorbar.set_ticklabels(
             [
-                "non-detect ({})".format(nan_.sum().sum()),
+                "no occurrence ({})".format(nan_.sum().sum()),
                 "CV <= {} ({})".format(max_replicate_cv_value, below.sum().sum()),
                 "CV > {} ({})".format(max_replicate_cv_value, above.sum().sum()),
             ]
@@ -1004,18 +1077,23 @@ class NtaRun:
 
         # implements part of NTAW-143
         dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
-
+        if self.pass_through[0] is not None and self.pass_through[1] is not None:
+            passthru = pd.concat([self.pass_through[0], self.pass_through[1]])
+        elif self.pass_through[0] is not None:
+            passthru = self.pass_through[0]
+        else:
+            passthru = self.pass_through[1]
         # remove the columns 'Detection_Count(non-blank_samples)' and 'Detection_Count(non-blank_samples)(%)'
         # dft = dft.drop(columns=['Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'])
 
-        self.data_map["Tracer_Sample_Results"] = task_fun.column_sort_TSR(dft)
+        self.data_map["Tracer Detection Statistics"] = task_fun.column_sort_TSR(dft, passthru)
 
         # create summary table
         # AC 12/7/2023: commented out to move to function after clean_features
         # if 'DTXSID' not in dft.columns:
         #     dft['DTXSID'] = ''
-        # dft = dft[['Feature_ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass_Error_PPM', 'Retention_Time_Difference', 'Max_CV_across_sample']]
-        # self.data_map['Tracers_Summary'] = dft
+        # dft = dft[['Feature ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass Error (PPM)', 'Retention Time Difference', 'Max CV Across Samples']]
+        # self.data_map['Tracer Summary'] = dft
 
         # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
         # self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
@@ -1090,12 +1168,12 @@ class NtaRun:
         return
 
     def merge_columns_onto_tracers(self):
-        # self.data_map['Tracer_Sample_Results'] = task_fun.column_sort_TSR(dft)
+        # self.data_map['Tracer Detection Statistics'] = task_fun.column_sort_TSR(dft)
         if self.tracer_df is None:
             logger.info("No tracer file, skipping this step.")
             return
         # Grab the tracer dataframe from self.data_map
-        dft = self.data_map["Tracer_Sample_Results"]
+        dft = self.data_map["Tracer Detection Statistics"]
         logger.info("dft: {}".format(dft.columns))
         """
         # Go through both negative and positive mode dataframes combine when present into a new temp dataframe
@@ -1107,10 +1185,10 @@ class NtaRun:
             temp_df = self.dfs[1]
               
         # Merge combined modes dataframe with tracer dataframe            
-        dft = pd.merge(dft, temp_df[['Feature_ID', 'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']], how='left', on='Feature_ID')
+        dft = pd.merge(dft, temp_df[['Feature ID', 'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']], how='left', on='Feature ID')
         
         # Push new version of tracers dataframe back into data_map
-        self.data_map['Tracer_Sample_Results'] = dft
+        self.data_map['Tracer Detection Statistics'] = dft
 
         logger.info("dft post-merge: {}".format(dft.columns))
         """
@@ -1119,18 +1197,19 @@ class NtaRun:
             dft["DTXSID"] = ""
         dft = dft[
             [
-                "Feature_ID",
-                "Chemical_Name",
+                "Feature ID",
+                "Chemical Name",
                 "DTXSID",
-                "Ionization_Mode",
-                "Mass_Error_PPM",
-                "Retention_Time_Difference",
-                "Max_CV_across_sample",
-                "Occurrence_Count(across_all_replicates)",
-                "Occurrence_Count(across_all_replicates)(%)",
+                "Ionization Mode",
+                "Mass Error (PPM)",
+                "Retention Time Difference",
+                "Total Detection Count",
+                "Total Detection Percentage",
+                "Max CV Across Samples",
             ]
         ]
-        self.data_map["Tracers_Summary"] = dft
+
+        self.data_map["Tracer Summary"] = dft
         return
 
     def create_flags(self):
@@ -1159,13 +1238,15 @@ class NtaRun:
         else:
             self.doc_combined = task_fun.combine_doc(self.docs[0], self.docs[1], tracer_df=tracer_df_bool)
 
-        self.data_map["Filter_documentation"] = self.doc_combined
+        self.data_map["Decision Documentation"] = self.doc_combined
         # self.mongo_save(self.df_combined, FILENAMES['combined'])
-        self.mpp_ready = task_fun.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool)
-        self.mpp_ready_flagged = task_fun.MPP_Ready(self.df_flagged_combined, self.pass_through, tracer_df_bool)
-        # self.data_map['Cleaned_feature_results_full'] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
-        self.data_map["Cleaned_feature_results_reduced"] = reduced_file(self.mpp_ready)
-        self.data_map["Results_flagged"] = reduced_file(self.mpp_ready_flagged)
+        self.mpp_ready = task_fun.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool, flagged=False)
+        self.mpp_ready_flagged = task_fun.MPP_Ready(
+            self.df_flagged_combined, self.pass_through, tracer_df_bool, flagged=True
+        )
+        # self.data_map["Final Occurrence Matrix"] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
+        self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready)
+        self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(self.mpp_ready_flagged)
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save=True):
         logging.info(
@@ -1209,14 +1290,14 @@ class NtaRun:
                 orient="split",
                 dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
             )
-        dsstox_search_df = self.mpp_ready_flagged[["Feature_ID", "Mass", "Retention_Time"]].merge(
+        dsstox_search_df = self.mpp_ready_flagged[["Feature ID", "Mass", "Retention Time"]].merge(
             dsstox_search_df, how="right", left_on="Mass", right_on="INPUT"
         )
 
         # 5/23/2024 AC - Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
 
-        self.data_map["chemical_results"] = dsstox_search_df
+        self.data_map["Chemical Results"] = dsstox_search_df
         self.search_results = dsstox_search_df
 
     def perform_hcd_search(self):
@@ -1225,7 +1306,7 @@ class NtaRun:
             dtxsid_list = self.search_results["DTXSID"].unique()
             hcd_results = batch_search_hcd(dtxsid_list)
             self.search_results = self.search_results.merge(hcd_results, how="left", on="DTXSID")
-            self.data_map["chemical_results"] = self.search_results
+            self.data_map["Chemical Results"] = self.search_results
             self.data_map["hcd_search"] = hcd_results
 
     def store_data(self):

@@ -11,7 +11,7 @@ import numpy as np
 import math
 
 # from .functions_Universal_v3 import parse_headers
-from .task_functions import parse_headers
+from .task_functions import parse_headers, determine_string_width
 import io
 import logging
 
@@ -772,20 +772,22 @@ class WebApp_plotter:
                 # legend innards
                 # AC Loop through legend label generation
                 legend_x_coord = []  # List of x-coordinates for sample group in legend
-                character_increment = 0.018  # How much to increment x-coordinate per character
+                # character_increment = 0.018  # How much to increment x-coordinate per character
+                base_separation = 0.025  # Flat base amount of separation between group labels
 
                 for b in range(len(sample_group_unique)):
                     # Get x coordinate of sample group legend text based on number of characters
                     if b == 0:
                         legend_x_coord.append(0.55)  # First x-coordinate is always 0.55
-                        char_count = len(sample_group_unique[b])
-                        next_x_increment = char_count * character_increment
+                        # char_count = len(sample_group_unique[b])
+                        # next_x_increment = char_count * character_increment + base_separation
+                        next_x_increment = determine_string_width(sample_group_unique[b]) + base_separation
                     else:
                         last_value = legend_x_coord[-1]
                         legend_x_coord.append(last_value + next_x_increment)
-                        char_count = len(sample_group_unique[b])
-                        next_x_increment = char_count * character_increment
-
+                        # char_count = len(sample_group_unique[b])
+                        # next_x_increment = char_count * character_increment + base_separation
+                        next_x_increment = determine_string_width(sample_group_unique[b]) + base_separation
                 # Display the legend text for each sample group
                 for a in range(len(sample_group_unique)):
                     fig.text(

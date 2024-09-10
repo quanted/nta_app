@@ -1,6 +1,6 @@
 {% load static %}
 
-<script src="{% static 'js/scripts_header_eco.js' %}" type="text/javascript"></script>
+<!--<script src="{% static 'js/scripts_header_eco.js' %}" type="text/javascript"></script>-->
 
 <script src="{% static 'js/d3.v7.min.js' %}" type="text/javascript"></script>
 
@@ -8,7 +8,7 @@
 
 <script src="{% static 'ms1/nta_decision_tree.js' %}" type="text/javascript"></script>
 
-{{ jobid|json_script:'jobid' }}
+<!--{{ jobid|json_script:'jobid' }}-->
 
 <!DOCTYPE html>
 
@@ -25,11 +25,11 @@
   
   
 <!--  <link type="text/css" rel="stylesheet" href="{% static 'ms1/decisionTree-styles.css' %}" media="all" />-->
-  <title>NTA WebApp Logic Tree</title>
+  <title>NTA WebApp Filtering Decision Tree</title>
 </head>
 <body>
   <!-- set up container with all elements within -->
-  <h1>Decision Tree</h1>
+  <!--<h1>Decision Tree</h1>-->
 
   <div class="logicTreeGrid-container logicTree" id="grid-container">
 
@@ -48,7 +48,7 @@
     </div>
 
     <div class="mrlThreshSliderA logicTree">
-      <span style="font-size: 30px">Blank MRL Multiplier ( A ):</span><br>
+      <span style="font-size: 30px">MRL Multiplier ( A ):</span><br>
 
       <input class="logicTreeSlider slider_mrl" id="ThreshSliderRange_mrlA" type="range" min="0" max="10" value="3">
       <input class="logicTree" id="ThreshSliderNumber_mrlA"  type="number" min="0" max="10" placeholder="3" value="3" disabled="true"> &nbsp;&nbsp; 
@@ -73,7 +73,7 @@
     </div>
 
     <div class="mrlThreshSliderB logicTree">
-      <span style="font-size: 30px">Blank MRL Multiplier ( B ):</span><br>
+      <span style="font-size: 30px">MRL Multiplier ( B ):</span><br>
 
       <input class="logicTreeSlider slider_mrl" id="ThreshSliderRange_mrlB" type="range" min="0" max="10" value="3">
       <input class="logicTree" id="ThreshSliderNumber_mrlB"  type="number" min="0" max="10" placeholder="3" value="3" disabled="true"> &nbsp;&nbsp; 

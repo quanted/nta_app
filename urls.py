@@ -45,6 +45,10 @@ urlpatterns = [
         "ms1/results/decision_tree_data/<slug:jobid>",
         ms1_results_api.decision_tree_data,
     ),
+    path(
+        "ms1/results/decision_tree_analysis_parameters/<slug:jobid>",
+        ms1_results_api.decision_tree_analysis_parameters,
+    ),
     path("github/", github),
     path("version_info/", version_info_page),
     #

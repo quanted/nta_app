@@ -24,7 +24,7 @@ def assign_feature_id(df_in, start=1):
     df = df_in.copy()
     row_nums = list(range(0, len(df.index)))
     to_assign = [x + start for x in row_nums]
-    df.insert(0, "Feature_ID", to_assign.copy())
+    df.insert(0, "Feature ID", to_assign.copy())
     return df
 
 
@@ -109,7 +109,7 @@ def flags(df):
     # df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '0')
     df["For_Dashboard_Search"] = np.where(
         ((df.Formula_Match_Above90 == "1") | (df.X_NegMassDef_Below90 == "1")), "1", "1"
-    )  # REMOVE THIS LINE AND UNCOMMENT ABOVE
+    )  # REMOVE THIS LINE AMRL UNCOMMENT ABOVE
     df.sort_values(
         [
             "Formula_Match",
@@ -138,16 +138,16 @@ def passthrucol(df_in):
     df = df_in.copy()
     # Parse headers
     all_headers = parse_headers(df)
-    # Define active_cols: Keep 'Feature_ID' in pt_headers to merge later
-    active_cols = ["Retention_Time", "Mass", "Ionization_Mode", "Formula"]
+    # Define active_cols: Keep 'Feature ID' in pt_headers to merge later
+    active_cols = ["Retention_Time", "Mass", "Ionization_Mode"]
     # Create list of pass through headers that are not in the active columns
-    pt_headers = ["Feature_ID"] + [
+    pt_headers = ["Feature ID"] + [
         item
         for sublist in all_headers
         for item in sublist
         if len(sublist) == 1 and not any(x in sublist for x in active_cols)
     ]
-    headers = ["Feature_ID"] + [
+    headers = ["Feature ID"] + [
         item for sublist in all_headers for item in sublist if not any(x in item for x in pt_headers)
     ]
     # Save pass through columns in df
@@ -165,10 +165,10 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     Modified version of Jeff's 'adduct_identifier' function. This function executes
     the matrix portion of the old function -- TMF 10/27/23
     """
-    # 'Mass' to matrix, 'Retention Time' to matrix, 'Feature_ID' to matrix
+    # 'Mass' to matrix, 'Retention Time' to matrix, 'Feature ID' to matrix
     mass = df["Mass"].to_numpy()
     rts = df["Retention_Time"].to_numpy()
-    ids = df["Feature_ID"].to_numpy()
+    ids = df["Feature ID"].to_numpy()
     # Reshape 'masses', 'rts', and 'ids'
     masses_matrix = np.reshape(mass, (len(mass), 1))
     rts_matrix = np.reshape(rts, (len(rts), 1))
@@ -292,8 +292,8 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
     features that are near to adduct distance from another feature. This shortened dataframe is used to
     calculate a window size, then loop through possible adducts, passing to 'chunk_adducts' -- TMF 10/27/23
     """
-    # Copy df_in, only need 'Feature_ID', 'Mass', and 'Retention Time'
-    df = df_in[["Feature_ID", "Mass", "Retention_Time"]].copy()
+    # Copy df_in, only need 'Feature ID', 'Mass', and 'Retention Time'
+    df = df_in[["Feature ID", "Mass", "Retention_Time"]].copy()
     # Round columns
     df["Rounded Mass"] = df["Mass"].round(2)
     df["Rounded RT"] = df["Retention_Time"].round(1)
@@ -399,6 +399,9 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
             how="left",
             on=["Mass", "Retention_Time"],
         )
+    # Use fillna() to fill in 0s
+    df_in["Is Adduct or Loss?"].fillna(0, inplace=True)
+    df_in["Has Adduct or Loss?"].fillna(0, inplace=True)
     # Return dataframe with three adduct info columns added
     return df_in
 
@@ -577,6 +580,8 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, remove):
         dupe_df.drop(["all_sample_mean"], axis=1, inplace=True)
         # Return output dataframe with duplicates removed and duplicate dataframe
         return output, dupe_df
+    # fillna() to replace nans with 0s
+    output["Duplicate Feature?"].fillna(0, inplace=True)
     # Return output dataframe with duplicates flagged
     return output
 
@@ -596,12 +601,12 @@ def statistics(df_in):
     all_headers = parse_headers(df_in)
     sam_headers = [i for i in all_headers if len(i) > 1]
     # Create column names for each statistics from sam_headers
-    mean_cols = ["Mean_" + i[0][:-1] for i in sam_headers]
-    med_cols = ["Median_" + i[0][:-1] for i in sam_headers]
-    std_cols = ["STD_" + i[0][:-1] for i in sam_headers]
-    cv_cols = ["CV_" + i[0][:-1] for i in sam_headers]
-    nabun_cols = ["N_Abun_" + i[0][:-1] for i in sam_headers]
-    rper_cols = ["Replicate_Percent_" + i[0][:-1] for i in sam_headers]
+    mean_cols = ["Mean " + i[0][:-1] for i in sam_headers]
+    med_cols = ["Median " + i[0][:-1] for i in sam_headers]
+    std_cols = ["STD " + i[0][:-1] for i in sam_headers]
+    cv_cols = ["CV " + i[0][:-1] for i in sam_headers]
+    nabun_cols = ["Detection Count " + i[0][:-1] for i in sam_headers]
+    rper_cols = ["Detection Percentage " + i[0][:-1] for i in sam_headers]
     # Concatenate list comprehensions to calculate each statistic for each sample
     means = pd.concat(
         [df[x].mean(axis=1).round(4).rename(col) for x, col in zip(sam_headers, mean_cols)],
@@ -655,66 +660,84 @@ def chunk_stats(df_in, mrl_multiplier=3):
         # iterate through list_df, calculating 'statistics' on chunks and appending to li
         for df in list_df:
             li.append(statistics(df))
-        # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max_CV_across_sample'
+        # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max CV Across Samples'
         output = pd.concat(li, axis=0)
     # Sort output mass and add two new columns
     output.sort_values(["Mass", "Retention_Time"], ascending=[True, True], inplace=True)
     output["Rounded_Mass"] = output["Mass"].round(0)
-    output["Max_CV_across_sample"] = output.filter(regex="CV_").max(axis=1)
+    output["Max CV Across Samples"] = output.filter(regex="CV ").max(axis=1)
     # Define lists to calculate MRL for inclusion in 'Feature_statistics' outputs
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
-    Mean = output.columns[output.columns.str.contains(pat="Mean_")].tolist()
+    Mean = output.columns[output.columns.str.contains(pat="Mean ")].tolist()
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
-    Std = output.columns[output.columns.str.contains(pat="STD_")].tolist()
+    Std = output.columns[output.columns.str.contains(pat="STD ")].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
     # Calculate feature MRL
-    output["MRL"] = (mrl_multiplier * output[Std_MB[0]]) + output[Mean_MB[0]]
-    output["MRL"] = output["MRL"].fillna(output[Mean_MB[0]])
-    output["MRL"] = output["MRL"].fillna(0)
+    output["Selected MRL"] = (mrl_multiplier * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["Selected MRL"] = output["Selected MRL"].fillna(output[Mean_MB[0]])
+    output["Selected MRL"] = output["Selected MRL"].fillna(0)
 
     # Calculate 3x, 5x, 10x MRL values explicitly for use by the logic tree - NTAW-377 AC 6/24/2024
-    output["MRL_3x"] = (3 * output[Std_MB[0]]) + output[Mean_MB[0]]
-    output["MRL_3x"] = output["MRL_3x"].fillna(output[Mean_MB[0]])
-    output["MRL_3x"] = output["MRL_3x"].fillna(0)
-    output["MRL_5x"] = (5 * output[Std_MB[0]]) + output[Mean_MB[0]]
-    output["MRL_5x"] = output["MRL_5x"].fillna(output[Mean_MB[0]])
-    output["MRL_5x"] = output["MRL_5x"].fillna(0)
-    output["MRL_10x"] = (10 * output[Std_MB[0]]) + output[Mean_MB[0]]
-    output["MRL_10x"] = output["MRL_10x"].fillna(output[Mean_MB[0]])
-    output["MRL_10x"] = output["MRL_10x"].fillna(0)
+    output["MRL (3x)"] = (3 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL (3x)"] = output["MRL (3x)"].fillna(output[Mean_MB[0]])
+    output["MRL (3x)"] = output["MRL (3x)"].fillna(0)
+    output["MRL (5x)"] = (5 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL (5x)"] = output["MRL (5x)"].fillna(output[Mean_MB[0]])
+    output["MRL (5x)"] = output["MRL (5x)"].fillna(0)
+    output["MRL (10x)"] = (10 * output[Std_MB[0]]) + output[Mean_MB[0]]
+    output["MRL (10x)"] = output["MRL (10x)"].fillna(output[Mean_MB[0]])
+    output["MRL (10x)"] = output["MRL (10x)"].fillna(0)
 
     # Return dataframe with statistics calculated and MRL included, to be output as data_feature_stats
     return output
 
 
-def column_sort_DFS(df_in):
+def column_sort_DFS(df_in, passthru):
     """
     Function that sorts columns for the data_feature_statistics outputs -- TMF 11/21/23
     """
+    # Copy df and passthru
     df = df_in.copy()
+    pt = passthru.copy()
     # Parse headers
     all_headers = parse_headers(df)
     # Get all cols, group roots (i.e., drop unique value from sample groups)
     all_cols = df.columns.tolist()
-    group_cols = [sublist[0][:-1] for sublist in all_headers if len(sublist) > 1]
+    non_samples = ["MRL"]
+    group_cols = [
+        sublist[0][:-1] for sublist in all_headers if len(sublist) > 1 if not any(x in sublist[0] for x in non_samples)
+    ]
     # Create list of prefixes to remove non-samples
     prefixes = [
-        "Mean_",
-        "Median_",
-        "CV_",
-        "STD_",
-        "N_Abun_",
-        "Replicate_Percent_",
+        "Mean ",
+        "Median ",
+        "CV ",
+        "STD ",
+        "Detection Count ",
+        "Detection Percentage ",
         "Detection",
     ]
     # Isolate sample_groups from prefixes columns
     groups = [item for item in group_cols if not any(x in item for x in prefixes)]
     # Organize front matter
     front_matter = [item for item in all_cols if not any(x in item for x in groups)]
-    ids = ["Feature_ID", "Mass", "Retention_Time", "Ionization_Mode"]
-    # ids = ['Compound Name', 'Mass', 'Retention_Time', 'Ionization_Mode']
-    front_matter = [item for item in front_matter if not any(x in item for x in ids)]
-    front_matter = ids + front_matter
+    pt_info = pt.columns.tolist()
+    ordering = [
+        "Ionization_Mode",
+        "Mass",
+        "Retention_Time",
+        "Selected MRL",
+        "MRL (3x)",
+        "MRL (5x)",
+        "MRL (10x)",
+        "Duplicate Feature?",
+        "Is Adduct or Loss?",
+        "Has Adduct or Loss?",
+        "Adduct or Loss Info",
+        "Max CV Across Samples",
+    ]
+    front_matter = [item for item in ordering if item in front_matter]
+    front_matter = pt_info + front_matter
     # Organize stats columns
     cols = []
     for sam in groups:
@@ -723,36 +746,85 @@ def column_sort_DFS(df_in):
     stats_cols = sum(cols, [])
     # Combine into new column list
     new_col_org = front_matter + stats_cols
+    # Combine df and passthrough
+    df = pd.merge(df, pt, how="left", on=["Feature ID"])
     # Subset data with new column list
     df_reorg = df[new_col_org]
+    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
+    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
+    df_reorg.rename(columns={"Ionization_Mode": "Ionization Mode", "Retention_Time": "Retention Time"}, inplace=True)
     # Return re-organized dataframe
     return df_reorg
 
 
-def column_sort_TSR(df_in):
+def column_sort_TSR(df_in, passthru):
     """
     Function that sorts columns for the tracer_sample_results outputs -- TMF 11/21/23
     """
     df = df_in.copy()
+    pt = passthru.copy()
     all_cols = df.columns.tolist()
+    pt_info = pt.columns.tolist()
     # Create list of prefixes to remove non-samples
-    prefixes = ["Feature_ID", "Mass", "Retention_Time"]
+    prefixes = [
+        "Feature ID",
+        "Mass",
+        "Retention",
+        "Ionization_Mode",
+        "MRL",
+        "Adduct",
+        "Duplicate",
+        "Total",
+        "Max CV",
+        "Chemical_Name",
+        "Formula",
+        "DTXSID",
+    ]
     # Isolate sample_groups from prefixes columns
     back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
     # Organize front matter
     front_matter = [
-        "Feature_ID",
-        "Observed_Mass",
-        "Observed_Retention_Time",
+        "Chemical_Name",
+        "DTXSID",
+        "Ionization_Mode",
         "Monoisotopic_Mass",
+        "Observed Mass",
+        "Mass Error (PPM)",
         "Retention_Time",
-        "Mass_Error_PPM",
-        "Retention_Time_Difference",
+        "Observed Retention Time",
+        "Retention Time Difference",
+        "Selected MRL",
+        "MRL (3x)",
+        "MRL (5x)",
+        "MRL (10x)",
+        "Duplicate Feature?",
+        "Is Adduct or Loss?",
+        "Has Adduct or Loss?",
+        "Adduct or Loss Info",
+        "Total Detection Count",
+        "Total Detection Percentage",
+        "Max CV Across Samples",
     ]
+    front_matter = pt_info + front_matter
     # Combine into new column list
     new_col_org = front_matter + back_matter
+    # Combine df and passthrough
+    df = pd.merge(df, pt, how="left", on=["Feature ID"])
     # Subset data with new column list
+    if "DTXSID" not in df.columns:
+        df["DTXSID"] = ""
     df_reorg = df[new_col_org]
+    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
+    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
+    df_reorg.rename(
+        columns={
+            "Monoisotopic_Mass": "Mass",
+            "Chemical_Name": "Chemical Name",
+            "Ionization_Mode": "Ionization Mode",
+            "Retention_Time": "Retention Time",
+        },
+        inplace=True,
+    )
     # Return re-organized dataframe
     return df_reorg
 
@@ -766,9 +838,21 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     are a tracer, and which samples the tracers are present in -- TMF 12/11/23
     """
     df1 = df.copy()
+    # logger.info("cft df columns= {}".format(df1.columns.values))
     df2 = tracers_file.copy()
+    # logger.info("cft tracers columns= {}".format(df2.columns.values))
     # Get sample names
-    prefixes = ["Mean_", "Median_", "CV_", "STD_", "N_Abun_", "Replicate_Percent_", "Detection", "MRL"]
+    prefixes = [
+        "Mean ",
+        "Median ",
+        "CV ",
+        "STD ",
+        "Detection Count ",
+        "Detection Percentage ",
+        "Detection",
+        "MRL",
+        "Selected MRL",
+    ]
     all_headers = parse_headers(df1)
     samples = [
         item
@@ -784,49 +868,54 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     # Create 'Rounded_Mass' variable to merge on
     df2["Rounded_Mass"] = df2["Monoisotopic_Mass"].round(0)
     df1.rename(
-        columns={"Mass": "Observed_Mass", "Retention_Time": "Observed_Retention_Time"},
+        columns={"Mass": "Observed Mass", "Retention_Time": "Observed Retention Time"},
         inplace=True,
     )
-    df1["Rounded_Mass"] = df1["Observed_Mass"].round(0)
+    df1["Rounded_Mass"] = df1["Observed Mass"].round(0)
     # Merge df and tracers
     dft = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization_Mode"])
+    # logger.info("cft dfts columns= {}".format(dft.columns.values))
     if ppm:
         dft["Matches"] = np.where(
             (
-                abs((dft["Monoisotopic_Mass"] - dft["Observed_Mass"]) / dft["Monoisotopic_Mass"]) * 1000000
+                abs((dft["Monoisotopic_Mass"] - dft["Observed Mass"]) / dft["Monoisotopic_Mass"]) * 1000000
                 <= Mass_Difference
             )
-            & (abs(dft["Retention_Time"] - dft["Observed_Retention_Time"]) <= Retention_Difference),
+            & (abs(dft["Retention_Time"] - dft["Observed Retention Time"]) <= Retention_Difference),
             1,
             0,
         )
     else:
         dft["Matches"] = np.where(
-            (abs(dft["Monoisotopic_Mass"] - dft["Observed_Mass"]) <= Mass_Difference)
-            & (abs(dft["Retention_Time"] - dft["Observed_Retention_Time"]) <= Retention_Difference),
+            (abs(dft["Monoisotopic_Mass"] - dft["Observed Mass"]) <= Mass_Difference)
+            & (abs(dft["Retention_Time"] - dft["Observed Retention Time"]) <= Retention_Difference),
             1,
             0,
         )
     dft = dft[dft["Matches"] == 1]
     # Caculate Occurrence Count and % in tracers
-    dft["Occurrence_Count(across_all_replicates)"] = dft[samples].count(axis=1)
-    dft["Occurrence_Count(across_all_replicates)(%)"] = (
-        dft["Occurrence_Count(across_all_replicates)"] / len(samples)
-    ) * 100
+    dft["Total Detection Count"] = dft[samples].count(axis=1)
+    dft["Total Detection Percentage"] = (dft["Total Detection Count"] / len(samples)) * 100
     # Get 'Matches' info into main df
-    dum = dft[["Observed_Mass", "Observed_Retention_Time", "Matches"]].copy()
-    dfc = pd.merge(df1, dum, how="left", on=["Observed_Mass", "Observed_Retention_Time"])
+    dum = dft[["Observed Mass", "Observed Retention Time", "Matches"]].copy()
+    # logger.info("cft dum columns= {}".format(dum.columns.values))
+    dfc = pd.merge(df1, dum, how="left", on=["Observed Mass", "Observed Retention Time"])
+    # logger.info("cft dfc columns= {}".format(dfc.columns.values))
     dfc.rename(
         columns={
-            "Observed_Mass": "Mass",
-            "Observed_Retention_Time": "Retention_Time",
+            "Observed Mass": "Mass",
+            "Observed Retention Time": "Retention_Time",
             "Matches": "Tracer Chemical Match?",
         },
         inplace=True,
     )
     # Drop columns
     dft.drop(["Rounded_Mass", "Matches"], axis=1, inplace=True)
+    # np.where to replace nans with 0s
+    dfc["Tracer Chemical Match?"].fillna(0, inplace=True)
     # Returns tracers data (dft) and dataframe with 'Tracer Chemical Match?' appended (dfc)
+    # logger.info("cft dfts columns= {}".format(dft.columns.values))
+    # logger.info("cft dfc columns= {}".format(dfc.columns.values))
     return dft, dfc
 
 
@@ -934,15 +1023,15 @@ def calculate_detection_counts(df, docs, df_flagged, MRL_sample_mask, Std_MB, Me
 def MRL_flag(docs, Mean_Samples, MRL_sample_mask, missing):
     """
     Function that takes docs, missing, and the MRL_sample_mask and flags
-    non-detects in df (via the MRL_sample_mask) as ND. -- TMF 04/19/24
+    non-detects in df (via the MRL_sample_mask) as MRL. -- TMF 04/19/24
     """
     # Update empty cell masks from the docs and df dataframes
     cell_empty = docs[Mean_Samples].isnull()
-    # append ND flag (occurrence < MRL) to documentation dataframe
-    docs[Mean_Samples] = np.where(~MRL_sample_mask & cell_empty & ~missing, "ND", docs[Mean_Samples])
+    # append MRL flag (occurrence < MRL) to documentation dataframe
+    docs[Mean_Samples] = np.where(~MRL_sample_mask & cell_empty & ~missing, "MRL", docs[Mean_Samples])
     docs[Mean_Samples] = np.where(
         ~MRL_sample_mask & ~cell_empty & ~missing,
-        docs[Mean_Samples] + ", ND",
+        docs[Mean_Samples] + ", MRL",
         docs[Mean_Samples],
     )
     return docs
@@ -970,49 +1059,62 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     """
     # Set all values of feature removed to ""
     docs["Feature Removed?"] = ""
+    # Set Possible Occurrence Count to len of Mean_Samples
+    docs["Possible Occurrence Count"] = len(Mean_Samples)
     # Generate mask of float values in docs (i.e., occurrences with flags or NaN are False)
     num_mask = pd.concat(
         [pd.to_numeric(docs[mean], errors="coerce").notnull() for mean in Mean_Samples],
         axis=1,
     )
-    docs["# of real occurrences"] = num_mask.sum(axis=1)
+    docs["Final Occurrence Count"] = num_mask.sum(axis=1)
     # Count number of missing samples from missing mask
     docs["# of missing occurrences"] = missing.sum(axis=1)
-    # Count # of times an occurrence flag contains R, CV, or ND, and count # of just CV flags
+    docs["Unfiltered Occurrence Count"] = docs["Possible Occurrence Count"] - docs["# of missing occurrences"]
+    # Generate mask of str values in docs (i.e., occurrences with ANY flags are True)
+    str_mask = pd.concat([docs[mean].str.contains("R|CV|MRL") for mean in Mean_Samples], axis=1)
+    docs["Unfiltered Occurrence Removed Count"] = str_mask.sum(axis=1)
+    # Generate mask of str values in docs (i.e., occurrences with R and MRL flags are True)
+    str_mask = pd.concat([docs[mean].str.contains("R|MRL") for mean in Mean_Samples], axis=1)
+    docs["Unfiltered Occurrence Removed Count (with flags)"] = str_mask.sum(axis=1)
+    docs["Final Occurrence Count (with flags)"] = (
+        docs["Unfiltered Occurrence Count"] - docs["Unfiltered Occurrence Removed Count (with flags)"]
+    )
+
+    # Count # of times an occurrence flag contains R, CV, or MRL, and count # of just CV flags
     contains_R = pd.concat([docs[mean].str.contains("R") for mean in Mean_Samples], axis=1)
     contains_CV = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1)
     is_CV = docs[Mean_Samples] == "CV"
-    contains_ND = pd.concat([docs[mean].str.contains("ND") for mean in Mean_Samples], axis=1)
+    contains_MRL = pd.concat([docs[mean].str.contains("MRL") for mean in Mean_Samples], axis=1)
     docs["# contains R flag"] = contains_R.sum(axis=1)
     docs["# contains CV flag"] = contains_CV.sum(axis=1)
     docs["# is CV flag"] = is_CV.sum(axis=1)
-    docs["# contains ND flag"] = contains_ND.sum(axis=1)
+    docs["# contains MRL flag"] = contains_MRL.sum(axis=1)
     # Determine if any samples are dropped for a feature
     docs["Any Occurrences Removed?"] = np.where(
-        (docs["# contains R flag"] > 0) | (docs["# contains CV flag"] > 0) | (docs["# contains ND flag"] > 0),
+        (docs["# contains R flag"] > 0) | (docs["# contains CV flag"] > 0) | (docs["# contains MRL flag"] > 0),
         1,
         0,
     )
     # Append feature level flags to features with no real occurrences
     # Feature flag because no occurrences present in input data
     docs["Feature Removed?"] = np.where(
-        docs["# of missing occurrences"] == len(Mean_Samples), "NO DATA ", docs["Feature Removed?"]
+        docs["# of missing occurrences"] == len(Mean_Samples), "NO DETECTIONS ", docs["Feature Removed?"]
     )
     # Feature flag because occurrences fail detection threshold
     docs["Feature Removed?"] = np.where(
-        (docs["# of real occurrences"] == 0) & (docs["# contains ND flag"] > 0),
-        docs["Feature Removed?"] + "BLK ",
+        (docs["Final Occurrence Count"] == 0) & (docs["# contains MRL flag"] > 0),
+        docs["Feature Removed?"] + "MRL, ",
         docs["Feature Removed?"],
     )
     # Feature flag because occurrences fail CV threshold
     docs["Feature Removed?"] = np.where(
-        (docs["# of real occurrences"] == 0) & (docs["# contains CV flag"] > 0),
-        docs["Feature Removed?"] + "CV ",
+        (docs["Final Occurrence Count"] == 0) & (docs["# contains CV flag"] > 0),
+        docs["Feature Removed?"] + "CV, ",
         docs["Feature Removed?"],
     )
     # Feature flag because occurrences fail Replication threshold
     docs["Feature Removed?"] = np.where(
-        (docs["# of real occurrences"] == 0) & docs["# contains R flag"] > 0,
+        (docs["Final Occurrence Count"] == 0) & docs["# contains R flag"] > 0,
         docs["Feature Removed?"] + "R ",
         docs["Feature Removed?"],
     )
@@ -1022,7 +1124,7 @@ def feat_removal_flag(docs, Mean_Samples, missing):
 def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     """
     Function that takes df, docs, df_flagged and creates a mask for each filter
-    applied to docs (R, CV, ND). All masks applied to df, only R and ND masks applied
+    applied to docs (R, CV, MRL). All masks applied to df, only R and MRL masks applied
     to df_flagged. Return df and df_flagged. -- TMF 04/19/24
     """
     # Copy 'Any Occurrences Removed?' to df and df_flagged
@@ -1034,7 +1136,7 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     df[Mean_Samples] = df[Mean_Samples].mask(rep_fails)
     df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(rep_fails)
     # Create mask of occurrences dropped for replicate flag
-    non_detects = pd.concat([docs[mean].str.contains("ND") for mean in Mean_Samples], axis=1).fillna(False)
+    non_detects = pd.concat([docs[mean].str.contains("MRL") for mean in Mean_Samples], axis=1).fillna(False)
     # Mask df and df_flagged
     df[Mean_Samples] = df[Mean_Samples].mask(non_detects)
     df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(non_detects)
@@ -1042,6 +1144,22 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     cv_fails = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1).fillna(False)
     # Mask df
     df[Mean_Samples] = df[Mean_Samples].mask(cv_fails)
+    # Add columns from docs to df / df_flagged
+    df["Possible Occurrence Count"] = docs["Possible Occurrence Count"]
+    df_flagged["Possible Occurrence Count"] = docs["Possible Occurrence Count"]
+    # df["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
+    # df_flagged["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
+    df["Final Occurrence Count"] = docs["Final Occurrence Count"]
+    df_flagged["Final Occurrence Count (with flags)"] = docs["Final Occurrence Count (with flags)"]
+    # Calculate Final Occurrence Percentage
+    df["Final Occurrence Percentage"] = (
+        (df["Final Occurrence Count"] / df["Possible Occurrence Count"]).astype(float).round(2)
+    )
+    df_flagged["Final Occurrence Percentage (with flags)"] = (
+        (df_flagged["Final Occurrence Count (with flags)"] / df_flagged["Possible Occurrence Count"])
+        .astype(float)
+        .round(2)
+    )
     return df, df_flagged
 
 
@@ -1049,7 +1167,7 @@ def feat_drop_df(df, docs, df_flagged):
     """
     Function that takes df, docs, df_flagged, and uses the Feature Removed? column
     from docs to subset df and df_flagged. All features that have a removal flag
-    are removed from df, only features with the R, ND, and CV flags are removed
+    are removed from df, only features with the R, MRL, and CV flags are removed
     from df_flagged. -- TMF 04/19/24
     """
     # Copy 'Feature Removed?' column onto df and df_flagged
@@ -1079,21 +1197,21 @@ def clean_features(df_in, controls, tracer_df=False):
     docs = pd.DataFrame().reindex_like(df)
     docs["Mass"] = df["Mass"]
     docs["Retention_Time"] = df["Retention_Time"]
-    docs["Feature_ID"] = df["Feature_ID"]
+    docs["Feature ID"] = df["Feature ID"]
     docs["Duplicate Feature?"] = df["Duplicate Feature?"]
     if tracer_df:
         docs["Tracer Chemical Match?"] = df["Tracer Chemical Match?"]
     # Define lists
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
-    Abundance = df.columns[df.columns.str.contains(pat="Replicate_Percent_")].tolist()
+    Abundance = df.columns[df.columns.str.contains(pat="Detection Percentage ")].tolist()
     Replicate_Percent_MB = [N for N in Abundance if any(x in N for x in blanks)]
     Replicate_Percent_Samples = [N for N in Abundance if not any(x in N for x in blanks)]
-    Mean = df.columns[df.columns.str.contains(pat="Mean_")].tolist()
+    Mean = df.columns[df.columns.str.contains(pat="Mean ")].tolist()
     Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
-    Std = df.columns[df.columns.str.contains(pat="STD_")].tolist()
+    Std = df.columns[df.columns.str.contains(pat="STD ")].tolist()
     Std_MB = [md for md in Std if any(x in md for x in blanks)]
-    CV = df.columns[df.columns.str.startswith("CV_")].tolist()
+    CV = df.columns[df.columns.str.startswith("CV ")].tolist()
     CV_Samples = [C for C in CV if not any(x in C for x in blanks)]
     missing = df[Mean_Samples].isnull()
     """REPLICATE FLAG"""
@@ -1122,7 +1240,7 @@ def clean_features(df_in, controls, tracer_df=False):
     df, docs, df_flagged = calculate_detection_counts(
         df, docs, df_flagged, MRL_sample_mask, Std_MB, Mean_MB, Mean_Samples
     )
-    """MRL/ND FLAG"""
+    """MRL FLAG"""
     # Implement MRL flag
     docs = MRL_flag(docs, Mean_Samples, MRL_sample_mask, missing)
     """ADD VALUES TO DOC"""
@@ -1148,15 +1266,15 @@ def Blank_Subtract_Mean(df_in):
     df = df_in.copy()
     # Define lists; blanks, means, sample means, and blank means
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
-    Mean = df.columns[df.columns.str.contains(pat="Mean_")].tolist()
+    Mean = df.columns[df.columns.str.contains(pat="Mean ")].tolist()
     Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
     # Iterate through sample means, subtracting blank mean into new column
     for mean in Mean_Samples:
         # Create new column, do subtraction
-        df["BlankSub_" + str(mean)] = df[mean].sub(df[Mean_MB[0]], axis=0)
+        df["BlankSub " + str(mean)] = df[mean].sub(df[Mean_MB[0]], axis=0)
         # Clip values at 0, replace 0s with NaN
-        df["BlankSub_" + str(mean)] = df["BlankSub_" + str(mean)].clip(lower=0).replace({0: np.nan})
+        df["BlankSub " + str(mean)] = df["BlankSub " + str(mean)].clip(lower=0).replace({0: np.nan})
     return df
 
 
@@ -1181,7 +1299,7 @@ def combine(df1, df2):
     dfc = dfc.drop_duplicates(subset=["Mass", "Retention_Time"])
     # Get sample Means
     Mean_list = dfc.columns[
-        (dfc.columns.str.contains(pat="Mean_") == True)
+        (dfc.columns.str.contains(pat="Mean ") == True)
         & (dfc.columns.str.contains(pat="MB|blank|blanks|BlankSub|_x|_y") == False)
     ].tolist()
     # Count sample-level occurrences and median of means
@@ -1197,52 +1315,70 @@ def combine_doc(doc1, doc2, tracer_df=False):
     """
     Function to combine positive and negative mode docs for filter_documentation sheet
     """
+    # Define blank sub-strings
+    blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
     # Recombine doc and dupe
     if doc1 is not None and doc2 is not None:
-        # Get Mean columns
-        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
+        # Get Mean columns for blanks and samples
+        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean ")].tolist()
+        Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
         dfc = pd.concat([doc1, doc2], sort=True)  # fixing pandas FutureWarning
         dfc = dfc.reindex(columns=doc1.columns)
     elif doc1 is not None:
-        # Get Mean columns
-        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean_")].tolist()
+        # Get Mean columns for blanks and samples
+        Mean = doc1.columns[doc1.columns.str.contains(pat="Mean ")].tolist()
+        Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
         dfc = doc1.copy()
     else:
-        # Get Mean columns
-        Mean = doc2.columns[doc2.columns.str.contains(pat="Mean_")].tolist()
+        # Get Mean columns for blanks and samples
+        Mean = doc2.columns[doc2.columns.str.contains(pat="Mean ")].tolist()
+        Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
+        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
         dfc = doc2.copy()
     # Select columns for keeping, with tracer conditional
     if tracer_df:
-        to_keep = [
-            "Feature_ID",
-            "Mass",
-            "Retention_Time",
-            "BlkStd_cutoff",
-            "Any Occurrences Removed?",
-            "Duplicate Feature?",
-            "Feature Removed?",
-            "Tracer Chemical Match?",
-        ] + Mean
+        to_keep = (
+            [
+                "Feature ID",
+                "BlkStd_cutoff",
+                "Tracer Chemical Match?",
+                "Duplicate Feature?",
+                "Feature Removed?",
+                "Possible Occurrence Count",
+                "Unfiltered Occurrence Count",
+                "Final Occurrence Count (with flags)",
+                "Final Occurrence Count",
+            ]
+            + Mean_MB
+            + Mean_Samples
+        )
     else:
-        to_keep = [
-            "Feature_ID",
-            "Mass",
-            "Retention_Time",
-            "BlkStd_cutoff",
-            "Any Occurrences Removed?",
-            "Duplicate Feature?",
-            "Feature Removed?",
-        ] + Mean
+        to_keep = (
+            [
+                "Feature ID",
+                "BlkStd_cutoff",
+                "Duplicate Feature?",
+                "Feature Removed?",
+                "Possible Occurrence Count",
+                "Unfiltered Occurrence Count",
+                "Final Occurrence Count (with flags)",
+                "Final Occurrence Count",
+            ]
+            + Mean_MB
+            + Mean_Samples
+        )
     # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
     dfc = dfc[to_keep]
-    dfc.rename({"BlkStd_cutoff": "MRL"}, axis=1, inplace=True)
+    dfc.rename({"BlkStd_cutoff": "Selected MRL"}, axis=1, inplace=True)
     # Sort by 'Mass' and 'Retention_Time'
-    dfc = dfc.sort_values(["Mass", "Retention_Time"], ascending=[True, True])
+    dfc = dfc.sort_values(["Feature ID"], ascending=[True])
     # Return filter_documentation dataframe with removed duplicates appended
     return dfc
 
 
-def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
+def MPP_Ready(dft, pts, tracer_df=False, flagged=False, directory="", file=""):
     """
     Function that re-combines the pass-through columns with the processed dataframe
     plus some final column sorting
@@ -1251,101 +1387,111 @@ def MPP_Ready(dft, pts, tracer_df=False, directory="", file=""):
     # Assign pass through columns to pt_cols for re_org
     if pts[0] is not None and pts[1] is not None:
         pt_com = pd.concat([pts[0], pts[1]], axis=0)
-        dft = pd.merge(dft, pt_com, how="left", on=["Feature_ID"])
+        dft = pd.merge(dft, pt_com, how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
-        pt_cols = [col for col in pt_cols if "Feature_ID" not in col]
+        # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     elif pts[0] is not None:
-        dft = pd.merge(dft, pts[0], how="left", on=["Feature_ID"])
+        dft = pd.merge(dft, pts[0], how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
-        pt_cols = [col for col in pt_cols if "Feature_ID" not in col]
+        # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     else:
-        dft = pd.merge(dft, pts[1], how="left", on=["Feature_ID"])
+        dft = pd.merge(dft, pts[1], how="left", on=["Feature ID"])
         pt_cols = pts[1].columns.tolist()
-        pt_cols = [col for col in pt_cols if "Feature_ID" not in col]
+        # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     # Parse headers, get sample values and blank subtracted means
     Headers = parse_headers(dft)
-    raw_samples = [item for sublist in Headers for item in sublist if (len(sublist) > 2) & ("BlankSub" not in item)]
+    raw_samples = [
+        item
+        for sublist in Headers
+        for item in sublist
+        if (len(sublist) > 2)
+        if ("BlankSub" not in item)
+        if not any(x in item for x in pt_cols)
+    ]
     blank_subtracted_means = dft.columns[dft.columns.str.contains(pat="BlankSub")].tolist()
+
     # Check for 'Formula' (should be deprecated), then check for tracer_df
     # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
-    if "Formula" in dft.columns:
+    if flagged:
         if tracer_df:
-            dft = dft[
-                [
-                    "Feature_ID",
-                    "Formula",
+            cols = (
+                pt_cols
+                + [
+                    "Ionization_Mode",
                     "Mass",
                     "Retention_Time",
-                    "Any Occurrences Removed?",
-                    "Duplicate Feature?",
-                    "Detection_Count(non-blank_samples)",
-                    "Detection_Count(non-blank_samples)(%)",
                     "Tracer Chemical Match?",
-                    "Has Adduct or Loss?",
+                    "Duplicate Feature?",
                     "Is Adduct or Loss?",
+                    "Has Adduct or Loss?",
                     "Adduct or Loss Info",
+                    "Final Occurrence Count (with flags)",
+                    "Final Occurrence Percentage (with flags)",
                 ]
-                + pt_cols
                 + raw_samples
                 + blank_subtracted_means
-            ]
+            )
+            dft = dft[cols]
         else:
-            dft = dft[
-                [
-                    "Feature_ID",
-                    "Formula",
+            cols = (
+                pt_cols
+                + [
+                    "Ionization_Mode",
                     "Mass",
                     "Retention_Time",
-                    "Any Occurrences Removed?",
                     "Duplicate Feature?",
-                    "Detection_Count(non-blank_samples)",
-                    "Detection_Count(non-blank_samples)(%)",
-                    "Has Adduct or Loss?",
                     "Is Adduct or Loss?",
+                    "Has Adduct or Loss?",
                     "Adduct or Loss Info",
+                    "Final Occurrence Count (with flags)",
+                    "Final Occurrence Percentage (with flags)",
                 ]
-                + pt_cols
                 + raw_samples
                 + blank_subtracted_means
-            ]
+            )
+            dft = dft[cols]
     else:
         if tracer_df:
-            dft = dft[
-                [
-                    "Feature_ID",
+            cols = (
+                pt_cols
+                + [
+                    "Ionization_Mode",
                     "Mass",
                     "Retention_Time",
-                    "Any Occurrences Removed?",
-                    "Duplicate Feature?",
-                    "Detection_Count(non-blank_samples)",
-                    "Detection_Count(non-blank_samples)(%)",
                     "Tracer Chemical Match?",
-                    "Has Adduct or Loss?",
+                    "Duplicate Feature?",
                     "Is Adduct or Loss?",
+                    "Has Adduct or Loss?",
                     "Adduct or Loss Info",
+                    "Final Occurrence Count",
+                    "Final Occurrence Percentage",
                 ]
-                + pt_cols
                 + raw_samples
                 + blank_subtracted_means
-            ]
+            )
+            dft = dft[cols]
         else:
-            dft = dft[
-                [
-                    "Feature_ID",
+            cols = (
+                pt_cols
+                + [
+                    "Ionization_Mode",
                     "Mass",
                     "Retention_Time",
-                    "Any Occurrences Removed?",
                     "Duplicate Feature?",
-                    "Detection_Count(non-blank_samples)",
-                    "Detection_Count(non-blank_samples)(%)",
-                    "Has Adduct or Loss?",
                     "Is Adduct or Loss?",
+                    "Has Adduct or Loss?",
                     "Adduct or Loss Info",
+                    "Final Occurrence Count",
+                    "Final Occurrence Percentage",
                 ]
-                + pt_cols
                 + raw_samples
                 + blank_subtracted_means
-            ]
+            )
+            dft = dft[cols]
+    # Rename columns
+    dft["Ionization_Mode"] = dft["Ionization_Mode"].replace("Esi+", "ESI+")
+    dft["Ionization_Mode"] = dft["Ionization_Mode"].replace("Esi-", "ESI-")
+    dft.rename({"Ionization_Mode": "Ionization Mode", "Retention_Time": "Retention Time"}, axis=1, inplace=True)
     # Return re-combined, sorted dataframe for output as 'Cleaned_feature_results_reduced' and 'Results_flagged'
     return dft
 
@@ -1373,3 +1519,84 @@ def calc_toxcast_percent_active(df):
     dft = dft.drop(["TOTAL_ASSAYS_TESTED", "NUMBER_ACTIVE_ASSAYS"], axis=1)
 
     return dft
+
+
+# The following function calculates a "width" of a string based on the characters within, as some characters are large, medium or skinny
+# These widths are used to determine the spacing of the group labels on the run sequence plot
+def determine_string_width(input_string):
+    big_letters = [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "m",
+    ]
+    medium_letters = [
+        "E",
+        "F",
+        "L",
+        "N",
+        "P",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "g",
+        "h",
+        "k",
+        "n",
+        "o",
+        "p",
+        "q",
+        "s",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "0",
+    ]
+    skinny_letters = ["I", "J", "f", "i", "j", "l", "r", "t", "1"]
+    big_increment = 0.02
+    medium_increment = 0.015
+    skinny_increment = 0.007
+
+    temp_increment = 0
+    for j in range(len(input_string)):
+        if input_string[j] in big_letters:
+            temp_increment = temp_increment + big_increment
+            print("big")
+        elif input_string[j] in medium_letters:
+            temp_increment = temp_increment + medium_increment
+            print("medium")
+        else:
+            print("skinny")
+            temp_increment = temp_increment + skinny_increment
+    return temp_increment

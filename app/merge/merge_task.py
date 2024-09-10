@@ -69,7 +69,6 @@ def run_merge(
 
 
 class MergeRun:
-
     def __init__(
         self,
         parameters=None,
@@ -83,6 +82,7 @@ class MergeRun:
         self.project_name = parameters["project_name"]
         logger.info(input_data)
         self.input_ms1 = input_data["MS1"]
+        # self.input_ms2 = [input_data["MS2_pos"], input_data["MS2_neg"]] # NTAW-158: Update how MS2 data is handled, needs to be a list of MS2 files / ignore this
         self.input_ms2 = input_data["MS2_pos"] + input_data["MS2_neg"]
         self.n_files = len(self.input_ms2)
         self.results_df = [None]
@@ -96,16 +96,32 @@ class MergeRun:
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.step = "Started"  # tracks the current step (for fail messages)
+        # NTAW-158: Adjust sheet names pulled from MS1 results
         self.ms1_data_map = (
-            {"dsstox_search": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
+            {"chemical_results": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
         )
+        # self.ms1_data_map = (
+        #     {"dsstox_search": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
+        # )
 
     def execute(self):
         self.set_status("Processing", create=True)
         if self.n_files > 0:
-            self.ms1_data_map["dsstox_search"] = process_MS2_data(
+            # NTAW-158: Debugger statements
+            logger.info("self.input_MS2:")
+            logger.info(len(self.input_ms2))
+            logger.info(self.input_ms2)
+            logger.info("shape file_df:")
+            logger.info(self.input_ms2[0]["file_df"].shape)
+            logger.info("file_df:")
+            logger.info(self.input_ms2[0]["file_df"])
+            # NTAW-158: Adjust sheet names pulled from MS1 results
+            self.ms1_data_map["chemical_results"] = process_MS2_data(
                 self.input_ms1, self.input_ms2, self.mass_accuracy_tolerance, self.rt_tolerance
             )
+            # self.ms1_data_map["dsstox_search"] = process_MS2_data(
+            #     self.input_ms1, self.input_ms2, self.mass_accuracy_tolerance, self.rt_tolerance
+            # )
             logger.info("Store file names")
             self.gridfs.put(
                 "&&".join(self.ms1_data_map.keys()),
