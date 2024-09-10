@@ -1,6 +1,6 @@
 NTA WebApp Version History and Known Issues Documentation
 Version 0.3
-Updated 9/9/2024
+Updated 9/10/2024
 
 *************
 Known Issues:
@@ -10,7 +10,7 @@ Known Issues:
 3) Decision tree: An MRL threshold is applied to the data even if blank samples do not meet the blank sample replicate threshold
 
 ************************
-Version 0.3 - 9/9/2024
+Version 0.3 - 9/10/2024
 ************************
 - MS1 results file:
   - Sheet names updated
