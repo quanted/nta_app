@@ -1,6 +1,6 @@
 NTA WebApp Version History and Known Issues Documentation
 Version 0.3
-Updated 9/5/2024
+Updated 9/10/2024
 
 *************
 Known Issues:
@@ -10,12 +10,12 @@ Known Issues:
 3) Decision tree: An MRL threshold is applied to the data even if blank samples do not meet the blank sample replicate threshold
 
 ************************
-Version 0.3 - 9/5/2024
+Version 0.3 - 9/10/2024
 ************************
 - MS1 results file:
   - Sheet names updated
   - Column names and order updated throughout all sheets
-  - True/False column (i.e. "Duplicate Feature?") values updated: Nan values replaced with 0
+  - True/False column (i.e. "Duplicate Feature?", "Is/Has Adduct?" columns) values updated: Nan values replaced with 0
   - Analysis parameters sheet: Text fields updated
   - Decision documentation sheet: Filter labels updated/standardized
   - Decision documentation sheet: Additional occurrence count columns added
