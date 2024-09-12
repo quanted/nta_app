@@ -895,7 +895,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     dft = dft[dft["Matches"] == 1]
     # Caculate Occurrence Count and % in tracers
     dft["Total Detection Count"] = dft[samples].count(axis=1)
-    dft["Total Detection Percentage"] = (dft["Total Detection Count"] / len(samples)) * 100
+    dft["Total Detection Percentage"] = ((dft["Total Detection Count"] / len(samples)) * 100).round(2)
     # Get 'Matches' info into main df
     dum = dft[["Observed Mass", "Observed Retention Time", "Matches"]].copy()
     # logger.info("cft dum columns= {}".format(dum.columns.values))
