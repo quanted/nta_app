@@ -10,6 +10,12 @@ Known Issues:
 3) Decision tree: An MRL threshold is applied to the data even if blank samples do not meet the blank sample replicate threshold
 
 ************************
+Version 0.3.X - 
+************************
+- Decision tree:
+  - Now auto-populates "A" trees with the analysis parameters selected by the user for the current job
+
+************************
 Version 0.3 - 9/10/2024
 ************************
 - MS1 results file:
