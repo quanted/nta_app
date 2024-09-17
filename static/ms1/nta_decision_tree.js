@@ -4,8 +4,16 @@ var jobid = window.location.pathname.split("/").pop();
 // set path for webApp reduced CSV
 // var csv_path = '../Reduced_WebApp_input_file_perc.csv';
 var csv_path = '/nta/ms1/results/decision_tree_data/' + jobid;
+// var init_parmaeters_path = './data/Analysis Parameters.csv'
+var init_parmaeters_path = '/nta/ms1/results/decision_tree_analysis_parameters/' + jobid;
 
 /**
+ * Changes in v0.6.0
+ *  - Added sliders for Min Blank Replicate Threshold (%)
+ *    - If a feature fails blank replicate threshold, the MRL is set to 0 for all occurences in that feature
+ *  - Annotation for replicate threshold in the tree SVGs have changed to give both the blank replicate and sample replicate thresholds
+ *  - The colors of the threshold sliders have been updated to match their box colors from the SVGs -- Replicates and MRL = grey; CV = red
+ * 
  * Changes in v0.5.5
  *  - Removed the mrlPass variable for the feature level tree. It used to pass a feature if at least 1 occurrence passed CV and ANY occurrence passed MRL.
  *    Now a feature only passes if at least 1 occurence passes all 3 checks --> Replicate, CV, MRL
@@ -38,9 +46,11 @@ var csv_path = '/nta/ms1/results/decision_tree_data/' + jobid;
 var countData = {
   "A": {
     "threshold": {
+      "blankRep": 66.7,
       "rep": 66.7,
       "cv": 1.25,
-      "mrl": 3
+      "mrl": 3,
+      "blankRepPassArr": []
     },
     "counts": {
       "occ": {
@@ -74,9 +84,11 @@ var countData = {
 
   "B": {
     "threshold": {
+      "blankRep": 50.0,
       "rep": 50.0,
       "cv": 0.80,
-      "mrl": 3
+      "mrl": 3,
+      "blankRepPassArr": []
     },
     "counts": {
       "occ": {
@@ -124,7 +136,7 @@ try {
 
     // update the default parameters of the "A" thresholds
     for (let iRow in init_parameter_data) {
-      row = init_parameter_data[iRow];
+      let row = init_parameter_data[iRow];
       if (!(Array.isArray(row))) {
         if (row['Parameter'] === 'Min replicate hits (%)') {
           countData['A']['threshold']['rep'] = Number(row['Value'])
@@ -132,12 +144,21 @@ try {
           countData['A']['threshold']['cv'] = Number(row['Value'])
         } else if (row['Parameter'] === 'MRL standard deviation multiplier') {
           countData['A']['threshold']['mrl'] = Number(row['Value'])
+        } else if (row['Parameter'] === 'Min replicate hits in blanks (%)') {
+          countData['A']['threshold']['blankRep'] = Number(row['Value'])
         }
       }
     }
   })
 
   // Data validation
+  //// Blank Replicate
+  if (countData["A"]["threshold"]["blankRep"] > thresholdData["repMax"]) {
+    countData["A"]["threshold"]["blankRep"] = thresholdData["repMax"];
+  } else if (countData["A"]["threshold"]["blankRep"] < thresholdData["repMin"]) {
+    countData["A"]["threshold"]["blankRep"] = thresholdData["repMin"];
+  }
+
   //// Replicate
   if (countData["A"]["threshold"]["rep"] > thresholdData["repMax"]) {
     countData["A"]["threshold"]["rep"] = thresholdData["repMax"];
@@ -173,12 +194,62 @@ d3.csv(csv_path).then(function(data) {
    * 
    ***********************************************/ 
   
-  // Replicate Threshold A
+  // Blank Replicate Threshold A
+  var sliderBlankRepA = document.getElementById("ThreshSliderRange_blankRepA"),
+    inputBoxBlankRepA = document.getElementById("ThreshSliderNumber_blankRepA");
+  //// update with default threshold values if applicable
+  sliderBlankRepA.value = countData["A"]["threshold"]["blankRep"]; // update with initial input value
+  inputBoxBlankRepA.value = Number(sliderBlankRepA.value);
+  sliderBlankRepA.oninput = function() {
+    if (sliderBlankRepA.value > thresholdData["repMax"]) {
+      sliderBlankRepA.value = thresholdData["repMax"];
+    } else if (sliderBlankRepA.value < thresholdData["repMin"]) {
+      sliderBlankRepA.value = thresholdData["repMin"];
+    }
+    inputBoxBlankRepA.value = Number(sliderBlankRepA.value);
+
+    countData["A"]["threshold"]["blankRep"] = Number(sliderBlankRepA.value)
+
+    countData = get_counts(countData)
+
+    tableCreate(countData, true)
+    if (sunburstToggle) {
+      createSunburst(countData, 'occTreeABox', 'occTreeASVG', "A", "occ")
+      createSunburst(countData, 'featTreeABox', 'featTreeASVG', "A", "feat")
+    } else {
+      createOccTree(countData, 'occTreeABox', 'occTreeASVG', "A")
+      createFeatTree(countData, 'featTreeABox', 'featTreeASVG', "A")
+    }
+  }
+  inputBoxBlankRepA.oninput = function() {
+    if (inputBoxBlankRepA.value > thresholdData["repMax"]) {
+      inputBoxBlankRepA.value = thresholdData["repMax"];
+    } else if (inputBoxBlankRepA.value < thresholdData["repMin"]) {
+      inputBoxBlankRepA.value = thresholdData["repMin"];
+    }
+    sliderBlankRepA.value = Number(inputBoxBlankRepA.value);
+
+    countData["A"]["threshold"]["blankRep"] = Number(sliderBlankRepA.value)
+
+    countData = get_counts(countData)
+
+    tableCreate(countData, true)
+    if (sunburstToggle) {
+      createSunburst(countData, 'occTreeABox', 'occTreeASVG', "A", "occ")
+      createSunburst(countData, 'featTreeABox', 'featTreeASVG', "A", "feat")
+    } else {
+      createOccTree(countData, 'occTreeABox', 'occTreeASVG', "A")
+      createFeatTree(countData, 'featTreeABox', 'featTreeASVG', "A")
+    }
+  }
+
+
+  // Sample Replicate Threshold A
   var sliderRepA = document.getElementById("ThreshSliderRange_repA"),
     inputBoxRepA = document.getElementById("ThreshSliderNumber_repA");
   //// update with default threshold values if applicable
   sliderRepA.value = countData["A"]["threshold"]["rep"]; // update with initial input value
-  inputBoxRepA.value = sliderRepA.value;
+  inputBoxRepA.value = Number(sliderRepA.value);
   sliderRepA.oninput = function() {
     if (sliderRepA.value > thresholdData["repMax"]) {
       sliderRepA.value = thresholdData["repMax"];
@@ -226,7 +297,7 @@ d3.csv(csv_path).then(function(data) {
   var sliderCVA = document.getElementById("ThreshSliderRange_cvA"),
     inputBoxCVA = document.getElementById("ThreshSliderNumber_cvA");
   sliderCVA.value = countData["A"]["threshold"]["cv"]; // update with initial input value
-  inputBoxCVA.value = sliderCVA.value;
+  inputBoxCVA.value = Number(sliderCVA.value);
   sliderCVA.oninput = function() {
     if (sliderCVA.value > thresholdData["cvMax"]) {
       sliderCVA.value = thresholdData["cvMax"];
@@ -235,7 +306,7 @@ d3.csv(csv_path).then(function(data) {
     }
     inputBoxCVA.value = Number(sliderCVA.value);
 
-    countData["A"]["threshold"]["cv"] = sliderCVA.value
+    countData["A"]["threshold"]["cv"] = Number(sliderCVA.value)
 
     countData = get_counts(countData)
 
@@ -256,7 +327,7 @@ d3.csv(csv_path).then(function(data) {
     }
     sliderCVA.value = Number(inputBoxCVA.value);
 
-    countData["A"]["threshold"]["cv"] = sliderCVA.value
+    countData["A"]["threshold"]["cv"] = Number(sliderCVA.value)
 
     countData = get_counts(countData)
 
@@ -270,7 +341,53 @@ d3.csv(csv_path).then(function(data) {
     }
   }
 
-  // Replicate Threshold B
+  // Blank Replicate Threshold B
+  var sliderBlankRepB = document.getElementById("ThreshSliderRange_blankRepB"),
+    inputBoxBlankRepB = document.getElementById("ThreshSliderNumber_blankRepB");
+  sliderBlankRepB.oninput = function() {
+    if (sliderBlankRepB.value > thresholdData["repMax"]) {
+      sliderBlankRepB.value = thresholdData["repMax"];
+    } else if (sliderBlankRepB.value < thresholdData["repMin"]) {
+      sliderBlankRepB.value = thresholdData["repMin"];
+    }
+    inputBoxBlankRepB.value = Number(sliderBlankRepB.value);
+
+    countData["B"]["threshold"]["blankRep"] = Number(sliderBlankRepB.value)
+
+    countData = get_counts(countData)
+
+    tableCreate(countData, true)
+    if (sunburstToggle) {
+      createSunburst(countData, 'occTreeBBox', 'occTreeBSVG', "B", "occ")
+      createSunburst(countData, 'featTreeBBox', 'featTreeBSVG', "B", "feat")
+    } else {
+      createOccTree(countData, 'occTreeBBox', 'occTreeBSVG', "B")
+      createFeatTree(countData, 'featTreeBBox', 'featTreeBSVG', "B")
+    }
+  }
+  inputBoxBlankRepB.oninput = function() {
+    if (inputBoxBlankRepB.value > thresholdData["repMax"]) {
+      inputBoxBlankRepB.value = thresholdData["repMax"];
+    } else if (inputBoxBlankRepB.value < thresholdData["repMin"]) {
+      inputBoxBlankRepB.value = thresholdData["repMin"];
+    }
+    sliderBlankRepB.value = Number(inputBoxBlankRepB.value);
+
+    countData["B"]["threshold"]["blankRep"] = Number(sliderBlankRepB.value)
+
+    countData = get_counts(countData)
+
+    tableCreate(countData, true)
+    if (sunburstToggle) {
+      createSunburst(countData, 'occTreeBBox', 'occTreeBSVG', "B", "occ")
+      createSunburst(countData, 'featTreeBBox', 'featTreeBSVG', "B", "feat")
+    } else {
+      createOccTree(countData, 'occTreeBBox', 'occTreeBSVG', "B")
+      createFeatTree(countData, 'featTreeBBox', 'featTreeBSVG', "B")
+    }
+  }
+
+  // Sample Replicate Threshold B
   var sliderRepB = document.getElementById("ThreshSliderRange_repB"),
     inputBoxRepB = document.getElementById("ThreshSliderNumber_repB");
   sliderRepB.oninput = function() {
@@ -281,7 +398,7 @@ d3.csv(csv_path).then(function(data) {
     }
     inputBoxRepB.value = Number(sliderRepB.value);
 
-    countData["B"]["threshold"]["rep"] = sliderRepB.value
+    countData["B"]["threshold"]["rep"] = Number(sliderRepB.value)
 
     countData = get_counts(countData)
 
@@ -302,7 +419,7 @@ d3.csv(csv_path).then(function(data) {
     }
     sliderRepB.value = Number(inputBoxRepB.value);
 
-    countData["B"]["threshold"]["rep"] = sliderRepB.value
+    countData["B"]["threshold"]["rep"] = Number(sliderRepB.value)
 
     countData = get_counts(countData)
 
@@ -327,7 +444,7 @@ d3.csv(csv_path).then(function(data) {
     }
     inputBoxCVB.value = Number(sliderCVB.value);
 
-    countData["B"]["threshold"]["cv"] = sliderCVB.value
+    countData["B"]["threshold"]["cv"] = Number(sliderCVB.value)
 
     countData = get_counts(countData)
 
@@ -348,7 +465,7 @@ d3.csv(csv_path).then(function(data) {
     }
     sliderCVB.value = Number(inputBoxCVB.value);
 
-    countData["B"]["threshold"]["cv"] = sliderCVB.value
+    countData["B"]["threshold"]["cv"] = Number(sliderCVB.value)
 
     countData = get_counts(countData)
 
@@ -366,7 +483,7 @@ d3.csv(csv_path).then(function(data) {
   var sliderMRLA = document.getElementById("ThreshSliderRange_mrlA"),
     inputBoxMRLA = document.getElementById("ThreshSliderNumber_mrlA");
   sliderMRLA.value = countData["A"]["threshold"]["mrl"]; // update with initial input value
-  inputBoxMRLA.value = sliderMRLA.value;
+  inputBoxMRLA.value = Number(sliderMRLA.value);
   sliderMRLA.oninput = function() {
     // First set the possible values for the slider
     if (sliderMRLA.value < 4) {
@@ -376,8 +493,8 @@ d3.csv(csv_path).then(function(data) {
     } else {
       sliderMRLA.value = 10;
     }
-    inputBoxMRLA.value = sliderMRLA.value
-    countData["A"]["threshold"]["mrl"] = sliderMRLA.value
+    inputBoxMRLA.value = Number(sliderMRLA.value)
+    countData["A"]["threshold"]["mrl"] = Number(sliderMRLA.value)
 
     countData = get_counts(countData)
 
@@ -403,8 +520,8 @@ d3.csv(csv_path).then(function(data) {
     } else {
       sliderMRLB.value = 10;
     }
-    inputBoxMRLB.value = sliderMRLB.value
-    countData["B"]["threshold"]["mrl"] = sliderMRLB.value
+    inputBoxMRLB.value = Number(sliderMRLB.value)
+    countData["B"]["threshold"]["mrl"] = Number(sliderMRLB.value)
 
     countData = get_counts(countData)
 
@@ -794,6 +911,8 @@ d3.csv(csv_path).then(function(data) {
       myData["A"]["counts"]['feat'][i] = 0;
       myData["B"]["counts"]['occ'][i] = 0;
       myData["B"]["counts"]['feat'][i] = 0;
+      myData["A"]["threshold"]["blankRepPassArr"] = [];
+      myData["B"]["threshold"]["blankRepPassArr"] = [];
     }
 
     return myData;
@@ -813,7 +932,7 @@ d3.csv(csv_path).then(function(data) {
    * @param {String} threshID The key, if we are looking at threshold "A" or "B"
    * @returns updated countData Object, and max_pass string for updating feature counts
    */
-  function get_counts_by_row(countData, row, threshID) {
+  function get_counts_by_row(countData, row, threshID, blankRepPassIndex) {
     // we need to store information about "pass-hierarchy" to keep track of the 'highest-level-occurrence' in a feature.
     // e.g., if all occurrences of a feature are missing except for one occurrence that passes all filtering steps,
     //       then the feature is said to have passed.
@@ -836,6 +955,10 @@ d3.csv(csv_path).then(function(data) {
         sample_names.push(column_headers[header_i].slice(16));
       }
     }
+
+    // check if this feature passed the mass blank threshold
+    //// The index in the array is equal to the feature ID - 1
+    var passedBlankRep = countData[threshID]["threshold"]["blankRepPassArr"][blankRepPassIndex];
 
     // ensure we are not looking at an empty row at the end of CSV.
     if (row['Feature ID']) {
@@ -866,14 +989,22 @@ d3.csv(csv_path).then(function(data) {
           // check if this occurrence within the feature passes MRL check (and hence causes the feature to pass)
           var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`; 
           var sample_mean_header = "Mean " + sample_name;
+          
+          // Check if sample is a blank or not
+          // If it is: the replicate threshold is the blank threshold
+          // If not: the replicate threshold is the sample threshold
+          const blankStrings = ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"]
+          if (blankStrings.some(substring => sample_name.includes(substring))){
+            var replicate_threshold = countData[`${threshID}`]["threshold"]["blankRep"]
+          } else {
+            var replicate_threshold = countData[`${threshID}`]["threshold"]["rep"]
+          }
+
 
           // now we need to check the replicate threshold
           var sample_rep_header = "Detection Percentage " + sample_name;
-          if (Number(row[sample_rep_header]) >= countData[`${threshID}`]["threshold"]["rep"]) {
-            
-            // if (threshID === 'A') {
-            //   console.log(Number(row[sample_rep_header]), countData[`${threshID}`]["threshold"]["rep"])
-            // }
+          //if (Number(row[sample_rep_header]) >= countData[`${threshID}`]["threshold"]["rep"]) {
+          if (Number(row[sample_rep_header]) >= replicate_threshold) {
             // we pass the replicate threshold
             countData[`${threshID}`]["counts"]["occ"]["overRep"] += 1;
 
@@ -886,7 +1017,7 @@ d3.csv(csv_path).then(function(data) {
               // check if this occurrence passes MRL check
               var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`; 
               var sample_mean_header = "Mean " + sample_name;
-              if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
+              if (((Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) && (passedBlankRep)) || ((!(passedBlankRep)) && (Number(row[sample_mean_header])) >= 0)) {
                 // pass MRL (pass replicate-->pass CV-->pass MRL) = (overRep,underCV,overMRL)
                 countData[`${threshID}`]["counts"]["occ"]["underCVOverMRL"] += 1;
                 max_pass = 'underCVOverMRL' // highest level of pass, so no need to check before assigning
@@ -905,7 +1036,7 @@ d3.csv(csv_path).then(function(data) {
               // check if this occurrence passes MRL check
               var mrl_threshold_header = `MRL (${countData[threshID]['threshold']['mrl']}x)`
               var sample_mean_header = "Mean " + sample_name;
-              if (Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) {
+              if (((Number(row[sample_mean_header]) >= Number(row[mrl_threshold_header])) && (passedBlankRep)) || ((!(passedBlankRep)) && (Number(row[sample_mean_header])) >= 0)) {
                 // pass MRL (pass replicate-->fail CV-->pass MRL) = (overRep,overCV,overMRL)
                 countData[`${threshID}`]["counts"]["occ"]["overCVOverMRL"] += 1;
                 if (pass_hierarchy['overCVOverMRL'] > pass_hierarchy[max_pass]) {
@@ -933,10 +1064,6 @@ d3.csv(csv_path).then(function(data) {
         }
       }
     } // END OF FEATURE
-
-    // if ((threshID === 'A') && (max_pass === 'overCVOverMRL')) {
-    //   console.log(row['Feature ID'])
-    // }
 
     return countData, max_pass
 
@@ -998,11 +1125,46 @@ d3.csv(csv_path).then(function(data) {
     // anytime this function is called, we need to reset the counts to zero
     countData = resetCounts(countData);
 
+    // check first row of data to determine which string is used for MB
+    var row_keys = Object.keys(data[1]);
+    var blank_perc_header = false;
+    for (key of row_keys) {
+      if (key.startsWith("Detection Percentage ")) {
+        for (valid_blank_string of ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"]) {
+          if (key.endsWith(valid_blank_string)) {
+            blank_perc_header = key;
+            break;
+          }
+        }
+      }
+      if (blank_perc_header) {
+        break;
+      }
+    }
+
+    // iterate over rows once to get boolean array for blank replicate pass/fail
+    for (let iRow in data) {
+      var row = data[iRow];
+      if (!(Array.isArray(row))) {
+        if (row[blank_perc_header] >= countData["A"]["threshold"]["blankRep"]) {
+          countData["A"]["threshold"]["blankRepPassArr"].push(true);
+        } else {
+          countData["A"]["threshold"]["blankRepPassArr"].push(false);
+        }
+
+        if (row[blank_perc_header] >= countData["B"]["threshold"]["blankRep"]) {
+          countData["B"]["threshold"]["blankRepPassArr"].push(true);
+        } else {
+          countData["B"]["threshold"]["blankRepPassArr"].push(false);
+        }
+      }
+    }
+
     // iterate over rows (features)
     for (let iRow in data) {
       var row = data[iRow];
       if (!(Array.isArray(row))) {
-        countData, max_pass = get_counts_by_row(countData, row, "A")
+        countData, max_pass = get_counts_by_row(countData, row, "A", Number(iRow))
         if (max_pass === 'missing') {
           // console.log(row['Feature ID'])
         }
@@ -1010,7 +1172,7 @@ d3.csv(csv_path).then(function(data) {
           countData = update_feature_count(countData, max_pass, "A")
         }
 
-        countData, max_pass = get_counts_by_row(countData, row, "B")
+        countData, max_pass = get_counts_by_row(countData, row, "B", Number(iRow))
         if (max_pass) {
           countData = update_feature_count(countData, max_pass, "B")
         }
@@ -1240,7 +1402,9 @@ d3.csv(csv_path).then(function(data) {
     svg = addBifurcatingArrow(svg, `nOverCV${tag}`, `nOverCVOverMRL${tag}`, `nOverCVUnderMRL${tag}`, 27, fail_arrow_ec, fail_arrow_fc, fail_arrow_ec, fail_arrow_fc, nonDetect_arrow_ec, nonDetect_arrow_fc, "", "MRL Flag");
 
     // add text for Threshold values on SVG
-    var replicateText = addText(30, 285, `<tspan text-decoration="underline">Replicate Threshold = ${countData[threshID]["threshold"]["rep"]}%</tspan>`, 28, "black");
+    var replicateText = addText(90, 255, `<tspan>Replicate Threshold:</tspan>`, 28, "black");
+    svg.appendChild(replicateText);
+    var replicateText = addText(30, 295, `<tspan text-decoration="underline">Sample / Blank = ${countData[threshID]["threshold"]["rep"]}% / ${countData[threshID]["threshold"]["blankRep"]}%</tspan>`, 28, "black");
     svg.appendChild(replicateText);
     var replicateText = addText(40, 505, `<tspan text-decoration="underline">CV Threshold = ${countData[threshID]["threshold"]["cv"]}</tspan>`, 28, "black");
     svg.appendChild(replicateText);
@@ -1374,7 +1538,9 @@ d3.csv(csv_path).then(function(data) {
     svg = addBifurcatingArrow(svg, `nOverCV${tag}`, `nOverCVOverMRL${tag}`, `nOverCVUnderMRL${tag}`, 27, fail_arrow_ec, fail_arrow_fc, fail_arrow_ec, fail_arrow_fc, nonDetect_arrow_ec, nonDetect_arrow_fc, "", "MRL Flag");
 
     // add text for Threshold values on SVG
-    var replicateText = addText(30, 285, `<tspan text-decoration="underline">Replicate Threshold = ${countData[threshID]["threshold"]["rep"]}%</tspan>`, 28, "black");
+    var replicateText = addText(90, 255, `<tspan>Replicate Threshold:</tspan>`, 28, "black");
+    svg.appendChild(replicateText);
+    var replicateText = addText(30, 295, `<tspan text-decoration="underline">Sample / Blank = ${countData[threshID]["threshold"]["rep"]}% / ${countData[threshID]["threshold"]["blankRep"]}%</tspan>`, 28, "black");
     svg.appendChild(replicateText);
     var replicateText = addText(40, 505, `<tspan text-decoration="underline">CV Threshold = ${countData[threshID]["threshold"]["cv"]}</tspan>`, 28, "black");
     svg.appendChild(replicateText);

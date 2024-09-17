@@ -294,7 +294,7 @@ class OutputServer:
         combined_df.to_csv(path_or_buf=response, index_label=False, index=False)  # write our csv to the response
         return response
 
-    def decision_tree_analysis_parameters(self):
+    def decision_tree_parameters(self):
         data_analysis_parameters_id = self.jobid + "_" + "Analysis Parameters"
         try:  #
             data_analysis_parameters = self.gridfs.get(data_analysis_parameters_id)

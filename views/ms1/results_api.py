@@ -27,5 +27,5 @@ def decision_tree_data(request, jobid=None):
 
 def decision_tree_analysis_parameters(request, jobid=None):
     server = OutputServer(jobid)
-    response = server.decision_tree_analysis_parameters()
+    response = server.decision_tree_parameters()
     return response
