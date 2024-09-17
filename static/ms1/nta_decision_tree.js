@@ -5,7 +5,7 @@ var jobid = window.location.pathname.split("/").pop();
 // var csv_path = '../Reduced_WebApp_input_file_perc.csv';
 var csv_path = '/nta/ms1/results/decision_tree_data/' + jobid;
 // var init_parmaeters_path = './data/Analysis Parameters.csv'
-// var init_parmaeters_path = '/nta/ms1/results/decision_tree_analysis_parameters/' + jobid;
+var init_parmaeters_path = '/nta/ms1/results/decision_tree_analysis_parameters/' + jobid;
 
 /**
  * Changes in v0.6.0

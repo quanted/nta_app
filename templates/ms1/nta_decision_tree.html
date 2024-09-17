@@ -33,8 +33,15 @@
 
   <div class="logicTreeGrid-container logicTree" id="grid-container">
 
+    <div class="blankRepThreshSliderA logicTree">
+      <span style="font-size: 30px">Blank Replicate Threshold ( A ):</span><br>
+
+      <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_blankRepA" type="range" min="0.0" max="100.0" step="0.1" value="66.7">
+      <input class="logicTree" id="ThreshSliderNumber_blankRepA"  type="number" min="0.0" max="100.0" step="0.1" placeholder="66.7" value="66.7"> %
+    </div>
+    
     <div class="repThreshSliderA logicTree">
-      <span style="font-size: 30px">Replicate Threshold ( A ):</span><br>
+      <span style="font-size: 30px">Sample Replicate Threshold ( A ):</span><br>
 
       <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_repA" type="range" min="0.0" max="100.0" step="0.1" value="66.7">
       <input class="logicTree" id="ThreshSliderNumber_repA"  type="number" min="0.0" max="100.0" step="0.1" placeholder="66.7" value="66.7"> %
@@ -58,8 +65,15 @@
 
     <div class="myLogicTreeTable logicTree" id="myTable"></div>
 
+    <div class="blankRepThreshSliderB logicTree">
+      <span style="font-size: 30px">Blank Replicate Threshold ( B ):</span><br>
+
+      <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_blankRepB" type="range" min="0.0" max="100.0" step="0.1" value="50.0">
+      <input class="logicTree" id="ThreshSliderNumber_blankRepB"  type="number" min="0.0" max="100.0" step="0.1" placeholder="50.0" value="50.0"> %
+    </div>
+
     <div class="repThreshSliderB logicTree">
-      <span style="font-size: 30px">Replicate Threshold ( B ):</span><br>
+      <span style="font-size: 30px">Sample Replicate Threshold ( B ):</span><br>
 
       <input class="logicTreeSlider slider_rep" id="ThreshSliderRange_repB" type="range" min="0.0" max="100.0" step="0.1" value="50.0">
       <input class="logicTree" id="ThreshSliderNumber_repB"  type="number" min="0.0" max="100.0" step="0.1" placeholder="50.0" value="50.0"> %
