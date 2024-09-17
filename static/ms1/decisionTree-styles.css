@@ -194,6 +194,18 @@ tr.logicTree:nth-child(3) {
 .slider_mrl::-webkit-slider-thumb {
   background: #8e8e8e;
 }
+.downloadA {
+  display: flex;            /* Use flexbox layout */
+  justify-content: space-between; /* Spread buttons horizontally */
+  gap: 20px;                /* Add some space between the buttons */
+  padding: 10px;
+}
+.downloadB {
+  display: flex;            /* Use flexbox layout */
+  justify-content: space-between; /* Spread buttons horizontally */
+  gap: 20px;                /* Add some space between the buttons */
+  padding: 10px;
+}
 
 button.logicTree, button.toggleLogicTree {
   font-size: 29px;
