@@ -1487,7 +1487,7 @@ d3.csv(csv_path).then(function(data) {
     var fontSizeText = "1.7rem";
 
     // add the title
-    var textValue = 'Occurrences' + svgID.charAt(svgID.length-4)
+    var textValue = 'Occurrences ' + svgID.charAt(svgID.length-4)
     var tag = `occ${svgID.charAt(svgID.length-4)}`; // for setting box ID on SVG children elements -- how arrows are drawn.
     svg = addTitleBox(svg, xTitle, yTitle, textValue, '3.0rem', 'rgba(0,0,0,0)', 'transparent', "black", `treeTitle${tag}`);
 
