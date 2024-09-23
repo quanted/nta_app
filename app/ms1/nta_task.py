@@ -878,14 +878,14 @@ class NtaRun:
         blank_std = "STD " + blank_col[0]
         # AC Add blank replicate percentage column grab NTAW574
         blank_rper = "Detection Percentage " + blank_col[0]
-        
+
         # Calculate MDL
         # AC 6/18/2024: Need to pull in MRL multiplier for MRL calculation
         dfCombined["MDL"] = dfCombined[blank_mean] + MRL_mult * dfCombined[blank_std]
         dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
         dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
         # AC Where blank replicate percentage column fails, zero out MDL - NTAW574
-        dfCombined.loc[dfCombined[blank_rper] < min_replicate_blanks_hits_percent, 'MDL'] = 0
+        dfCombined.loc[dfCombined[blank_rper] < min_replicate_blanks_hits_percent, "MDL"] = 0
         # Find CV, Rep_Percent, and Mean cols from df
         cv_cols = ["CV " + col for col in sample_groups]
         rper_cols = ["Detection Percentage " + col for col in sample_groups]
@@ -897,7 +897,9 @@ class NtaRun:
         titleText = (
             "Heatmap of Feature Occurrences (n = "
             + str(cv_df.size)
-            + ")\nSample Rep. Threshold = {}%; Blank Rep. Threshold = {}%; CV Threshold = {}; MRL Multiplier = {}".format(min_replicate_hits_percent, min_replicate_blanks_hits_percent, max_replicate_cv_value, MRL_mult)
+            + ")\nSample Rep. Threshold = {}%; Blank Rep. Threshold = {}%; CV Threshold = {}; MRL Multiplier = {}".format(
+                min_replicate_hits_percent, min_replicate_blanks_hits_percent, max_replicate_cv_value, MRL_mult
+            )
         )
 
         # Blank out cvs in samples with <2 samples
@@ -929,7 +931,7 @@ class NtaRun:
         cv_df_trans = cv_df_discrete.transpose()
         # Set Figure size and title
         plt.figure(figsize=(40, 15))
-        plt.title(titleText, fontsize=40, pad=30, linespacing=1.5))
+        plt.title(titleText, fontsize=40, pad=30, linespacing=1.5)
         # Create custom color mapping
         myColors = ((0.8, 0.8, 0.8, 1.0), (1.0, 1.0, 1.0, 1.0), (1, 0.0, 0.2, 1.0))
         cmap = LinearSegmentedColormap.from_list("Custom", myColors, len(myColors))
