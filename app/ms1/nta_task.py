@@ -824,11 +824,16 @@ class NtaRun:
         # Get user input CV and Replicate thresholds
         max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
         min_replicate_hits_percent = self.parameters["min_replicate_hits"][1]
+        min_replicate_blanks_hit_percent = self.parameters["min_replicate_hits_blanks"][1]
         MRL_mult = float(self.parameters["mrl_std_multiplier"][1])
         # convert max_replicate_cv_value to a numeric value
         max_replicate_cv_value = pd.to_numeric(self.parameters["max_replicate_cv"][1], errors="coerce")
         # convert min_replicate_hits_percent to a numeric value
         min_replicate_hits_percent = pd.to_numeric(self.parameters["min_replicate_hits"][1], errors="coerce")
+        # convert min_replicate_blanks_hits_percent to a numeric value
+        min_replicate_blanks_hits_percent = pd.to_numeric(
+            self.parameters["min_replicate_hits_blanks"][1], errors="coerce"
+        )
         # get dataframe 'All Detection Statistics (Pos)' if it exists else None
         dfPos = (
             self.data_map["All Detection Statistics (Pos)"]
@@ -871,11 +876,16 @@ class NtaRun:
         logger.info("blank_col= {}".format(blank_col))
         blank_mean = "Mean " + blank_col[0]
         blank_std = "STD " + blank_col[0]
+        # AC Add blank replicate percentage column grab NTAW574
+        blank_rper = "Detection Percentage " + blank_col[0]
+        
         # Calculate MDL
         # AC 6/18/2024: Need to pull in MRL multiplier for MRL calculation
         dfCombined["MDL"] = dfCombined[blank_mean] + MRL_mult * dfCombined[blank_std]
         dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
         dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
+        # AC Where blank replicate percentage column fails, zero out MDL - NTAW574
+        dfCombined.loc[dfCombined[blank_rper] < min_replicate_blanks_hits_percent, 'MDL'] = 0
         # Find CV, Rep_Percent, and Mean cols from df
         cv_cols = ["CV " + col for col in sample_groups]
         rper_cols = ["Detection Percentage " + col for col in sample_groups]
@@ -885,16 +895,19 @@ class NtaRun:
 
         # Get number of occurrences from the CV dataframe
         titleText = (
-            "Heatmap of feature occurrences (n = "
+            "Heatmap of Feature Occurrences (n = "
             + str(cv_df.size)
-            + ") using filter values of {} maximum CV and {} minimum replicate %".format(
-                max_replicate_cv_value, min_replicate_hits_percent
-            )
+            + ")\nSample Rep. Threshold = {}%; Blank Rep. Threshold = {}%; CV Threshold = {}; MRL Multiplier = {}".format(min_replicate_hits_percent, min_replicate_blanks_hits_percent, max_replicate_cv_value, MRL_mult)
         )
 
         # Blank out cvs in samples with <2 samples
         for x, y, z in zip(cv_cols, rper_cols, mean_cols):
             # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
+            # Check if replicate column is the blank column to determine which filter to apply - NTAW574
+            if y == blank_rper:
+                cv_df.loc[dfCombined[y] < min_replicate_blanks_hits_percent, x] = np.nan
+            else:
+                cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
             cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
             cv_df.loc[dfCombined[z] <= dfCombined["MDL"], x] = np.nan
         # Add sum of Trues for condition applied to cv dataframe
@@ -916,7 +929,7 @@ class NtaRun:
         cv_df_trans = cv_df_discrete.transpose()
         # Set Figure size and title
         plt.figure(figsize=(40, 15))
-        plt.title(titleText, fontsize=40)
+        plt.title(titleText, fontsize=40, pad=30, linespacing=1.5))
         # Create custom color mapping
         myColors = ((0.8, 0.8, 0.8, 1.0), (1.0, 1.0, 1.0, 1.0), (1, 0.0, 0.2, 1.0))
         cmap = LinearSegmentedColormap.from_list("Custom", myColors, len(myColors))
