@@ -9,9 +9,12 @@ Known Issues:
 2) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
 
 ************************
-Version 0.3.X - 
+Version 0.3.2 - 
 ************************
-
+- Occurrence heatmap:
+  - Blank replicate slider added for additional replicate threshold specific to blank samples
+  - MRL threshold now only applied for features where feature blanks pass blank replicate threshold
+  - Updated title text/aesthetics
 
 ************************
 Version 0.3.1 - 9/17/2024
