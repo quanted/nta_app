@@ -1254,7 +1254,7 @@ class NtaRun:
             self.doc_combined = task_fun.combine_doc(self.docs[0], self.docs[1], tracer_df=tracer_df_bool)
 
         # NTAW-577: Replace zero values of "Selected MRL" column with blank cells prior to exporting to data_map
-        self.doc_combined["Selected MRL"].replace(0, "")
+        self.doc_combined["Selected MRL"] = self.doc_combined["Selected MRL"].replace(0, "")
 
         self.data_map["Decision Documentation"] = self.doc_combined
         # self.mongo_save(self.df_combined, FILENAMES['combined'])
