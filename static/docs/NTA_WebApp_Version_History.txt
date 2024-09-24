@@ -1,6 +1,6 @@
 NTA WebApp Version History and Known Issues Documentation
-Version 0.3.1
-Updated 9/17/2024
+Version 0.3.2
+Updated 9/24/2024
 
 *************
 Known Issues:
@@ -9,12 +9,15 @@ Known Issues:
 2) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
 
 ************************
-Version 0.3.2 - 
+Version 0.3.2 - 9/24/2024
 ************************
 - Occurrence heatmap:
   - Blank replicate slider added for additional replicate threshold specific to blank samples
   - MRL threshold now only applied for features where feature blanks pass blank replicate threshold
   - Updated title text/aesthetics
+- MS1 results file:
+  - "Final Occurrence Percentage" columns updated to percentage values
+  - "Selected MRL" column set as blank cell if blanks do not pass blank replicate filter and no MRL threshold is applied
 
 ************************
 Version 0.3.1 - 9/17/2024
