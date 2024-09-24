@@ -1160,6 +1160,12 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
         .astype(float)
         .round(2)
     )
+    # NTAW-578 - Convert values in "Final Occurrence Percentage" columns to percentages by multiplying by 100 / rounding to whole number
+    df["Final Occurrence Percentage"] = (df["Final Occurrence Percentage"] * 100).round(0)
+    df_flagged["Final Occurrence Percentage (with flags)"] = (
+        df_flagged["Final Occurrence Percentage (with flags)"] * 100
+    ).round(0)
+
     return df, df_flagged
 
 

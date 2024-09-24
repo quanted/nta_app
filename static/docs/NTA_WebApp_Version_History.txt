@@ -1,13 +1,23 @@
 NTA WebApp Version History and Known Issues Documentation
-Version 0.3
-Updated 9/10/2024
+Version 0.3.2
+Updated 9/24/2024
 
 *************
 Known Issues:
 *************
 1) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
 2) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
-3) Decision tree: An MRL threshold is applied to the data even if blank samples do not meet the blank sample replicate threshold
+
+************************
+Version 0.3.2 - 9/24/2024
+************************
+- Occurrence heatmap:
+  - Minimum replicate thresholds for samples and blanks now applied correctly for their respective sample types
+  - MRL threshold now only applied for features where feature blanks pass blank replicate threshold
+  - Updated title text/aesthetics
+- MS1 results file:
+  - "Final Occurrence Percentage" columns updated to percentage values
+  - "Selected MRL" column set as blank cell if blanks do not pass blank replicate filter and no MRL threshold is applied
 
 ************************
 Version 0.3.1 - 9/17/2024
