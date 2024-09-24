@@ -12,7 +12,7 @@ Known Issues:
 Version 0.3.2 - 9/24/2024
 ************************
 - Occurrence heatmap:
-  - Blank replicate slider added for additional replicate threshold specific to blank samples
+  - Minimum replicate thresholds for samples and blanks now applied correctly for their respective sample types
   - MRL threshold now only applied for features where feature blanks pass blank replicate threshold
   - Updated title text/aesthetics
 - MS1 results file:
