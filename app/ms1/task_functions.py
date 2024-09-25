@@ -1081,7 +1081,8 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     )
 
     # Count # of times an occurrence flag contains R, CV, or MRL, and count # of just CV flags
-    contains_R = pd.concat([docs[mean].str.contains("R") for mean in Mean_Samples], axis=1)
+    # NTAW-584: Update string matching so that replicate flag "R" is not found in MRL flag "MRL"
+    contains_R = pd.concat([docs[mean].str.match("R") for mean in Mean_Samples], axis=1)
     contains_CV = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1)
     is_CV = docs[Mean_Samples] == "CV"
     contains_MRL = pd.concat([docs[mean].str.contains("MRL") for mean in Mean_Samples], axis=1)
