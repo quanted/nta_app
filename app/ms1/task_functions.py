@@ -1119,6 +1119,13 @@ def feat_removal_flag(docs, Mean_Samples, missing):
         docs["Feature Removed?"] + "R ",
         docs["Feature Removed?"],
     )
+
+    # Clean up "Feature Removed?" column entries that end in commas/spaces
+    docs["Feature Removed?"] = docs["Feature Removed?"].apply(
+        lambda x: " ".join(x.split()) if isinstance(x, str) else x
+    )
+    docs["Feature Removed?"] = docs["Feature Removed?"].str.replace("(,$)", "", regex=True)
+
     return docs
 
 
