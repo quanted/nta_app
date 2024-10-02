@@ -945,7 +945,9 @@ def replicate_flag(
     # Flag blanks occurrences where feature presence is less than some replicate percentage cutoff, and remove from blanks
     for mean, Std, N in zip(Mean_MB, Std_MB, Replicate_Percent_MB):
         docs[mean] = docs[mean].astype(object)
-        docs.loc[df[N] < controls[2], mean] = "R"
+        # NTAW-593 update logic for blanks and blank replicate filter
+        # docs.loc[df[N] < controls[2], mean] = "R"
+        docs.loc[((df[N] < controls[2]) & (~missing[mean])), mean] = "R"
         df.loc[df[N] < controls[2], mean] = 0
         df.loc[df[N] < controls[2], Std] = 0
     return df, docs
