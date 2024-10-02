@@ -927,6 +927,7 @@ def replicate_flag(
     docs,
     controls,
     missing,
+    missing_MB,
     Mean_Samples,
     Replicate_Percent_Samples,
     Mean_MB,
@@ -947,7 +948,7 @@ def replicate_flag(
         docs[mean] = docs[mean].astype(object)
         # NTAW-593 update logic for blanks and blank replicate filter
         # docs.loc[df[N] < controls[2], mean] = "R"
-        docs.loc[((df[N] < controls[2]) & (~missing[mean])), mean] = "R"
+        docs.loc[((df[N] < controls[2]) & (~missing_MB[mean])), mean] = "R"
         df.loc[df[N] < controls[2], mean] = 0
         df.loc[df[N] < controls[2], Std] = 0
     return df, docs
@@ -1230,6 +1231,7 @@ def clean_features(df_in, controls, tracer_df=False):
     CV = df.columns[df.columns.str.startswith("CV ")].tolist()
     CV_Samples = [C for C in CV if not any(x in C for x in blanks)]
     missing = df[Mean_Samples].isnull()
+    missing_MB = df[Mean_MB].isnull()
     """REPLICATE FLAG"""
     # Implement replicate flag
     df, docs = replicate_flag(
@@ -1237,6 +1239,7 @@ def clean_features(df_in, controls, tracer_df=False):
         docs,
         controls,
         missing,
+        missing_MB,
         Mean_Samples,
         Replicate_Percent_Samples,
         Mean_MB,
