@@ -1,12 +1,19 @@
 NTA WebApp Version History and Known Issues Documentation
-Version 0.3.2
-Updated 9/24/2024
+Version 0.3.3
+Updated 10/3/2024
 
 *************
 Known Issues:
 *************
 1) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
 2) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
+
+************************
+Version 0.3.3 - 10/3/2024
+************************
+- MS1 results file:
+  - Decision documentation sheet "Feature Removed" column - Fixed bug where "MRL" flags in occurrences were mis-identified as "R" flags
+  - Decision documentation sheet, blank occurrence columns - Fixed bug where if there were no detections in blank samples, they were labeled as failing "R" occurrence flags
 
 ************************
 Version 0.3.2 - 9/24/2024

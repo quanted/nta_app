@@ -1255,6 +1255,11 @@ class NtaRun:
 
         # NTAW-577: Replace zero values of "Selected MRL" column with blank cells prior to exporting to data_map
         self.doc_combined["Selected MRL"] = self.doc_combined["Selected MRL"].replace(0, "")
+        # Also replace zero values of blank mean columns with blank cells prior to exporting to data_map
+        blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
+        Mean = self.doc_combined.columns[self.doc_combined.columns.str.contains(pat="Mean ")].tolist()
+        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
+        self.doc_combined[Mean_MB] = self.doc_combined[Mean_MB].replace(0, "")
 
         self.data_map["Decision Documentation"] = self.doc_combined
         # self.mongo_save(self.df_combined, FILENAMES['combined'])

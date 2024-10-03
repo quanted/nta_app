@@ -927,6 +927,7 @@ def replicate_flag(
     docs,
     controls,
     missing,
+    missing_MB,
     Mean_Samples,
     Replicate_Percent_Samples,
     Mean_MB,
@@ -945,7 +946,9 @@ def replicate_flag(
     # Flag blanks occurrences where feature presence is less than some replicate percentage cutoff, and remove from blanks
     for mean, Std, N in zip(Mean_MB, Std_MB, Replicate_Percent_MB):
         docs[mean] = docs[mean].astype(object)
-        docs.loc[df[N] < controls[2], mean] = "R"
+        # NTAW-593 update logic for blanks and blank replicate filter
+        # docs.loc[df[N] < controls[2], mean] = "R"
+        docs.loc[((df[N] < controls[2]) & (~missing_MB[mean])), mean] = "R"
         df.loc[df[N] < controls[2], mean] = 0
         df.loc[df[N] < controls[2], Std] = 0
     return df, docs
@@ -1081,7 +1084,8 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     )
 
     # Count # of times an occurrence flag contains R, CV, or MRL, and count # of just CV flags
-    contains_R = pd.concat([docs[mean].str.contains("R") for mean in Mean_Samples], axis=1)
+    # NTAW-584: Update string matching so that replicate flag "R" is not found in MRL flag "MRL"
+    contains_R = pd.concat([docs[mean].str.match("R") for mean in Mean_Samples], axis=1)
     contains_CV = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1)
     is_CV = docs[Mean_Samples] == "CV"
     contains_MRL = pd.concat([docs[mean].str.contains("MRL") for mean in Mean_Samples], axis=1)
@@ -1118,6 +1122,13 @@ def feat_removal_flag(docs, Mean_Samples, missing):
         docs["Feature Removed?"] + "R ",
         docs["Feature Removed?"],
     )
+
+    # Clean up "Feature Removed?" column entries that end in commas/spaces
+    docs["Feature Removed?"] = docs["Feature Removed?"].apply(
+        lambda x: " ".join(x.split()) if isinstance(x, str) else x
+    )
+    docs["Feature Removed?"] = docs["Feature Removed?"].str.replace("(,$)", "", regex=True)
+
     return docs
 
 
@@ -1220,6 +1231,7 @@ def clean_features(df_in, controls, tracer_df=False):
     CV = df.columns[df.columns.str.startswith("CV ")].tolist()
     CV_Samples = [C for C in CV if not any(x in C for x in blanks)]
     missing = df[Mean_Samples].isnull()
+    missing_MB = df[Mean_MB].isnull()
     """REPLICATE FLAG"""
     # Implement replicate flag
     df, docs = replicate_flag(
@@ -1227,6 +1239,7 @@ def clean_features(df_in, controls, tracer_df=False):
         docs,
         controls,
         missing,
+        missing_MB,
         Mean_Samples,
         Replicate_Percent_Samples,
         Mean_MB,
