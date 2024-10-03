@@ -183,14 +183,9 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     diff_matrix_rt = rts_matrix - rts_matrix.transpose()
     # Create array of 0s
     unique_adduct_number = np.zeros(len(df.index))
-    # if the delta is negative, it is a loss and the has/is identification must be flipped
-    if delta < 0:
-        loss_modifier = -1  # loss
-    else:
-        loss_modifier = 1  # adduct
     # Add 'diff_mass_matrix' by 'delta' (adduct mass)
-    is_adduct_diff = abs(diff_matrix_mass - (delta * loss_modifier))
-    has_adduct_diff = abs(diff_matrix_mass + (delta * loss_modifier))
+    is_adduct_diff = abs(diff_matrix_mass - delta)
+    has_adduct_diff = abs(diff_matrix_mass + delta)
     # Adjust matrix if units are 'ppm'
     if ppm:
         has_adduct_diff = (has_adduct_diff / masses_matrix) * 10**6
