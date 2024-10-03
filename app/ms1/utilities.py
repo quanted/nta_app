@@ -71,80 +71,76 @@ def response_log_wrapper(api_name:str):
         return wrapper
     return api_log_decorator
 
-@response_log_wrapper('DSSTOX')
-def api_search_masses(masses, accuracy, jobid = "00000"):
-    input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
-    #if "edap-cluster" in DSSTOX_API:
-    api_url = '{}/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
-    #else:
-    #    api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
-    logger.info(api_url)
-    http_headers = {'Content-Type': 'application/json'}
-    return requests.post(api_url, headers=http_headers, data=input_json)
-
-def api_search_mass(mass, accuracy, jobid = "00000"):
-    mass_low = float(mass) - (float(mass) * float(accuracy) / 1000000)
-    mass_high = float(mass) + (float(mass) * float(accuracy) / 1000000)
-    api_url = '{}/chemical/msready/search/by-mass/{}/{}'.format(CCD_API, mass_low, mass_high)
-    logger.info(api_url)
-    http_headers = {'x-api-key': CCD_API_KEY}
-    response = requests.get(api_url, headers=http_headers)
-    candidate_list = list(response.json())
-    return candidate_list
-
 def api_search_mass_batch(mass_list, accuracy):
     api_url = '{}/chemical/msready/search/by-mass/'.format(CCD_API)
-    logger.info(api_url)
     http_headers = {'x-api-key': CCD_API_KEY, 'content-type': 'application/json',
                     'accept': 'application/json'}
     post_data = {"masses": mass_list, "error": accuracy}
     response = requests.post(api_url, data=json.dumps(post_data), headers=http_headers)
     candidate_list = response.json()
-    logger.info(candidate_list)
     return candidate_list
+
+def api_search_formula(formula):
+    api_url = '{}/chemical/msready/search/by-formula/{}'.format(CCD_API, formula)
+    http_headers = {'x-api-key': CCD_API_KEY}
+    response = requests.get(api_url, headers=http_headers)
+    return response.json()
 
 def api_get_metadata(dtxsid):
     http_headers = {'x-api-key': CCD_API_KEY}
     chem_details_api = '{}/chemical/detail/search/by-dtxsid/{}'.format(CCD_API,dtxsid)
     chem_details_response = requests.get(chem_details_api, headers=http_headers)
-    #logger.info('METADATA OUTPUT: {}'.format({dtxsid: chem_details_response.json()}))
     return {dtxsid: chem_details_response.json()}
 
-def api_search_mass_list(masses, accuracy, jobid = "00000", batchsize=100):
+def api_get_metadata_batch(dtxsid_list):
+    http_headers = {'x-api-key': CCD_API_KEY, 'content-type': 'application/json',
+                    'accept': 'application/json'}
+    chem_details_api = '{}/chemical/detail/search/by-dtxsid/?projection=ntatoolkit'.format(CCD_API)
+    metadata_response = requests.post(chem_details_api, data=json.dumps(dtxsid_list),
+                                          headers=http_headers)
+    return metadata_response.json()
+
+@response_log_wrapper('CCD API by mass')
+def api_search_mass_list(masses, accuracy, batchsize=100):
     n_masses = len(masses)
-    logging.info("Sending {} masses in batches of {}".format(n_masses, batchsize))
+    logging.info("Searching {} masses in batches of {} using the CCD API".format(n_masses, batchsize))
     candidates_dict = {}
-    for i in range(0, len(masses), batchsize):
+    for i in range(0, n_masses, batchsize):
         candidates_batch = api_search_mass_batch(mass_list=masses[i:i+batchsize],
                               accuracy=accuracy)
         candidates_dict.update(candidates_batch)
-    # for count, mass in enumerate(masses):
-    #     logger.info("Searching mass # {} out of {}".format(count+1, n_masses))
-    #     candidate_list = list(api_search_mass(mass, accuracy))
-    #     logger.info("Mass: {} - num of candidates: {}".format(mass, len(candidate_list)))
-    #     candidates_dict = {}
-    #     for candidate in candidate_list:
-    #         candidate_metadata = api_get_metadata(candidate)
-    #         candidates_dict.update(candidate_metadata)
-    #     results_dict[mass] = candidates_dict
-    # logging.info('api search final dict: {}'.format(results_dict))
-    # results_df = pd.read_json(json.dumps(results_dict))
-    logging.info("final ms ready batch result reached")
-    #return results_df
-    return None
+    logger.info("done with mass searching")
+    metadata_list = []
+    for parent, candidates in candidates_dict.items():
+        dtxsid_batch_size = 1000 # loop through 1000 DTXSIDs max
+        for i in range(0, len(candidates), dtxsid_batch_size): 
+            metadata = api_get_metadata_batch(candidates[i:i+dtxsid_batch_size])
+            metadata_df = pd.DataFrame(metadata)
+            metadata_df['Input'] = float(parent)
+            metadata_list.append(metadata_df)
+    logger.info("done with metadata searching")
+    results_df = pd.concat(metadata_list)
+    return results_df
 
-@response_log_wrapper('DSSTOX')
-def api_search_formulas(formulas, jobID = "00000"):
-    input_json = json.dumps({"search_by": "formula", "query": formulas})  # assumes ppm
-    if "edap-cluster" in DSSTOX_API:
-        api_url = '{}/rest/ms1/batch/{}'.format(DSSTOX_API, jobID)
-    else:
-        api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobID)
-    logger.info(api_url)
-    http_headers = {'Content-Type': 'application/json'}
-    return requests.post(api_url, headers=http_headers, data=input_json)
+@response_log_wrapper('CCD API by formula')
+def api_search_formula_list(formulas):
+    n_formulas = len(formulas)
+    logging.info("Searching {} formulas in batches of 1 using the CCD API".format(n_formulas))
+    candidates_dict = {}
+    for formula in formulas:
+        candidates_batch = api_search_formula(formula)
+        candidates_dict.update({formula:candidates_batch})
+    metadata_list = []
+    for parent, candidates in candidates_dict.items():
+        dtxsid_batch_size = 1000 # loop through 1000 DTXSIDs max
+        for i in range(0, len(candidates), dtxsid_batch_size): 
+            metadata = api_get_metadata_batch(candidates[i:i+dtxsid_batch_size])
+            metadata_df = pd.DataFrame(metadata)
+            metadata_df['Input'] = parent
+            metadata_list.append(metadata_df)
+    results_df = pd.concat(metadata_list)
+    return results_df
 
-@response_log_wrapper('HCD')
 def api_search_hcd(dtxsid_list):
     post_data = {"chemicals":[], "options": {"noRecords": "true", "usePredictions": "false"}}
     headers = {'content-type': 'application/json'}
@@ -154,6 +150,7 @@ def api_search_hcd(dtxsid_list):
         post_data['chemicals'].append({'chemical': {'sid': dtxsid, "checked": True}, "properties": {}})
     return requests.post(url, data=json.dumps(post_data), headers=headers)
             
+@response_log_wrapper('HCD')
 def batch_search_hcd(dtxsid_list, batchsize = 200):
     result_dict = {}
     logger.info(f"Search {len(dtxsid_list)} DTXSIDs in HCD")
@@ -169,6 +166,16 @@ def batch_search_hcd(dtxsid_list, batchsize = 200):
                 result_dict[chemical_id][f'{data["hazardName"]}_authority'] = data['finalAuthority'] if 'finalAuthority' in data.keys() else ''
     return pd.DataFrame(result_dict).transpose().reset_index().rename(columns = {'index':'DTXSID'})
 
+def metadata_posthoc_formatting(metadata_df):
+    metadata_df['mass_difference'] = metadata_df['Input'] - metadata_df['monoisotopicMass']
+    #metadata_df - metadata_df.drop(columns=['expocat'])
+    metadata_df.rename(columns={"expocatMedianPrediction": "EXPOCAST_MEDIAN_EXPOSURE_PREDICTION_MG/KG-BW/DAY",
+                                "expocat":"inExpocast?",
+                                "nhanes":"inNHANES?"})
+    metadata_df['inExpocast?'] = metadata_df['inExpocast?'].astype(bool)
+    metadata_df['inNHANES?'] = metadata_df['inNHANES?'].astype(bool)
+    
+    
 def format_tracer_file(df_in):
     df = df_in.copy()
     # NTAW-94 comment out the following line. Compound is no longer being used
