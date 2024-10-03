@@ -123,3 +123,6 @@ venv.bak/
 
 # copied as a result of local code mounted development
 collected_static/
+
+# vscode
+.vscode/
