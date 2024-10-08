@@ -218,7 +218,7 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
         # is_adduct_number_flat = np.max(is_adduct_number, axis=1)
         # For each feature (column), make a string listing all 'is adduct' numbers for the info column
         is_adduct_number_flat = np.apply_along_axis(
-            collapse_adduct_id_array, 0, is_adduct_number, a_name
+            collapse_adduct_id_array, 1, is_adduct_number, a_name
         )
         # Matrix multiplication, keep highest # row if multiple adducts
         has_adduct_number = has_adduct_matrix * is_id_matrix
@@ -226,7 +226,7 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
         # has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
         # For each feature (column), make a string listing all 'has adduct' numbers for the info column
         has_adduct_number_flat = np.apply_along_axis(
-            collapse_adduct_id_array, 0, has_adduct_number, a_name
+            collapse_adduct_id_array, 1, has_adduct_number, a_name
         )
         # unique_adduct_number = np.where(
         #    has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat
