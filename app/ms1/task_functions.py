@@ -260,7 +260,7 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
 
 
 def collapse_adduct_id_array(the_array, delta_name):
-    non_zero = the_array[the_array > 0]
+    non_zero = the_array[the_array > 0].astype(str)
     if len(non_zero) == 0:
         return ""
     adduct_info_str = "({});".format(delta_name).join(non_zero) + "({});".format(delta_name)
