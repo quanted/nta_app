@@ -209,32 +209,25 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
         # skip matrix math if no adduct matches
         pass
     else:
-        # Define 'row_num', 'is_id_matrix'
+        # Define 'is_id_matrix' where each row is a list of every feature ID
         row_num = len(mass)
         is_id_matrix = np.tile(ids_matrix, (row_num, 1))
-        # Matrix multiplication, keep highest # row if multiple adducts
+        # Matrix multiplication, set all feature IDs to 0 except adduct/loss hits
         is_adduct_number = is_adduct_matrix * is_id_matrix
-        # if is adduct of multiple, keep highest # row
-        # is_adduct_number_flat = np.max(is_adduct_number, axis=1)
         # For each feature (column), make a string listing all 'is adduct' numbers for the info column
         is_adduct_number_flat = np.apply_along_axis(
             collapse_adduct_id_array, 1, is_adduct_number, a_name
         )
-        # Matrix multiplication, keep highest # row if multiple adducts
+        # Matrix multiplication, set all feature IDs to 0 except adduct/loss hits
         has_adduct_number = has_adduct_matrix * is_id_matrix
-        # if is adduct of multiple, keep highest # row
-        # has_adduct_number_flat = np.max(has_adduct_number, axis=1)  # these will all be the same down columns
         # For each feature (column), make a string listing all 'has adduct' numbers for the info column
         has_adduct_number_flat = np.apply_along_axis(
             collapse_adduct_id_array, 1, has_adduct_number, a_name
         )
-        # unique_adduct_number = np.where(
-        #    has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat
-        # ).astype(int)
         # Edit 'df['Has Adduct or Loss?']' column
         df["Has Adduct or Loss?"] = np.where(
             (has_adduct_number_flat != ""),
-            df["Has Adduct or Loss?"] + 1,
+            1,
             df["Has Adduct or Loss?"],
         )
         # Edit 'df['Is Adduct or Loss?']' column
@@ -260,10 +253,21 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
 
 
 def collapse_adduct_id_array(the_array, delta_name):
-    non_zero = the_array[the_array > 0].astype(str)
+    """
+    Helper function that collapses each row of the adduct ID matrix into a string containing all matches
+    """
+    non_zero = the_array[the_array > 0].astype(
+        str
+    )  # get all non-zero adduct/loss identifiers and convert to string
     if len(non_zero) == 0:
-        return ""
-    adduct_info_str = "({});".format(delta_name).join(non_zero) + "({});".format(delta_name)
+        adduct_info_str = ""  # if there are no hits, return empty string
+    else:
+        adduct_info_str = "({});".format(delta_name).join(non_zero) + "({});".format(
+            delta_name
+        )  # format as ID(adduct);ID2(adduct);
+    adduct_info_str = np.array(
+        adduct_info_str, dtype="object"
+    )  # convert to length 1 numpy array for proper str formatting with apply_along_axis()
     return adduct_info_str
 
 
