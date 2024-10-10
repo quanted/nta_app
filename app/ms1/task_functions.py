@@ -175,12 +175,12 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     rts = df["Retention_Time"].to_numpy()
     ids = df["Feature ID"].to_numpy()
     # Reshape 'masses', 'rts', and 'ids'
-    masses_matrix = np.reshape(mass, (len(mass), 1))
-    rts_matrix = np.reshape(rts, (len(rts), 1))
-    ids_matrix = np.reshape(ids, (1, len(ids)))
+    masses_vector = np.reshape(mass, (len(mass), 1))
+    rts_vector = np.reshape(rts, (len(rts), 1))
+    ids_vector = np.reshape(ids, (1, len(ids)))
     # Create difference matrices
-    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
-    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
+    diff_matrix_mass = masses_vector - masses_vector.transpose()
+    diff_matrix_rt = rts_vector - rts_vector.transpose()
     # Create array of 0s
     unique_adduct_number = np.zeros(len(df.index))
     # Add 'diff_mass_matrix' by 'delta' (adduct mass)
@@ -188,8 +188,8 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     has_adduct_diff = abs(diff_matrix_mass + delta)
     # Adjust matrix if units are 'ppm'
     if ppm:
-        has_adduct_diff = (has_adduct_diff / masses_matrix) * 10**6
-        is_adduct_diff = (is_adduct_diff / masses_matrix) * 10**6
+        has_adduct_diff = (has_adduct_diff / masses_vector) * 10**6
+        is_adduct_diff = (is_adduct_diff / masses_vector) * 10**6
     # Replace cells in 'has_adduct_diff' below 'Mass_Difference' and 'Retention_Difference' with 1, else 0
     is_adduct_matrix = np.where(
         (is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference),
@@ -209,48 +209,66 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
         # skip matrix math if no adduct matches
         pass
     else:
-        # Define 'row_num', 'is_id_matrix'
+        # Define 'is_id_matrix' where each row is a list of every feature ID
         row_num = len(mass)
-        is_id_matrix = np.tile(ids_matrix, (row_num, 1))
-        # Matrix multiplication, keep highest # row if multiple adducts
-        is_adduct_number = is_adduct_matrix * is_id_matrix
-        # if is adduct of multiple, keep highest # row
-        is_adduct_number_flat = np.max(is_adduct_number, axis=1)
-        # Matrix multiplication, keep highest # row if multiple adducts
-        has_adduct_number = has_adduct_matrix * is_id_matrix
-        # if is adduct of multiple, keep highest # row
-        has_adduct_number_flat = np.max(
-            has_adduct_number, axis=1
-        )  # these will all be the same down columns
-        unique_adduct_number = np.where(
-            has_adduct_number_flat != 0, has_adduct_number_flat, is_adduct_number_flat
-        ).astype(int)
+        id_matrix = np.tile(ids_vector, (row_num, 1))
+        # Matrix multiplication, set all feature IDs to 0 except adduct/loss hits
+        is_adduct_number = is_adduct_matrix * id_matrix
+        # For each feature (column), make a string listing all 'is adduct' numbers for the info column
+        is_adduct_number_flat = np.apply_along_axis(
+            collapse_adduct_id_array, 1, is_adduct_number, a_name
+        )
+        # Matrix multiplication, set all feature IDs to 0 except adduct/loss hits
+        has_adduct_number = has_adduct_matrix * id_matrix
+        # For each feature (column), make a string listing all 'has adduct' numbers for the info column
+        has_adduct_number_flat = np.apply_along_axis(
+            collapse_adduct_id_array, 1, has_adduct_number, a_name
+        )
         # Edit 'df['Has Adduct or Loss?']' column
         df["Has Adduct or Loss?"] = np.where(
-            (has_adduct_number_flat > 0) & (df["Is Adduct or Loss?"] == 0),
-            df["Has Adduct or Loss?"] + 1,
+            (has_adduct_number_flat != ""),
+            1,
             df["Has Adduct or Loss?"],
         )
         # Edit 'df['Is Adduct or Loss?']' column
         df["Is Adduct or Loss?"] = np.where(
-            (is_adduct_number_flat > 0) & (df["Has Adduct or Loss?"] == 0),
+            (is_adduct_number_flat != ""),
             1,
             df["Is Adduct or Loss?"],
         )
         # Edit 'df['Adduct or Loss Info']' column
         df["Adduct or Loss Info"] = np.where(
-            (has_adduct_number_flat > 0) & (df["Is Adduct or Loss?"] == 0),
-            df["Adduct or Loss Info"] + unique_adduct_number.astype(str) + "({});".format(a_name),
+            (has_adduct_number_flat != ""),
+            df["Adduct or Loss Info"] + has_adduct_number_flat,
             df["Adduct or Loss Info"],
         )
         # Edit 'df['Adduct or Loss Info']' column
         df["Adduct or Loss Info"] = np.where(
-            (is_adduct_number_flat > 0) & (df["Has Adduct or Loss?"] == 0),
-            df["Adduct or Loss Info"] + unique_adduct_number.astype(str) + "({});".format(a_name),
+            (is_adduct_number_flat != ""),
+            df["Adduct or Loss Info"] + is_adduct_number_flat,
             df["Adduct or Loss Info"],
         )
     # Return dataframe with three new adduct info columns
     return df
+
+
+def collapse_adduct_id_array(the_array, delta_name):
+    """
+    Helper function that collapses each row of the adduct ID matrix into a string containing all matches
+    """
+    non_zero = the_array[the_array > 0].astype(
+        str
+    )  # get all non-zero adduct/loss identifiers and convert to string
+    if len(non_zero) == 0:
+        adduct_info_str = ""  # if there are no hits, return empty string
+    else:
+        adduct_info_str = "({});".format(delta_name).join(non_zero) + "({});".format(
+            delta_name
+        )  # format as ID(adduct);ID2(adduct);
+    adduct_info_str = np.array(
+        adduct_info_str, dtype="object"
+    )  # convert to length 1 numpy array for proper str formatting with apply_along_axis()
+    return adduct_info_str
 
 
 def window_size(df_in, mass_diff_mass=112.985586):
@@ -327,17 +345,17 @@ def adduct_identifier(
     ]
     # no change to neutral losses
     neutral_losses_li = [
-        ("H2O", 18.010565),
-        ("2H2O", 36.02113),
-        ("3H2O", 54.031695),
-        ("4H2O", 72.04226),
-        ("5H2O", 90.052825),
-        ("NH3", 17.0265),
-        ("O", 15.99490),
-        ("CO", 29.00220),
-        ("CO2", 43.989829),
-        ("C2H4", 28.03130),
-        ("HFA", 46.00550),
+        ("H2O", -18.010565),
+        ("2H2O", -36.02113),
+        ("3H2O", -54.031695),
+        ("4H2O", -72.04226),
+        ("5H2O", -90.052825),
+        ("NH3", -17.0265),
+        ("O", -15.99490),
+        ("CO", -29.00220),
+        ("CO2", -43.989829),
+        ("C2H4", -28.03130),
+        ("HFA", 46.00550),  # note here and below - not losses? but still neutral?
         ("HAc", 60.02110),
         ("MeOH", 32.02620),
         ("ACN", 41.02650),
