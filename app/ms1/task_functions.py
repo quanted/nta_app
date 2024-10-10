@@ -175,12 +175,12 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     rts = df["Retention_Time"].to_numpy()
     ids = df["Feature ID"].to_numpy()
     # Reshape 'masses', 'rts', and 'ids'
-    masses_matrix = np.reshape(mass, (len(mass), 1))
-    rts_matrix = np.reshape(rts, (len(rts), 1))
-    ids_matrix = np.reshape(ids, (1, len(ids)))
+    masses_vector = np.reshape(mass, (len(mass), 1))
+    rts_vector = np.reshape(rts, (len(rts), 1))
+    ids_vector = np.reshape(ids, (1, len(ids)))
     # Create difference matrices
-    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
-    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
+    diff_matrix_mass = masses_vector - masses_vector.transpose()
+    diff_matrix_rt = rts_vector - rts_vector.transpose()
     # Create array of 0s
     unique_adduct_number = np.zeros(len(df.index))
     # Add 'diff_mass_matrix' by 'delta' (adduct mass)
@@ -188,8 +188,8 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     has_adduct_diff = abs(diff_matrix_mass + delta)
     # Adjust matrix if units are 'ppm'
     if ppm:
-        has_adduct_diff = (has_adduct_diff / masses_matrix) * 10**6
-        is_adduct_diff = (is_adduct_diff / masses_matrix) * 10**6
+        has_adduct_diff = (has_adduct_diff / masses_vector) * 10**6
+        is_adduct_diff = (is_adduct_diff / masses_vector) * 10**6
     # Replace cells in 'has_adduct_diff' below 'Mass_Difference' and 'Retention_Difference' with 1, else 0
     is_adduct_matrix = np.where(
         (is_adduct_diff < Mass_Difference) & (abs(diff_matrix_rt) < Retention_Difference),
@@ -211,15 +211,15 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     else:
         # Define 'is_id_matrix' where each row is a list of every feature ID
         row_num = len(mass)
-        is_id_matrix = np.tile(ids_matrix, (row_num, 1))
+        id_matrix = np.tile(ids_vector, (row_num, 1))
         # Matrix multiplication, set all feature IDs to 0 except adduct/loss hits
-        is_adduct_number = is_adduct_matrix * is_id_matrix
+        is_adduct_number = is_adduct_matrix * id_matrix
         # For each feature (column), make a string listing all 'is adduct' numbers for the info column
         is_adduct_number_flat = np.apply_along_axis(
             collapse_adduct_id_array, 1, is_adduct_number, a_name
         )
         # Matrix multiplication, set all feature IDs to 0 except adduct/loss hits
-        has_adduct_number = has_adduct_matrix * is_id_matrix
+        has_adduct_number = has_adduct_matrix * id_matrix
         # For each feature (column), make a string listing all 'has adduct' numbers for the info column
         has_adduct_number_flat = np.apply_along_axis(
             collapse_adduct_id_array, 1, has_adduct_number, a_name
@@ -355,11 +355,11 @@ def adduct_identifier(
         ("CO", -29.00220),
         ("CO2", -43.989829),
         ("C2H4", -28.03130),
-        ("HFA", -46.00550),
-        ("HAc", -60.02110),
-        ("MeOH", -32.02620),
-        ("ACN", -41.02650),
-        ("IsoProp", -60.05810),
+        ("HFA", 46.00550),  # note here and below - not losses? but still neutral?
+        ("HAc", 60.02110),
+        ("MeOH", 32.02620),
+        ("ACN", 41.02650),
+        ("IsoProp", 60.05810),
     ]
     # Determine possible adduct dictionary according to ionization
     if ionization == "positive":
