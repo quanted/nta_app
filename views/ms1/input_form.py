@@ -62,7 +62,7 @@ class NtaInputs(forms.Form):
             ("4H2O", mark_safe("[M-4H<sub>2</sub>O]")),
             ("5H2O", mark_safe("[M-5H<sub>2</sub>O]")),
             ("NH3", mark_safe("[M-NH<sub>3</sub>]")),
-            ("O", "[M-O]"),
+            ("O", "[M+O]"),
             ("CO", "[M-CO]"),
             ("CO2", mark_safe("[M-CO<sub>2</sub>]")),
             ("C2H4", mark_safe("[M-C<sub>2</sub>H<sub>4</sub>]")),
