@@ -76,7 +76,6 @@ FILENAMES = {"final_output": ["CFMID_results_pos", "CFMID_results_neg", "input_p
 
 
 class MS2Run:
-
     def __init__(
         self, parameters=None, mongo_address=None, jobid="00000000", results_link=None, verbose=True, in_docker=True
     ):
@@ -279,7 +278,11 @@ class MS2Run:
             self.features["neg"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True),
             step=FILENAMES["final_output"][1],
         )
-        self.mongo_save(self.features["pos"].to_df(), step=FILENAMES["final_output"][0])
+        # self.mongo_save(self.features["pos"].to_df(), step=FILENAMES["final_output"][0])
+        self.mongo_save(
+            self.features["pos"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True),
+            step=FILENAMES["final_output"][0],
+        )
         self.mongo_save(inputParameters_df, step=FILENAMES["final_output"][2])
 
     def send_email(self):
