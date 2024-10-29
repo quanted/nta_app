@@ -344,12 +344,7 @@ class FeatureList:
 
         # NTAW-537: Add percentile scores
         for feature in self.feature_list:
-            feature.reference_scores["PERCENTILE"] = [
-                np.nan
-                if max(feature.reference_scores["SUM_SCORE"]) == 0
-                else feature.reference_scores["SUM_SCORE"].rank(pct=True)
-                for score in feature.reference_scores["SUM_SCORE"]
-            ]
+            feature.reference_scores["PERCENTILE"] = feature.reference_scores["SUM_SCORE"].rank(pct=True)
             for key in feature_dict.keys():
                 feature_dict[key].extend(feature.reference_scores.get(key, None))
 
