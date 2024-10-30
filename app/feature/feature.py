@@ -7,7 +7,6 @@ Created on Wed Nov 17 11:01:38 2021
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 from .score_algo import SpectraScorer
 
 
@@ -340,10 +339,10 @@ class FeatureList:
                 else score / max(feature.reference_scores["SUM_SCORE"])
                 for score in feature.reference_scores["SUM_SCORE"]
             ]
-            # NTAW-537: Add percentile scores
-            feature.reference_scores["PERCENTILE"] = stats.rankdata(
-                feature.reference_scores["SUM_SCORE"], "average"
-            ) / len(feature.reference_scores["SUM_SCORE"])
+            # NTAW-537: Add percentile scores (doing this in a temporary dataframe for now, probably inefficient)
+            df_temp = pd.DataFrame({"sum_scores": feature.reference_scores["SUM_SCORE"]})
+            df_temp["percentile"] = df_temp["sum_scores"].rank(pct=True)  # Calculate percentile values
+            feature.reference_scores["PERCENTILE"] = df_temp["percentile"].tolist()
 
             for key in feature_dict.keys():
                 feature_dict[key].extend(feature.reference_scores.get(key, None))
