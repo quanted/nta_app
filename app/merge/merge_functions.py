@@ -86,7 +86,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
             [mass_col, rt_col, score_col, q_score_col, percentile_col]
         ].where(
             (matched_df["mass_diff"] < mass_accuracy) & (matched_df["rt_diff"] < rt_accuracy),
-            [np.nan, np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan, np.nan, np.nan],
         )
 
     matched_df.drop(columns=["mass_diff", "rt_diff", "sum_diff"], inplace=True)
