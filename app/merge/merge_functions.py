@@ -33,19 +33,36 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
     for ms2_data in ms2_data_list:
         filename = ms2_data["file_name"]
         cfmid_df = ms2_data["file_df"]
-        mass_col, rt_col, score_col = (f"MASS_MGF_{filename}", f"RT_{filename}", f"SUM_SCORE_{filename}")
+        # mass_col, rt_col, score_col, q_score_col, percentile_col = (f"MASS_MGF_{filename}", f"RT_{filename}", f"SUM_SCORE_{filename}", f"QUOTIENT_SCORE_{filename}", f"PERCENTILE_SCORE_{filename}")
+        mass_col, rt_col, score_col, q_score_col = (
+            f"MASS_MGF_{filename}",
+            f"RT_{filename}",
+            f"SUM_SCORE_{filename}",
+            f"QUOTIENT_SCORE_{filename}",
+        )
         # logger.info('mass_col, rt_col, score_col')
         # logger.info(mass_col, rt_col, score_col)
 
         # NTAW-158: Adjust columns renamed based on new MS2 column names
         # NTAW-158: Grab the neutral mass column from the MS2 data as this is going to be compared to the neutral mass from the MS1 data
-        cfmid_df.rename(columns={"MASS_NEUTRAL": mass_col, "RT": rt_col, "SUM_SCORE": score_col}, inplace=True)
+        cfmid_df.rename(
+            columns={"MASS_NEUTRAL": mass_col, "RT": rt_col, "SUM_SCORE": score_col, "Q_SCORE": q_score_col},
+            inplace=True,
+        )
         # cfmid_df.rename(columns={"MASS_MGF": mass_col, "RT": rt_col, "SUM_SCORE": score_col}, inplace=True)
         # cfmid_df.rename(columns = {'MASS_MGF': mass_col, 'RT': rt_col, 'SUM_SCORE' : score_col}, inplace = True)
         # cfmid_df.rename(columns={"MASS_in_MGF": mass_col, "RT": rt_col, "energy_sum": score_col}, inplace=True)
 
         matched_df = matched_df.merge(
-            cfmid_df[["DTXCID", f"MASS_MGF_{filename}", f"RT_{filename}", f"SUM_SCORE_{filename}"]],
+            cfmid_df[
+                [
+                    "DTXCID",
+                    f"MASS_MGF_{filename}",
+                    f"RT_{filename}",
+                    f"SUM_SCORE_{filename}",
+                    f"QUOTIENT_SCORE_{filename}",
+                ]
+            ],
             how="left",
             on="DTXCID",
         )
@@ -57,8 +74,11 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
             mass_diff + rt_diff if mass_diff <= mass_accuracy and rt_diff <= rt_accuracy else np.nan
             for mass_diff, rt_diff in zip(matched_df["mass_diff"], matched_df["rt_diff"])
         ]
-        matched_df[[mass_col, rt_col, score_col]] = matched_df[[mass_col, rt_col, score_col]].where(
-            (matched_df["mass_diff"] < mass_accuracy) & (matched_df["rt_diff"] < rt_accuracy), [np.nan, np.nan, np.nan]
+        matched_df[[mass_col, rt_col, score_col, q_score_col]] = matched_df[
+            [mass_col, rt_col, score_col, q_score_col]
+        ].where(
+            (matched_df["mass_diff"] < mass_accuracy) & (matched_df["rt_diff"] < rt_accuracy),
+            [np.nan, np.nan, np.nan, np.nan],
         )
 
     matched_df.drop(columns=["mass_diff", "rt_diff", "sum_diff"], inplace=True)
