@@ -334,14 +334,19 @@ class FeatureList:
 
         for feature in self.feature_list:
             feature.reference_scores["Q-SCORE"] = [
-                np.nan
+                0
                 if max(feature.reference_scores["SUM_SCORE"]) == 0
                 else score / max(feature.reference_scores["SUM_SCORE"])
                 for score in feature.reference_scores["SUM_SCORE"]
             ]
+
             # NTAW-537: Add percentile scores (doing this in a temporary dataframe for now, probably inefficient)
             df_temp = pd.DataFrame({"sum_scores": feature.reference_scores["SUM_SCORE"]})
-            df_temp["percentile"] = df_temp["sum_scores"].rank(pct=True)  # Calculate percentile values
+            # NTAW-606: If all scores are zero, then make all percentiles zero
+            if df_temp["sum_scores"].eq(0).all():
+                df_temp["percentile"] = 0
+            else:
+                df_temp["percentile"] = df_temp["sum_scores"].rank(pct=True)  # Calculate percentile values
             feature.reference_scores["PERCENTILE"] = df_temp["percentile"].tolist()
 
             for key in feature_dict.keys():
