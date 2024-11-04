@@ -358,7 +358,7 @@ class FeatureList:
         results_dataframe["Q-SCORE"] = pd.to_numeric(results_dataframe["Q-SCORE"])
         results_dataframe["PERCENTILE"] = pd.to_numeric(results_dataframe["PERCENTILE"])
 
-        return pd.DataFrame.from_dict(feature_dict)
+        return results_dataframe
 
     def _remove_unnanotated_features(self):
         self.feature_list[:] = [feature for feature in self.feature_list if len(feature.reference_spectra) > 0]
