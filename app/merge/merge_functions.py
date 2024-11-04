@@ -33,7 +33,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         # mass_col, rt_col, score_col, q_score_col, percentile_col = (f"MASS_MGF_{filename}", f"RT_{filename}", f"SUM_SCORE_{filename}", f"QUOTIENT_SCORE_{filename}", f"PERCENTILE_SCORE_{filename}")
         mass_col, rt_col, score_col, q_score_col, percentile_col = (
             f"MASS_MGF_{filename}",
-            f"RT_{filename}(min)",
+            f"RT_{filename}",
             f"SUM_SCORE_{filename}",
             f"QUOTIENT_SCORE_{filename}",
             f"PERCENTILE_SCORE_{filename}",
@@ -64,7 +64,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
                 [
                     "DTXCID",
                     f"MASS_MGF_{filename}",
-                    f"RT_{filename}(min)",
+                    f"RT_{filename}",
                     f"SUM_SCORE_{filename}",
                     f"QUOTIENT_SCORE_{filename}",
                     f"PERCENTILE_SCORE_{filename}",
@@ -76,7 +76,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         matched_df["mass_diff"] = abs(matched_df["Mass"] - matched_df[f"MASS_MGF_{filename}"])
         # NTAW-158: Retention time units of input MS1 are in minutes, input MS2 are in seconds, convert MS2 units to minutes by dividing by 60
         # matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"])
-        matched_df["rt_diff"] = abs(matched_df["Retention_Time(min)"] - matched_df[f"RT_{filename}(min)"])
+        matched_df["rt_diff"] = abs(matched_df["Retention_Time(min)"] - matched_df[f"RT_{filename}"])
         matched_df["sum_diff"] = [
             mass_diff + rt_diff if mass_diff <= mass_accuracy and rt_diff <= rt_accuracy else np.nan
             for mass_diff, rt_diff in zip(matched_df["mass_diff"], matched_df["rt_diff"])
@@ -89,7 +89,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         )
 
         # NTAW-607: Round MS2 retention time, cfmid score columns to two decimal places
-        matched_df[f"RT_{filename}(min)"] = matched_df[f"RT_{filename}(min)"].round(2)
+        matched_df[f"RT_{filename}"] = matched_df[f"RT_{filename}"].round(2)
         matched_df[score_col] = matched_df[score_col].round(2)
         matched_df[q_score_col] = matched_df[q_score_col].round(2)
         matched_df[percentile_col] = matched_df[percentile_col].round(2)
