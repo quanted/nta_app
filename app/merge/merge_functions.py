@@ -33,7 +33,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         # mass_col, rt_col, score_col, q_score_col, percentile_col = (f"MASS_MGF_{filename}", f"RT_{filename}", f"SUM_SCORE_{filename}", f"QUOTIENT_SCORE_{filename}", f"PERCENTILE_SCORE_{filename}")
         mass_col, rt_col, score_col, q_score_col, percentile_col = (
             f"MASS_MGF_{filename}",
-            f"RT_{filename}",
+            f"RT_{filename}(min)",
             f"SUM_SCORE_{filename}",
             f"QUOTIENT_SCORE_{filename}",
             f"PERCENTILE_SCORE_{filename}",
