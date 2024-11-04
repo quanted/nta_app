@@ -352,6 +352,12 @@ class FeatureList:
             for key in feature_dict.keys():
                 feature_dict[key].extend(feature.reference_scores.get(key, None))
 
+        # NTAW-607: Grab dataframe and force score columns as numeric to avoid weird text cells when exporting to csv
+        results_dataframe = pd.DataFrame.from_dict(feature_dict)
+        results_dataframe["SUM_SCORE"] = pd.to_numeric(results_dataframe["SUM_SCORE"])
+        results_dataframe["Q-SCORE"] = pd.to_numeric(results_dataframe["Q-SCORE"])
+        results_dataframe["PERCENTILE"] = pd.to_numeric(results_dataframe["PERCENTILE"])
+
         return pd.DataFrame.from_dict(feature_dict)
 
     def _remove_unnanotated_features(self):
