@@ -89,7 +89,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         )
 
         # NTAW-608: Quotient scores of 1 are showing up as empty cell. As a quick fix, fill in empty quotient cells with 1 (where the percentile cell has a value)
-        matched_df.loc[matched_df[percentile_col].notna(), q_score_col] = 1
+        matched_df.loc[matched_df[q_score_col].isna() & matched_df[percentile_col].notna(), q_score_col] = 1
 
     #     # NTAW-607: Round MS2 retention time, cfmid score columns to two decimal places
     #     matched_df[f"RT_{filename}"] = matched_df[f"RT_{filename}"].round(2)
