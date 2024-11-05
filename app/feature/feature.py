@@ -358,8 +358,8 @@ class FeatureList:
         results_dataframe["Q-SCORE"] = pd.to_numeric(results_dataframe["Q-SCORE"], errors="coerce")
         results_dataframe["PERCENTILE"] = pd.to_numeric(results_dataframe["PERCENTILE"], errors="coerce")
 
-        # Round all score columns to two digits
-        results_dataframe["SUM_SCORE"] = results_dataframe["SUM_SCORE"].round(2)
+        # Round all score columns
+        # results_dataframe["SUM_SCORE"] = results_dataframe["SUM_SCORE"].round(2)
         results_dataframe["Q-SCORE"] = results_dataframe["Q-SCORE"].round(2)
         results_dataframe["PERCENTILE"] = results_dataframe["PERCENTILE"].round(2)
 
