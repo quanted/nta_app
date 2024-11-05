@@ -354,9 +354,14 @@ class FeatureList:
 
         # NTAW-607: Grab dataframe and force score columns as numeric to avoid weird text cells when exporting to csv
         results_dataframe = pd.DataFrame.from_dict(feature_dict)
-        results_dataframe["SUM_SCORE"] = pd.to_numeric(results_dataframe["SUM_SCORE"])
-        results_dataframe["Q-SCORE"] = pd.to_numeric(results_dataframe["Q-SCORE"])
-        results_dataframe["PERCENTILE"] = pd.to_numeric(results_dataframe["PERCENTILE"])
+        results_dataframe["SUM_SCORE"] = pd.to_numeric(results_dataframe["SUM_SCORE"], errors="coerce")
+        results_dataframe["Q-SCORE"] = pd.to_numeric(results_dataframe["Q-SCORE"], errors="coerce")
+        results_dataframe["PERCENTILE"] = pd.to_numeric(results_dataframe["PERCENTILE"], errors="coerce")
+
+        # Round all score columns to two digits
+        results_dataframe["SUM_SCORE"] = results_dataframe["SUM_SCORE"].round(2)
+        results_dataframe["Q-SCORE"] = results_dataframe["Q-SCORE"].round(2)
+        results_dataframe["PERCENTILE"] = results_dataframe["PERCENTILE"].round(2)
 
         return results_dataframe
 
