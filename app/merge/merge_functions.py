@@ -54,7 +54,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         )
 
         # NTAW-607: Convert retention time column units from seconds to minutes
-        cfmid_df[rt_col] = cfmid_df[rt_col] / 60
+        # cfmid_df[f"RT_{filename}"] = cfmid_df[f"RT_{filename}"] / 60
 
         # # NTAW-607: Add units to MS1 retention time column
         # matched_df.rename(columns={"Retention_Time": "Retention_Time(min)"}, inplace=True)
@@ -75,8 +75,8 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         )
         matched_df["mass_diff"] = abs(matched_df["Mass"] - matched_df[f"MASS_MGF_{filename}"])
         # NTAW-158: Retention time units of input MS1 are in minutes, input MS2 are in seconds, convert MS2 units to minutes by dividing by 60
-        matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"])
-        # matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"] / 60)
+        # matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"])
+        matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"] / 60)
         matched_df["sum_diff"] = [
             mass_diff + rt_diff if mass_diff <= mass_accuracy and rt_diff <= rt_accuracy else np.nan
             for mass_diff, rt_diff in zip(matched_df["mass_diff"], matched_df["rt_diff"])
@@ -87,6 +87,9 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
             (matched_df["mass_diff"] < mass_accuracy) & (matched_df["rt_diff"] < rt_accuracy),
             [np.nan, np.nan, np.nan, np.nan, np.nan],
         )
+
+        # NTAW-607: Convert retention time column units from seconds to minutes
+        matched_df[f"RT_{filename}"] = matched_df[f"RT_{filename}"] / 60
 
         # NTAW-608: Quotient scores of 1 are showing up as empty cell. As a quick fix, fill in empty quotient cells with 1 (where the percentile cell has a value)
         matched_df.loc[matched_df[q_score_col].isna() & matched_df[percentile_col].notna(), q_score_col] = 1
