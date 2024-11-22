@@ -1,12 +1,21 @@
 NTA WebApp Version History and Known Issues Documentation
-Version 0.3.3
-Updated 10/3/2024
+Version 0.3.4
+Updated 11/7/2024
 
 *************
 Known Issues:
 *************
 1) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
 2) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
+
+************************
+Version 0.3.4 - 11/7/2024
+************************
+- MS1 workflow now correctly identifies all adduct matches when more than one adduct is found for a feature
+- MS1 workflow now correctly identifies which feature is parent and which feature is adduct for neutral loss adduct matches
+- MS2 workflow now generates percentile scores (in addition to the existing raw and quotient scores)
+- Merge workflow now merges MS2 percentile and quotient scores into merge results
+- MS2 workflow: Updated rounding for values, and small bug fixes for empty score cells
 
 ************************
 Version 0.3.3 - 10/3/2024
