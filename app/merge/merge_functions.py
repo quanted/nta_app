@@ -94,14 +94,14 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         # NTAW-608: Quotient scores of 1 are showing up as empty cell. As a quick fix, fill in empty quotient cells with 1 (where the percentile cell has a value)
         matched_df.loc[matched_df[q_score_col].isna() & matched_df[percentile_col].notna(), q_score_col] = 1
 
-    #     # NTAW-607: Round MS2 retention time, cfmid score columns to two decimal places
-    #     matched_df[f"RT_{filename}"] = matched_df[f"RT_{filename}"].round(2)
-    #     matched_df[score_col] = matched_df[score_col].round(2)
-    #     matched_df[q_score_col] = matched_df[q_score_col].round(2)
-    #     matched_df[percentile_col] = matched_df[percentile_col].round(2)
+        # NTAW-607: Round MS2 retention time, cfmid score columns to two decimal places
+        matched_df[f"RT_{filename}"] = matched_df[f"RT_{filename}"].round(2)
+        matched_df[score_col] = matched_df[score_col].round(2)
+        matched_df[q_score_col] = matched_df[q_score_col].round(2)
+        matched_df[percentile_col] = matched_df[percentile_col].round(2)
 
-    # # NTAW-607: Round MS1 retention time column to two decimal places
-    # matched_df["Retention_Time"] = matched_df["Retention_Time"].round(2)
+    # NTAW-607: Round MS1 retention time column to two decimal places
+    matched_df["Retention_Time"] = matched_df["Retention_Time"].round(2)
 
     matched_df.drop(columns=["mass_diff", "rt_diff", "sum_diff"], inplace=True)
     matched_df["Median_MS2_Mass"] = matched_df[[col for col in matched_df.columns if "MASS_" in col]].apply(
