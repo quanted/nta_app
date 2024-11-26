@@ -103,6 +103,10 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
     # NTAW-607: Round MS1 retention time column to two decimal places
     matched_df["Retention_Time"] = matched_df["Retention_Time"].round(2)
 
+    # NTAW-607: Rename columns starting with "RT_"
+    matched_df.rename(columns=lambda col: f"{col}(min)" if col.startswith("RT_") else col, inplace=True)
+    matched_df.rename(columns={"Retention_Time": "Retention_Time(min)"}, inplace=True)
+
     matched_df.drop(columns=["mass_diff", "rt_diff", "sum_diff"], inplace=True)
     matched_df["Median_MS2_Mass"] = matched_df[[col for col in matched_df.columns if "MASS_" in col]].apply(
         np.median, axis=1
