@@ -124,7 +124,7 @@ class MS2Run:
 
     def parse_uploaded_files(self):
         """
-        Parse MGF file stored on mongo DB. Uses jobID to fetch relatd MS2 files before parse
+        Parse MGF file stored on mongo DB. Uses jobID to fetch related MS2 files before parse
         """
         grid_out = fetch_ms2_files(self.jobid)
         for file in grid_out:
