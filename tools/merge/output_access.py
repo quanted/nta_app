@@ -97,14 +97,29 @@ class OutputServer:
                     else:
                         filename = record_id + ".csv"
 
-                    # NTAW-631: Convert specific columns to numerics post-merge
-                    # df.loc[:, df.columns.str.startswith("RT_")] = df.loc[:, df.columns.str.startswith("RT_")].apply(pd.to_numeric, errors="coerce")
-                    # df.loc[:, df.columns.str.startswith("RT_")] = df.loc[:, df.columns.str.startswith("RT_")].round(2)
-                    # NTAW-631: Convert all retention time columns to numeric and round
+                    # NTAW-631: Convert all merged columns to numeric and round to two decimals places
                     df.loc[:, df.columns.str.startswith("RT_")] = df.loc[:, df.columns.str.startswith("RT_")].apply(
                         pd.to_numeric, errors="coerce"
                     )
                     df.loc[:, df.columns.str.startswith("RT_")] = df.loc[:, df.columns.str.startswith("RT_")].round(2)
+                    df.loc[:, df.columns.str.startswith("SUM_SCORE_")] = df.loc[
+                        :, df.columns.str.startswith("SUM_SCORE_")
+                    ].apply(pd.to_numeric, errors="coerce")
+                    df.loc[:, df.columns.str.startswith("SUM_SCORE_")] = df.loc[
+                        :, df.columns.str.startswith("SUM_SCORE_")
+                    ].round(2)
+                    df.loc[:, df.columns.str.startswith("QUOTIENT_SCORE_")] = df.loc[
+                        :, df.columns.str.startswith("QUOTIENT_SCORE_")
+                    ].apply(pd.to_numeric, errors="coerce")
+                    df.loc[:, df.columns.str.startswith("QUOTIENT_SCORE_")] = df.loc[
+                        :, df.columns.str.startswith("QUOTIENT_SCORE_")
+                    ].round(2)
+                    df.loc[:, df.columns.str.startswith("PERCENTILE_SCORE_")] = df.loc[
+                        :, df.columns.str.startswith("PERCENTILE_SCORE_")
+                    ].apply(pd.to_numeric, errors="coerce")
+                    df.loc[:, df.columns.str.startswith("PERCENTILE_SCORE_")] = df.loc[
+                        :, df.columns.str.startswith("PERCENTILE_SCORE_")
+                    ].round(2)
 
                     csv_string = df.to_csv(index=False)
                     zipf.writestr(filename, csv_string)

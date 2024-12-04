@@ -25,6 +25,8 @@ class MS2_Parser:
     def _get_parser(file_type):
         if file_type == "mgf":
             return MS2_Parser._mgf_parser
+        elif file_type == "msp":
+            return MS2_Parser._msp_parser
         elif file_type == "mzml":
             return MS2_Parser._mzml_parser
         else:
