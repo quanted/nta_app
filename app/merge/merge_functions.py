@@ -123,4 +123,13 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
     matched_df["Median_Score"] = matched_df[[col for col in matched_df.columns if "SUM_SCORE_" in col]].apply(
         np.median, axis=1
     )
+
+    # NTAW-631: Convert all retention time columns to numeric and round
+    matched_df.loc[:, matched_df.columns.str.startswith("RT_")] = matched_df.loc[
+        :, matched_df.columns.str.startswith("RT_")
+    ].apply(pd.to_numeric, errors="coerce")
+    matched_df.loc[:, matched_df.columns.str.startswith("RT_")] = matched_df.loc[
+        :, matched_df.columns.str.startswith("RT_")
+    ].round(2)
+
     return matched_df
