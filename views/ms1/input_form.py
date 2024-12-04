@@ -202,11 +202,13 @@ class NtaInputs(forms.Form):
         ),
         initial="mass",
     )
-    top_result_only = forms.ChoiceField(
-        label="Save top result only?",
-        choices=(
-            ("yes", "yes"),
-            ("no", "no"),
-        ),
-        initial="no",
-    )
+
+
+# top_result_only = forms.ChoiceField(
+#     label="Save top result only?",
+#     choices=(
+#         ("yes", "yes"),
+#         ("no", "no"),
+#     ),
+#     initial="no",
+# )

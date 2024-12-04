@@ -68,6 +68,44 @@ class MS2_Parser:
                     result["FRAG_INTENSITY"].append(float(frag_intensity))
         return OUTPUT
 
+    def _msp_parser(file_in):
+        """
+        Output: list of dictionaries sturcutres as follows:
+                [{'Mass': float, 'RT': float, 'CHARGE': str, 'FRAG_MASS': [float], 'FRAG_INTENSITY':[float]}, ...]
+
+                Each list entry represents a feature present within the MS2 dataset
+        """
+        OUTPUT = []
+        with Open_Input(file_in) as file:
+            all_lines = file.readlines()
+            non_blank_lines = [
+                line for line in all_lines if line.strip()
+            ]  # Remove empty lines from the input text lines
+
+            for line in non_blank_lines:
+                line = line.strip()  # Get rid of potential blank spaces at end of line
+                if line.startswith("BEGIN IONS"):
+                    result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
+                elif line.startswith("PEPMASS"):
+                    line = line.split(" ")[
+                        0
+                    ]  # Get rid of extra intensity value that is present in Thermo data after a space
+                    # result['MASS'] = float(MS2_Parser._seperate_line(line.split('=')[1])[0])
+                    result["MASS"] = float(line.split("=")[1])
+                elif line.startswith("RTINSECONDS"):
+                    result["RT"] = float(line.split("=")[1])
+                elif line.startswith("CHARGE"):
+                    result["CHARGE"] = line.split("=")[1]
+                elif line.startswith("TITLE"):
+                    continue  # TODO: Add functinality later to include TITLE to track file origin
+                elif line.startswith("END IONS"):
+                    OUTPUT.append(result)
+                elif line[0].isdigit():  # Only grab fragment data if the line starts with a numeric value
+                    mass_frag, frag_intensity = MS2_Parser._seperate_line(line)
+                    result["FRAG_MASS"].append(float(mass_frag))
+                    result["FRAG_INTENSITY"].append(float(frag_intensity))
+        return OUTPUT
+
     def _mzml_parser(file_in):
         # with Open_Input(file_in) as datafile:
         #     file = datafile.read()

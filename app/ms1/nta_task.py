@@ -1349,7 +1349,7 @@ class NtaRun:
         self.df_combined = toxpi.process_toxpi(
             self.df_combined,
             self.search_results,
-            tophit=(self.parameters["top_result_only"][1] == "yes"),
+            # tophit=(self.parameters["top_result_only"][1] == "yes"),
             by_mass=by_mass,
         )
         self.data_map["final_full"] = self.df_combined
