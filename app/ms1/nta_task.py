@@ -524,24 +524,41 @@ class NtaRun:
         if self.dup_remove:
             self.dupes = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dupes]
         # Get user-selected adducts
+        # print(pos_adducts_selected)
         pos_adducts_selected = self.parameters["pos_adducts"][1]
         logger.info("pos adducts list: {}".format(self.parameters["pos_adducts"]))
-        # print(pos_adducts_selected)
+        # print(neg_adducts_selected)
         neg_adducts_selected = self.parameters["neg_adducts"][1]
         logger.info("neg adducts list: {}".format(self.parameters["neg_adducts"]))
-        # print(neg_adducts_selected)
+        # print(neutral_losses_selected)
         neutral_losses_selected = self.parameters["neutral_losses"][1]
         logger.info("neutral losses list: {}".format(self.parameters["neutral_losses"]))
-        # print(neutral_losses_selected)
+        # Package adduct lists together into list of lists
         adduct_selections = [pos_adducts_selected, neg_adducts_selected, neutral_losses_selected]
-
+        # Check if any adducts are selected
+        to_run = False
+        for li in adduct_selections:
+            if len(li) > 0:
+                to_run = True
+        # Check if any adducts selected; if so, perform adduct identification functions
+        if to_run:
+            if self.dfs[0] is not None and self.dfs[1] is not None:
+                self.dfs[0] = task_fun.adduct_identifier(
+                    self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
+                )
+                self.dfs[1] = task_fun.adduct_identifier(
+                    self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
+                )
+            elif self.dfs[0] is not None:
+                self.dfs[0] = task_fun.adduct_identifier(
+                    self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
+                )
+            else:
+                self.dfs[1] = task_fun.adduct_identifier(
+                    self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
+                )
+        # sort dataframe columns for data_feature_statistics (DFS) output
         if self.dfs[0] is not None and self.dfs[1] is not None:
-            self.dfs[0] = task_fun.adduct_identifier(
-                self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
-            )
-            self.dfs[1] = task_fun.adduct_identifier(
-                self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
-            )
             self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
                 self.dfs[0], self.pass_through[0]
             )
@@ -549,16 +566,10 @@ class NtaRun:
                 self.dfs[1], self.pass_through[1]
             )
         elif self.dfs[0] is not None:
-            self.dfs[0] = task_fun.adduct_identifier(
-                self.dfs[0], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="positive"
-            )
             self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
                 self.dfs[0], self.pass_through[0]
             )
         else:
-            self.dfs[1] = task_fun.adduct_identifier(
-                self.dfs[1], adduct_selections, mass_accuracy, rt_accuracy, ppm, ionization="negative"
-            )
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
                 self.dfs[1], self.pass_through[1]
             )
