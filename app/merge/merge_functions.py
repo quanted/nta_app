@@ -95,12 +95,14 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         matched_df.loc[matched_df[q_score_col].isna() & matched_df[percentile_col].notna(), q_score_col] = 1
 
         # NTAW-631: Force merged column types to numeric
+        # Likely not needed as the conversion and rounding in _package_csv in tools/merge/output_access.py solved this
         matched_df[f"RT_{filename}"] = pd.to_numeric(matched_df[f"RT_{filename}"], errors="coerce")
         matched_df[score_col] = pd.to_numeric(matched_df[score_col], errors="coerce")
         matched_df[q_score_col] = pd.to_numeric(matched_df[q_score_col], errors="coerce")
         matched_df[percentile_col] = pd.to_numeric(matched_df[percentile_col], errors="coerce")
 
         # NTAW-607: Round MS2 retention time, cfmid score columns to two decimal places
+        # Likely not needed as the conversion and rounding in _package_csv in tools/merge/output_access.py solved this
         matched_df[f"RT_{filename}"] = matched_df[f"RT_{filename}"].round(2)
         matched_df[score_col] = matched_df[score_col].round(2)
         matched_df[q_score_col] = matched_df[q_score_col].round(2)
@@ -125,6 +127,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
     )
 
     # NTAW-631: Convert all retention time columns to numeric and round
+    # Likely not needed as the conversion and rounding in _package_csv in tools/merge/output_access.py solved this
     matched_df.loc[:, matched_df.columns.str.startswith("RT_")] = matched_df.loc[
         :, matched_df.columns.str.startswith("RT_")
     ].apply(pd.to_numeric, errors="coerce")

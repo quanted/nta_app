@@ -23,11 +23,11 @@ class MS2_Parser:
         return parser(file, **kwargs)
 
     def _get_parser(file_type):
-        if file_type.lower() == "mgf":
+        if str(file_type).lower() == "mgf":
             return MS2_Parser._mgf_parser
-        elif file_type.lower() == "msp":
+        elif str(file_type).lower() == "msp":
             return MS2_Parser._msp_parser
-        elif file_type.lower() == "mzml":
+        elif str(file_type).lower() == "mzml":
             return MS2_Parser._mzml_parser
         else:
             raise ValueError(file_type)

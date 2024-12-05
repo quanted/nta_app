@@ -38,6 +38,7 @@ class NtaInputs(forms.Form):
             ("NH4", mark_safe("[M+NH<sub>4</sub>]+")),
         ),
         initial=["Na", "K", "NH4"],
+        required=False,
     )
     neg_adducts = forms.MultipleChoiceField(
         label="Negative mode adducts",
@@ -51,6 +52,7 @@ class NtaInputs(forms.Form):
             ("FA", "[M+FA]-"),
         ),
         initial=["Cl", "HCO2", "CH3CO2", "FA"],
+        required=False,
     )
     neutral_losses = forms.MultipleChoiceField(
         label="Neutral losses (both modes)",
@@ -73,6 +75,7 @@ class NtaInputs(forms.Form):
             ("IsoProp", "[M+IsoProp]"),
         ),
         initial=["H2O", "CO2"],
+        required=False,
     )
     mass_accuracy_units = forms.ChoiceField(
         choices=(
