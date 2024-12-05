@@ -1435,17 +1435,15 @@ def MPP_Ready(dft, pts, tracer_df=False, flagged=False, directory="", file=""):
         pt_com = pd.concat([pts[0], pts[1]], axis=0)
         dft = pd.merge(dft, pt_com, how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
-        # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     elif pts[0] is not None:
         dft = pd.merge(dft, pts[0], how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
-        # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     else:
         dft = pd.merge(dft, pts[1], how="left", on=["Feature ID"])
         pt_cols = pts[1].columns.tolist()
-        # pt_cols = [col for col in pt_cols if "Feature ID" not in col]
     # Parse headers, get sample values and blank subtracted means
     Headers = parse_headers(dft)
+    # Get raw sample values
     raw_samples = [
         item
         for sublist in Headers
@@ -1454,86 +1452,31 @@ def MPP_Ready(dft, pts, tracer_df=False, flagged=False, directory="", file=""):
         if ("BlankSub" not in item)
         if not any(x in item for x in pt_cols)
     ]
+    # Get blank subtracted means
     blank_subtracted_means = dft.columns[dft.columns.str.contains(pat="BlankSub")].tolist()
-
-    # Check for 'Formula' (should be deprecated), then check for tracer_df
-    # Format front matter accordingly, add pt_cols, raw_samples, blank_subtracted_means
-    if flagged:
-        if tracer_df:
-            cols = (
-                pt_cols
-                + [
-                    "Ionization_Mode",
-                    "Mass",
-                    "Retention_Time",
-                    "Tracer Chemical Match?",
-                    "Duplicate Feature?",
-                    "Is Adduct or Loss?",
-                    "Has Adduct or Loss?",
-                    "Adduct or Loss Info",
-                    "Final Occurrence Count (with flags)",
-                    "Final Occurrence Percentage (with flags)",
-                ]
-                + raw_samples
-                + blank_subtracted_means
-            )
-            dft = dft[cols]
-        else:
-            cols = (
-                pt_cols
-                + [
-                    "Ionization_Mode",
-                    "Mass",
-                    "Retention_Time",
-                    "Duplicate Feature?",
-                    "Is Adduct or Loss?",
-                    "Has Adduct or Loss?",
-                    "Adduct or Loss Info",
-                    "Final Occurrence Count (with flags)",
-                    "Final Occurrence Percentage (with flags)",
-                ]
-                + raw_samples
-                + blank_subtracted_means
-            )
-            dft = dft[cols]
-    else:
-        if tracer_df:
-            cols = (
-                pt_cols
-                + [
-                    "Ionization_Mode",
-                    "Mass",
-                    "Retention_Time",
-                    "Tracer Chemical Match?",
-                    "Duplicate Feature?",
-                    "Is Adduct or Loss?",
-                    "Has Adduct or Loss?",
-                    "Adduct or Loss Info",
-                    "Final Occurrence Count",
-                    "Final Occurrence Percentage",
-                ]
-                + raw_samples
-                + blank_subtracted_means
-            )
-            dft = dft[cols]
-        else:
-            cols = (
-                pt_cols
-                + [
-                    "Ionization_Mode",
-                    "Mass",
-                    "Retention_Time",
-                    "Duplicate Feature?",
-                    "Is Adduct or Loss?",
-                    "Has Adduct or Loss?",
-                    "Adduct or Loss Info",
-                    "Final Occurrence Count",
-                    "Final Occurrence Percentage",
-                ]
-                + raw_samples
-                + blank_subtracted_means
-            )
-            dft = dft[cols]
+    # Establish ordering of all possible front matter (tracer/no tracer, flags/no flags, etc.)
+    ordering = [
+        "Ionization_Mode",
+        "Mass",
+        "Retention_Time",
+        "Tracer Chemical Match?",
+        "Duplicate Feature?",
+        "Is Adduct or Loss?",
+        "Has Adduct or Loss?",
+        "Adduct or Loss Info",
+        "Final Occurrence Count",
+        "Final Occurrence Percentage",
+        "Final Occurrence Count (with flags)",
+        "Final Occurrence Percentage (with flags)",
+    ]
+    # Get dft columns in list
+    all_cols = dft.columns.tolist()
+    # Front matter list comp
+    front_matter = [item for item in ordering if item in all_cols]
+    # Generate full column list
+    cols = pt_cols + front_matter + raw_samples + blank_subtracted_means
+    # Subset dft with correct columns / ordering
+    dft = dft[cols]
     # Rename columns
     dft["Ionization_Mode"] = dft["Ionization_Mode"].replace("Esi+", "ESI+")
     dft["Ionization_Mode"] = dft["Ionization_Mode"].replace("Esi-", "ESI-")
