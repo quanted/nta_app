@@ -279,7 +279,6 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
     df["Rounded RT"] = df["Retention_Time"].round(1)
     # Create tuple of 'Rounded RT' and 'Rounded Mass'
     df["Rounded_RT_Mass_Pair"] = list(zip(df["Rounded RT"], df["Rounded Mass"]))
-
     # Define pos/neg/neutral adduct lists
     # Proton subtracted - we observe Mass+(H+) and Mass+(Adduct)
     pos_adduct_li = [
@@ -578,7 +577,6 @@ def chunk_stats(df_in, mrl_multiplier=3):
     output["Selected MRL"] = (mrl_multiplier * output[Std_MB[0]]) + output[Mean_MB[0]]
     output["Selected MRL"] = output["Selected MRL"].fillna(output[Mean_MB[0]])
     output["Selected MRL"] = output["Selected MRL"].fillna(0)
-
     # Calculate 3x, 5x, 10x MRL values explicitly for use by the logic tree - NTAW-377 AC 6/24/2024
     output["MRL (3x)"] = (3 * output[Std_MB[0]]) + output[Mean_MB[0]]
     output["MRL (3x)"] = output["MRL (3x)"].fillna(output[Mean_MB[0]])
@@ -589,7 +587,6 @@ def chunk_stats(df_in, mrl_multiplier=3):
     output["MRL (10x)"] = (10 * output[Std_MB[0]]) + output[Mean_MB[0]]
     output["MRL (10x)"] = output["MRL (10x)"].fillna(output[Mean_MB[0]])
     output["MRL (10x)"] = output["MRL (10x)"].fillna(0)
-
     # Return dataframe with statistics calculated and MRL included, to be output as data_feature_stats
     return output
 
@@ -811,9 +808,9 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     dft["Total Detection Percentage"] = ((dft["Total Detection Count"] / len(samples)) * 100).round(2)
     # Get 'Matches' info into main df
     dum = dft[["Observed Mass", "Observed Retention Time", "Matches"]].copy()
-    # logger.info("cft dum columns= {}".format(dum.columns.values))
+
     dfc = pd.merge(df1, dum, how="left", on=["Observed Mass", "Observed Retention Time"])
-    # logger.info("cft dfc columns= {}".format(dfc.columns.values))
+
     dfc.rename(
         columns={
             "Observed Mass": "Mass",
@@ -827,8 +824,6 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     # np.where to replace nans with 0s
     dfc["Tracer Chemical Match?"].fillna(0, inplace=True)
     # Returns tracers data (dft) and dataframe with 'Tracer Chemical Match?' appended (dfc)
-    # logger.info("cft dfts columns= {}".format(dft.columns.values))
-    # logger.info("cft dfc columns= {}".format(dfc.columns.values))
     return dft, dfc
 
 
@@ -860,7 +855,6 @@ def replicate_flag(
     for mean, Std, N in zip(Mean_MB, Std_MB, Replicate_Percent_MB):
         docs[mean] = docs[mean].astype(object)
         # NTAW-593 update logic for blanks and blank replicate filter
-        # docs.loc[df[N] < controls[2], mean] = "R"
         docs.loc[((df[N] < controls[2]) & (~missing_MB[mean])), mean] = "R"
         df.loc[df[N] < controls[2], mean] = 0
         df.loc[df[N] < controls[2], Std] = 0
@@ -995,7 +989,6 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     docs["Final Occurrence Count (with flags)"] = (
         docs["Unfiltered Occurrence Count"] - docs["Unfiltered Occurrence Removed Count (with flags)"]
     )
-
     # Count # of times an occurrence flag contains R, CV, or MRL, and count # of just CV flags
     # NTAW-584: Update string matching so that replicate flag "R" is not found in MRL flag "MRL"
     contains_R = pd.concat([docs[mean].str.match("R") for mean in Mean_Samples], axis=1)
@@ -1037,7 +1030,6 @@ def feat_removal_flag(docs, Mean_Samples, missing):
         docs["Feature Removed?"] + "R ",
         docs["Feature Removed?"],
     )
-
     # Clean up "Feature Removed?" column entries that end in commas/spaces
     docs["Feature Removed?"] = docs["Feature Removed?"].apply(
         lambda x: " ".join(x.split()) if isinstance(x, str) else x
@@ -1073,8 +1065,6 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     # Add columns from docs to df / df_flagged
     df["Possible Occurrence Count"] = docs["Possible Occurrence Count"]
     df_flagged["Possible Occurrence Count"] = docs["Possible Occurrence Count"]
-    # df["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
-    # df_flagged["Possible Occurrences Removed Count"] = docs["Possible Occurrences Removed Count"]
     df["Final Occurrence Count"] = docs["Final Occurrence Count"]
     df_flagged["Final Occurrence Count (with flags)"] = docs["Final Occurrence Count (with flags)"]
     # Calculate Final Occurrence Percentage
@@ -1378,8 +1368,10 @@ def MPP_Ready(dft, pts, tracer_df=False, flagged=False, directory="", file=""):
 
 
 def calc_toxcast_percent_active(df):
+    """
+    Function that calculates toxcast percent active values
+    """
     dft = df.copy()
-
     # Extract out the total and active numeric values from the TOTAL_ASSAYS_TESTED column
     TOTAL_ASSAYS = "\/([0-9]+)"  # a regex to find the digits after a slash
     dft["TOTAL_ASSAYS_TESTED"] = (
@@ -1389,22 +1381,23 @@ def calc_toxcast_percent_active(df):
     dft["NUMBER_ACTIVE_ASSAYS"] = (
         dft["TOXCAST_NUMBER_OF_ASSAYS/TOTAL"].astype("str").str.extract(NUMBER_ASSAYS, expand=True)
     )
-
     # Convert the value columns to floats and do division to get the percent active value
     dft["TOTAL_ASSAYS_TESTED"] = dft["TOTAL_ASSAYS_TESTED"].astype(float)
     dft["NUMBER_ACTIVE_ASSAYS"] = dft["NUMBER_ACTIVE_ASSAYS"].astype(float)
     dft["TOXCAST_PERCENT_ACTIVE"] = dft["NUMBER_ACTIVE_ASSAYS"] / dft["TOTAL_ASSAYS_TESTED"] * 100
     dft["TOXCAST_PERCENT_ACTIVE"] = dft["TOXCAST_PERCENT_ACTIVE"].apply(lambda x: round(x, 2))
-
     # Clean up and remove the temporary value columns
     dft = dft.drop(["TOTAL_ASSAYS_TESTED", "NUMBER_ACTIVE_ASSAYS"], axis=1)
-
+    # Return datafrmame with TOXCAST_PERCENT_ACTIVE column appended
     return dft
 
 
-# The following function calculates a "width" of a string based on the characters within, as some characters are large, medium or skinny
-# These widths are used to determine the spacing of the group labels on the run sequence plot
 def determine_string_width(input_string):
+    """
+    The following function calculates a "width" of a string based on the characters within, as some
+    characters are large, medium or skinnyThese widths are used to determine the spacing of the group
+    labels on the run sequence plot
+    """
     big_letters = [
         "A",
         "B",
