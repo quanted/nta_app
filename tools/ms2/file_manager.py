@@ -83,12 +83,10 @@ class MS2_Parser:
             non_blank_lines = [
                 line for line in all_lines if line.strip()
             ]  # Remove empty lines from the input text lines
-
+            has_fragments = True  # This tracks whether a fragment has peaks or not. Initialize as true
             for line in all_lines:
                 line = line.strip()  # Get rid of potential blank spaces at end of line
                 if line.startswith("Name:"):
-                    if len(OUTPUT) != 0:
-                        OUTPUT.append(result)
                     result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
                 elif line.startswith("PrecursorMZ:"):
                     result["MASS"] = float(line.split(" ")[1])
@@ -98,7 +96,14 @@ class MS2_Parser:
                 elif line.startswith("Charge"):
                     result["CHARGE"] = line.split(" ")[1]
                 elif line.strip() == "":
-                    OUTPUT.append(result)
+                    if has_fragments == True:  # If there are fragment peaks in results, append to OUTPUT
+                        OUTPUT.append(result)
+                    else:
+                        has_fragments = True
+                elif line.startswith("Num Peaks:"):  # Check if there are fragments in the spectrum
+                    line = line.split(": ")[1]
+                    if line == "0":
+                        has_fragments = False
                 elif line[0].isdigit():  # Only grab fragment data if the line starts with a numeric value
                     mass_frag, frag_intensity = MS2_Parser._seperate_line(line)
                     result["FRAG_MASS"].append(float(mass_frag))
