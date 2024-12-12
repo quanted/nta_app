@@ -104,11 +104,14 @@ class OutputServer:
                         filename = record_id + ".csv"
                     # csv_string = StringIO()
 
-                    df["Q-SCORE"] = pd.to_numeric(df["Q-SCORE"], errors="coerce")
-                    df["PERCENTILE"] = pd.to_numeric(df["PERCENTILE"], errors="coerce")
-                    df["SUM_SCORE"] = pd.to_numeric(df["SUM_SCORE"], errors="coerce")
-                    df["Q-SCORE"] = df["Q-SCORE"].round(2)
-                    df["PERCENTILE"] = df["PERCENTILE"].round(2)
+                    if (
+                        "Q-SCORE" in df.columns
+                    ):  # Add check that the file is a results dataframe and not the input parameters
+                        df["Q-SCORE"] = pd.to_numeric(df["Q-SCORE"], errors="coerce")
+                        df["PERCENTILE"] = pd.to_numeric(df["PERCENTILE"], errors="coerce")
+                        df["SUM_SCORE"] = pd.to_numeric(df["SUM_SCORE"], errors="coerce")
+                        df["Q-SCORE"] = df["Q-SCORE"].round(2)
+                        df["PERCENTILE"] = df["PERCENTILE"].round(2)
 
                     csv_string = df.to_csv(index=False)
                     zipf.writestr(filename, csv_string)
