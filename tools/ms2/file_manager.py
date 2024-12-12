@@ -104,6 +104,7 @@ class MS2_Parser:
                     result["FRAG_MASS"].append(float(mass_frag))
                     result["FRAG_INTENSITY"].append(float(frag_intensity))
                 # Add check for last line in file
+        return OUTPUT
 
     def _mzml_parser(file_in):
         # with Open_Input(file_in) as datafile:
