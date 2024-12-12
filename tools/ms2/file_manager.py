@@ -80,24 +80,22 @@ class MS2_Parser:
         OUTPUT = []
         with Open_Input(file_in) as file:
             all_lines = file.readlines()
-            """
             non_blank_lines = [
                 line for line in all_lines if line.strip()
             ]  # Remove empty lines from the input text lines
-            """
+
             for line in all_lines:
                 line = line.strip()  # Get rid of potential blank spaces at end of line
                 if line.startswith("Name:"):
+                    if len(OUTPUT) != 0:
+                        OUTPUT.append(result)
                     result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
                 elif line.startswith("PrecursorMZ:"):
-                    line = line.split(" ")[
-                        0
-                    ]  # Get rid of extra intensity value that is present in Thermo data after a space
-                    result["MASS"] = float(line.split("=")[1])
+                    result["MASS"] = float(line.split(" ")[1])
                 elif line.startswith("Comment:"):  # RT is stored in the comment line for Waters MSP files
                     line = line.split(" ")[1]
                     result["RT"] = float(line.split("_")[0])
-                elif line.startswith("CHARGE"):
+                elif line.startswith("Charge"):
                     result["CHARGE"] = line.split(" ")[1]
                 elif line.strip() == "":
                     OUTPUT.append(result)
@@ -105,7 +103,7 @@ class MS2_Parser:
                     mass_frag, frag_intensity = MS2_Parser._seperate_line(line)
                     result["FRAG_MASS"].append(float(mass_frag))
                     result["FRAG_INTENSITY"].append(float(frag_intensity))
-        return OUTPUT
+                # Add check for last line in file
 
     def _mzml_parser(file_in):
         # with Open_Input(file_in) as datafile:
