@@ -138,6 +138,9 @@ class MS2Run:
         Prepares pos- and neg-mode FeatureList object from the input dfs
         """
         self.n_masses = len(self.input_dfs["neg"]) + len(self.input_dfs["pos"])
+
+        logger.info("Total number of features: {}".format(self.n_masses))
+
         for mode, df_list in self.input_dfs.items():
             tmp_feature_list = FeatureList()
             for data_block in df_list:
