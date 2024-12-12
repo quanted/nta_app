@@ -146,8 +146,8 @@ class NtaRun:
         self.run_sequence_neg_df = run_sequence_neg_df
         self.dfs = input_dfs
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values
-        self.dup_remove = False  # Currently hard-coded so that duplicates will be flagged TMF 04/11/24
-        self.dupes = None
+        #self.dup_remove = False  # Currently hard-coded so that duplicates will be flagged TMF 04/11/24
+        #self.dupes = None
         self.docs = None
         self.doc_combined = None
         self.df_combined = None
@@ -204,9 +204,6 @@ class NtaRun:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
-            # print(self.dfs[0])
-
-        # logger.info("self.dfs[1] pre-stat columns= {}".format(self.dfs[1].columns))
 
         # 2: statistics
         self.step = "Calculating statistics"
@@ -217,22 +214,6 @@ class NtaRun:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
-            # print(self.dfs[0])
-            # print(str(list(self.dfs[0])))
-
-        # logger.info("self.dfs.size(): {}".format(len(self.dfs)))
-        # for df in self.dfs:
-        #    if df is not None:
-        #        logger.info("df = {}".format(df.to_string()))
-        # explanation of the following line:
-        # . self.dfs is a list of dataframes
-        # . the if statement is checking if the dataframe is not None
-        # . if the dataframe is not None, then the dataframe is passed to the function cal_detection_count
-        # . the result of the function is stored in the list
-        # . the list is assigned to self.dfs
-
-        # 10/30/23 Calculating detection counts now happens in the 'Clean Features' step -- TMF
-        # self.dfs = [task_fun.cal_detection_count(df) if df is not None else None for df in self.dfs]
 
         # 2.1: Occurrence heatmap
         self.step = "Create heatmap"
@@ -243,8 +224,6 @@ class NtaRun:
         self.check_tracers()
         if self.verbose:
             logger.info("Checked tracers.")
-            # print(self.tracer_dfs_out)
-        # counting occrrences of each feature after cleaning
 
         # 3.1: CV Scatterplot
         self.step = "Create scatterplot"
@@ -260,16 +239,11 @@ class NtaRun:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
-            # print(self.dfs[0])
 
         # 4.1: Merge detection count columns onto tracers for export
         self.step = "Merge detection counts onto tracers"
         self.merge_columns_onto_tracers()
 
-        # commented out for NTAW-94
-        # # 5: create flags
-        self.step = "Creating flags"
-        # self.create_flags()
         if self.verbose:
             logger.info("Created flags.")
             if self.dfs[0] is not None:
@@ -282,8 +256,6 @@ class NtaRun:
                 # NTAW-94 set flag for dashboard search
                 self.dfs[1]["For_Dashboard_Search"] = "1"
                 self.dfs_flagged[1]["For_Dashboard_Search"] = "1"
-            # print(self.dfs[0])
-        # hardcoded to search all features against dsstox
 
         # 6: combine modes
         self.step = "Combining modes"
@@ -291,7 +263,6 @@ class NtaRun:
         if self.verbose:
             logger.info("Combined modes.")
             logger.info("combined df length: {}".format(len(self.df_combined)))
-            # print(self.df_combined)
 
         # 7: search dashboard
         if self.parameters["search_dsstox"][1] == "yes":
@@ -300,10 +271,6 @@ class NtaRun:
             if self.parameters["search_hcd"][1] == "yes":
                 self.step = "Searching Cheminformatics Hazard Module database"
                 self.perform_hcd_search()
-            # NTAW-94 comment out the following line. toxpi is no longer being used
-            # self.process_toxpi()
-        # if self.verbose:
-        #    logger.info("Download files removed, processing complete.")
 
         # 8: Store data to MongoDB
         self.step = "Storing data"
@@ -498,21 +465,18 @@ class NtaRun:
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
-        remove = self.dup_remove
-        if remove:
-            self.dupes = [
-                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[1] if df is not None else None
-                for df in self.dfs
-            ]
-            self.dfs = [
-                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[0] if df is not None else None
-                for df in self.dfs
-            ]
-        else:
-            self.dfs = [
-                task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove) if df is not None else None
-                for df in self.dfs
-            ]
+        #remove = self.dup_remove
+        #if remove:
+        #    self.dupes = [
+        #        task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[1] if df is not None else None
+        #        for df in self.dfs
+        #    ]
+        #    self.dfs = [
+        #        task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[0] if df is not None else None
+        #        for df in self.dfs
+        #    ]
+        #else:
+        self.dfs = [task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm) if df is not None else Nonefor df in self.dfs]
         return
 
     def calc_statistics(self):
@@ -521,8 +485,8 @@ class NtaRun:
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
         mrl_multiplier = float(self.parameters["mrl_std_multiplier"][1])
         self.dfs = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dfs]
-        if self.dup_remove:
-            self.dupes = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dupes]
+        #if self.dup_remove:
+        #    self.dupes = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dupes]
         # Get user-selected adducts
         # print(pos_adducts_selected)
         pos_adducts_selected = self.parameters["pos_adducts"][1]
@@ -1023,15 +987,11 @@ class NtaRun:
             )
             for index, df in enumerate(self.dfs)
         ]
-        # logger.info("self.tracer_dfs_out[0].shape = {}".format(self.tracer_dfs_out[0].shape))
 
         self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
-        # self.tracer_plots_out = [create_tracer_plot(df) for df in self.tracer_dfs_out]
 
         # declare plotter
         df_WA = WebApp_plotter()
-
-        # logger.info('nta_task: self.tracer_dfs_out[0].columns: {} '.format(self.tracer_dfs_out[0].columns))
 
         # plot
         if self.tracer_dfs_out[0] is not None:
@@ -1053,8 +1013,6 @@ class NtaRun:
                 dark_mode=False,
             )
 
-            # logger.info("df_debug= {}".format(df_debug.columns.values))
-
             self.tracer_plots_out.append(listOfPNGs)
 
         else:
@@ -1062,8 +1020,6 @@ class NtaRun:
 
         # declare plotter
         df_WA = WebApp_plotter()
-        # df_WA,df_debug = WebApp_plotter()
-        # logger.info("df_debug= {}".format(df_debug.columns.values))
 
         # plot
         if self.tracer_dfs_out[1] is not None:
@@ -1089,15 +1045,9 @@ class NtaRun:
             )
 
             self.tracer_plots_out.append(listOfPNGs)
-            # logger.info("df_debug.head(20)= {}".format(df_debug.head(20)))
             logger.info("df_debug shape= {}".format(df_debug.shape))
             logger.info("df_debug columns= {}".format(df_debug.columns.values))
 
-            # # Print debug list
-            # for item in debug_list:
-            #     logger.info(item)
-
-            # logger.info("chem_names= {}".format(df_debug))
         else:
             self.tracer_plots_out.append(None)
 
@@ -1109,26 +1059,12 @@ class NtaRun:
             passthru = self.pass_through[0]
         else:
             passthru = self.pass_through[1]
-        # remove the columns 'Detection_Count(non-blank_samples)' and 'Detection_Count(non-blank_samples)(%)'
-        # dft = dft.drop(columns=['Detection_Count(non-blank_samples)','Detection_Count(non-blank_samples)(%)'])
 
         self.data_map["Tracer Detection Statistics"] = task_fun.column_sort_TSR(dft, passthru)
-
-        # create summary table
-        # AC 12/7/2023: commented out to move to function after clean_features
-        # if 'DTXSID' not in dft.columns:
-        #     dft['DTXSID'] = ''
-        # dft = dft[['Feature ID', 'Chemical_Name', 'DTXSID', 'Ionization_Mode', 'Mass Error (PPM)', 'Retention Time Difference', 'Max CV Across Samples']]
-        # self.data_map['Tracer Summary'] = dft
-
-        # self.tracer_map['tracer_plot_pos'] = self.tracer_plots_out[0]
-        # self.tracer_map['tracer_plot_neg'] = self.tracer_plots_out[1]
 
         if self.tracer_plots_out[0] is not None:
             for i in range(len(self.tracer_plots_out[0])):
                 self.tracer_map["tracer_plot_pos_" + str(i + 1)] = self.tracer_plots_out[0][i]
-
-        # logger.info(len(self.tracer_plots_out[1]))
 
         # Add an if statement below to account for: if only negative mode data is entered, and only a negative tracer file is submitted, tracer_plots_out will only have one entry at [0]
         if len(self.tracer_plots_out) > 1:
@@ -1136,10 +1072,9 @@ class NtaRun:
                 for i in range(len(self.tracer_plots_out[1])):
                     self.tracer_map["tracer_plot_neg_" + str(i + 1)] = self.tracer_plots_out[1][i]
 
-        # 5/21/2024 AC: Convert the figure objects in tracer_map into PNGs that can be stored in gridfs
+        # Convert the figure objects in tracer_map into PNGs that can be stored in gridfs
         for key in self.tracer_map.keys():
             buf = io.BytesIO()
-            # fig.savefig(buf, format='png', )
             # Save the figure in buffer as png
             self.tracer_map[key].savefig(buf, bbox_inches="tight", format="png")
             buf.seek(0)
@@ -1184,40 +1119,16 @@ class NtaRun:
         self.dfs_flagged = [
             task_fun.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs_flagged)
         ]
-        # Remove flagged duplicates from dfs
-        # if self.dup_remove == False:
-        #    self.dfs = [
-        #        df.loc[df["Duplicate Feature?"] == 0, :] if df is not None else None
-        #        for df in self.dfs
-        #    ]
-        #    return
         return
 
     def merge_columns_onto_tracers(self):
-        # self.data_map['Tracer Detection Statistics'] = task_fun.column_sort_TSR(dft)
+        # Check for tracer file, if not present return
         if self.tracer_df is None:
             logger.info("No tracer file, skipping this step.")
             return
         # Grab the tracer dataframe from self.data_map
         dft = self.data_map["Tracer Detection Statistics"]
         logger.info("dft: {}".format(dft.columns))
-        """
-        # Go through both negative and positive mode dataframes combine when present into a new temp dataframe
-        if self.dfs[0] is not None and self.dfs[1] is not None:
-            temp_df = pd.concat([self.dfs[0], self.dfs[1]], axis=0)
-        elif self.dfs[0] is not None:
-            temp_df = self.dfs[0]
-        else:
-            temp_df = self.dfs[1]
-              
-        # Merge combined modes dataframe with tracer dataframe            
-        dft = pd.merge(dft, temp_df[['Feature ID', 'Occurrence_Count(all_samples)', 'Occurrence_Count(all_samples)(%)']], how='left', on='Feature ID')
-        
-        # Push new version of tracers dataframe back into data_map
-        self.data_map['Tracer Detection Statistics'] = dft
-
-        logger.info("dft post-merge: {}".format(dft.columns))
-        """
         # create summary table
         if "DTXSID" not in dft.columns:
             dft["DTXSID"] = ""
@@ -1240,8 +1151,6 @@ class NtaRun:
 
     def create_flags(self):
         self.dfs = [task_fun.flags(df) if df is not None else None for df in self.dfs]
-        # self.mongo_save(self.dfs[0], FILENAMES['flags'][0])
-        # self.mongo_save(self.dfs[1], FILENAMES['flags'][1])
 
     def combine_modes(self):
         tracer_df_bool = False
@@ -1250,19 +1159,19 @@ class NtaRun:
         self.df_combined = task_fun.combine(self.dfs[0], self.dfs[1])
         self.df_flagged_combined = task_fun.combine(self.dfs_flagged[0], self.dfs_flagged[1])
         # Check if duplicates are removed - if yes need to combine doc and dupe
-        if self.dup_remove:
-            self.doc_combined = [
-                (
-                    task_fun.combine_doc(
-                        doc, dupe, tracer_df=tracer_df_bool
-                    )  # This needs revisiting if self.dup_remove = True TMF 04/11/24
-                    if doc is not None
-                    else None
-                )
-                for doc, dupe in zip(self.docs, self.dupes)
-            ]
-        else:
-            self.doc_combined = task_fun.combine_doc(self.docs[0], self.docs[1], tracer_df=tracer_df_bool)
+        #if self.dup_remove:
+        #    self.doc_combined = [
+        #        (
+        #            task_fun.combine_doc(
+        #                doc, dupe, tracer_df=tracer_df_bool
+        #            )  # This needs revisiting if self.dup_remove = True TMF 04/11/24
+        #            if doc is not None
+        #            else None
+        #       )
+        #        for doc, dupe in zip(self.docs, self.dupes)
+        #    ]
+        #else:
+        self.doc_combined = task_fun.combine_doc(self.docs[0], self.docs[1], tracer_df=tracer_df_bool)
 
         # NTAW-577: Replace zero values of "Selected MRL" column with blank cells prior to exporting to data_map
         self.doc_combined["Selected MRL"] = self.doc_combined["Selected MRL"].replace(0, "")

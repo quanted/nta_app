@@ -92,40 +92,6 @@ def parse_headers(df_in):
     return new_headers_list
 
 
-def flags(df):
-    """
-    A function to develop optional flags
-    """
-    SCORE = 90  # formula match is 90
-    df["Neg_Mass_Defect"] = np.where((df.Mass - df.Mass.round(0)) < 0, "1", "0")
-    df["Halogen"] = np.where(df.Compound.str.contains("F|l|r|I"), "1", "0")
-    df["Formula_Match"] = np.where(df.Score != df.Score, "0", "1")  # check if it does not have a score
-    df["Formula_Match_Above90"] = np.where(df.Score >= SCORE, "1", "0")
-    df["X_NegMassDef_Below90"] = np.where(
-        ((df.Score < SCORE) & (df.Neg_Mass_Defect == "1") & (df.Halogen == "1")),
-        "1",
-        "0",
-    )
-    # df['For_Dashboard_Search'] = np.where(((df.Formula_Match_Above90 == '1') | (df.X_NegMassDef_Below90 == '1')) , '1', '0')
-    df["For_Dashboard_Search"] = np.where(
-        ((df.Formula_Match_Above90 == "1") | (df.X_NegMassDef_Below90 == "1")), "1", "1"
-    )  # REMOVE THIS LINE AMRL UNCOMMENT ABOVE
-    df.sort_values(
-        [
-            "Formula_Match",
-            "For_Dashboard_Search",
-            "Formula_Match_Above90",
-            "X_NegMassDef_Below90",
-        ],
-        ascending=[False, False, False, False],
-        inplace=True,
-    )
-    # df.to_csv('input-afterflag.csv', index=False)
-    # print df1
-    df.sort_values("Compound", ascending=True, inplace=True)
-    return df
-
-
 """PASS-THROUGH COLUMNS FUNCTION"""
 
 
@@ -420,9 +386,9 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
     return df_in
 
 
-"""DUPLICATE REMOVAL FUNCTIONS"""
+"""DUPLICATE REMOVAL/FLAGGING FUNCTIONS"""
 
-
+'''
 def chunk_dup_remove(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
     """
     Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix' -- TMF 10/27/23
@@ -488,6 +454,7 @@ def dup_matrix_remove(df_in, mass_cutoff, rt_cutoff, ppm):
     dupes = df_in.loc[df_in[(row_sums != 0) & (lower_row_sums != 0)].index, :]
     # Return de-duplicated dataframe (passed) and duplicates (dupes)
     return passed, dupes
+'''
 
 
 def chunk_dup_flag(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
@@ -553,7 +520,7 @@ def dup_matrix_flag(df_in, mass_cutoff, rt_cutoff, ppm):
     return output
 
 
-def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, remove):
+def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
     """
     Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff.
     Includes logic statement for determining if the dataframe is too large to
@@ -576,24 +543,24 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, remove):
     n = 12000
     step = 6000
     # 'if' statement for chunker: if no chunks needed, send to 'dup_matrix', else send to 'chunk_duplicates'
-    if remove:
-        if df.shape[0] <= n:
-            output, dupe_df = dup_matrix_remove(df, mass_cutoff, rt_cutoff, ppm)
-        else:
-            output, dupe_df = chunk_dup_remove(df, n, step, mass_cutoff, rt_cutoff, ppm)
+    # if remove:
+    #    if df.shape[0] <= n:
+    #        output, dupe_df = dup_matrix_remove(df, mass_cutoff, rt_cutoff, ppm)
+    #    else:
+    #        output, dupe_df = chunk_dup_remove(df, n, step, mass_cutoff, rt_cutoff, ppm)
+    # else:
+    if df.shape[0] <= n:
+        output = dup_matrix_flag(df, mass_cutoff, rt_cutoff, ppm)
     else:
-        if df.shape[0] <= n:
-            output = dup_matrix_flag(df, mass_cutoff, rt_cutoff, ppm)
-        else:
-            output = chunk_dup_flag(df, n, step, mass_cutoff, rt_cutoff, ppm)
+        output = chunk_dup_flag(df, n, step, mass_cutoff, rt_cutoff, ppm)
     # Sort output by 'Mass', reset the index, drop 'all_sample_mean'
     output.sort_values(by=["Mass"], inplace=True)
     output.reset_index(drop=True, inplace=True)
     output.drop(["all_sample_mean"], axis=1, inplace=True)
-    if remove:
-        dupe_df.drop(["all_sample_mean"], axis=1, inplace=True)
-        # Return output dataframe with duplicates removed and duplicate dataframe
-        return output, dupe_df
+    # if remove:
+    #    dupe_df.drop(["all_sample_mean"], axis=1, inplace=True)
+    # Return output dataframe with duplicates removed and duplicate dataframe
+    #    return output, dupe_df
     # fillna() to replace nans with 0s
     output["Duplicate Feature?"].fillna(0, inplace=True)
     # Return output dataframe with duplicates flagged
