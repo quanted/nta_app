@@ -388,74 +388,6 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
 
 """DUPLICATE REMOVAL/FLAGGING FUNCTIONS"""
 
-'''
-def chunk_dup_remove(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
-    """
-    Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix' -- TMF 10/27/23
-    """
-    # Create copy of df_in
-    df = df_in.copy()
-    # Chunk df based on n (# of features WebApp can handle) and step
-    to_test_list = [df[i : i + n] for i in range(0, df.shape[0], step)]
-    # Remove small remainder tail, if present
-    to_test_list = [i for i in to_test_list if (i.shape[0] > n / 2)]
-    # Create list and duplicate list
-    li = []
-    dupe_li = []
-    # Pass list to 'dup_matrix'
-    for x in to_test_list:
-        # dum = dup_matrix(x, mass_cutoff, rt_cutoff) # Deprecated 10/30/23 -- TMF
-        dum, dupes = dup_matrix_remove(x, mass_cutoff, rt_cutoff, ppm)
-        li.append(dum)
-        dupe_li.append(dupes)
-    # Concatenate results, drop duplicates from overlap
-    output = pd.concat(li, axis=0).drop_duplicates(subset=["Mass", "Retention_Time"], keep="first")
-    dupe_df = pd.concat(dupe_li, axis=0).drop_duplicates(subset=["Mass", "Retention_Time"], keep="first")
-    # Return de-duplicated dataframe (output) and removed duplicates (dupe_df)
-    return output, dupe_df
-
-
-def dup_matrix_remove(df_in, mass_cutoff, rt_cutoff, ppm):
-    """
-    Matrix portion of 'duplicates' function; takes a filtered 'to_test' df, does matrix math,
-    returns 'passed' items (i.e., de-duplicated dataframe) -- TMF 10/27/23
-    """
-    # Create matrices from df_in
-    mass = df_in["Mass"].to_numpy()
-    rts = df_in["Retention_Time"].to_numpy()
-    # Reshape matrices
-    masses_matrix = np.reshape(mass, (len(mass), 1))
-    rts_matrix = np.reshape(rts, (len(rts), 1))
-    # Perform matrix transposition
-    diff_matrix_mass = masses_matrix - masses_matrix.transpose()
-    diff_matrix_rt = rts_matrix - rts_matrix.transpose()
-    # Find indices where differences are less than 'mass_cutoff' and 'rt_cutoff'
-    if ppm:
-        duplicates_matrix = np.where(
-            (abs(diff_matrix_mass / masses_matrix) * 10**6 <= mass_cutoff) & (abs(diff_matrix_rt) <= rt_cutoff),
-            1,
-            0,
-        )
-    else:
-        duplicates_matrix = np.where(
-            (abs(diff_matrix_mass) <= mass_cutoff) & (abs(diff_matrix_rt) <= rt_cutoff),
-            1,
-            0,
-        )
-    np.fill_diagonal(duplicates_matrix, 0)
-    # Find # of duplicates for each row
-    row_sums = np.sum(duplicates_matrix, axis=1)
-    # Calculate lower triangle of matrix
-    duplicates_matrix_lower = np.tril(duplicates_matrix)
-    lower_row_sums = np.sum(duplicates_matrix_lower, axis=1)
-    # Store features with no duplicates in 'passed'
-    passed = df_in[(row_sums == 0) | (lower_row_sums == 0)].copy()
-    # Store features with any dupi=licates in 'dupes'
-    dupes = df_in.loc[df_in[(row_sums != 0) & (lower_row_sums != 0)].index, :]
-    # Return de-duplicated dataframe (passed) and duplicates (dupes)
-    return passed, dupes
-'''
-
 
 def chunk_dup_flag(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
     """
@@ -542,13 +474,6 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
     # Define feature limit of WebApp
     n = 12000
     step = 6000
-    # 'if' statement for chunker: if no chunks needed, send to 'dup_matrix', else send to 'chunk_duplicates'
-    # if remove:
-    #    if df.shape[0] <= n:
-    #        output, dupe_df = dup_matrix_remove(df, mass_cutoff, rt_cutoff, ppm)
-    #    else:
-    #        output, dupe_df = chunk_dup_remove(df, n, step, mass_cutoff, rt_cutoff, ppm)
-    # else:
     if df.shape[0] <= n:
         output = dup_matrix_flag(df, mass_cutoff, rt_cutoff, ppm)
     else:
@@ -557,10 +482,6 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
     output.sort_values(by=["Mass"], inplace=True)
     output.reset_index(drop=True, inplace=True)
     output.drop(["all_sample_mean"], axis=1, inplace=True)
-    # if remove:
-    #    dupe_df.drop(["all_sample_mean"], axis=1, inplace=True)
-    # Return output dataframe with duplicates removed and duplicate dataframe
-    #    return output, dupe_df
     # fillna() to replace nans with 0s
     output["Duplicate Feature?"].fillna(0, inplace=True)
     # Return output dataframe with duplicates flagged

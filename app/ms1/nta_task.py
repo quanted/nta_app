@@ -146,8 +146,6 @@ class NtaRun:
         self.run_sequence_neg_df = run_sequence_neg_df
         self.dfs = input_dfs
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values
-        #self.dup_remove = False  # Currently hard-coded so that duplicates will be flagged TMF 04/11/24
-        #self.dupes = None
         self.docs = None
         self.doc_combined = None
         self.df_combined = None
@@ -384,8 +382,6 @@ class NtaRun:
         return
 
     def create_analysis_parameters_sheet(self):
-        # logger.info("create_analysis_parameters_sheet: inputParameters: {} ".format(inputParameters))
-
         # create a dataframe to store analysis parameters
         columns = ["Parameter", "Value"]
         df_analysis_parameters = pd.DataFrame(columns=columns)
@@ -465,18 +461,10 @@ class NtaRun:
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
-        #remove = self.dup_remove
-        #if remove:
-        #    self.dupes = [
-        #        task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[1] if df is not None else None
-        #        for df in self.dfs
-        #    ]
-        #    self.dfs = [
-        #        task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, remove)[0] if df is not None else None
-        #        for df in self.dfs
-        #    ]
-        #else:
-        self.dfs = [task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm) if df is not None else Nonefor df in self.dfs]
+        # Perform duplicate flagging functions
+        self.dfs = [
+            task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm) if df is not None else None for df in self.dfs
+        ]
         return
 
     def calc_statistics(self):
@@ -485,9 +473,6 @@ class NtaRun:
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
         mrl_multiplier = float(self.parameters["mrl_std_multiplier"][1])
         self.dfs = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dfs]
-        #if self.dup_remove:
-        #    self.dupes = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dupes]
-        # Get user-selected adducts
         # print(pos_adducts_selected)
         pos_adducts_selected = self.parameters["pos_adducts"][1]
         logger.info("pos adducts list: {}".format(self.parameters["pos_adducts"]))
@@ -1156,21 +1141,11 @@ class NtaRun:
         tracer_df_bool = False
         if self.tracer_df is not None:
             tracer_df_bool = True
+        # combine dfs from both modes
         self.df_combined = task_fun.combine(self.dfs[0], self.dfs[1])
+        # combine df_flaggeds from both modes
         self.df_flagged_combined = task_fun.combine(self.dfs_flagged[0], self.dfs_flagged[1])
-        # Check if duplicates are removed - if yes need to combine doc and dupe
-        #if self.dup_remove:
-        #    self.doc_combined = [
-        #        (
-        #            task_fun.combine_doc(
-        #                doc, dupe, tracer_df=tracer_df_bool
-        #            )  # This needs revisiting if self.dup_remove = True TMF 04/11/24
-        #            if doc is not None
-        #            else None
-        #       )
-        #        for doc, dupe in zip(self.docs, self.dupes)
-        #    ]
-        #else:
+        # combine docs from both modes
         self.doc_combined = task_fun.combine_doc(self.docs[0], self.docs[1], tracer_df=tracer_df_bool)
 
         # NTAW-577: Replace zero values of "Selected MRL" column with blank cells prior to exporting to data_map
@@ -1182,12 +1157,12 @@ class NtaRun:
         self.doc_combined[Mean_MB] = self.doc_combined[Mean_MB].replace(0, "")
 
         self.data_map["Decision Documentation"] = self.doc_combined
-        # self.mongo_save(self.df_combined, FILENAMES['combined'])
+
         self.mpp_ready = task_fun.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool, flagged=False)
         self.mpp_ready_flagged = task_fun.MPP_Ready(
             self.df_flagged_combined, self.pass_through, tracer_df_bool, flagged=True
         )
-        # self.data_map["Final Occurrence Matrix"] = remove_columns(self.mpp_ready,['Occurrence_Count(all_samples)','Occurrence_Count(all_samples)(%)'])
+
         self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready)
         self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(self.mpp_ready_flagged)
 
@@ -1205,12 +1180,10 @@ class NtaRun:
             to_search.drop_duplicates(subset="Mass", keep="first", inplace=True)
         else:
             # NTAW-94 rename compound to formula
-            # to_search.drop_duplicates(subset='Compound', keep='first', inplace=True)
             to_search.drop_duplicates(subset="Formula", keep="first", inplace=True)
         n_search = len(to_search)  # number of fragments to search
         logger.info("Total # of queries: {}".format(n_search))
-        # max_search = 300  # the maximum number of fragments to search at a time
-        # upper_index = 0
+
         to_search = to_search.iloc[lower_index:upper_index, :]
         if self.parameters["search_mode"][1] == "mass":
             mono_masses = task_fun.masses(to_search)
@@ -1237,7 +1210,7 @@ class NtaRun:
             dsstox_search_df, how="right", left_on="Mass", right_on="INPUT"
         )
 
-        # 5/23/2024 AC - Calculate toxcast_percent_active values
+        # Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
 
         self.data_map["Chemical Results"] = dsstox_search_df
