@@ -227,10 +227,10 @@ class NtaRun:
             logger.info("dfs.size(): {}".format(len(self.dfs)))
             if self.dfs[0] is not None:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
-                logger.info("POS df columns: {}".format(self.dfs[0].columns))
+                logger.info("POS df columns: {}".format(self.dfs[0].columns.tolist()))
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
-                logger.info("NEG df columns: {}".format(self.dfs[1].columns))
+                logger.info("NEG df columns: {}".format(self.dfs[1].columns.tolist()))
         self.check_tracers()
         if self.verbose:
             logger.info("Checked tracers.")
