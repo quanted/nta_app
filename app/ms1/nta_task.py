@@ -10,7 +10,8 @@ from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
 from . import functions_Universal_v3 as fn
-from . import toxpi
+
+# from . import toxpi
 from .utilities import *  # connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
 
 from . import task_functions as task_fun
@@ -200,8 +201,10 @@ class NtaRun:
             logger.info("dfs.size(): {}".format(len(self.dfs)))
             if self.dfs[0] is not None:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
+                logger.info("POS df columns: {}".format(self.dfs[0].columns))
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
+                logger.info("NEG df columns: {}".format(self.dfs[1].columns))
 
         # 2: statistics
         self.step = "Calculating statistics"
@@ -1237,15 +1240,15 @@ class NtaRun:
         for key in self.data_map.keys():
             self.mongo_save(self.data_map[key], step=key)
 
-    def process_toxpi(self):
-        by_mass = self.parameters["search_mode"][1] == "mass"
-        self.df_combined = toxpi.process_toxpi(
-            self.df_combined,
-            self.search_results,
-            by_mass=by_mass,
-        )
-        self.data_map["final_full"] = self.df_combined
-        self.data_map["final_reduced"] = reduced_file(self.df_combined)
+    # def process_toxpi(self):
+    #    by_mass = self.parameters["search_mode"][1] == "mass"
+    #    self.df_combined = toxpi.process_toxpi(
+    #        self.df_combined,
+    #        self.search_results,
+    #        by_mass=by_mass,
+    #    )
+    #    self.data_map["final_full"] = self.df_combined
+    #    self.data_map["final_reduced"] = reduced_file(self.df_combined)
 
     def mongo_save(self, file, step=""):
         if isinstance(file, pd.DataFrame):

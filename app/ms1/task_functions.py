@@ -11,6 +11,12 @@ import logging
 logger = logging.getLogger("nta_app.ms1")
 
 
+"""
+This file contains functions (grouped together by class function they support)
+that are called in the execution of the NtaRun class object defined in nta_task.py
+"""
+
+
 """UTILITY FUNCTIONS (many from Functions_Universal_v3)"""
 
 
