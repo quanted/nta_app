@@ -526,7 +526,7 @@ class WebApp_plotter:
             # Sort dataframe columns alphabetically prior to parsing headers
             df_in = df_in.reindex(sorted(df_in.columns), axis=1)  # Remove sorting to
             df_in = df_in[
-                ["Feature_ID"] + [col for col in df_in.columns if col != "Feature_ID"]
+                ["Feature ID"] + [col for col in df_in.columns if col != "Feature ID"]
             ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
 
             # Debug_list
@@ -625,7 +625,7 @@ class WebApp_plotter:
             # Sort dataframe columns alphabetically prior to parsing headers
             df_in = df_in.reindex(sorted(df_in.columns), axis=1)
             df_in = df_in[
-                ["Feature_ID"] + [col for col in df_in.columns if col != "Feature_ID"]
+                ["Feature ID"] + [col for col in df_in.columns if col != "Feature ID"]
             ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
 
             headers = parse_headers(df_in)
