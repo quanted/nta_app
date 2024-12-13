@@ -222,6 +222,15 @@ class NtaRun:
 
         # 3: check tracers (optional)
         self.step = "Checking tracers"
+        if self.verbose:
+            logger.info("Checking tracers: DF check for debugging.")
+            logger.info("dfs.size(): {}".format(len(self.dfs)))
+            if self.dfs[0] is not None:
+                logger.info("POS df length: {}".format(len(self.dfs[0])))
+                logger.info("POS df columns: {}".format(self.dfs[0].columns))
+            if self.dfs[1] is not None:
+                logger.info("NEG df length: {}".format(len(self.dfs[1])))
+                logger.info("NEG df columns: {}".format(self.dfs[1].columns))
         self.check_tracers()
         if self.verbose:
             logger.info("Checked tracers.")
