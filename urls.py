@@ -31,6 +31,7 @@ urlpatterns = [
     path("ms1", ms1_input.input_page),
     path("ms1/", ms1_input.input_page),
     path("ms1/input/", ms1_input.input_page),
+    path("ms1/external/input/", ms1_input.input_page),
     path("ms1/processing/<slug:jobid>", ms1_processing.processing_page),
     path("ms1/output/<slug:jobid>", ms1_output.output_page),
     path("ms1/results/toxpi/<slug:jobid>", ms1_results_api.download_toxpi),

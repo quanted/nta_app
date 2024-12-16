@@ -41,7 +41,9 @@ def login(request):
         message = request.COOKIES["message"]
         delete_message = True
     html = render_to_string(
-        "login_prompt.html", {"TITLE": "User Login", "next": next_page, "TEXT": message}, request=request
+        "login_prompt.html",
+        {"TITLE": "User Login", "next": next_page, "TEXT": message},
+        request=request,
     )
     response = HttpResponse()
     response.write(html)
@@ -65,7 +67,7 @@ class RequireLoginMiddleware:
             self.nta_username = "ntauser"
         else:
             self.nta_username = "ntadev"
-        self.open_urls = ["/nta/login"]
+        self.open_urls = ["/nta/login", "ms1/external/input/"]
 
         nta_password = self.load_password()
         if nta_password is None:
