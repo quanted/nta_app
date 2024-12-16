@@ -1057,6 +1057,8 @@ class NtaRun:
         else:
             passthru = self.pass_through[1]
 
+        logger.info("tracer dft= {}".format(dft.columns.tolist()))
+        logger.info("tracer passthru= {}".format(passthru.columns.tolist()))
         self.data_map["Tracer Detection Statistics"] = task_fun.column_sort_TSR(dft, passthru)
 
         if self.tracer_plots_out[0] is not None:
