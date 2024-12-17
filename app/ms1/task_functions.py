@@ -299,7 +299,6 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
         ("HCO2", 46.005477),
         ("CH3CO2", 60.021127),
         ("CF3CO2", 113.992862),
-        ("FA", 46.00550),
     ]
     # no change to neutral losses
     neutral_losses_li = [
@@ -313,11 +312,11 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
         ("CO", -29.00220),
         ("CO2", -43.989829),
         ("C2H4", -28.03130),
-        ("HFA", 46.00550),  # note here and below - not losses? but still neutral?
-        ("HAc", 60.02110),
-        ("MeOH", 32.02620),
-        ("ACN", 41.02650),
-        ("IsoProp", 60.05810),
+        ("CH2O2", 46.00550),  # note here and below - not losses? but still neutral?
+        ("CH3COOH", 60.02110),
+        ("CH3OH", 32.02620),
+        ("CH3CN", 41.02650),
+        ("(CH3)2CHOH", 60.05810),
     ]
     # Determine possible adduct dictionary according to ionization
     if ionization == "positive":
