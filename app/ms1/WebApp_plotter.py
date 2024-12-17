@@ -631,10 +631,6 @@ class WebApp_plotter:
             headers = parse_headers(df_in)
             abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
             abundance.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
-            # abundance.remove('Detection_Count(all_samples)')
-            # abundance.remove('Detection_Count(all_samples)(%)')
-            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
-            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
             # Remove these from the sample list below
             column_prefixes_to_remove = [
                 "Mean_",
@@ -655,20 +651,6 @@ class WebApp_plotter:
 
         # our list of final chemical names with appropriate capitalization
         chemical_names = df_in["Chemical_Name"]
-
-        # # need to make a column for lower cased names for sorting alpha-numerically (ignoring case)
-        # df['chem_name'] = df.loc[:, 'Chemical_Name'].str.lower().copy()
-        # #df.loc[:,'Chemical_Name'] = df.loc[:,'Chemical_Name'].str.lower().copy()
-        # df = df.sort_values('chem_name').copy()
-        # df = df.drop(['chem_name'], axis=1)
-
-        # # create a list of chemical names to work with
-        # if chemical_names is not None:
-        #     # if user specified a list of chemicals, only keep relavent chems in our df
-        #     df = df[df['Chemical_Name'].isin(chemical_names)]
-
-        # # capitalize the first letter of each chemical
-        # df['Chemical_Name'] = df['Chemical_Name'].apply(capitalize_chems)
 
         # split chem names into a nested list, one list of chem_names per plot
         # since each plot can only comfortably fit 16 chemicals
@@ -748,7 +730,6 @@ class WebApp_plotter:
                 rotation="vertical",
                 fontsize=28,
             )
-            # title = "Abundance vs. Sequence\n"
             title = "Abundance across Samples\n"
             sub = f"{subtitle}, ESI{ion_token}"
             fig.text(0.05, 1.045, title, fontsize=32)
@@ -886,45 +867,6 @@ class WebApp_plotter:
                                     y_fit = y_fit[1:]
                                     x_fit = x_fit[1:]
                                 ax.plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
-                    # AC 1/3/2024 Disable line fit for now
-                    # # add a quadratic fits to plot
-                    # if fit == True:
-                    #     if len(x_values_sample) > 2:
-                    #         x_fit = np.linspace(min(x_values_sample), max(x_values_sample), len(x_values_sample))
-                    #         coefs = np.polyfit(x_fit, y_values_sample, 2)
-                    #         y_fit = np.polyval(coefs, x_fit)
-                    #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                    #         if y_fit[-1] < 0:
-                    #             y_fit = x_fit[:-1]
-                    #             x_fit = x_fit[:-1]
-                    #         if y_fit[0] < 0:
-                    #             y_fit = y_fit[1:]
-                    #             x_fit = x_fit[1:]
-                    #         ax.plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)
-                    #     if len(x_values_mb) > 2:
-                    #         x_fit = np.linspace(min(x_values_mb), max(x_values_mb), len(x_values_mb))
-                    #         coefs = np.polyfit(x_fit, y_values_mb, 2)
-                    #         y_fit = np.polyval(coefs, x_fit)
-                    #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                    #         if y_fit[-1] < 0:
-                    #             y_fit = x_fit[:-1]
-                    #             x_fit = x_fit[:-1]
-                    #         if y_fit[0] < 0:
-                    #             y_fit = y_fit[1:]
-                    #             x_fit = x_fit[1:]
-                    #         ax.plot(x_fit, y_fit, color=c_aes[1], lw=3, zorder=100)
-                    #     if len(x_values_pooled) > 2:
-                    #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), len(x_values_pooled))
-                    #         coefs = np.polyfit(x_fit, y_values_pooled, 2)
-                    #         y_fit = np.polyval(coefs, x_fit)
-                    #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                    #         if y_fit[-1] < 0:
-                    #             y_fit = x_fit[:-1]
-                    #             x_fit = x_fit[:-1]
-                    #         if y_fit[0] < 0:
-                    #             y_fit = y_fit[1:]
-                    #             x_fit = x_fit[1:]
-                    #         ax.plot(x_fit, y_fit, color=c_aes[2], lw=3, zorder=100)
 
                 # now deal with 2 and 3 chemicals
                 elif (nrows != 1) and (ncols == 1):
@@ -960,45 +902,6 @@ class WebApp_plotter:
                                     y_fit = y_fit[1:]
                                     x_fit = x_fit[1:]
                                 ax[row_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
-
-                    # # add a quadratic fits to plot
-                    # if fit == True:
-                    #     if len(x_values_sample) > 2:
-                    #         x_fit = np.linspace(min(x_values_sample), max(x_values_sample), len(x_values_sample))
-                    #         coefs = np.polyfit(x_fit, y_values_sample, 2)
-                    #         y_fit = np.polyval(coefs, x_fit)
-                    #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                    #         if y_fit[-1] < 0:
-                    #             y_fit = x_fit[:-1]
-                    #             x_fit = x_fit[:-1]
-                    #         if y_fit[0] < 0:
-                    #             y_fit = y_fit[1:]
-                    #             x_fit = x_fit[1:]
-                    #         ax[row_index].plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)
-                    #     if len(x_values_mb) > 2:
-                    #         x_fit = np.linspace(min(x_values_mb), max(x_values_mb), len(x_values_mb))
-                    #         coefs = np.polyfit(x_fit, y_values_mb, 2)
-                    #         y_fit = np.polyval(coefs, x_fit)
-                    #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                    #         if y_fit[-1] < 0:
-                    #             y_fit = x_fit[:-1]
-                    #             x_fit = x_fit[:-1]
-                    #         if y_fit[0] < 0:
-                    #             y_fit = y_fit[1:]
-                    #             x_fit = x_fit[1:]
-                    #         ax[row_index].plot(x_fit, y_fit, color=c_aes[1], lw=3, zorder=100)
-                    #     if len(x_values_pooled) > 2:
-                    #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), len(x_values_pooled))
-                    #         coefs = np.polyfit(x_fit, y_values_pooled, 2)
-                    #         y_fit = np.polyval(coefs, x_fit)
-                    #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                    #         if y_fit[-1] < 0:
-                    #             y_fit = x_fit[:-1]
-                    #             x_fit = x_fit[:-1]
-                    #         if y_fit[0] < 0:
-                    #             y_fit = y_fit[1:]
-                    #             x_fit = x_fit[1:]
-                    #         ax[row_index].plot(x_fit, y_fit, color=c_aes[2], lw=3, zorder=100)
 
                     # iterate to next plot
                     row_index += 1
@@ -1044,47 +947,6 @@ class WebApp_plotter:
                                         y_fit = y_fit[1:]
                                         x_fit = x_fit[1:]
                                     ax[row_index, col_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
-                        # # add a quadratic fits to plot
-                        # if fit == True:
-                        #     if len(x_values_sample) > 2:
-                        #         x_fit = np.linspace(min(x_values_sample), max(x_values_sample), len(x_values_sample))
-                        #         coefs = np.polyfit(x_fit, y_values_sample, 2)
-                        #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), 80)
-                        #         y_fit = np.polyval(coefs, x_fit)
-                        #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                        #         if y_fit[-1] < 0:
-                        #             y_fit = x_fit[:-1]
-                        #             x_fit = x_fit[:-1]
-                        #         if y_fit[0] < 0:
-                        #             y_fit = y_fit[1:]
-                        #             x_fit = x_fit[1:]
-                        #         ax[row_index, col_index].plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)
-                        #     if len(x_values_mb) > 2:
-                        #         x_fit = np.linspace(min(x_values_mb), max(x_values_mb), len(x_values_mb))
-                        #         coefs = np.polyfit(x_fit, y_values_mb, 2)
-                        #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), 80)
-                        #         y_fit = np.polyval(coefs, x_fit)
-                        #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                        #         if y_fit[-1] < 0:
-                        #             y_fit = x_fit[:-1]
-                        #             x_fit = x_fit[:-1]
-                        #         if y_fit[0] < 0:
-                        #             y_fit = y_fit[1:]
-                        #             x_fit = x_fit[1:]
-                        #         ax[row_index, col_index].plot(x_fit, y_fit, color=c_aes[1], lw=3, zorder=100)
-                        #     if len(x_values_pooled) > 2:
-                        #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), len(x_values_pooled))
-                        #         coefs = np.polyfit(x_fit, y_values_pooled, 2)
-                        #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), 80)
-                        #         y_fit = np.polyval(coefs, x_fit)
-                        #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                        #         if y_fit[-1] < 0:
-                        #             y_fit = x_fit[:-1]
-                        #             x_fit = x_fit[:-1]
-                        #         if y_fit[0] < 0:
-                        #             y_fit = y_fit[1:]
-                        #             x_fit = x_fit[1:]
-                        #         ax[row_index, col_index].plot(x_fit, y_fit, color=c_aes[2], lw=3, zorder=100)
 
                         # iterate to next plot
                         col_index += 1
@@ -1131,47 +993,6 @@ class WebApp_plotter:
                                         y_fit = y_fit[1:]
                                         x_fit = x_fit[1:]
                                     ax[row_index, column_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
-                        # # add a quadratic fits to plot
-                        # if fit == True:
-                        #     if len(x_values_sample) > 2:
-                        #         x_fit = np.linspace(min(x_values_sample), max(x_values_sample), len(x_values_sample))
-                        #         coefs = np.polyfit(x_fit, y_values_sample, 2)
-                        #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), 80)
-                        #         y_fit = np.polyval(coefs, x_fit)
-                        #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                        #         if y_fit[-1] < 0:
-                        #             y_fit = x_fit[:-1]
-                        #             x_fit = x_fit[:-1]
-                        #         if y_fit[0] < 0:
-                        #             y_fit = y_fit[1:]
-                        #             x_fit = x_fit[1:]
-                        #         ax[row_index, column_index].plot(x_fit, y_fit, color=c_aes[0], lw=3, zorder=100)
-                        #     if len(x_values_mb) > 2:
-                        #         x_fit = np.linspace(min(x_values_mb), max(x_values_mb), len(x_values_mb))
-                        #         coefs = np.polyfit(x_fit, y_values_mb, 2)
-                        #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), 80)
-                        #         y_fit = np.polyval(coefs, x_fit)
-                        #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                        #         if y_fit[-1] < 0:
-                        #             y_fit = x_fit[:-1]
-                        #             x_fit = x_fit[:-1]
-                        #         if y_fit[0] < 0:
-                        #             y_fit = y_fit[1:]
-                        #             x_fit = x_fit[1:]
-                        #         ax[row_index, column_index].plot(x_fit, y_fit, color=c_aes[1], lw=3, zorder=100)
-                        #     if len(x_values_pooled) > 2:
-                        #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), len(x_values_pooled))
-                        #         coefs = np.polyfit(x_fit, y_values_pooled, 2)
-                        #         x_fit = np.linspace(min(x_values_pooled), max(x_values_pooled), 80)
-                        #         y_fit = np.polyval(coefs, x_fit)
-                        #         # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                        #         if y_fit[-1] < 0:
-                        #             y_fit = x_fit[:-1]
-                        #             x_fit = x_fit[:-1]
-                        #         if y_fit[0] < 0:
-                        #             y_fit = y_fit[1:]
-                        #             x_fit = x_fit[1:]
-                        #         ax[row_index, column_index].plot(x_fit, y_fit, color=c_aes[2], lw=3, zorder=100)
 
                         # iterate to next plot
                         col_index = 1
@@ -1232,16 +1053,6 @@ class WebApp_plotter:
 
             # 5/20/2024 AC: Add this code to address tracer plot bug
             listOfPNGs.append(fig)
-
-            # 5/20/2024 AC: Comment out below code to address tracer plot bug
-            ### store matplot figure as a PNG
-            # buffer = io.BytesIO()
-            # plt.savefig(buffer, bbox_inches="tight")  # , format='png')
-            # # append to list of PNGs
-            # listOfPNGs.append(buffer.getvalue())
-
-            # close plt to prevent resource leaks
-            # plt.close()
 
             # iterate to the next figure
             sublist_index += 1
