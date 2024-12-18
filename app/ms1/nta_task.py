@@ -1257,16 +1257,6 @@ class NtaRun:
         for key in self.data_map.keys():
             self.mongo_save(self.data_map[key], step=key)
 
-    # def process_toxpi(self):
-    #    by_mass = self.parameters["search_mode"][1] == "mass"
-    #    self.df_combined = toxpi.process_toxpi(
-    #        self.df_combined,
-    #        self.search_results,
-    #        by_mass=by_mass,
-    #    )
-    #    self.data_map["final_full"] = self.df_combined
-    #    self.data_map["final_reduced"] = reduced_file(self.df_combined)
-
     def mongo_save(self, file, step=""):
         if isinstance(file, pd.DataFrame):
             to_save = file.to_json(orient="split")
