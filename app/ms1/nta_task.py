@@ -685,10 +685,17 @@ class NtaRun:
         red_flag_count = sum(
             plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"] > max_replicate_cv_value
         )
+
         white_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"])
         white_flag_count = sum(
             plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
         )
+
+        logger.info("white_count= {}".format(white_count))
+        logger.info("white_flag_count= {}".format(white_flag_count))
+        logger.info("red_count= {}".format(red_count))
+        logger.info("red_flag_count= {}".format(red_flag_count))
+
         # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
         legend = a.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
         # Set legend labels
