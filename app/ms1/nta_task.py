@@ -691,11 +691,6 @@ class NtaRun:
             plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
         )
 
-        # logger.info("white_count= {}".format(white_count))
-        # logger.info("white_flag_count= {}".format(white_flag_count))
-        # logger.info("red_count= {}".format(red_count))
-        # logger.info("red_flag_count= {}".format(red_flag_count))
-
         # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
         legend = a.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
         # Set legend labels
@@ -967,6 +962,10 @@ class NtaRun:
         mass_accuracy_tr = float(self.parameters["mass_accuracy_tr"][1])
         yaxis_scale = self.parameters["tracer_plot_yaxis_format"][1]
         trendline_shown = self.parameters["tracer_plot_trendline"][1] == "yes"
+
+        logger.info("check_tracers df[1]= {}".format(df[1].columns.tolist()))
+        logger.info("check_tracers self.tracer_df= {}".format(self.tracer_df.columns.tolist()))
+
         self.tracer_dfs_out = [
             (
                 task_fun.check_feature_tracers(
@@ -1011,13 +1010,11 @@ class NtaRun:
                 y_scale=yaxis_scale,
                 fit=trendline_shown,
                 share_y=False,
-                y_fixed=False,
+                # y_fixed=False,
                 y_step=6,
                 same_frame=False,
                 legend=True,
-                chemical_names=None,
-                # save_image=True,
-                # image_title='./output02/slide_12-dark',
+                # =None,
                 dark_mode=False,
             )
 
@@ -1042,13 +1039,11 @@ class NtaRun:
                 y_scale=yaxis_scale,
                 fit=trendline_shown,
                 share_y=False,
-                y_fixed=False,
+                # y_fixed=False,
                 y_step=6,
                 same_frame=False,
                 legend=True,
-                chemical_names=None,
-                # save_image=True,
-                # image_title='./output02/slide_12-dark',
+                # chemical_names=None,
                 dark_mode=False,
             )
 
