@@ -1,30 +1,30 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 14 10:11:13 2017
-Modified Nov 18 - Apr 19
-Modified Nov 18 - Apr 19
+# """
+# Created on Tue Nov 14 10:11:13 2017
+# Modified Nov 18 - Apr 19
+# Modified Nov 18 - Apr 19
 
-@author: HALGhoul
-         Adapted/edited by Jeff Minucci
-"""
+# @author: HALGhoul
+#         Adapted/edited by Jeff Minucci
+# """
 
-import pandas as pd
-import numpy as np
-import re
-import os
-from operator import itemgetter
-from itertools import groupby
-from difflib import SequenceMatcher
-import dask.dataframe as dd
+# import pandas as pd
+# import numpy as np
+# import re
+# import os
+# from operator import itemgetter
+# from itertools import groupby
+# from difflib import SequenceMatcher
+# import dask.dataframe as dd
 
-pd.options.mode.chained_assignment = None  # suppress settingwithcopy warning
-"""
-#REP_NUM = 3
-HBR = 3.0 # High_Blank_Ratio condition
-HMR = 1.5 # High_Mid_Ratio condition
-SCORE = 90 # formula match is 90
-"""
-BLANKS = ["MB_", "blank", "blanks", "BLANK", "Blank"]
+# pd.options.mode.chained_assignment = None  # suppress settingwithcopy warning
+# """
+##REP_NUM = 3
+# HBR = 3.0 # High_Blank_Ratio condition
+# HMR = 1.5 # High_Mid_Ratio condition
+# SCORE = 90 # formula match is 90
+# """
+# BLANKS = ["MB_", "blank", "blanks", "BLANK", "Blank"]
 
 
 # def common_substrings(ls=None):
