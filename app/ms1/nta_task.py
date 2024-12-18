@@ -691,19 +691,22 @@ class NtaRun:
             plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
         )
 
-        logger.info("white_count= {}".format(white_count))
-        logger.info("white_flag_count= {}".format(white_flag_count))
-        logger.info("red_count= {}".format(red_count))
-        logger.info("red_flag_count= {}".format(red_flag_count))
+        # logger.info("white_count= {}".format(white_count))
+        # logger.info("white_flag_count= {}".format(white_flag_count))
+        # logger.info("red_count= {}".format(red_count))
+        # logger.info("red_flag_count= {}".format(red_flag_count))
 
         # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
         legend = a.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
         # Set legend labels
         if dfTracer is not None:
             legend.get_texts()[0].set_text(f"unknowns ({white_flag_count} of {white_count} above line)")
-            legend.get_texts()[1].set_text(
-                f"tracers ({red_flag_count} of {red_count} above line)"
-            )  # If tracers are present, add secondary legend label
+            try:
+                legend.get_texts()[1].set_text(
+                    f"tracers ({red_flag_count} of {red_count} above line)"
+                )  # If tracers are present, add secondary legend label
+            except IndexError:  # If no tracers found in blanks, set alternate legend
+                legend.set_text("tracers 0 of 0 above line)")
         # Make it pretty
         frame = legend.get_frame()  # sets up for color, edge, and transparency
         frame.set_facecolor("lightgray")  # color of legend
