@@ -706,7 +706,8 @@ class NtaRun:
                     f"tracers ({red_flag_count} of {red_count} above line)"
                 )  # If tracers are present, add secondary legend label
             except IndexError:  # If no tracers found in blanks, set alternate legend
-                legend.set_text("tracers 0 of 0 above line)")
+                # legend.set_text("tracers 0 of 0 above line)")
+                pass
         # Make it pretty
         frame = legend.get_frame()  # sets up for color, edge, and transparency
         frame.set_facecolor("lightgray")  # color of legend
