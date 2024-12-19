@@ -12,7 +12,8 @@ Known Issues:
 Version 0.3.5 - 12/19/2024
 ************************
 - MS1 workflow:
-  - Front end page updated
+  - Front end page updated ("Save Top Result Only?" removed)
+  - Fixed bug where at least one positive adduct, negative adduct, and neutral loss was required to run
   - CV scatterplot: No longer throws error if no tracers are found in blank samples
 - MS2 workflow:
   - Rounding of results columns updated
