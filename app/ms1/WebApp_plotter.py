@@ -3,21 +3,19 @@ Class for producing plots for web app
 2023/02/23
 E. Tyler Carr
 """
-
+import logging
 from typing import Any, Literal, Union
+
 from matplotlib.axes._axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import FancyBboxPatch
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-import pandas as pd
-import numpy as np
 import math
+import numpy as np
+import pandas as pd
 
-# from .functions_Universal_v3 import parse_headers
-from .task_functions import parse_headers, determine_string_width
-import io
-import logging
+from .task_functions import determine_string_width, parse_headers
 
 ## set axes return type annotation alias for the WAPlotter._make_subplots() method
 AxesType = Union[np.ndarray[np.ndarray[Axes]], np.ndarray[Axes], Axes]
@@ -1225,8 +1223,8 @@ class WebApp_plotter:
 
     def make_seq_scatter(
         self,
-        df_in,
-        df_seq,
+        df_in: pd.DataFrame,
+        df_seq: Union[None, pd.DataFrame],
         ionization: Literal["pos", "neg"] = "pos",
         fit: bool = True,
         y_scale: Literal["linear", "log"] = "linear",
@@ -1235,7 +1233,7 @@ class WebApp_plotter:
         same_frame: bool = False,
         legend: bool = True,
         dark_mode: bool = False,
-    ):
+    ) -> tuple[list[Any], pd.DataFrame, list[Any]]:
         """Creates a run sequence scatter plot for ESI+ or ESI-.
 
         This method is mainly for organization, most of the real work is
@@ -1335,6 +1333,10 @@ class WebApp_plotter:
             y_step,
             y_scale,
         )
+
+        # for i, fig in enumerate(listOfPNGs):
+        #     fig.savefig(f"./seq_{ionization}_{y_step}ticks-{str(i+1).zfill(2)}.png", bbox_inches="tight")
+
         return listOfPNGs, df, debug_list
 
     def make_loc_plot(
@@ -2081,6 +2083,7 @@ def make_subplots(
         else:
             fig.tight_layout(h_pad=1)
         figs_axes.append((fig, ax, shape, subtitle))
+        print(type(fig), type(ax[0][0]), type(shape), type(subtitle))
         i += 1
 
     return figs_axes
