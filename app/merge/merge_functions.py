@@ -24,7 +24,7 @@ logger = logging.getLogger("nta_app.merge")
 
 
 def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2):
-    matched_df = ms1_data if isinstance(ms1_data, pd.DataFrame) else ms1_data["chemical_results"]
+    matched_df = ms1_data if isinstance(ms1_data, pd.DataFrame) else ms1_data["Chemical Results"]
     matched_df.rename(columns={"DTXCID_INDIVIDUAL_COMPONENT": "DTXCID"}, inplace=True)
 
     for ms2_data in ms2_data_list:
@@ -53,8 +53,8 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
             inplace=True,
         )
 
-        # # NTAW-607: Convert retention time column units from seconds to minutes
-        # cfmid_df[rt_col] = cfmid_df[rt_col] / 60
+        # NTAW-607: Convert retention time column units from seconds to minutes
+        # cfmid_df[f"RT_{filename}"] = cfmid_df[f"RT_{filename}"] / 60
 
         # # NTAW-607: Add units to MS1 retention time column
         # matched_df.rename(columns={"Retention_Time": "Retention_Time(min)"}, inplace=True)
@@ -76,7 +76,7 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
         matched_df["mass_diff"] = abs(matched_df["Mass"] - matched_df[f"MASS_MGF_{filename}"])
         # NTAW-158: Retention time units of input MS1 are in minutes, input MS2 are in seconds, convert MS2 units to minutes by dividing by 60
         # matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"])
-        matched_df["rt_diff"] = abs(matched_df["Retention_Time"] - matched_df[f"RT_{filename}"] / 60)
+        matched_df["rt_diff"] = abs(matched_df["Retention Time"] - matched_df[f"RT_{filename}"] / 60)
         matched_df["sum_diff"] = [
             mass_diff + rt_diff if mass_diff <= mass_accuracy and rt_diff <= rt_accuracy else np.nan
             for mass_diff, rt_diff in zip(matched_df["mass_diff"], matched_df["rt_diff"])
@@ -88,17 +88,32 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
             [np.nan, np.nan, np.nan, np.nan, np.nan],
         )
 
+        # NTAW-607: Convert retention time column units from seconds to minutes
+        matched_df[f"RT_{filename}"] = matched_df[f"RT_{filename}"] / 60
+
         # NTAW-608: Quotient scores of 1 are showing up as empty cell. As a quick fix, fill in empty quotient cells with 1 (where the percentile cell has a value)
         matched_df.loc[matched_df[q_score_col].isna() & matched_df[percentile_col].notna(), q_score_col] = 1
 
-    #     # NTAW-607: Round MS2 retention time, cfmid score columns to two decimal places
-    #     matched_df[f"RT_{filename}"] = matched_df[f"RT_{filename}"].round(2)
-    #     matched_df[score_col] = matched_df[score_col].round(2)
-    #     matched_df[q_score_col] = matched_df[q_score_col].round(2)
-    #     matched_df[percentile_col] = matched_df[percentile_col].round(2)
+        # NTAW-631: Force merged column types to numeric
+        # Likely not needed as the conversion and rounding in _package_csv in tools/merge/output_access.py solved this
+        matched_df[f"RT_{filename}"] = pd.to_numeric(matched_df[f"RT_{filename}"], errors="coerce")
+        matched_df[score_col] = pd.to_numeric(matched_df[score_col], errors="coerce")
+        matched_df[q_score_col] = pd.to_numeric(matched_df[q_score_col], errors="coerce")
+        matched_df[percentile_col] = pd.to_numeric(matched_df[percentile_col], errors="coerce")
 
-    # # NTAW-607: Round MS1 retention time column to two decimal places
-    # matched_df["Retention_Time"] = matched_df["Retention_Time"].round(2)
+        # NTAW-607: Round MS2 retention time, cfmid score columns to two decimal places
+        # Likely not needed as the conversion and rounding in _package_csv in tools/merge/output_access.py solved this
+        matched_df[f"RT_{filename}"] = matched_df[f"RT_{filename}"].round(2)
+        matched_df[score_col] = matched_df[score_col].round(2)
+        matched_df[q_score_col] = matched_df[q_score_col].round(2)
+        matched_df[percentile_col] = matched_df[percentile_col].round(2)
+
+    # NTAW-607: Round MS1 retention time column to two decimal places
+    matched_df["Retention Time"] = matched_df["Retention Time"].round(2)
+
+    # NTAW-607: Rename columns starting with "RT_"
+    matched_df.rename(columns=lambda col: f"{col}(min)" if col.startswith("RT_") else col, inplace=True)
+    matched_df.rename(columns={"Retention Time": "Retention Time(min)"}, inplace=True)
 
     matched_df.drop(columns=["mass_diff", "rt_diff", "sum_diff"], inplace=True)
     matched_df["Median_MS2_Mass"] = matched_df[[col for col in matched_df.columns if "MASS_" in col]].apply(
@@ -110,4 +125,14 @@ def process_MS2_data(ms1_data, ms2_data_list, mass_accuracy=10, rt_accuracy=0.2)
     matched_df["Median_Score"] = matched_df[[col for col in matched_df.columns if "SUM_SCORE_" in col]].apply(
         np.median, axis=1
     )
+
+    # NTAW-631: Convert all retention time columns to numeric and round
+    # Likely not needed as the conversion and rounding in _package_csv in tools/merge/output_access.py solved this
+    matched_df.loc[:, matched_df.columns.str.startswith("RT_")] = matched_df.loc[
+        :, matched_df.columns.str.startswith("RT_")
+    ].apply(pd.to_numeric, errors="coerce")
+    matched_df.loc[:, matched_df.columns.str.startswith("RT_")] = matched_df.loc[
+        :, matched_df.columns.str.startswith("RT_")
+    ].round(2)
+
     return matched_df

@@ -37,7 +37,7 @@ def input_page(request, form_data=None, form_files=None):
             # NTAW-158 = AC 6/10/2024: Update parser to handle xlsx files. An xlsx file will create a dictionary with all the results sheets; only grab the chemical results sheet if it is a dict
             ms1_input_temp = fileParser.run(ms1_input[0])
             if isinstance(ms1_input_temp, dict):
-                input_data["MS1"] = ms1_input_temp["chemical_results"]
+                input_data["MS1"] = ms1_input_temp["Chemical Results"]
             else:
                 input_data["MS1"] = ms1_input_temp
 

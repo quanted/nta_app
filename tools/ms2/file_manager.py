@@ -23,9 +23,11 @@ class MS2_Parser:
         return parser(file, **kwargs)
 
     def _get_parser(file_type):
-        if file_type == "mgf":
+        if str(file_type).lower() == "mgf":
             return MS2_Parser._mgf_parser
-        elif file_type == "mzml":
+        elif str(file_type).lower() == "msp":
+            return MS2_Parser._msp_parser
+        elif str(file_type).lower() == "mzml":
             return MS2_Parser._mzml_parser
         else:
             raise ValueError(file_type)
@@ -66,6 +68,47 @@ class MS2_Parser:
                     mass_frag, frag_intensity = MS2_Parser._seperate_line(line)
                     result["FRAG_MASS"].append(float(mass_frag))
                     result["FRAG_INTENSITY"].append(float(frag_intensity))
+        return OUTPUT
+
+    def _msp_parser(file_in):
+        """
+        Output: list of dictionaries sturcutres as follows:
+                [{'Mass': float, 'RT': float, 'CHARGE': str, 'FRAG_MASS': [float], 'FRAG_INTENSITY':[float]}, ...]
+
+                Each list entry represents a feature present within the MS2 dataset
+        """
+        OUTPUT = []
+        with Open_Input(file_in) as file:
+            all_lines = file.readlines()
+            non_blank_lines = [
+                line for line in all_lines if line.strip()
+            ]  # Remove empty lines from the input text lines
+            has_fragments = True  # This tracks whether a fragment has peaks or not. Initialize as true
+            for line in all_lines:
+                line = line.strip()  # Get rid of potential blank spaces at end of line
+                if line.startswith("Name:"):
+                    result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
+                elif line.startswith("PrecursorMZ:"):
+                    result["MASS"] = float(line.split(" ")[1])
+                elif line.startswith("Comment:"):  # RT is stored in the comment line for Waters MSP files
+                    line = line.split(" ")[1]
+                    result["RT"] = float(line.split("_")[0])
+                elif line.startswith("Charge"):
+                    result["CHARGE"] = line.split(" ")[1]
+                elif line.strip() == "":
+                    if has_fragments == True:  # If there are fragment peaks in results, append to OUTPUT
+                        OUTPUT.append(result)
+                    else:
+                        has_fragments = True
+                elif line.startswith("Num Peaks:"):  # Check if there are fragments in the spectrum
+                    line = line.split(": ")[1]
+                    if line == "0":
+                        has_fragments = False
+                elif line[0].isdigit():  # Only grab fragment data if the line starts with a numeric value
+                    mass_frag, frag_intensity = MS2_Parser._seperate_line(line)
+                    result["FRAG_MASS"].append(float(mass_frag))
+                    result["FRAG_INTENSITY"].append(float(frag_intensity))
+                # Add check for last line in file
         return OUTPUT
 
     def _mzml_parser(file_in):

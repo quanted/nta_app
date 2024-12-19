@@ -124,7 +124,7 @@ class MS2Run:
 
     def parse_uploaded_files(self):
         """
-        Parse MGF file stored on mongo DB. Uses jobID to fetch relatd MS2 files before parse
+        Parse MGF file stored on mongo DB. Uses jobID to fetch related MS2 files before parse
         """
         grid_out = fetch_ms2_files(self.jobid)
         for file in grid_out:
@@ -138,6 +138,9 @@ class MS2Run:
         Prepares pos- and neg-mode FeatureList object from the input dfs
         """
         self.n_masses = len(self.input_dfs["neg"]) + len(self.input_dfs["pos"])
+
+        logger.info("Total number of features: {}".format(self.n_masses))
+
         for mode, df_list in self.input_dfs.items():
             tmp_feature_list = FeatureList()
             for data_block in df_list:

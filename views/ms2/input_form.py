@@ -20,13 +20,13 @@ class MS2FileInput(forms.Form):
     #     initial="no",
     # )
     pos_inputs = MultipleFileField(
-        label="Positive mode MS2 files (mgf)",
-        validators=[FileExtensionValidator(["mgf"])],
+        label="Positive mode MS2 files (mgf or msp)",
+        validators=[FileExtensionValidator(["mgf", "msp"])],
         required=False,
     )
     neg_inputs = MultipleFileField(
-        label="Negative mode MS2 files (mgf)",
-        validators=[FileExtensionValidator(["mgf"])],
+        label="Negative mode MS2 files (mgf or msp)",
+        validators=[FileExtensionValidator(["mgf", "msp"])],
         required=False,
     )
 

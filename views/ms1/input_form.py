@@ -38,6 +38,7 @@ class NtaInputs(forms.Form):
             ("NH4", mark_safe("[M+NH<sub>4</sub>]+")),
         ),
         initial=["Na", "K", "NH4"],
+        required=False,
     )
     neg_adducts = forms.MultipleChoiceField(
         label="Negative mode adducts",
@@ -48,9 +49,13 @@ class NtaInputs(forms.Form):
             ("HCO2", mark_safe("[M+HCO<sub>2</sub>]-")),
             ("CH3CO2", mark_safe("[M+CH<sub>3</sub>CO<sub>2</sub>]-")),
             ("CF3CO2", mark_safe("[M+CF<sub>3</sub>CO<sub>2</sub>]-")),
-            ("FA", "[M+FA]-"),
         ),
-        initial=["Cl", "HCO2", "CH3CO2", "FA"],
+        initial=[
+            "Cl",
+            "HCO2",
+            "CH3CO2",
+        ],
+        required=False,
     )
     neutral_losses = forms.MultipleChoiceField(
         label="Neutral losses (both modes)",
@@ -66,13 +71,14 @@ class NtaInputs(forms.Form):
             ("CO", "[M-CO]"),
             ("CO2", mark_safe("[M-CO<sub>2</sub>]")),
             ("C2H4", mark_safe("[M-C<sub>2</sub>H<sub>4</sub>]")),
-            ("HFA", "[M+HFA]"),
-            ("HAc", "[M+HAc]"),
-            ("MeOH", "[M+MeOH]"),
-            ("ACN", "[M+ACN]"),
-            ("IsoProp", "[M+IsoProp]"),
+            ("CH2O2", mark_safe("[M+CH<sub>2</sub>O<sub>2</sub>]")),
+            ("CH3COOH", mark_safe("[M+CH<sub>3</sub>COOH]")),
+            ("CH3OH", mark_safe("[M+CH<sub>3</sub>OH]")),
+            ("CH3CN", mark_safe("[M+CH<sub>3</sub>CN]")),
+            ("(CH3)2CHOH", mark_safe("[M+(CH<sub>3</sub>)<sub>2</sub>CHOH]")),
         ),
         initial=["H2O", "CO2"],
+        required=False,
     )
     mass_accuracy_units = forms.ChoiceField(
         choices=(
@@ -201,12 +207,4 @@ class NtaInputs(forms.Form):
             ("formula", "formula"),
         ),
         initial="mass",
-    )
-    top_result_only = forms.ChoiceField(
-        label="Save top result only?",
-        choices=(
-            ("yes", "yes"),
-            ("no", "no"),
-        ),
-        initial="no",
     )

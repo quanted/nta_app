@@ -71,7 +71,6 @@ def input_page(request, form_data=None, form_files=None):
         "search_dsstox": ["Search DSSTox for possible structures", None],
         "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", None],
         "search_mode": ["Search dashboard by", None],
-        "top_result_only": ["Save top result only?", None],
     }
     logger.debug("input_page: inputParameters: {} ".format(inputParameters))
 
@@ -138,7 +137,6 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["search_dsstox"][1] = parameters["search_dsstox"]
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
-            inputParameters["top_result_only"][1] = parameters["top_result_only"]
 
             # NTAW-387 - AC: Update passing of adducts into input parameters
             # Comment out old code
