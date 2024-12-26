@@ -256,6 +256,10 @@ def input_page(request, form_data=None, form_files=None):
     # function name example: 'sip_input_page'
     html += render_to_string("ms1/nta_input_scripts.html")
     html += render_to_string("ms1/nta_input_css.html")
+    if "/external/" in request.path:  # adding this switch as a short-term fix to connect AMOS front end 
+        input_start_form = "ms1/nta_input_start_drupal_nologin.html"
+    else:
+        input_start_form = "ms1/nta_input_start_drupal.html"
     html += render_to_string(
         "ms1/nta_input_start_drupal.html",
         {"MODEL": model, "TITLE": header},
