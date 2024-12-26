@@ -31,7 +31,6 @@ urlpatterns = [
     path("ms1", ms1_input.input_page),
     path("ms1/", ms1_input.input_page),
     path("ms1/input/", ms1_input.input_page),
-    path("ms1/external/input/", ms1_input.input_page),
     path("ms1/processing/<slug:jobid>", ms1_processing.processing_page),
     path("ms1/output/<slug:jobid>", ms1_output.output_page),
     path("ms1/results/toxpi/<slug:jobid>", ms1_results_api.download_toxpi),
@@ -81,6 +80,12 @@ urlpatterns = [
     path("upload", data_api.upload_api),
     path("upload/", data_api.upload_api),
     path("delete/", data_api.delete_api),
+    # external APIs for connection to AMOS
+    path("ms1/external/input/", ms1_input.input_page),
+    path("ms1/external/output/<slug:jobid>", ms1_output.output_page),
+    path("ms1/external/ms1_test_files/", ms1_test_files.test_files_page),
+    path("ms1/external/formulas/download", ms1_formulas.download_msready_formulas),
+    path("ms1/external/ms1_test_files/download", ms1_test_files.download_test_files),
 ]
 
 # Login requirement set url

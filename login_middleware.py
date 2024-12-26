@@ -67,7 +67,7 @@ class RequireLoginMiddleware:
             self.nta_username = "ntauser"
         else:
             self.nta_username = "ntadev"
-        self.open_urls = ["/nta/login", "ms1/external/input/"]
+        self.open_urls = ["/nta/login", "/external/", "/processing/", "/status/", "/results/"]
 
         nta_password = self.load_password()
         if nta_password is None:
