@@ -13,13 +13,10 @@ import numpy as np
 import pandas as pd
 from . import task_functions as task_fun
 
-# from .functions_Universal_v3 import parse_headers
-
 logger = logging.getLogger("nta_app.ms1")
 
 DSSTOX_API = os.environ.get("UBERTOOL_REST_SERVER")
 HCD_API = os.environ.get("HCD_API_URL_DEV")
-# DSSTOX_API = 'http://127.0.0.1:7777'
 
 
 def connect_to_mongoDB(address):
@@ -83,10 +80,9 @@ def response_log_wrapper(api_name: str):
 @response_log_wrapper("DSSTOX")
 def api_search_masses(masses, accuracy, jobid="00000"):
     input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
-    # if "edap-cluster" in DSSTOX_API:
+
     api_url = "{}/rest/ms1/batch/{}".format(DSSTOX_API, jobid)
-    # else:
-    #    api_url = '{}/nta/rest/ms1/batch/{}'.format(DSSTOX_API, jobid)
+
     logger.info(api_url)
     http_headers = {"Content-Type": "application/json"}
     return requests.post(api_url, headers=http_headers, data=input_json)
@@ -171,8 +167,6 @@ def batch_search_hcd(dtxsid_list, batchsize=200):
 
 def format_tracer_file(df_in):
     df = df_in.copy()
-    # NTAW-94 comment out the following line. Compound is no longer being used
-    # df = df.drop(columns=['Compound', 'Score'])
     rt_diff = df["Observed Retention Time"] - df["Retention_Time"]
     mass_diff = ((df["Observed Mass"] - df["Monoisotopic_Mass"]) / df["Monoisotopic_Mass"]) * 1000000
     df.insert(7, "Mass Error (PPM)", mass_diff)
@@ -192,7 +186,6 @@ def create_tracer_plot(df_in):
         ax.plot(x, y, marker="o", label=tracer[0])
         ax.set_ylabel("Log abundance")
         ax.set_xlabel("Sample name")
-    # plt.title('Tracers {} mode')
     plt.yscale("log")
     plt.xticks(rotation=-90)
     plt.legend()
@@ -202,7 +195,6 @@ def create_tracer_plot(df_in):
     ax.yaxis.set_major_formatter(sf)
     ax.margins(x=0.3)
     buffer = io.BytesIO()
-    plt.savefig(buffer)  # , format='png')
-    # plt.show()
+    plt.savefig(buffer)
     plt.close()
     return buffer.getvalue()
