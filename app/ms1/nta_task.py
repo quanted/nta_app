@@ -960,9 +960,6 @@ class NtaRun:
         yaxis_scale = self.parameters["tracer_plot_yaxis_format"][1]
         trendline_shown = self.parameters["tracer_plot_trendline"][1] == "yes"
 
-        logger.info("check_tracers df[1]= {}".format(df[1].columns.tolist()))
-        logger.info("check_tracers self.tracer_df= {}".format(self.tracer_df.columns.tolist()))
-
         self.tracer_dfs_out = [
             (
                 task_fun.check_feature_tracers(
