@@ -9,10 +9,8 @@ import json
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
-# from . import functions_Universal_v3 as fn
-
-# from . import toxpi
-from .utilities import *  # connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
+# connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
+from .utilities import *
 
 from . import task_functions as task_fun
 from .WebApp_plotter import WebApp_plotter
@@ -28,9 +26,8 @@ try:
 except ModuleNotFoundError:
     logger.error("Seaborn is not installed. Please run 'pip install seaborn' to install it.")
 
-
-# os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in tools/output_access.py
-NO_DASK = False  # set this to true to run locally without test (for debug purposes)
+# set this to true to run locally without test (for debug purposes)
+NO_DASK = False
 
 
 def run_nta_dask(
@@ -963,8 +960,8 @@ class NtaRun:
         yaxis_scale = self.parameters["tracer_plot_yaxis_format"][1]
         trendline_shown = self.parameters["tracer_plot_trendline"][1] == "yes"
 
-        # logger.info("check_tracers df[1]= {}".format(df[1].columns.tolist()))
-        # logger.info("check_tracers self.tracer_df= {}".format(self.tracer_df.columns.tolist()))
+        logger.info("check_tracers df[1]= {}".format(df[1].columns.tolist()))
+        logger.info("check_tracers self.tracer_df= {}".format(self.tracer_df.columns.tolist()))
 
         self.tracer_dfs_out = [
             (
@@ -1003,7 +1000,6 @@ class NtaRun:
         # plot
         if self.tracer_dfs_out[0] is not None:
             listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
-                # data_path='./input/summary_tracer.xlsx',
                 df_in=self.tracer_dfs_out[0],
                 seq_csv=self.run_sequence_pos_df,
                 ionization="pos",
@@ -1014,7 +1010,7 @@ class NtaRun:
                 y_step=6,
                 same_frame=False,
                 legend=True,
-                # =None,
+                # chemical_names=None,
                 dark_mode=False,
             )
 
@@ -1032,7 +1028,6 @@ class NtaRun:
             logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[1].columns.values))
 
             listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
-                # data_path='./input/summary_tracer.xlsx',
                 df_in=self.tracer_dfs_out[1],
                 seq_csv=self.run_sequence_neg_df,
                 ionization="neg",

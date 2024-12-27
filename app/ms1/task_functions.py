@@ -88,7 +88,6 @@ def parse_headers(df_in):
             if differences(str(headers[s]), str(headers[s + 1])) >= 2:
                 countD += 1
                 countS = countS + 1
-            # print "These are different "
         if "_Flags" in headers[s]:
             break
         new_headers.append([headers[countS], countD])
@@ -753,9 +752,7 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     are a tracer, and which samples the tracers are present in -- TMF 12/11/23
     """
     df1 = df.copy()
-    # logger.info("cft df columns= {}".format(df1.columns.values))
     df2 = tracers_file.copy()
-    # logger.info("cft tracers columns= {}".format(df2.columns.values))
     # Get sample names
     prefixes = [
         "Mean ",
@@ -789,7 +786,6 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     df1["Rounded_Mass"] = df1["Observed Mass"].round(0)
     # Merge df and tracers
     dft = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization_Mode"])
-    # logger.info("cft dfts columns= {}".format(dft.columns.values))
     if ppm:
         dft["Matches"] = np.where(
             (
