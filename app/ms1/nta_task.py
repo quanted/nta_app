@@ -299,10 +299,8 @@ class NtaRun:
         Args:
             self: The instance of the class (typically associated with object-oriented programming).
             input_dfs (list of pandas.DataFrame): A list of pandas DataFrames to check and modify.
-
         Returns:
             None: This function operates in place and modifies the input DataFrames.
-
         Example:
             input_dfs = [positive_mode_df, negative_mode_df]
             checker = IonizationModeChecker()
@@ -324,19 +322,15 @@ class NtaRun:
     def check_existence_of_mass_column(self, input_dfs):
         """
         Check the existence of a 'Mass' or 'm/z' column in input dataframes and handle it accordingly.
+        This function checks each dataframe in the input list for the presence of a 'Mass' or 'm/z' column. If either of these columns is found, it takes appropriate action based on the ionization mode. If neither column exists, it raises a ValueError.
 
         Args:
             input_dfs (list of pandas DataFrames): A list of dataframes to check.
-
-        This function checks each dataframe in the input list for the presence of a 'Mass' or 'm/z' column. If either of these columns is found, it takes appropriate action based on the ionization mode. If neither column exists, it raises a ValueError.
-
         Note:
             - If 'Mass' already exists, no action is taken.
             - If 'm/z' exists, a 'Mass' column is created by subtracting 1.0073 for "Esi+" mode and adding 1.0073 for "Esi-" mode.
-
         Raises:
             ValueError: If neither 'Mass' nor 'm/z' columns are present in the input dataframe.
-
         Returns:
             None
         """
@@ -364,8 +358,16 @@ class NtaRun:
         return
 
     def check_retention_time_column(self, input_dfs):
-        # Check for the existence of alternate spellings of 'Retention_Time' column in input dataframes and rename to "Retention_Time".
+        """
+        Check for the existence of alternate spellings of 'Retention_Time' column in input dataframes and rename to "Retention_Time".
 
+        Args:
+            input_dfs
+        Raises:
+            ValueError: If 'Retention_Time' column is not present in the input dataframe.
+        Returns:
+            None
+        """
         for df in input_dfs:
             if df is not None:
                 # Check to see if there is not the expected spelling of "Retention_Time" column
@@ -391,6 +393,17 @@ class NtaRun:
         return
 
     def create_analysis_parameters_sheet(self):
+        """
+        Chreate a dataframe to store analysis parameters in, assign parameters, then save
+        as the "Analysis Parameters" sheet in the self.data_map dictionary.
+
+        Args:
+            None
+        Notes:
+            In a future version, we would like to add a "Version" key to be printed.
+        Returns:
+            None
+        """
         # create a dataframe to store analysis parameters
         columns = ["Parameter", "Value"]
         df_analysis_parameters = pd.DataFrame(columns=columns)
