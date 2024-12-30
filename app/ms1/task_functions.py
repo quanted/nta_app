@@ -36,7 +36,9 @@ def assign_feature_id(df_in, start=1):
 
 def differences(s1, s2):
     """
-    find the number of different characters between two strings (headers)
+    find the number of different characters between two strings (headers).
+    Inputs: s1 (string) and s2 (string)
+    Outputs: count (int, # of characters different between s1 and s2)
     """
     s1 = re.sub(re.compile(r"\([^)]*\)"), "", s1)
     s2 = re.sub(re.compile(r"\([^)]*\)"), "", s2)
@@ -47,6 +49,8 @@ def differences(s1, s2):
 def formulas(df):
     """
     Return list of formulas tagged 'For_Dashboard_Search'
+    Inputs: df (dataframe)
+    Outputs: formulas_list (list)
     """
     df.drop_duplicates(subset="Formula", keep="first", inplace=True)
     formulas = df.loc[df["For_Dashboard_Search"] == "1", "Formula"].values
@@ -57,6 +61,8 @@ def formulas(df):
 def masses(df):
     """
     Return list of masses tagged 'For_Dashboard_Search'
+    Inputs: df (dataframe)
+    Outputs: masses_list (list)
     """
     masses = df.loc[df["For_Dashboard_Search"] == "1", "Mass"].values
     logger.info("# of masses for dashboard search: {} out of {}".format(len(masses), len(df)))
@@ -104,6 +110,9 @@ def passthrucol(df_in):
     """
     Find all columns in dfs that aren't necessary (i.e., not Mass and RT) and store
     these columns to be later appended to the output -- TMF 11/20/23
+    Inputs: df (dataframe)
+    Outputs: df_pt (dataframe containing passed columns, if any)
+             df_trim (dataframe containing required columns)
     """
     # Make a copy of the input df
     df = df_in.copy()
@@ -135,6 +144,13 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     """
     Modified version of Jeff's 'adduct_identifier' function. This function executes
     the matrix portion of the old function -- TMF 10/27/23
+    Inputs: df (dataframe)
+            a_name (string, adduct being tested)
+            delta (float, mass difference of adduct)
+            Mass_Difference (float, acceptable mass error)
+            Retention_Difference (float, acceptable retention time error)
+            ppm (int, binary yes or no to calculate error in ppm)
+    Outputs: df (dataframe, with adduct information added to columns)
     """
     # 'Mass' to matrix, 'Retention Time' to matrix, 'Feature ID' to matrix
     mass = df["Mass"].to_numpy()
@@ -217,6 +233,8 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
 def collapse_adduct_id_array(the_array, delta_name):
     """
     Helper function that collapses each row of the adduct ID matrix into a string containing all matches
+    Inputs: the_array (numpy array)
+            delta_name (string, adduct name)
     """
     non_zero = the_array[the_array > 0].astype(str)  # get all non-zero adduct/loss identifiers and convert to string
     if len(non_zero) == 0:
@@ -235,6 +253,9 @@ def window_size(df_in, mass_diff_mass=112.985586):
     """
     # Estimate a sliding window size from the input data by finding
     the maximum distance between indices differing by 'mass_diff_mass' -- TMF 10/27/23
+    Inputs: df_in (dataframe)
+            mass_diff_mass (float, largest adduct mass difference)
+    Outputs: val (int, size of df chunk such that no adducts will be missed)
     """
     df = df_in.copy()
     masses = df["Mass"].tolist()
@@ -254,6 +275,15 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
     """
     Function that takes the input data, chunks it based on window size, then loops through chunks
     and sends them to 'adduct_matrix' for calculation -- TMF 10/27/23
+    Inputs: df_in (dataframe)
+            n (int, size of matrix webapp can handle with current memory allotment)
+            step (int, increment 'window' is moved by, determined by window_size())
+            a_name (string, adduct being tested)
+            delta (float, mass of adduct)
+            Mass_Difference (float, acceptable mass error)
+            Retention_Difference (float, acceptable retention time error)
+            ppm (int, binary yes or no to calculate error in ppm)
+    Outputs: output (df, result with adduct information)
     """
     # Create copy
     df = df_in.copy()
@@ -276,6 +306,12 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
     Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
     features that are near to adduct distance from another feature. This shortened dataframe is used to
     calculate a window size, then loop through possible adducts, passing to 'chunk_adducts' -- TMF 10/27/23
+    Inputs: df_in (dataframe)
+            adduct_selections (list of tuples, contains adduct names and masses selected by user)
+            Mass_Difference (float, acceptable mass error)
+            Retention_Difference (float, acceptable retention time error)
+            ppm (int, binary yes or no to calculate error in ppm)
+    Outputs: df_in (dataframe, with adduct columns added)
     """
     # Copy df_in, only need 'Feature ID', 'Mass', and 'Retention Time'
     df = df_in[["Feature ID", "Mass", "Retention_Time"]].copy()
@@ -395,6 +431,13 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
 def chunk_dup_flag(df_in, n, step, mass_cutoff, rt_cutoff, ppm):
     """
     Wrapper function for passing manageable-sized dataframe chunks to 'dup_matrix_flag' -- TMF 04/11/24
+    Inputs: df_in (dataframe)
+            n (int, size of matrix webapp can handle)
+            step (int, increment 'window' is moved by)
+            mass_cutoff (float, value for determing if masses are close enough)
+            rt_cutoff (float, value for determing if rts are close enough)
+            ppm (int, binary yes/no for using ppm as units)
+    Outputs: output (dataframe, dataframe with duplicate flag column added)
     """
     # Create copy of df_in
     df = df_in.copy()
@@ -419,6 +462,11 @@ def dup_matrix_flag(df_in, mass_cutoff, rt_cutoff, ppm):
     """
     Matrix portion of 'duplicates' function; takes a filtered 'to_test' df, does matrix math,
     returns 'df' with duplicates flagged in 'Duplicate Feature?' column -- TMF 04/11/24
+    Inputs: df_in (dataframe)
+            mass_cutoff (float, value for determing if masses are close enough)
+            rt_cutoff (float, value for determing if rts are close enough)
+            ppm (int, binary yes/no for using ppm as units)
+    Outputs: output (dataframe, dataframe with duplicate flag column added)
     """
     # Create matrices from df_in
     mass = df_in["Mass"].to_numpy()
@@ -464,6 +512,12 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
     A new keyword argument 'remove=False' is included here, and now results in
     duplicates using the flag set of functions instead of the remove set of
     functions. This can be coded as a user choice in the future -- TMF 04/11/24
+
+    Inputs: df_in (dataframe)
+            mass_cutoff (float, value for determing if masses are close enough)
+            rt_cutoff (float, value for determing if rts are close enough)
+            ppm (int, binary yes/no for using ppm as units)
+    Outputs: output (dataframe, dataframe with duplicate flag column added)
     """
     # Copy the dataframe
     df = df_in.copy()
@@ -499,6 +553,8 @@ def statistics(df_in):
     Calculates statistics (mean, median, std, CV, N_Abun, & Percent Abun) on
     the dataframe. Includes logic statement for determining if the dataframe is
     too large to be processed in a single pass -- TMF 10/27/23
+    Inputs: df_in (dataframe)
+    Outputs: output (dataframe, dataframe with groupwise stats columns added)
     """
     # Create copy
     df = df_in.copy()
@@ -549,6 +605,9 @@ def statistics(df_in):
 def chunk_stats(df_in, mrl_multiplier=3):
     """
     Wrapper function for passing manageable-sized dataframe chunks to 'statistics' -- TMF 10/27/23
+    Inputs: df_in (dataframe)
+            mrl_multiplier (int, integer multiplier for MRL; default is 3)
+    Outputs: output (dataframe, dataframe with groupwise stats columns added)
     """
     # Create copy
     df = df_in.copy()
@@ -598,6 +657,9 @@ def chunk_stats(df_in, mrl_multiplier=3):
 def column_sort_DFS(df_in, passthru):
     """
     Function that sorts columns for the data_feature_statistics outputs -- TMF 11/21/23
+    Inputs: df_in (dataframe)
+            passthru (dataframe, passed columns from passthrucol())
+    Outputs: df_reorg (dataframe, combined dataframe with reorganized columns for excel output)
     """
     # Copy df and passthru
     df = df_in.copy()
@@ -666,6 +728,9 @@ def column_sort_DFS(df_in, passthru):
 def column_sort_TSR(df_in, passthru):
     """
     Function that sorts columns for the tracer_sample_results outputs -- TMF 11/21/23
+    Inputs: df_in (dataframe)
+            passthru (dataframe, passed columns from passthrucol())
+    Outputs: df_reorg (dataframe, combined dataframe with reorganized columns for excel output)
     """
     # Copy input dataframes
     df = df_in.copy()
@@ -750,6 +815,13 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     """
     Function that takes dataframe and the optional tracers input, identifies which features
     are a tracer, and which samples the tracers are present in -- TMF 12/11/23
+    Inputs: df (dataframe)
+            tracers_file (dataframe)
+            Mass_Difference (float, acceptable mass error)
+            Retention_Difference (float, acceptable retention time error)
+            ppm (int, binary yes or no to calculate error in ppm)
+    Outputs: dft (dataframe, tracer data)
+             dfc (dataframe, original data with binary tracer column appended)
     """
     df1 = df.copy()
     df2 = tracers_file.copy()
@@ -847,6 +919,18 @@ def replicate_flag(
     Function that takes df, docs, controls, and missing, and applies an R flag
     where values in df fail the user-defined value in controls. This is done
     for sample and blank occurrences in docs - blanks are set to 0 in df. -- TMF 04/19/24
+    Inputs: df (dataframe)
+            docs (dataframe, same dimensions/columns as df, intended for flagging)
+            controls (list of floats, user set thresholds for Rep %, CV, and Blank Rep %)
+            missing (boolean array of NaNs in df sample mean columns)
+            missing_MB (boolean array of NaNs in df blank mean columns)
+            Mean_Samples (list of strings, mean columns)
+            Replicate_Percent_Samples (list of strings, Rep % columns)
+            Mean_MB (list of strings, blank mean column)
+            Std_MB (list of strings, blank std column)
+            Replicate_Percent_MB (list of strings, blank Rep % column)
+    Outputs: df (dataframe)
+             docs (dataframe)
     """
     # Flag sample occurrences where feature presence is less than some replicate percentage cutoff
     for mean, N in zip(Mean_Samples, Replicate_Percent_Samples):
@@ -867,6 +951,13 @@ def cv_flag(df, docs, controls, Mean_Samples, CV_Samples, missing):
     Function that takes df, docs, controls, and missing, and applies a CV flag
     where values in df fail the user-defined value in controls. This is done
     for sample occurrences in docs, nothing in df changes. -- TMF 04/19/24
+    Inputs: df (dataframe)
+            docs (dataframe, same dimensions/columns as df, intended for flagging)
+            controls (list of floats, user set thresholds for Rep %, CV, and Blank Rep %)
+            Mean_Samples (list of strings, mean columns)
+            CV_Samples (list of strings, CV columns)
+            missing (boolean array of NaNs in df sample mean columns)
+    Outputs: docs (dataframe)
     """
     # Create a mask for df based on sample-level CV threshold
     cv_not_met = pd.DataFrame().reindex_like(df[Mean_Samples])
@@ -889,6 +980,17 @@ def MRL_calc(df, docs, df_flagged, controls, Mean_Samples, Mean_MB, Std_MB):
     Function that calculates a MRL (BlkStd_cutoff) in df, df_flagged, and
     sets it to docs. MRL is 1) mean + 3*std, then 2) mean, then 3) 0. Finally,
     a mask is generated that finds detects in df. -- TMF 04/19/24
+    Inputs: df (dataframe)
+            docs (dataframe, same dimensions/columns as df, intended for flagging)
+            df_flagged (dataframe, same dimensions/columns as df, keeps flagged cells)
+            controls (list of floats, user set thresholds for Rep %, CV, and Blank Rep %)
+            Mean_Samples (list of strings, mean columns)
+            Mean_MB (list of strings, blank mean column)
+            Std_MB (list of strings, blank std column)
+    Outputs: df (dataframe)
+             docs (dataframe)
+             df_flagged (dataframe)
+             MRL_sample_mask (boolean array, mask based on MRL threshold)
     """
     # Get mrl_std_multiplier
     multiplier = controls[3]
@@ -912,6 +1014,16 @@ def calculate_detection_counts(df, docs, df_flagged, MRL_sample_mask, Std_MB, Me
     """
     Function that takes df, docs, controls, and the MRL_sample_mask and calculates
     detection counts in df and df_flagged. -- TMF 04/19/24
+    Inputs: df (dataframe)
+            docs (dataframe, same dimensions/columns as df, intended for flagging)
+            df_flagged (dataframe, same dimensions/columns as df, keeps flagged cells)
+            MRL_sample_mask (boolean array, mask based on MRL threshold)
+            Std_MB (list of strings, blank std column)
+            Mean_MB (list of strings, blank mean column)
+            Mean_Samples (list of strings, mean columns)
+    Outputs: df (dataframe)
+             docs (dataframe)
+             df_flagged (dataframe)
     """
     # Calculate Detection_Count - sum mask
     df["Detection_Count(non-blank_samples)"] = MRL_sample_mask.sum(axis=1)
@@ -935,6 +1047,11 @@ def MRL_flag(docs, Mean_Samples, MRL_sample_mask, missing):
     """
     Function that takes docs, missing, and the MRL_sample_mask and flags
     non-detects in df (via the MRL_sample_mask) as MRL. -- TMF 04/19/24
+    Inputs: docs (dataframe, same dimensions/columns as df, intended for flagging)
+            Mean_Samples (list of strings, mean columns)
+            MRL_sample_mask (boolean array, mask based on MRL threshold)
+            missing (boolean array of NaNs in df sample mean columns)
+    Outputs: docs (dataframe)
     """
     # Update empty cell masks from the docs and df dataframes
     cell_empty = docs[Mean_Samples].isnull()
@@ -952,6 +1069,11 @@ def populate_doc_values(df, docs, Mean_Samples, Mean_MB):
     """
     Function that takes df, docs, and populates a value in all cells of docs
     where there is not currently an occurrence flag. Nothing happens to df. -- TMF 04/19/24
+    Inputs: df (dataframe)
+            docs (dataframe, same dimensions/columns as df, intended for flagging)
+            Mean_Samples (list of strings, mean columns)
+            Mean_MB (list of strings, blank mean column)
+    Outputs: docs (dataframe)
     """
     # Mask, add sample values back to doc
     data_values = docs[Mean_Samples].isnull()
@@ -967,6 +1089,10 @@ def feat_removal_flag(docs, Mean_Samples, missing):
     Function that takes docs, and determines whether features should be removed
     by counting the number real occurrences and then labels 'Feature Removed?' by counting
     the number of each type of occurrence flag. Return docs. -- TMF 05/23/24
+    Inputs: docs (dataframe, same dimensions/columns as df, intended for flagging)
+            Mean_Samples (list of strings, mean columns)
+            missing (boolean array of NaNs in df sample mean columns)
+    Outputs: docs (dataframe)
     """
     # Set all values of feature removed to ""
     docs["Feature Removed?"] = ""
@@ -1045,6 +1171,12 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     Function that takes df, docs, df_flagged and creates a mask for each filter
     applied to docs (R, CV, MRL). All masks applied to df, only R and MRL masks applied
     to df_flagged. Return df and df_flagged. -- TMF 04/19/24
+    Inputs: df (dataframe)
+            docs (dataframe, same dimensions/columns as df, intended for flagging)
+            df_flagged (dataframe, same dimensions/columns as df, keeps flagged cells)
+            Mean_Samples (list of strings, mean columns)
+    Outputs: df (dataframe)
+             df_flagged (dataframe)
     """
     # Copy 'Any Occurrences Removed?' to df and df_flagged
     df["Any Occurrences Removed?"] = docs["Any Occurrences Removed?"]
@@ -1092,6 +1224,11 @@ def feat_drop_df(df, docs, df_flagged):
     from docs to subset df and df_flagged. All features that have a removal flag
     are removed from df, only features with the R, MRL, and CV flags are removed
     from df_flagged. -- TMF 04/19/24
+    Inputs: df (dataframe)
+            docs (dataframe, same dimensions/columns as df, intended for flagging)
+            df_flagged (dataframe, same dimensions/columns as df, keeps flagged cells)
+    Outputs: df (dataframe)
+             df_flagged (dataframe)
     """
     # Copy 'Feature Removed?' column onto df and df_flagged
     df["Feature Removed?"] = docs["Feature Removed?"]
@@ -1113,6 +1250,12 @@ def clean_features(df_in, controls, tracer_df=False):
     an additional dataframe (docs). Sample-level detection counts are also calculated.
     This is an object-oriented version of the original fucntion that importantly
     makes occurrence and feature removal decisions based directly on flags in docs. -- TMF 04/19/24
+    Inputs: df (dataframe)
+            controls (list of floats, user set thresholds for Rep %, CV, and Blank Rep %)
+            tracer_df (boolean, presence of user-submitted tracer file)
+    Outputs: df (dataframe)
+             docs (dataframe)
+             df_flagged (dataframe)
     """
     # Make dataframe copy, create docs in df's image
     df = df_in.copy()
@@ -1187,6 +1330,8 @@ def Blank_Subtract_Mean(df_in):
     """
     Calculate the mean blank intensity for each feature and subtract that value from
     each sample's mean value for that feature
+    Inputs: df_in (dataframe)
+    Outputs: df (dataframe with blank mean values subtracted from sample mean values)
     """
     df = df_in.copy()
     # Define lists; blanks, means, sample means, and blank means
@@ -1209,6 +1354,9 @@ def Blank_Subtract_Mean(df_in):
 def combine(df1, df2):
     """
     Function to combine positive and negative mode dataframes into df_combined
+    Inputs: df1 (dataframe)
+            df2 (dataframe)
+    Outputs: dfc (dataframe, df1 and df2 combined)
     """
     # Recombine dfs
     if df1 is not None and df2 is not None:
@@ -1239,6 +1387,10 @@ def combine(df1, df2):
 def combine_doc(doc1, doc2, tracer_df=False):
     """
     Function to combine positive and negative mode docs for filter_documentation sheet
+    Inputs: doc1 (dataframe)
+            doc2 (dataframe)
+            tracer_df (boolean, presence of user-submitted tracer file)
+    Outputs: dfc (dataframe, doc1 and doc2 combined)
     """
     # Define blank sub-strings
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
@@ -1303,25 +1455,31 @@ def combine_doc(doc1, doc2, tracer_df=False):
     return dfc
 
 
-def MPP_Ready(dft, pts, tracer_df=False, flagged=False, directory="", file=""):
+def MPP_Ready(
+    dfc,
+    pts,
+):
     """
     Function that re-combines the pass-through columns with the processed dataframe
     plus some final column sorting
+    Inputs: dfc (dataframe, combined modes, processed data)
+            pts (list of dataframes, passed columns, if any)
+    Outputs: dfc (dataframe, re-combined and sorted for excel output)
     """
     # If/elif/else to combine pass through columns with dft
     # Assign pass through columns to pt_cols for re_org
     if pts[0] is not None and pts[1] is not None:
         pt_com = pd.concat([pts[0], pts[1]], axis=0)
-        dft = pd.merge(dft, pt_com, how="left", on=["Feature ID"])
+        dfc = pd.merge(dfc, pt_com, how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
     elif pts[0] is not None:
-        dft = pd.merge(dft, pts[0], how="left", on=["Feature ID"])
+        dfc = pd.merge(dfc, pts[0], how="left", on=["Feature ID"])
         pt_cols = pts[0].columns.tolist()
     else:
-        dft = pd.merge(dft, pts[1], how="left", on=["Feature ID"])
+        dfc = pd.merge(dfc, pts[1], how="left", on=["Feature ID"])
         pt_cols = pts[1].columns.tolist()
     # Parse headers, get sample values and blank subtracted means
-    Headers = parse_headers(dft)
+    Headers = parse_headers(dfc)
     # Get raw sample values
     raw_samples = [
         item
@@ -1332,7 +1490,7 @@ def MPP_Ready(dft, pts, tracer_df=False, flagged=False, directory="", file=""):
         if not any(x in item for x in pt_cols)
     ]
     # Get blank subtracted means
-    blank_subtracted_means = dft.columns[dft.columns.str.contains(pat="BlankSub")].tolist()
+    blank_subtracted_means = dfc.columns[dfc.columns.str.contains(pat="BlankSub")].tolist()
     # Establish ordering of all possible front matter (tracer/no tracer, flags/no flags, etc.)
     ordering = [
         "Ionization_Mode",
@@ -1349,28 +1507,30 @@ def MPP_Ready(dft, pts, tracer_df=False, flagged=False, directory="", file=""):
         "Final Occurrence Percentage (with flags)",
     ]
     # Get dft columns in list
-    all_cols = dft.columns.tolist()
+    all_cols = dfc.columns.tolist()
     # Front matter list comp
     front_matter = [item for item in ordering if item in all_cols]
     # Generate full column list
     cols = pt_cols + front_matter + raw_samples + blank_subtracted_means
     # Subset dft with correct columns / ordering
-    dft = dft[cols]
+    dfc = dfc[cols]
     # Rename columns
-    dft["Ionization_Mode"] = dft["Ionization_Mode"].replace("Esi+", "ESI+")
-    dft["Ionization_Mode"] = dft["Ionization_Mode"].replace("Esi-", "ESI-")
-    dft.rename(
+    dfc["Ionization_Mode"] = dfc["Ionization_Mode"].replace("Esi+", "ESI+")
+    dfc["Ionization_Mode"] = dfc["Ionization_Mode"].replace("Esi-", "ESI-")
+    dfc.rename(
         {"Ionization_Mode": "Ionization Mode", "Retention_Time": "Retention Time"},
         axis=1,
         inplace=True,
     )
     # Return re-combined, sorted dataframe for output as 'Cleaned_feature_results_reduced' and 'Results_flagged'
-    return dft
+    return dfc
 
 
 def calc_toxcast_percent_active(df):
     """
     Function that calculates toxcast percent active values
+    Inputs: df (dataframe)
+    Outputs: dft (dataframe with Toxcast columns added)
     """
     dft = df.copy()
     # Extract out the total and active numeric values from the TOTAL_ASSAYS_TESTED column
@@ -1398,6 +1558,8 @@ def determine_string_width(input_string):
     The following function calculates a "width" of a string based on the characters within, as some
     characters are large, medium or skinnyThese widths are used to determine the spacing of the group
     labels on the run sequence plot
+    Inputs: input_string (string)
+    Outputs: temp_increment (float)
     """
     big_letters = [
         "A",

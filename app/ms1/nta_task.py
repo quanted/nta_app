@@ -1170,9 +1170,13 @@ class NtaRun:
 
         self.data_map["Decision Documentation"] = self.doc_combined
 
-        self.mpp_ready = task_fun.MPP_Ready(self.df_combined, self.pass_through, tracer_df_bool, flagged=False)
+        self.mpp_ready = task_fun.MPP_Ready(
+            self.df_combined,
+            self.pass_through,
+        )
         self.mpp_ready_flagged = task_fun.MPP_Ready(
-            self.df_flagged_combined, self.pass_through, tracer_df_bool, flagged=True
+            self.df_flagged_combined,
+            self.pass_through,
         )
 
         self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready)
