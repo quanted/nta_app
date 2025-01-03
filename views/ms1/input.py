@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.encoding import iri_to_uri
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 
 from .. import links_left
@@ -26,7 +27,17 @@ example_tracer_filename = "pooled_blood_tracers.csv"
 example_run_sequence_pos_filename = "pooled_blood_run_sequence_pos.csv"
 example_run_sequence_neg_filename = "pooled_blood_run_sequence_neg.csv"
 
+def conditional_csrf_exempt(condition_func):
+    def decorator(view_func):
+        def wrapper(request, *args, **kwargs):
+            if condition_func(request):
+                return csrf_exempt(view_func)(request, *args, **kwargs)
+            else:
+                return csrf_protect(view_func)(request, *args, **kwargs)
+        return wrapper
+    return decorator
 
+@conditional_csrf_exempt(lambda request: "/external/" in request.path:)
 def input_page(request, form_data=None, form_files=None):
     model = "ms1"
     header = "Run NTA MS1 workflow"
