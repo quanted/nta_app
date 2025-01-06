@@ -362,7 +362,7 @@ class NtaRun:
         Check for the existence of alternate spellings of 'Retention_Time' column in input dataframes and rename to "Retention_Time".
 
         Args:
-            input_dfs
+            input_dfs (list of pandas DataFrames): A list of dataframes to check.
         Raises:
             ValueError: If 'Retention_Time' column is not present in the input dataframe.
         Returns:
@@ -394,7 +394,7 @@ class NtaRun:
 
     def create_analysis_parameters_sheet(self):
         """
-        Chreate a dataframe to store analysis parameters in, assign parameters, then save
+        Create a dataframe to store analysis parameters in, assign parameters, then save
         as the "Analysis Parameters" sheet in the self.data_map dictionary.
 
         Args:
@@ -421,6 +421,18 @@ class NtaRun:
         return
 
     def set_status(self, status, create=False):
+        """
+        Accepts a string (e.g., "Processing", or "Step Completed") and, if create is TRUE,
+        post status to the logger with the Job ID and timestamp.
+
+        Args:
+            status (string)
+            create (Boolean)
+        Notes:
+            In a future version, we would like to display status on the UI
+        Returns:
+            None
+        """
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
         post_id = self.jobid + "_" + "status"
@@ -445,6 +457,17 @@ class NtaRun:
             )
 
     def set_except_message(self, e):
+        """
+        Accepts a string with error/exception information and then
+        posts string to the logger with the Job ID and timestamp.
+
+        Args:
+            e (string)
+        Notes:
+            We are working to provide more detailed exceptions
+        Returns:
+            None
+        """
         posts = self.mongo.posts
         time_stamp = datetime.utcnow()
         post_id = self.jobid + "_" + "status"
@@ -455,9 +478,28 @@ class NtaRun:
         )
 
     def get_step(self):
+        """
+        Called if "try/ nta_run.execute()" (lines 112-113) fails; returns current
+        step of the execute() function for diagnosing error.
+
+        Args:
+            None
+        Returns:
+            self.step (string)
+        """
         return self.step
 
     def assign_id(self):
+        """
+        Accesses self.dfs (list of dataframes) and calls task_fun.assign_feature_id()
+        on each dataframe. Inserts column "Feature_ID" in the front of each dataframe
+        with a unique numeric identifier for each row.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index) + 1)
@@ -468,11 +510,36 @@ class NtaRun:
         return
 
     def pass_through_cols(self):
+        """
+        Accesses self.dfs (list of dataframes) and calls task_fun.passthrucol()
+        on each dataframe. Identifies columns in dataframes that aren't needed for
+        downstream functions; removes them from self.dfs and stores them in class
+        object self.pass_through. These columns will get appended to the results.
+
+        Args:
+            None
+        Notes:
+            There is probably a more elegant solution than effectively running the
+            task_fun.passthrucol() function twice, but I would run into errors if only
+            one dataframe in self.dfs was present.
+        Returns:
+            None
+        """
         self.pass_through = [task_fun.passthrucol(df)[0] if df is not None else None for df in self.dfs]
         self.dfs = [task_fun.passthrucol(df)[1] if df is not None else None for df in self.dfs]
         return
 
     def filter_void_volume(self, min_rt):
+        """
+        Accesses self.dfs (list of dataframes) and self.parameters["minimum_rt"][1]
+        then removes all rows with a value below "minimum_rt" in the "Retention_Time"
+        column.
+
+        Args:
+            min_rt (float, user-submitted value with default of 0.0)
+        Returns:
+            None
+        """
         self.dfs = [
             df.loc[df["Retention_Time"] > min_rt].copy() if df is not None else None
             for index, df in enumerate(self.dfs)
@@ -480,6 +547,18 @@ class NtaRun:
         return
 
     def filter_duplicates(self):
+        """
+        Accesses self.dfs (list of dataframes), self.parameters["mass_accuracy_units"][1],
+        self.parameters["mass_accuracy"][1], and self.parameters["rt_accuracy"][1].
+        The task_fun.duplicates() function is called on each dataframe, with mass_accuracy,
+        rt_accuracy, and ppm kwargs passed. The function identifies duplicate features
+        within the passed tolerances, flagged in a new "Duplicates Features?" column.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
@@ -490,6 +569,18 @@ class NtaRun:
         return
 
     def calc_statistics(self):
+        """
+        Accesses self.dfs (list of dataframes), self.parameters["mass_accuracy_units"][1],
+        self.parameters["mass_accuracy"][1], self.parameters["rt_accuracy"][1], and self.parameters["mrl_std_multiplier"][1].
+        The task_fun.chunk_stats() function is called on each dataframe, with mrl_std_multiplier passed. The function calculates
+        mean, median, std_dev, CV, and replication % for each chemical feature across sample replicates. The
+        within the passed tolerances, flagged in a new "Duplicates Features?" column.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
