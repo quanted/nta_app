@@ -37,7 +37,7 @@ def conditional_csrf_exempt(condition_func):
         return wrapper
     return decorator
 
-@conditional_csrf_exempt(lambda request: "/external/" in request.path:)
+@conditional_csrf_exempt(lambda request : "/external/" in request.path)
 def input_page(request, form_data=None, form_files=None):
     model = "ms1"
     header = "Run NTA MS1 workflow"
