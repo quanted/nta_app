@@ -1232,6 +1232,18 @@ class NtaRun:
         return
 
     def clean_features(self):
+        """
+        Accesses self.dfs and the user-input parameters for min replicate hits, max CV,
+        and mrl std_dev multiplier. Check for presence of tracer file, then call task_fun.clean_features()
+        that uses the parameters to document filtering and flagging the the Decision
+        Documentation excel sheet. Call task_fun.Blank_Subtract_Mean() to subtract each feature's
+        blank value from the mean of each sample grouping.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         controls = [
             float(self.parameters["min_replicate_hits"][1]),
             float(self.parameters["max_replicate_cv"][1]),
@@ -1262,6 +1274,15 @@ class NtaRun:
         return
 
     def merge_columns_onto_tracers(self):
+        """
+        Check for tracer files. If present, subset tracer dataframe with specific
+        order of columns desired for the Tracer Summary output.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         # Check for tracer file, if not present return
         if self.tracer_df is None:
             logger.info("No tracer file, skipping this step.")
@@ -1289,10 +1310,20 @@ class NtaRun:
         self.data_map["Tracer Summary"] = dft
         return
 
-    def create_flags(self):
-        self.dfs = [task_fun.flags(df) if df is not None else None for df in self.dfs]
-
     def combine_modes(self):
+        """
+        For self.dfs and self.dfs_flagged, call task_fun.combine(). Checks for presence
+        of pos and neg data modes, and if both present combine them. For self.doc_combined,
+        call task_fun.combine_doc() function to check presence of both data modes and combine
+        if present. Finally, merge passthrough columns back on to processed data (df_combined)
+        and decision documentation sheet (doc_combined) by calling task_fun.MPP_ready().
+        Store final dataframes in self.data_map dictionary.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         tracer_df_bool = False
         if self.tracer_df is not None:
             tracer_df_bool = True
@@ -1326,6 +1357,22 @@ class NtaRun:
         self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(self.mpp_ready_flagged)
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save=True):
+        """
+        Access self.df_flagged_combined to get full list of chemical features that passed
+        replication and MRL thresholds (flagged_combined keeps CV fails). Subset the dataframe
+        by features flagged "For_Dashboard_Search". Check user-selected "search mode" - if "mass",
+        call task_fun.masses() function to format masses for search. If "formulas", call
+        task_fun.formulas() funcion to format formulas for search. Send formatted list to
+        api_search_masses_batch() function imported from utilities.py. Handle returned JSON
+        and combine back into results. Finally, call task_fun.calc_toxcast_percent_active()
+        function to get tox information, and combine with dashboard results in "Chemical Results" output.
+
+        Args:
+            lower_index (integer; start search range at this Feature_ID)
+            upper_index (interger, default=None; end search range at this Feature_ID)
+        Returns:
+            None
+        """
         logging.info(
             "Rows flagged for dashboard search: {} out of {}".format(
                 len(self.df_flagged_combined.loc[self.df_flagged_combined["For_Dashboard_Search"] == "1", :]),
@@ -1376,6 +1423,17 @@ class NtaRun:
         self.search_results = dsstox_search_df
 
     def perform_hcd_search(self):
+        """
+        Check length of Dashboard Search Results. If length > 0, format Dashboard Search
+        Results into list of unique DTXSIDs and call batch_search_hcd() function imported
+        from utilities.py to retrieve hazard data from the Hazard Comparison Dashboard.
+        Merge HCD results with Dashboard results and update "Chemical Results" output.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         logger.info(f"Querying the HCD with DTXSID identifiers")
         if len(self.search_results) > 0:
             dtxsid_list = self.search_results["DTXSID"].unique()
@@ -1385,6 +1443,15 @@ class NtaRun:
             self.data_map["hcd_search"] = hcd_results
 
     def store_data(self):
+        """
+        Access "project_name" parameter, use gridfs to handle potentially large file chunks (16Mb)
+        and for each key in the self.data_map dictionary, call the mongo_save() function to save the output.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         logger.info(f"Storing data files to MongoDB")
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
@@ -1397,6 +1464,15 @@ class NtaRun:
             self.mongo_save(self.data_map[key], step=key)
 
     def mongo_save(self, file, step=""):
+        """
+        Take file chunk, and if it is a dataframe, arrange it via JSON to save in Mongo.
+        Else, save separately.
+
+        Args:
+            file (any file type)
+        Returns:
+            None
+        """
         if isinstance(file, pd.DataFrame):
             to_save = file.to_json(orient="split")
         else:
