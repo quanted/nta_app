@@ -573,8 +573,9 @@ class NtaRun:
         Accesses self.dfs (list of dataframes), self.parameters["mass_accuracy_units"][1],
         self.parameters["mass_accuracy"][1], self.parameters["rt_accuracy"][1], and self.parameters["mrl_std_multiplier"][1].
         The task_fun.chunk_stats() function is called on each dataframe, with mrl_std_multiplier passed. The function calculates
-        mean, median, std_dev, CV, and replication % for each chemical feature across sample replicates. The
-        within the passed tolerances, flagged in a new "Duplicates Features?" column.
+        mean, median, std_dev, CV, and replication % for each chemical feature across sample replicates. If adducts are
+        selected by the user, the task_fun.adduct_identifier() function is called on each dataframe. Finally, the
+        task_fun.column_sort_DFS() function is called to prepare the dataframes for output in the excel file.
 
         Args:
             None
@@ -638,6 +639,18 @@ class NtaRun:
         return
 
     def cv_scatterplot(self, input_dfs):
+        """
+        Accesses the processed dataframes and the tracer results from self.data_map and
+        create two scatterplots - the abundance (x-axis) vs CV (y-axis) for blank samples
+        and unknown samples. The points are colored, with known tracer chemicals displayed
+        red and unknown chemical features in white. Save to self.cv_scatterplot_map and
+        output.
+
+        Args:
+            input_dfs (list of Pandas dataframes)
+        Returns:
+            None
+        """
         # Set defaults
         plt.rcdefaults()
         # Set title
@@ -899,6 +912,18 @@ class NtaRun:
         plt.clf()
 
     def occurrence_heatmap(self, input_dfs):
+        """
+        Accesses the processed dataframes from self.data_map and other user submitted
+        parameters (max replicate CV, min replicate hits, and mrl std_dev multiplier).
+        Apply thresholds to the dataframes and organize into the heatmap. Cells are colored
+        red for CV flags, gray for not-present or filtered out, and white for real features.
+        Save to self.occurrence_heatmap_out and output.
+
+        Args:
+            input_dfs (list of Pandas dataframes)
+        Returns:
+            None
+        """
         plt.rcdefaults()
         # Get user input CV and Replicate thresholds
         max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
@@ -1054,6 +1079,20 @@ class NtaRun:
         plt.clf()
 
     def check_tracers(self):
+        """
+        Check for tracers. If present, access user input parameters for mass accuracy units,
+        mass accuracy, y-axis scaling (run sequence plots), and trendline toggling (yes/no).
+        Access self.dfs and pass each dataframe to task_fun.check_feature_tracers() with
+        other parameters as kwargs. Call fromat_tracer_file() function imported from
+        utilities.py, then instantiate run sequence plots with the WebApp_plotter. Access
+        pass-through columns (if present), and call task_fun.column_sort_TSR() function
+        to format the tracer outputs for the excel file.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         if self.tracer_df is None:
             logger.info("No tracer file, skipping this step.")
             return
@@ -1092,7 +1131,7 @@ class NtaRun:
             )
             for index, df in enumerate(self.dfs)
         ]
-
+        # Call format_tracer_file imported from utilities.py
         self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
 
         # declare plotter
