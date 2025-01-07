@@ -20,6 +20,15 @@ HCD_API = os.environ.get("HCD_API_URL_DEV")
 
 
 def connect_to_mongoDB(address):
+    """
+    With address from environment, create Mongo Collection "nta_runs". All entries
+    must have timestamp, items are held for 24 hours.
+
+    Args:
+        address (string; self.mongo = os.environ.get("MONGO_SERVER"))
+    Returns:
+        mongo_db (Mongo collection; storage space for NTA outputs)
+    """
     mongo = pymongo.MongoClient(host=address)
     mongo_db = mongo["nta_runs"]
     mongo.nta_runs.Collection.create_index([("date", pymongo.DESCENDING)], expireAfterSeconds=86400)
@@ -29,21 +38,45 @@ def connect_to_mongoDB(address):
 
 
 def connect_to_mongo_gridfs(address):
+    """
+    Using address from environment, connect to MongoDB and return gridfs storage structure.
+
+    Args:
+        address (string; self.mongo = os.environ.get("MONGO_SERVER"))
+    Returns:
+        fs (Mongo gridded storage)
+    """
     db = pymongo.MongoClient(host=address).nta_storage
     print("Connecting to mongodb at {}".format(address))
     fs = gridfs.GridFS(db)
     return fs
 
 
-# function to remove columns from a given dataframe, df_in. The columns to be removed are determined by the
-# a given list of strings.
-def remove_columns(df_in, list_of_columns2remove):
-    df = df_in.copy()
-    df.drop(list_of_columns2remove, axis=1, inplace=True)
-    return df
+# # function to remove columns from a given dataframe, df_in. The columns to be removed are determined by the
+# # a given list of strings.
+# def remove_columns(df_in, list_of_columns2remove):
+#     """
+
+
+#     Args:
+#         None
+#     Returns:
+#         None
+#     """
+#     df = df_in.copy()
+#     df.drop(list_of_columns2remove, axis=1, inplace=True)
+#     return df
 
 
 def reduced_file(df_in):
+    """
+    Take dataframe, and remove unnecessary columns in preparation for output.
+
+    Args:
+        df_in (Pandas dataframe)
+    Returns:
+        df (Pandas dataframe)
+    """
     df = df_in.copy()
     headers = task_fun.parse_headers(df)
     keeps_str = ["MB_", "blank", "blanks", "BLANK", "Blank", "Mean", "Sub"]
@@ -79,6 +112,17 @@ def response_log_wrapper(api_name: str):
 
 @response_log_wrapper("DSSTOX")
 def api_search_masses(masses, accuracy, jobid="00000"):
+    """
+    Formats list of masses for searching into JSON and using the DSSTOX_API
+    set in os.environ.get("UBERTOOL_REST_SERVER"), return a POST request.
+
+    Args:
+        masses (list of floats)
+        accuracy (integer; assumes ppm units)
+        jobid (string)
+    Returns:
+        POST request of the formatted masses
+    """
     input_json = json.dumps({"search_by": "mass", "query": masses, "accuracy": accuracy})  # assumes ppm
 
     api_url = "{}/rest/ms1/batch/{}".format(DSSTOX_API, jobid)
@@ -89,6 +133,17 @@ def api_search_masses(masses, accuracy, jobid="00000"):
 
 
 def api_search_masses_batch(masses, accuracy, batchsize=50, jobid="00000"):
+    """
+    Function for passing 50 masses at a time to the above api_search_masses() function.
+
+    Args:
+        masses (list of floats)
+        accuracy (integer; assumes ppm units)
+        batchsize (int; default is 50)
+        jobid (string)
+    Returns:
+        POST request of the formatted masses
+    """
     n_masses = len(masses)
     logging.info("Sending {} masses in batches of {}".format(n_masses, batchsize))
     i = 0
@@ -124,6 +179,17 @@ def api_search_masses_batch(masses, accuracy, batchsize=50, jobid="00000"):
 
 @response_log_wrapper("DSSTOX")
 def api_search_formulas(formulas, jobID="00000"):
+    """
+    Formats list of formulae for searching into JSON and using the DSSTOX_API
+    set in os.environ.get("UBERTOOL_REST_SERVER"), return a POST request.
+
+    Args:
+        masses (list of strings)
+        accuracy (integer; assumes ppm units)
+        jobid (string)
+    Returns:
+        POST request of the formatted strings
+    """
     input_json = json.dumps({"search_by": "formula", "query": formulas})  # assumes ppm
     if "edap-cluster" in DSSTOX_API:
         api_url = "{}/rest/ms1/batch/{}".format(DSSTOX_API, jobID)
@@ -136,6 +202,15 @@ def api_search_formulas(formulas, jobID="00000"):
 
 @response_log_wrapper("HCD")
 def api_search_hcd(dtxsid_list):
+    """
+    Formats list of DTXSIDs for searching into JSON and using the HCD_API
+    set in os.environ.get("HCD_API_URL_DEV"), return a POST request.
+
+    Args:
+        dtxsid_list (list of strings)
+    Returns:
+        POST request of the formatted masses
+    """
     post_data = {
         "chemicals": [],
         "options": {"noRecords": "true", "usePredictions": "true"},
@@ -148,6 +223,15 @@ def api_search_hcd(dtxsid_list):
 
 
 def batch_search_hcd(dtxsid_list, batchsize=200):
+    """
+    Function for passing 200 DTXSIDs at a time to the above api_search_hcd() function.
+
+    Args:
+        dtxsid_list (list of strings)
+        batchsize (int; default is 200)
+    Returns:
+        POST request of the formatted masses
+    """
     result_dict = {}
     logger.info(f"Search {len(dtxsid_list)} DTXSIDs in HCD")
     for i in range(0, len(dtxsid_list), batchsize):
@@ -166,6 +250,15 @@ def batch_search_hcd(dtxsid_list, batchsize=200):
 
 
 def format_tracer_file(df_in):
+    """
+    Function for formatting the Tracer Detection Statistics dataframe(s). Calculates and inserts
+    two columns, "Mass Error (PPM)" and "Retention Time Difference", then returns the dataframe.
+
+    Args:
+        df_in (Pandas dataframe)
+    Returns:
+        df (dataframe with two additional columns, Mass Error (PPM) and Retention Time Difference)
+    """
     df = df_in.copy()
     rt_diff = df["Observed Retention Time"] - df["Retention_Time"]
     mass_diff = ((df["Observed Mass"] - df["Monoisotopic_Mass"]) / df["Monoisotopic_Mass"]) * 1000000
@@ -174,27 +267,35 @@ def format_tracer_file(df_in):
     return df
 
 
-def create_tracer_plot(df_in):
-    mpl_logger = logging.getLogger("matplotlib")
-    mpl_logger.setLevel(logging.WARNING)
-    headers = task_fun.parse_headers(df_in)
-    abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-    fig, ax = plt.subplots()
-    for i, tracer in df_in.iterrows():
-        y = tracer[abundance]
-        x = abundance
-        ax.plot(x, y, marker="o", label=tracer[0])
-        ax.set_ylabel("Log abundance")
-        ax.set_xlabel("Sample name")
-    plt.yscale("log")
-    plt.xticks(rotation=-90)
-    plt.legend()
-    plt.tight_layout()
-    sf = ScalarFormatter()
-    sf.set_scientific(False)
-    ax.yaxis.set_major_formatter(sf)
-    ax.margins(x=0.3)
-    buffer = io.BytesIO()
-    plt.savefig(buffer)
-    plt.close()
-    return buffer.getvalue()
+# def create_tracer_plot(df_in):
+#     """
+
+
+#     Args:
+#         None
+#     Returns:
+#         None
+#     """
+#     mpl_logger = logging.getLogger("matplotlib")
+#     mpl_logger.setLevel(logging.WARNING)
+#     headers = task_fun.parse_headers(df_in)
+#     abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
+#     fig, ax = plt.subplots()
+#     for i, tracer in df_in.iterrows():
+#         y = tracer[abundance]
+#         x = abundance
+#         ax.plot(x, y, marker="o", label=tracer[0])
+#         ax.set_ylabel("Log abundance")
+#         ax.set_xlabel("Sample name")
+#     plt.yscale("log")
+#     plt.xticks(rotation=-90)
+#     plt.legend()
+#     plt.tight_layout()
+#     sf = ScalarFormatter()
+#     sf.set_scientific(False)
+#     ax.yaxis.set_major_formatter(sf)
+#     ax.margins(x=0.3)
+#     buffer = io.BytesIO()
+#     plt.savefig(buffer)
+#     plt.close()
+#     return buffer.getvalue()
