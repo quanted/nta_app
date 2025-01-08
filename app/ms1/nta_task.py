@@ -175,26 +175,26 @@ class NtaRun:
 
     def execute(self):
         self.step = "Check for existence of required columns"
-        # 0: check existence of "Ionization mode" column
+        # 1a: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
-        # 0: check existence of 'mass column'
+        # 1b: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
-        # 0: check for alternate spellings of 'Retention_Time' column
+        # 1c: check for alternate spellings of 'Retention_Time' column
         self.check_retention_time_column(self.dfs)
-        # 0: sort dataframe columns alphabetically
+        # 1d: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
-        # 0: create a status in mongo
+        # 1e: create a status in mongo
         self.set_status("Processing", create=True)
-        # 0: create an analysis_parameters sheet
+        # 1f: create an analysis_parameters sheet
         self.create_analysis_parameters_sheet()
-        # 1: drop duplicates and throw out void volume
-        self.step = "Dropping duplicates"
+        # 2: assign ids, separate passthrough cols, filter void volume, and flag duplicates
+        self.step = "Flagging duplicates"
         self.assign_id()
         self.pass_through_cols()
         self.filter_void_volume(float(self.parameters["minimum_rt"][1]))  # throw out features below this (void volume)
         self.filter_duplicates()
         if self.verbose:
-            logger.info("Dropped duplicates.")
+            logger.info("Flagged duplicates.")
             logger.info("dfs.size(): {}".format(len(self.dfs)))
             if self.dfs[0] is not None:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
@@ -203,7 +203,7 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
                 logger.info("NEG df columns: {}".format(self.dfs[1].columns))
 
-        # 2: statistics
+        # 3a: statistics
         self.step = "Calculating statistics"
         self.calc_statistics()
         if self.verbose:
@@ -213,11 +213,11 @@ class NtaRun:
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
 
-        # 2.1: Occurrence heatmap
+        # 3b: Occurrence heatmap
         self.step = "Create heatmap"
         self.occurrence_heatmap(self.dfs)
 
-        # 3: check tracers (optional)
+        # 4a: check tracers (optional)
         self.step = "Checking tracers"
         if self.verbose:
             logger.info("Checking tracers: DF check for debugging.")
@@ -232,11 +232,11 @@ class NtaRun:
         if self.verbose:
             logger.info("Checked tracers.")
 
-        # 3.1: CV Scatterplot
+        # 4b: CV Scatterplot
         self.step = "Create scatterplot"
         self.cv_scatterplot(self.dfs)
 
-        # 4: clean features
+        # 5a: clean features
         self.step = "Cleaning features"
         self.clean_features()
 
@@ -247,7 +247,7 @@ class NtaRun:
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
 
-        # 4.1: Merge detection count columns onto tracers for export
+        # 5b: Merge detection count columns onto tracers for export
         self.step = "Merge detection counts onto tracers"
         self.merge_columns_onto_tracers()
 
@@ -310,6 +310,7 @@ class NtaRun:
         """
         # the zeroth element of input_dfs is the positive mode dataframe
         ionizationMode = "Esi+"
+        # Iterate through list of dfs
         for df in input_dfs:
             if df is not None:
                 if "Ionization_Mode" not in df.columns:
@@ -368,6 +369,7 @@ class NtaRun:
         Returns:
             None
         """
+        # Iterate through list of dfs
         for df in input_dfs:
             if df is not None:
                 # Check to see if there is not the expected spelling of "Retention_Time" column
@@ -434,8 +436,11 @@ class NtaRun:
             None
         """
         posts = self.mongo.posts
+        # Get time stamp
         time_stamp = datetime.utcnow()
+        # Generate ID with status
         post_id = self.jobid + "_" + "status"
+        # If create, post update
         if create:
             posts.update_one(
                 {"_id": post_id},
@@ -469,8 +474,11 @@ class NtaRun:
             None
         """
         posts = self.mongo.posts
+        # Get timestamp
         time_stamp = datetime.utcnow()
+        # Generate ID with status
         post_id = self.jobid + "_" + "status"
+        # Post string update
         posts.update_one(
             {"_id": post_id},
             {"$set": {"_id": post_id, "date": time_stamp, "error_info": e}},
@@ -487,6 +495,7 @@ class NtaRun:
         Returns:
             self.step (string)
         """
+        # Return step string
         return self.step
 
     def assign_id(self):
@@ -500,9 +509,12 @@ class NtaRun:
         Returns:
             None
         """
+        # If both df exists, submit both to assign_feature_id() function, update start
+        # kwarg by length of first df
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1], start=len(self.dfs[0].index) + 1)
+        # Else, submit single df to assign_feature_id() function
         elif self.dfs[0] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
         else:
@@ -525,6 +537,7 @@ class NtaRun:
         Returns:
             None
         """
+        # Submit dfs to passthrucol() function, store outputs separately
         self.pass_through = [task_fun.passthrucol(df)[0] if df is not None else None for df in self.dfs]
         self.dfs = [task_fun.passthrucol(df)[1] if df is not None else None for df in self.dfs]
         return
@@ -540,10 +553,8 @@ class NtaRun:
         Returns:
             None
         """
-        self.dfs = [
-            df.loc[df["Retention_Time"] > min_rt].copy() if df is not None else None
-            for index, df in enumerate(self.dfs)
-        ]
+        # Iterate through dfs, removing rows where "Retention_Time" is below min_rt threshold
+        self.dfs = [df.loc[df["Retention_Time"] > min_rt].copy() if df is not None else None for df in self.dfs]
         return
 
     def filter_duplicates(self):
@@ -559,6 +570,7 @@ class NtaRun:
         Returns:
             None
         """
+        # Get ppm, mass_accuracy, and rt_accuracy parameters
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
@@ -582,18 +594,20 @@ class NtaRun:
         Returns:
             None
         """
+        # Get ppm, mass_accuracy, rt_accuracy, and mrl_multiplier parameters
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
         mrl_multiplier = float(self.parameters["mrl_std_multiplier"][1])
+        # Iterate through dfs, calling chunk_stats() function
         self.dfs = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dfs]
-        # print(pos_adducts_selected)
+        # Get positive adducts, print to logger
         pos_adducts_selected = self.parameters["pos_adducts"][1]
         logger.info("pos adducts list: {}".format(self.parameters["pos_adducts"]))
-        # print(neg_adducts_selected)
+        # Get negative adducts, print to logger
         neg_adducts_selected = self.parameters["neg_adducts"][1]
         logger.info("neg adducts list: {}".format(self.parameters["neg_adducts"]))
-        # print(neutral_losses_selected)
+        # Get neutral losses, print to logger
         neutral_losses_selected = self.parameters["neutral_losses"][1]
         logger.info("neutral losses list: {}".format(self.parameters["neutral_losses"]))
         # Package adduct lists together into list of lists
@@ -1093,16 +1107,18 @@ class NtaRun:
         Returns:
             None
         """
+        # If no tracer file present, skip step
         if self.tracer_df is None:
             logger.info("No tracer file, skipping this step.")
             return
         if self.verbose:
             logger.info("Tracer file found, checking tracers.")
+        # Get ppm, mass_accuracy_tr, yaxis_scale, and trendline_shown parameters
         ppm = self.parameters["mass_accuracy_units_tr"][1] == "ppm"
         mass_accuracy_tr = float(self.parameters["mass_accuracy_tr"][1])
         yaxis_scale = self.parameters["tracer_plot_yaxis_format"][1]
         trendline_shown = self.parameters["tracer_plot_trendline"][1] == "yes"
-
+        # Perform check_tracers() on dfs with tracer file
         self.tracer_dfs_out = [
             (
                 task_fun.check_feature_tracers(
@@ -1115,7 +1131,7 @@ class NtaRun:
                 if df is not None
                 else None
             )
-            for index, df in enumerate(self.dfs)
+            for df in self.dfs
         ]
         self.dfs = [
             (
@@ -1129,15 +1145,15 @@ class NtaRun:
                 if df is not None
                 else None
             )
-            for index, df in enumerate(self.dfs)
+            for df in self.dfs
         ]
         # Call format_tracer_file imported from utilities.py
         self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
 
-        # declare plotter
+        # Declare plotter
         df_WA = WebApp_plotter()
 
-        # plot
+        # Create plot
         if self.tracer_dfs_out[0] is not None:
             listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 df_in=self.tracer_dfs_out[0],
@@ -1159,10 +1175,10 @@ class NtaRun:
         else:
             self.tracer_plots_out.append(None)
 
-        # declare plotter
+        # Declare plotter
         df_WA = WebApp_plotter()
 
-        # plot
+        # Create plot
         if self.tracer_dfs_out[1] is not None:
             logger.info("self.tracer_dfs_out[1] shape= {}".format(self.tracer_dfs_out[1].shape))
             logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[1].columns.values))
@@ -1189,17 +1205,19 @@ class NtaRun:
         else:
             self.tracer_plots_out.append(None)
 
-        # implements part of NTAW-143
+        # Combine items of tracer_dfs_out list
         dft = pd.concat([self.tracer_dfs_out[0], self.tracer_dfs_out[1]])
+        # If passthrough columns present, combine
         if self.pass_through[0] is not None and self.pass_through[1] is not None:
             passthru = pd.concat([self.pass_through[0], self.pass_through[1]])
         elif self.pass_through[0] is not None:
             passthru = self.pass_through[0]
         else:
             passthru = self.pass_through[1]
-
+        # Update logger
         logger.info("tracer dft= {}".format(dft.columns.tolist()))
         logger.info("tracer passthru= {}".format(passthru.columns.tolist()))
+        # Combine and sort processed tracer file and combined passthrough columns
         self.data_map["Tracer Detection Statistics"] = task_fun.column_sort_TSR(dft, passthru)
 
         if self.tracer_plots_out[0] is not None:
@@ -1219,7 +1237,7 @@ class NtaRun:
             self.tracer_map[key].savefig(buf, bbox_inches="tight", format="png")
             buf.seek(0)
             self.tracer_map[key] = buf.read()
-
+        # Set project name
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
             "&&".join(self.tracer_map.keys()),
@@ -1244,15 +1262,18 @@ class NtaRun:
         Returns:
             None
         """
+        # Define controls
         controls = [
             float(self.parameters["min_replicate_hits"][1]),
             float(self.parameters["max_replicate_cv"][1]),
             float(self.parameters["min_replicate_hits_blanks"][1]),
             float(self.parameters["mrl_std_multiplier"][1]),
         ]
+        # Check for tracer file
         tracer_df_bool = False
         if self.tracer_df is not None:
             tracer_df_bool = True
+        # Pass inputs to clean_features() and store docs, dfs_flagged, and finally dfs
         self.docs = [
             task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[1] if df is not None else None
             for index, df in enumerate(self.dfs)
@@ -1293,6 +1314,7 @@ class NtaRun:
         # create summary table
         if "DTXSID" not in dft.columns:
             dft["DTXSID"] = ""
+        # Subset dataframe with columns of interest
         dft = dft[
             [
                 "Feature ID",
@@ -1306,7 +1328,7 @@ class NtaRun:
                 "Max CV Across Samples",
             ]
         ]
-
+        # Map dataframe to Tracer Summary output
         self.data_map["Tracer Summary"] = dft
         return
 
@@ -1324,6 +1346,7 @@ class NtaRun:
         Returns:
             None
         """
+        # Check for tracer file
         tracer_df_bool = False
         if self.tracer_df is not None:
             tracer_df_bool = True
@@ -1341,18 +1364,19 @@ class NtaRun:
         Mean = self.doc_combined.columns[self.doc_combined.columns.str.contains(pat="Mean ")].tolist()
         Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
         self.doc_combined[Mean_MB] = self.doc_combined[Mean_MB].replace(0, "")
-
+        # Map to Decision Documentation output
         self.data_map["Decision Documentation"] = self.doc_combined
-
+        # Prep combined df for output by combining with passthrough cols and formatting
         self.mpp_ready = task_fun.MPP_Ready(
             self.df_combined,
             self.pass_through,
         )
+        # Prep combined df_flagged for output by combining with passthrough cols and formatting
         self.mpp_ready_flagged = task_fun.MPP_Ready(
             self.df_flagged_combined,
             self.pass_through,
         )
-
+        # Map df and df_flagged outputs to Final Occurrence Matrices sheets
         self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready)
         self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(self.mpp_ready_flagged)
 
@@ -1373,24 +1397,27 @@ class NtaRun:
         Returns:
             None
         """
+        # Update logger
         logging.info(
             "Rows flagged for dashboard search: {} out of {}".format(
                 len(self.df_flagged_combined.loc[self.df_flagged_combined["For_Dashboard_Search"] == "1", :]),
                 len(self.df_flagged_combined),
             )
         )
-        to_search = self.df_flagged_combined.loc[
-            self.df_flagged_combined["For_Dashboard_Search"] == "1", :
-        ].copy()  # only rows flagged
+        # Get subset of features to search from df_flagged_combined
+        to_search = self.df_flagged_combined.loc[self.df_flagged_combined["For_Dashboard_Search"] == "1", :].copy()
+        # Check if searching by mass or formula, drop duplicates
         if self.parameters["search_mode"][1] == "mass":
             to_search.drop_duplicates(subset="Mass", keep="first", inplace=True)
         else:
-            # NTAW-94 rename compound to formula
             to_search.drop_duplicates(subset="Formula", keep="first", inplace=True)
-        n_search = len(to_search)  # number of fragments to search
+        # Calculate number of fragments to search
+        n_search = len(to_search)
+        # Update logger
         logger.info("Total # of queries: {}".format(n_search))
-
+        # Subset features to search
         to_search = to_search.iloc[lower_index:upper_index, :]
+        # If searching by mass, call api_search_masses_batch()
         if self.parameters["search_mode"][1] == "mass":
             mono_masses = task_fun.masses(to_search)
             dsstox_search_df = api_search_masses_batch(
@@ -1399,6 +1426,7 @@ class NtaRun:
                 batchsize=150,
                 jobid=self.jobid,
             )
+        # If searching by formula, call api_search_masses_batch()
         else:
             formulas = task_fun.formulas(to_search)
             response = api_search_formulas(formulas, self.jobid)
@@ -1412,14 +1440,15 @@ class NtaRun:
                 orient="split",
                 dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
             )
+        # Merge API search results with mpp_ready_flagged dataframe ID, mass, and RT
         dsstox_search_df = self.mpp_ready_flagged[["Feature ID", "Mass", "Retention Time"]].merge(
             dsstox_search_df, how="right", left_on="Mass", right_on="INPUT"
         )
-
         # Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
-
+        # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
+        # Store search results
         self.search_results = dsstox_search_df
 
     def perform_hcd_search(self):
@@ -1434,12 +1463,19 @@ class NtaRun:
         Returns:
             None
         """
+        # Update logger
         logger.info(f"Querying the HCD with DTXSID identifiers")
+        # Check length of search results from API batch search
         if len(self.search_results) > 0:
+            # Get unique DTXSIDs from searched features
             dtxsid_list = self.search_results["DTXSID"].unique()
+            # Hit HCD API with unique DTXSIDs, retrieve hazard info
             hcd_results = batch_search_hcd(dtxsid_list)
+            # Merge retrieved hazard info with dashboard search results
             self.search_results = self.search_results.merge(hcd_results, how="left", on="DTXSID")
+            # Update Chemical Results output
             self.data_map["Chemical Results"] = self.search_results
+            # Store hcd retrieval results
             self.data_map["hcd_search"] = hcd_results
 
     def store_data(self):
@@ -1452,14 +1488,18 @@ class NtaRun:
         Returns:
             None
         """
+        # Update logger
         logger.info(f"Storing data files to MongoDB")
+        # Get project name
         project_name = self.parameters["project_name"][1]
+        # Access MongoDB storage
         self.gridfs.put(
             "&&".join(self.data_map.keys()),
             _id=self.jobid + "_file_names",
             encoding="utf-8",
             project_name=project_name,
         )
+        # For item in data_map dictionary, store in MongoDB
         for key in self.data_map.keys():
             self.mongo_save(self.data_map[key], step=key)
 
@@ -1473,11 +1513,16 @@ class NtaRun:
         Returns:
             None
         """
+        # Check if file is type Pandas dataframe
         if isinstance(file, pd.DataFrame):
+            # Convert to JSON
             to_save = file.to_json(orient="split")
         else:
+            # Else handle with no conversion
             to_save = file
+        # Format id
         id = self.jobid + "_" + step
-
+        # Get project name
         project_name = self.parameters["project_name"][1]
+        # Save item to MongoDB using item id
         self.gridfs.put(to_save, _id=id, encoding="utf-8", project_name=project_name)
