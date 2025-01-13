@@ -35,9 +35,13 @@ def input_page(request, form_data=None, form_files=None):
     # generate a timestamp with the current time and date
     current_datetime = datetime.datetime.now()
 
+    # manually define current version of the WebApp
+    current_version = "0.3.5"
+
     # define inputParameters dictionary containing all the parameters and their attributes, labels, and initial values
     inputParameters = {
         "project_name": ["Project name", None],
+        "version": ["WebApp Version", current_version],
         "datetime": ["Date & time", str(current_datetime)],
         "test_files": ["Run test files only (debugging)", None],
         "pos_input": ["Positive mode file", None],
