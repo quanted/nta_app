@@ -42,15 +42,15 @@ def plot_cv_scatterplot(
     # Try to plot scatterplot
     try:
         output = plot.execute()
-    # Raise exception if plotting scatterplot fails
-    except Exception as e:
-        trace = traceback.format_exc()
-        logger.info(trace)
-        fail_step = plot.get_step()
-        plot.set_status("Failed on step: " + fail_step)
-        error = repr(e)
-        plot.set_except_message(error)
-        raise e
+    # # Raise exception if plotting scatterplot fails
+    # except Exception as e:
+    #     trace = traceback.format_exc()
+    #     logger.info(trace)
+    #     fail_step = plot.get_step()
+    #     plot.set_status("Failed on step: " + fail_step)
+    #     error = repr(e)
+    #     plot.set_except_message(error)
+    #     raise e
 
     return output
 

@@ -595,6 +595,7 @@ class NtaRun:
             None
         """
         # Get ppm, mass_accuracy, rt_accuracy, and mrl_multiplier parameters
+        logger.info("self.parameters"), self.parameters
         ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
