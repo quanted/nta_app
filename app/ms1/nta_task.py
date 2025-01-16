@@ -7,7 +7,8 @@ import traceback
 import shutil
 import json
 from datetime import datetime
-from pytz import timezone
+
+# from pytz import timezone
 from dask.distributed import Client, LocalCluster, fire_and_forget
 
 # connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
@@ -20,16 +21,15 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
 
-# obtain datetime object containing the current date/time in UTC-5 (New York timezone). This function meant to
-def get_us_east_timestamp(*args):
-    return datetime.now(timezone("US/Eastern")).timetuple()
+# # obtain datetime object containing the current date/time in UTC-5 (New York timezone).
+# def get_us_east_timestamp(*args):
+#     return datetime.now(timezone("US/Eastern")).timetuple()
 
 
-# Convert logging statement timestamp to the US/Eastern timezone.
-logging.Formatter.converter = get_us_east_timestamp
+# # Convert logging statement timestamp to the US/Eastern timezone.
+# logging.Formatter.converter = get_us_east_timestamp
 
 logger = logging.getLogger("nta_app.ms1")
-logging.info("testing logger statements with EST timezone")
 
 # import seaborn as sns
 try:

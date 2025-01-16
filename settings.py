@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+from pytz import timezone
 import logging
 import secrets
 
@@ -15,6 +17,15 @@ LOGIN_URL = "/nta/login"
 LOGIN_VERBOSE = "true" == os.getenv("LOGIN_VERBOSE", "false").lower()
 LOGIN_DURATION = int(os.getenv("LOGIN_DURATION", 86400))
 
+
+# obtain datetime object containing the current date/time in UTC-5 (New York timezone)
+def get_us_east_timestamp(*args):
+    return datetime.now(timezone("US/Eastern")).timetuple()
+
+
+# Convert logging statement timestamp to the US/Eastern timezone.
+logging.Formatter.converter = get_us_east_timestamp
+
 # Set up logging root
 logging.basicConfig(
     level=logging.WARNING,
@@ -23,6 +34,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("nta_app")
 logger.info("NTA-APP django:settings.py")
+logger.info("testing logger statement timezone conversion in settings.py")
 
 # Set up deploy specific attributes
 if DEPLOY_ENV == "kube-dev":  # run in dev mode
