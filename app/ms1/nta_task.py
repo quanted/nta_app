@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
 
-# obtain datetime object containing the current date/time in UTC-5 (New York timezone). This function meant to
+# obtain datetime object containing the current date/time in UTC-5 (New York timezone).
 def get_us_east_timestamp(*args):
     return datetime.now(timezone("US/Eastern")).timetuple()
 
