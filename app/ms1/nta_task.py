@@ -305,8 +305,7 @@ class NtaRun:
 
         for dataframe in input_dfs:
             # Copy original dataframe
-            df = dataframe.copy()
-
+            df = dataframe
             # Obtain the column headers as a concatenated string
             headers = df.columns.values.tolist()
             header_string = ""
