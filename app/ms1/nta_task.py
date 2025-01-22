@@ -304,29 +304,29 @@ class NtaRun:
         inputs_without_blanks = 0
 
         for dataframe in input_dfs:
-            # Copy original dataframe
-            df = dataframe
-            # Obtain the column headers as a concatenated string
-            headers = df.columns.values.tolist()
-            header_string = ""
-            for header in headers:
-                header_string += header + " "
+            if dataframe is not None:
+                df = dataframe
+                # Obtain the column headers as a concatenated string
+                headers = df.columns.values.tolist()
+                header_string = ""
+                for header in headers:
+                    header_string += header + " "
 
-            # has_blanks becomes True only if the column header string contains an acceptable blank format
-            has_blanks = False
-            for blank_format in blanks:
-                if blank_format in header_string:
-                    has_blanks = True
+                # has_blanks becomes True only if the column header string contains an acceptable blank format
+                has_blanks = False
+                for blank_format in blanks:
+                    if blank_format in header_string:
+                        has_blanks = True
 
-            if not has_blanks:
-                inputs_without_blanks += 1
+                if not has_blanks:
+                    inputs_without_blanks += 1
 
-        if inputs_without_blanks > 0:
-            raise ValueError(
-                'one or more of the input files do not contain blanks \n blanks column names must begin with ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]'
-            )
+            if inputs_without_blanks > 0:
+                raise ValueError(
+                    'one or more of the input files do not contain blanks \n blanks column names must begin with ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]'
+                )
 
-        return
+            return
 
     def check_existence_of_ionization_mode_column(self, input_dfs):
         """
