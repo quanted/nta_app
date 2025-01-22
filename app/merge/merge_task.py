@@ -80,6 +80,7 @@ class MergeRun:
         in_docker=True,
     ):
         self.project_name = parameters["project_name"]
+        logger.info(f"\n============= Job ID: {jobid}")
         logger.info(input_data)
         self.input_ms1 = input_data["MS1"]
         # self.input_ms2 = [input_data["MS2_pos"], input_data["MS2_neg"]] # NTAW-158: Update how MS2 data is handled, needs to be a list of MS2 files / ignore this
