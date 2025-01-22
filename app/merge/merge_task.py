@@ -104,6 +104,8 @@ class MergeRun:
         #     {"dsstox_search": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
         # )
 
+        logger.info(f"\n============= Job ID: {jobid}")
+
     def execute(self):
         self.set_status("Processing", create=True)
         if self.n_files > 0:
@@ -133,7 +135,7 @@ class MergeRun:
             for key in self.ms1_data_map.keys():
                 self.mongo_save(self.ms1_data_map[key], data_name=key)
         self.set_status("Completed", progress=self.n_files)
-        logger.info("Run Finished")
+        logger.info(f"[Job ID: {self.jobid}] Run Finished")
 
     def set_status(self, status, progress=0, create=False):
         self.step = status

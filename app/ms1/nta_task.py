@@ -136,7 +136,8 @@ class NtaRun:
         verbose=True,
         in_docker=True,
     ):
-        logger.info("Initializing NtaRun Task")
+        logger.info(f"\n============= Job ID: {jobid}")
+        logger.info("[Job ID: {}] Initializing NtaRun Task".format(jobid))
         logger.info("parameters= {}".format(parameters))
         self.parameters = parameters
         self.tracer_df = tracer_df

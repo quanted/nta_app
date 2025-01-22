@@ -302,7 +302,7 @@ class MS2Run:
 
     def set_status(self, status, create=False):
         logger.info(
-            f"\n============= Job ID: [{self.jobid}] \n============= Starting Process: \n============= {status}  \n============="
+            f"\n============= Job ID: {self.jobid} \n============= Starting Process: \n============= {status}  \n============="
         )
         self.step = status
         self.log_time()
