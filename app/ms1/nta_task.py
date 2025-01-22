@@ -323,7 +323,7 @@ class NtaRun:
 
             if inputs_without_blanks > 0:
                 raise ValueError(
-                    'one or more of the input files do not contain blanks \n blanks column names must begin with ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]'
+                    "Blank samples not found. Refer to guidance documentation on blank naming conventions."
                 )
 
             return
