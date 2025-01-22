@@ -177,17 +177,19 @@ class NtaRun:
 
     def execute(self):
         self.step = "Check for existence of required columns"
-        # 1a: check existence of "Ionization mode" column
+        # 1a: check existence of blank columns
+        self.check_existence_of_blank_columns(self.dfs)
+        # 1b: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
-        # 1b: check existence of 'mass column'
+        # 1c: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
-        # 1c: check for alternate spellings of 'Retention_Time' column
+        # 1d: check for alternate spellings of 'Retention_Time' column
         self.check_retention_time_column(self.dfs)
-        # 1d: sort dataframe columns alphabetically
+        # 1e: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
-        # 1e: create a status in mongo
+        # 1f: create a status in mongo
         self.set_status("Processing", create=True)
-        # 1f: create an analysis_parameters sheet
+        # 1g: create an analysis_parameters sheet
         self.create_analysis_parameters_sheet()
         # 2: assign ids, separate passthrough cols, filter void volume, and flag duplicates
         self.step = "Flagging duplicates"
@@ -289,6 +291,43 @@ class NtaRun:
         self.step = "Displaying results"
         self.set_status("Completed")
         logger.warning("MS1 job {}: Processing complete.".format(self.jobid))
+
+    def check_existence_of_blank_columns(self, input_dfs):
+        """
+        Function raise a ValueError if no blank samples are present in the MS1 input files.
+        """
+
+        # Acceptable blank formats
+        blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
+
+        # Instantiating counter
+        inputs_without_blanks = 0
+
+        for dataframe in input_dfs:
+            # Copy original dataframe
+            df = dataframe.copy()
+
+            # Obtain the column headers as a concatenated string
+            headers = df.columns.values.tolist()
+            header_string = ""
+            for header in headers:
+                header_string += header + " "
+
+            # has_blanks becomes True only if the column header string contains an acceptable blank format
+            has_blanks = False
+            for blank_format in blanks:
+                if blank_format in header_string:
+                    has_blanks = True
+
+            if not has_blanks:
+                inputs_without_blanks += 1
+
+        if inputs_without_blanks > 0:
+            raise ValueError(
+                'one or more of the input files do not contain blanks \n blanks column names must begin with ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]'
+            )
+
+        return
 
     def check_existence_of_ionization_mode_column(self, input_dfs):
         """
