@@ -298,7 +298,7 @@ class NtaRun:
         """
 
         # Acceptable blank formats
-        blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
+        blanks = ["MB", "mb", "Mb", "blank", "Blank", "BLANK", "BLK", "Blk"]
 
         # Instantiating counter
         inputs_without_blanks = 0
@@ -323,7 +323,7 @@ class NtaRun:
 
             if inputs_without_blanks > 0:
                 raise ValueError(
-                    "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'mB', 'Mb', 'MB', 'blank', 'Blank', 'BLANK']"
+                    "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'Mb', 'MB', 'blank', 'Blank', 'BLANK', 'BLK', 'Blk']"
                 )
 
             return
