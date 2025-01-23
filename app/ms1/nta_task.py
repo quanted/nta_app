@@ -177,8 +177,8 @@ class NtaRun:
 
     def execute(self):
         self.step = "Check for existence of required columns"
-        # 1a: check existence of blank columns
-        self.check_existence_of_blank_columns(self.dfs)
+        # # 1a: check existence of blank columns
+        # self.check_existence_of_blank_columns(self.dfs)
         # 1b: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
         # 1c: check existence of 'mass column'
@@ -292,43 +292,45 @@ class NtaRun:
         self.set_status("Completed")
         logger.warning("MS1 job {}: Processing complete.".format(self.jobid))
 
-    def check_existence_of_blank_columns(self, input_dfs):
-        """
-        Function raise a ValueError if no blank samples are present in the MS1 input files.
-        """
+    # def check_existence_of_blank_columns(self, input_dfs):
+    #     """
+    #     Function raise a ValueError if no blank samples are present in the MS1 input files.
+    #     """
 
-        logger.info("Start checking existence of blanks")
-        # Acceptable blank formats
-        blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
+    #     logger.info("Start checking existence of blanks")
+    #     # Acceptable blank formats
+    #     blanks = ["mb", "Mb", "MB", "blank", "Blank", "BLANK", "BLK", "Blk"]
 
-        # Instantiating counter
-        inputs_without_blanks = 0
+    #     # Instantiating counter
+    #     inputs_without_blanks = 0
 
-        for dataframe in input_dfs:
-            if dataframe is not None:
-                df = dataframe
-                # Obtain the column headers as a concatenated string
-                headers = df.columns.values.tolist()
-                header_string = ""
-                for header in headers:
-                    header_string += header + " "
+    #     for dataframe in input_dfs:
+    #         logger.info("dataframe is none? {}".format(dataframe is None))
+    #         if dataframe is not None:
+    #             df = dataframe
+    #             # Obtain the column headers as a concatenated string
+    #             headers = df.columns.values.tolist()
+    #             header_string = ""
+    #             for header in headers:
+    #                 header_string += header + " "
+    #             logger.info("header_string: {}".format(header_string))
 
-                # has_blanks becomes True only if the column header string contains an acceptable blank format
-                has_blanks = False
-                for blank_format in blanks:
-                    if blank_format in header_string:
-                        has_blanks = True
+    #             # has_blanks becomes True only if the column header string contains an acceptable blank format
+    #             has_blanks = False
+    #             for blank_format in blanks:
+    #                 if blank_format in header_string:
+    #                     has_blanks = True
 
-                if not has_blanks:
-                    inputs_without_blanks += 1
+    #             if not has_blanks:
+    #                 inputs_without_blanks += 1
 
-            if inputs_without_blanks > 0:
-                raise ValueError(
-                    "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'Mb', 'MB', 'blank', 'Blank', 'BLANK', 'BLK', 'Blk']"
-                )
+    #         if inputs_without_blanks > 0:
+    #             raise ValueError(
+    #                 "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'Mb', 'MB', 'blank', 'Blank', 'BLANK', 'BLK', 'Blk']"
+    #             )
 
-            logger.info("Done Checking existence of blanks")
-            return
+    #         logger.info("Done Checking existence of blanks")
+    #         return
 
     def check_existence_of_ionization_mode_column(self, input_dfs):
         """
@@ -642,7 +644,12 @@ class NtaRun:
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
         mrl_multiplier = float(self.parameters["mrl_std_multiplier"][1])
         # Iterate through dfs, calling chunk_stats() function
-        self.dfs = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dfs]
+        try:
+            self.dfs = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dfs]
+        except IndexError:
+            raise ValueError(
+                "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'Mb', 'MB', 'blank', 'Blank', 'BLANK']"
+            )
         # Get positive adducts, print to logger
         pos_adducts_selected = self.parameters["pos_adducts"][1]
         logger.info("pos adducts list: {}".format(self.parameters["pos_adducts"]))
