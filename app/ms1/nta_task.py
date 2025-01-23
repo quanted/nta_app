@@ -294,11 +294,11 @@ class NtaRun:
 
     def check_existence_of_blank_columns(self, input_dfs):
         """
-        Function raise a ValueError if no blank samples are present in the MS1 input files.
+        Function raises a ValueError if no blank samples are found in the MS1 input files.
         """
 
         # Acceptable blank formats
-        blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
+        blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
 
         # Instantiating counter
         inputs_without_blanks = 0
@@ -323,7 +323,7 @@ class NtaRun:
 
             if inputs_without_blanks > 0:
                 raise ValueError(
-                    "Blank samples not found. Refer to guidance documentation on blank naming conventions."
+                    "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'mB', 'Mb', 'MB', 'blank', 'Blank', 'BLANK']"
                 )
 
             return
