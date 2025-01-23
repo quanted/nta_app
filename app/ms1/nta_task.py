@@ -294,11 +294,12 @@ class NtaRun:
 
     def check_existence_of_blank_columns(self, input_dfs):
         """
-        Function raises a ValueError if no blank samples are found in the MS1 input files.
+        Function raise a ValueError if no blank samples are present in the MS1 input files.
         """
 
+        logger.info("Start checking existence of blanks")
         # Acceptable blank formats
-        blanks = ["MB", "mb", "Mb", "blank", "Blank", "BLANK", "BLK", "Blk"]
+        blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
 
         # Instantiating counter
         inputs_without_blanks = 0
@@ -326,6 +327,7 @@ class NtaRun:
                     "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'Mb', 'MB', 'blank', 'Blank', 'BLANK', 'BLK', 'Blk']"
                 )
 
+            logger.info("Done Checking existence of blanks")
             return
 
     def check_existence_of_ionization_mode_column(self, input_dfs):
