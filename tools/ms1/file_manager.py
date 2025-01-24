@@ -7,24 +7,19 @@ from difflib import SequenceMatcher
 
 
 # convert the user-supplied input file into dataframe
-def input_handler(file, index):
+def input_handler(file, index, na_value=0):
     # ext = os.path.splitext(file)[1]
     # print(ext)
-    ext = ".csv"  # for now only take csv
+    # Hard-coded to only accept .csv files
+    ext = ".csv"
     if ext == ".tsv":
-        df = pd.read_csv(file, sep="\t", comment="#", na_values=1 | 0)
+        df = pd.read_csv(file, sep="\t", comment="#", na_values=na_value)
     if ext == ".csv":
-        nan_value_list = [0, 1]
-        df = pd.read_csv(file, comment="#", na_values=nan_value_list)
-
-    # AC
-    # logging.info("df columns pre-fix names", df.columns)
-
+        # Read .csv file, add user-selected na_value to list of default na values for pandas na filter
+        df = pd.read_csv(file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True)
+    # Call fix names
     df = fix_names(df, index)
-
-    # AC
-    # logging.info("df columns post-fix names", df.columns)
-
+    # Return formatted df
     return df
 
 
@@ -82,7 +77,6 @@ def parse_headers(df, index):  # group headers into a group of samples
             if differences(str(headers[index][s]), str(headers[index][s + 1])) < 2:  # 2 is more common
                 countS += 1
             if differences(str(headers[index][s]), str(headers[index][s + 1])) >= 2:
-
                 countD += 1
                 countS = countS + 1
             # print "These are different "

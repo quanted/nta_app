@@ -29,6 +29,15 @@ class NtaInputs(forms.Form):
         required=False,
         validators=[FileExtensionValidator(["csv"])],
     )
+    na_val = forms.ChoiceField(
+        choices=(
+            ("0", 0),
+            ("1", 1),
+            ("-1", -1),
+        ),
+        label="Input matrix non-detect value",
+        initial="3",
+    )
     pos_adducts = forms.MultipleChoiceField(
         label="Positive mode adducts",
         widget=forms.CheckboxSelectMultiple(attrs={"class": "two"}),

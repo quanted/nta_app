@@ -135,9 +135,7 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["tracer_plot_yaxis_format"][1] = parameters["tracer_plot_yaxis_format"]
             inputParameters["tracer_plot_trendline"][1] = parameters["tracer_plot_trendline"]
             inputParameters["min_replicate_hits"][1] = parameters["min_replicate_hits"]
-            inputParameters["min_replicate_hits_blanks"][1] = parameters[
-                "min_replicate_hits_blanks"
-            ]
+            inputParameters["min_replicate_hits_blanks"][1] = parameters["min_replicate_hits_blanks"]
             inputParameters["max_replicate_cv"][1] = parameters["max_replicate_cv"]
             inputParameters["mrl_std_multiplier"][1] = parameters["mrl_std_multiplier"]
             inputParameters["parent_ion_mass_accuracy"][1] = parameters["parent_ion_mass_accuracy"]
@@ -163,18 +161,12 @@ def input_page(request, form_data=None, form_files=None):
             if parameters["test_files"] == "yes":
                 # handle case 1: the user has selected to run the test files
                 # get the path and filename of the test files
-                example_data_dir = os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), "..", "..", "input/ms1"
-                )
+                example_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "input/ms1")
                 pos_input = os.path.join(example_data_dir, example_pos_filename)
                 neg_input = os.path.join(example_data_dir, example_neg_filename)
                 tracer_file = os.path.join(example_data_dir, example_tracer_filename)
-                run_sequence_pos_file = os.path.join(
-                    example_data_dir, example_run_sequence_pos_filename
-                )
-                run_sequence_neg_file = os.path.join(
-                    example_data_dir, example_run_sequence_neg_filename
-                )
+                run_sequence_pos_file = os.path.join(example_data_dir, example_run_sequence_pos_filename)
+                run_sequence_neg_file = os.path.join(example_data_dir, example_run_sequence_neg_filename)
                 # save the name of the files to the inputParameters dictionary
                 inputParameters["pos_input"][1] = pos_input
                 inputParameters["neg_input"][1] = neg_input
@@ -232,12 +224,14 @@ def input_page(request, form_data=None, form_files=None):
             logger.info("Input Files: {} ".format(inputs))
 
             input_dfs = []
+            # Get user-input non-detect value, pass to file_manager.input_handler
+            na_value = parameters["na_val"]
+            # Iterate through inputs, format, and append to input_dfs
             for index, df in enumerate(inputs):
                 if df is not None:
-                    input_dfs.append(file_manager.input_handler(df, index))
+                    input_dfs.append(file_manager.input_handler(df, index, na_value))
                 else:
                     input_dfs.append(None)
-            # input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs) if df is not None]
 
             # create a job ID
             job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
@@ -270,9 +264,7 @@ def input_page(request, form_data=None, form_files=None):
     # function name example: 'sip_input_page'
     html += render_to_string("ms1/nta_input_scripts.html")
     html += render_to_string("ms1/nta_input_css.html")
-    if (
-        "/external/" in request.path
-    ):  # adding this switch as a short-term fix to connect AMOS front end
+    if "/external/" in request.path:  # adding this switch as a short-term fix to connect AMOS front end
         input_start_form = "ms1/nta_input_start_drupal_nologin.html"
     else:
         input_start_form = "ms1/nta_input_start_drupal.html"
