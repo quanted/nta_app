@@ -7,7 +7,7 @@ from difflib import SequenceMatcher
 
 
 # convert the user-supplied input file into dataframe
-def input_handler(file, index, na_value=0):
+def input_handler(file, index, na_value):
     # ext = os.path.splitext(file)[1]
     # print(ext)
     # Hard-coded to only accept .csv files

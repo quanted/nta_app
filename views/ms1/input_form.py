@@ -29,14 +29,13 @@ class NtaInputs(forms.Form):
         required=False,
         validators=[FileExtensionValidator(["csv"])],
     )
-    na_val = forms.ChoiceField(
-        choices=(
-            ("0", 0),
-            ("1", 1),
-            ("-1", -1),
-        ),
+    na_val = forms.CharField(
+        max_length=10,
+        min_length=1,
+        empty_value="",
         label="Input matrix non-detect value",
-        initial="3",
+        initial="Please enter your data's non-detect number or character",
+        required=True,
     )
     pos_adducts = forms.MultipleChoiceField(
         label="Positive mode adducts",

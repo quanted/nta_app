@@ -144,11 +144,7 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
 
-            # NTAW-387 - AC: Update passing of adducts into input parameters
-            # Comment out old code
-            # inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
-            # inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
-            # inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
+            # Get user-selected adducts via POST.getlist()
             inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts")
             inputParameters["neg_adducts"][1] = request.POST.getlist("neg_adducts")
             inputParameters["neutral_losses"][1] = request.POST.getlist("neutral_losses")
@@ -202,22 +198,24 @@ def input_page(request, form_data=None, form_files=None):
                     inputParameters["tracer_input"][1] = tracer_file.name
                 except Exception:
                     tracer_df = None
+                # If a tracer file was submitted, check for either (or both run sequence files)
+                # If neither is present, throw an error (form not valid)
+                if tracer_df:
+                    try:
+                        run_sequence_pos_file = request.FILES["run_sequence_pos_file"]
+                        run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
+                        # save the name of the file to the inputParameters dictionary
+                        inputParameters["run_sequence_pos_file"][1] = run_sequence_pos_file.name
+                    except Exception:
+                        run_sequence_pos_df = None
 
-                try:
-                    run_sequence_pos_file = request.FILES["run_sequence_pos_file"]
-                    run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
-                    # save the name of the file to the inputParameters dictionary
-                    inputParameters["run_sequence_pos_file"][1] = run_sequence_pos_file.name
-                except Exception:
-                    run_sequence_pos_df = None
-
-                try:
-                    run_sequence_neg_file = request.FILES["run_sequence_neg_file"]
-                    run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
-                    # save the name of the file to the inputParameters dictionary
-                    inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file.name
-                except Exception:
-                    run_sequence_neg_df = None
+                    try:
+                        run_sequence_neg_file = request.FILES["run_sequence_neg_file"]
+                        run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
+                        # save the name of the file to the inputParameters dictionary
+                        inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file.name
+                    except Exception:
+                        run_sequence_neg_df = None
 
             # create a list of the input files
             inputs = [pos_input, neg_input]
@@ -225,7 +223,11 @@ def input_page(request, form_data=None, form_files=None):
 
             input_dfs = []
             # Get user-input non-detect value, pass to file_manager.input_handler
-            na_value = parameters["na_val"]
+            # Try to convert to float if a number, if not store string
+            try:
+                na_value = float(parameters["na_val"])
+            except ValueError:
+                na_value = parameters["na_val"]
             # Iterate through inputs, format, and append to input_dfs
             for index, df in enumerate(inputs):
                 if df is not None:
