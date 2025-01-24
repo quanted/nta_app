@@ -216,7 +216,22 @@ def input_page(request, form_data=None, form_files=None):
                         inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file.name
                     except Exception:
                         run_sequence_neg_df = None
+                else:
+                    try:
+                        run_sequence_pos_file = request.FILES["run_sequence_pos_file"]
+                        run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
+                        # save the name of the file to the inputParameters dictionary
+                        inputParameters["run_sequence_pos_file"][1] = run_sequence_pos_file.name
+                    except Exception:
+                        run_sequence_pos_df = None
 
+                    try:
+                        run_sequence_neg_file = request.FILES["run_sequence_neg_file"]
+                        run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
+                        # save the name of the file to the inputParameters dictionary
+                        inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file.name
+                    except Exception:
+                        run_sequence_neg_df = None
             # create a list of the input files
             inputs = [pos_input, neg_input]
             logger.info("Input Files: {} ".format(inputs))
