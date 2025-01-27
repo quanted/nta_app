@@ -240,3 +240,5 @@ class NtaInputs(forms.Form):
                 self.fields["run_sequence_pos_file"].required = True
             if neg_input:
                 self.fields["run_sequence_neg_file"].required = True
+
+        return cleaned_data
