@@ -34,7 +34,7 @@ class NtaInputs(forms.Form):
         min_length=1,
         empty_value="",
         label="Input matrix non-detect value",
-        initial="Please enter your data's non-detect number or character",
+        initial="0",
         required=True,
     )
     pos_adducts = forms.MultipleChoiceField(
@@ -217,26 +217,23 @@ class NtaInputs(forms.Form):
         initial="mass",
     )
 
-    def __init__(self, post, files):
-        super().__init__(post, files)
+    def clean(self):
+        cleaned_data = super().clean()
         # Check for pos input file
-        if "pos_input" in self.FILES:
-            try:
-                pos_input = self.FILES["pos_input"]
-            except Exception:
-                pos_input = None
+        try:
+            pos_input = cleaned_data.get("pos_input")
+        except Exception:
+            pos_input = None
         # Check for neg input file
-        if "neg_input" in self.FILES:
-            try:
-                neg_input = self.FILES["neg_input"]
-            except Exception:
-                neg_input = None
+        try:
+            neg_input = cleaned_data.get("neg_input")
+        except Exception:
+            neg_input = None
         # Check for tracer input file
-        if "tracer_input" in self.FILES:
-            try:
-                tracer_input = self.FILES["tracer_input"]
-            except Exception:
-                tracer_input = None
+        try:
+            tracer_input = cleaned_data.get("tracer_input")
+        except Exception:
+            tracer_input = None
         # If tracer input present, require run sequence files corresponding to data modes
         if tracer_input:
             if pos_input:
