@@ -976,6 +976,11 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
 
     dfc = pd.merge(df1, dum, how="left", on=["Observed Mass", "Observed Retention Time"])
 
+    if 1.0 not in dfc["Matches"].values:
+        raise ValueError(
+            "Tracer file was submitted but no tracer features were found. Check 'Tracer mass accuracy' and 'Tracer retention time accuracy' settings"
+        )
+
     dfc.rename(
         columns={
             "Observed Mass": "Mass",
