@@ -237,8 +237,14 @@ class NtaInputs(forms.Form):
         # If tracer input present, require run sequence files corresponding to data modes
         if tracer_input:
             if pos_input:
-                self.fields["run_sequence_pos_file"].required = True
+                try:
+                    rspf_input = cleaned_data.get("run_sequence_pos_file")
+                except Exception:
+                    raise forms.ValidationError("Run sequence file required when tracer file is submitted.")
             if neg_input:
-                self.fields["run_sequence_neg_file"].required = True
+                try:
+                    rsnf_input = cleaned_data.get("run_sequence_neg_file")
+                except Exception:
+                    raise forms.ValidationError("Run sequence file required when tracer file is submitted.")
 
         return cleaned_data
