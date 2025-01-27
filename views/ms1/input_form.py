@@ -217,8 +217,8 @@ class NtaInputs(forms.Form):
         initial="mass",
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, post, files):
+        super().__init__(post, files)
         # Check for pos input file
         if "pos_input" in self.FILES:
             try:
