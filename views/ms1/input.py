@@ -104,7 +104,7 @@ def input_page(request, form_data=None, form_files=None):
             if "neg_input" in request.FILES.keys():
                 form.fields["pos_input"].required = False
         # If tracer file is present, then run sequence files are required inputs
-        if "tracer_input" in in request.FILES.keys():
+        if "tracer_input" in request.FILES.keys():
             # Set requirement status to True
             form.fields["run_sequence_pos_file"].required = True
             form.fields["run_sequence_neg_file"].required = True
