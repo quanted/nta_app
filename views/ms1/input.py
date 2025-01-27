@@ -103,17 +103,17 @@ def input_page(request, form_data=None, form_files=None):
             # If 'neg_input' file is present, the 'pos_input' file is not required
             if "neg_input" in request.FILES.keys():
                 form.fields["pos_input"].required = False
-        # If tracer file is present, then run sequence files are required inputs
-        if "tracer_input" in request.FILES.keys():
-            # Set requirement status to True
-            form.fields["run_sequence_pos_file"].required = True
-            form.fields["run_sequence_neg_file"].required = True
-            # If 'pos_input' file is present, the 'neg_input' file is not required
-            if "pos_input" in request.FILES.keys():
-                form.fields["run_sequence_neg_file"].required = False
-            # If 'neg_input' file is present, the 'pos_input' file is not required
-            if "neg_input" in request.FILES.keys():
-                form.fields["run_sequence_pos_file"].required = False
+        # # If tracer file is present, then run sequence files are required inputs
+        # if "tracer_input" in request.FILES.keys():
+        #     # Set requirement status to True
+        #     form.fields["run_sequence_pos_file"].required = True
+        #     form.fields["run_sequence_neg_file"].required = True
+        #     # If 'pos_input' file is present, the 'neg_input' file is not required
+        #     if "pos_input" in request.FILES.keys():
+        #         form.fields["run_sequence_neg_file"].required = False
+        #     # If 'neg_input' file is present, the 'pos_input' file is not required
+        #     if "neg_input" in request.FILES.keys():
+        #         form.fields["run_sequence_pos_file"].required = False
 
         if form.is_valid():
             logger.info("form is valid")

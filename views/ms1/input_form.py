@@ -216,3 +216,30 @@ class NtaInputs(forms.Form):
         ),
         initial="mass",
     )
+
+    def __init__(self):
+        super().__init__()
+        # Check for pos input file
+        if "pos_input" in self.FILES:
+            try:
+                pos_input = self.FILES["pos_input"]
+            except Exception:
+                pos_input = None
+        # Check for neg input file
+        if "neg_input" in self.FILES:
+            try:
+                neg_input = self.FILES["neg_input"]
+            except Exception:
+                neg_input = None
+        # Check for tracer input file
+        if "tracer_input" in self.FILES:
+            try:
+                tracer_input = self.FILES["tracer_input"]
+            except Exception:
+                tracer_input = None
+        # If tracer input present, require run sequence files corresponding to data modes
+        if tracer_input:
+            if pos_input:
+                self.fields["run_sequence_pos_file"].required = True
+            if neg_input:
+                self.fields["run_sequence_neg_file"].required = True
