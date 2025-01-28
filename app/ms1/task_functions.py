@@ -56,9 +56,25 @@ def differences(s1, s2):
     s1 = re.sub(re.compile(r"\([^)]*\)"), "", s1)
     s2 = re.sub(re.compile(r"\([^)]*\)"), "", s2)
     # Count up different characters between s1 and s2, plus difference in string length
-    count = sum(1 for a, b in zip(s1, s2) if a != b) + abs(len(s1) - len(s2))
+    # Store the non-matching index value in diff_index
+    # count = sum(1 for a, b in zip(s1, s2) if a != b) + abs(len(s1) - len(s2))
+    mytup = tuple(zip(s1, s2))
+    count = abs(len(s1) - len(s2))
+    diff_index = None  # This value is only important if the final count ==1
+    for i in range(len(mytup)):
+        if mytup[i][0] != mytup[i][1]:
+            count += 1
+            diff_index = i
+
     # Return count (int)
-    return count
+    # NTAW-422: If the single non-matching character is in the middle of the strings, the header strings do not belong in the same sample group
+    # In this case, count is increased to ensure that non-replicate samples do not end up in the same sample group when passed through parse_headers()
+    if count == 1:
+        if diff_index != (len(mytup) - 1) and diff_index != 0:
+            count += 1
+        return count
+    else:
+        return count
 
 
 def formulas(df):
@@ -142,6 +158,15 @@ def parse_headers(df_in):
     groups = groupby(new_headers, itemgetter(1))
     # Extract column names from group tuples
     new_headers_list = [[item[0] for item in data] for (key, data) in groups]
+    # Check that replicate samples are present. Raise IndexError if no repliates samples are found.
+    max_group_size = 0
+    for item in new_headers_list:
+        if len(item) > max_group_size:
+            max_group_size = len(item)
+    if max_group_size < 2:
+        raise IndexError(
+            "No replicate samples found. A minimum of two replicates are required for each sample and method blank."
+        )
     # Return list of header group lists
     return new_headers_list
 
