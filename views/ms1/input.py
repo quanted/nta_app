@@ -21,11 +21,11 @@ if os.getenv("DEPLOY_ENV", "kube-dev") == "kube-prod":
     logger.setLevel(logging.WARNING)
 
 # hard-coded example file names for testing found in nta_app/input/ms1/
-example_pos_filename = "pooled_blood_pos_MPP.csv"
-example_neg_filename = "pooled_blood_neg_MPP.csv"
-example_tracer_filename = "pooled_blood_tracers.csv"
-example_run_sequence_pos_filename = "pooled_blood_run_sequence_pos.csv"
-example_run_sequence_neg_filename = "pooled_blood_run_sequence_neg.csv"
+example_pos_filename = "1a_MZmine3_pos.csv"
+example_neg_filename = "1b_MZmine3_neg.csv"
+example_tracer_filename = "WW2DW_Tracers_Amenable.csv"
+example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
+example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
 
 
 @csrf_exempt
