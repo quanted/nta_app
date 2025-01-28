@@ -165,7 +165,7 @@ def parse_headers(df_in):
             max_group_size = len(item)
     if max_group_size < 2:
         raise IndexError(
-            "No replicate samples found. A minimum of two replicates are required for each sample and method blank."
+            "Single replicate data found. A minimum of two replicates are required for each sample and method blank."
         )
     # Return list of header group lists
     return new_headers_list
