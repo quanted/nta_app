@@ -1456,6 +1456,7 @@ class NtaRun:
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
+        logger.info(f"Chemical Results Page Columns: {dsstox_search_df.columns}")
         # Store search results
         self.search_results = dsstox_search_df
 
