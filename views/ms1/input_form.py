@@ -35,7 +35,7 @@ class NtaInputs(forms.Form):
         empty_value="",
         label="Input matrix non-detect value",
         initial="1",
-        required=True,
+        required=False,
     )
     pos_adducts = forms.MultipleChoiceField(
         label="Positive mode adducts",
