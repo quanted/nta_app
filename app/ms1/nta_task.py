@@ -1483,8 +1483,8 @@ class NtaRun:
             self.search_results = self.search_results.merge(hcd_results, how="left", on="DTXSID")
             # Update Chemical Results output
             self.data_map["Chemical Results"] = self.search_results
-            # Store hcd retrieval results
-            self.data_map["hcd_search"] = hcd_results
+            # # Store hcd retrieval results
+            # self.data_map["hcd_search"] = hcd_results
 
     def store_data(self):
         """
