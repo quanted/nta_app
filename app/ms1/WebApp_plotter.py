@@ -217,7 +217,7 @@ class WebApp_plotter:
         ----------
         df_in : pd.DataFrame
             The tracer statistics df.
-        df_loc_deq : pd.DataFrame
+        df_loc_seq : pd.DataFrame
             The sequence df returned from self._check_for_seq().
         order_samples : bool
             Whether to order samples, as returned from self._check_for_seq()
@@ -269,7 +269,7 @@ class WebApp_plotter:
             df = df_in[abundance].copy()
 
         # our list of final chemical names with appropriate capitalization
-        chemical_names = df_in["Chemical Name"]
+        chemical_names = df_in["Chemical_Name"]
 
         ## split chem names into a nested list, one list of chem_names per plot
         chem_names = [[]]
