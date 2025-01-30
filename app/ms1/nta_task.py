@@ -1455,9 +1455,12 @@ class NtaRun:
         # Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
 
-        # Converts the static DTXSID column into the corresponding hyperlink
+        # Adds an empty column that will hold the DTXSID hyperlinks
+        dsstox_search_df.insert(dsstox_search_df.columns.get_loc("DTXSID") + 1, "DTXSID_HYPERLINK", "")
+
+        # Populates the DTXSID_HYPERLINK column into the corresponding hyperlink
         for index, row in dsstox_search_df.iterrows():
-            dsstox_search_df["DTXSID"][index] = make_hyperlink(dsstox_search_df["DTXSID"][index])
+            dsstox_search_df["DTXSID_HYPERLINK"][index] = make_hyperlink(dsstox_search_df["DTXSID"][index])
 
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
