@@ -52,7 +52,7 @@ def connect_to_mongo_gridfs(address):
     return fs
 
 
-def make_hyperlink(value, url="https://comptox.epa.gov/dashboard/chemical/details{}"):
+def make_hyperlink(value, url="https://comptox.epa.gov/dashboard/chemical/details/{}"):
     """
     Function is used to display a URL as a hyperlink when the returned string is passed into an Excel cell.
     The hyperlink text will display the 'value' parameter.
