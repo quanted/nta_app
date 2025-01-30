@@ -1165,7 +1165,7 @@ class NtaRun:
         if self.tracer_dfs_out[0] is not None:
             listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 df_in=self.tracer_dfs_out[0],
-                seq_csv=self.run_sequence_pos_df,
+                df_seq=self.run_sequence_pos_df,
                 ionization="pos",
                 y_scale=yaxis_scale,
                 fit=trendline_shown,
