@@ -52,6 +52,20 @@ def connect_to_mongo_gridfs(address):
     return fs
 
 
+def make_hyperlink(value, url="https://comptox.epa.gov/dashboard/{}"):
+    """
+    Function is used to display a URL as a hyperlink when the returned string is passed into an Excel cell.
+    The hyperlink text will display the 'value' parameter.
+
+    Args:
+        value (string; dynamic part of the destination url)
+        url (string, static part of the destination url)
+    Returns:
+        The Excel hyperlink command.
+    """
+    return '=HYPERLINK("%s", "%s")' % (url.format(value), value)
+
+
 # # function to remove columns from a given dataframe, df_in. The columns to be removed are determined by the
 # # a given list of strings.
 # def remove_columns(df_in, list_of_columns2remove):

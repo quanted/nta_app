@@ -1454,14 +1454,15 @@ class NtaRun:
         )
         # Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
+
+        # NTAW-343: Creates an empty column in the Chemical Results page that will hold a hyperlink to the CompTox Chemical Dashboard page of the corresponding DTXSID
+        dsstox_search_df.insert(dsstox_search_df.columns.get_loc("DTXSID") + 1, "DTXSID_HYPERLINK", " ")
+        # Converts the empty DTXSID_HYPERLINK column into the corresponding hyperlink
+        for index, row in dsstox_search_df.iterrows():
+            dsstox_search_df["DTXSID_HYPERLINK"][index] = make_hyperlink(dsstox_search_df["DTXSID"][index])
+
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
-        logger.info(f"Chemical Results Page Columns: {dsstox_search_df.columns}")
-        # NTAW-343: Creates a column in the Chemical Results page that provides the URL to the DTXSID. Will need to figure out how to turn this into a hyperlink.
-        comptox_url = "https://comptox.epa.gov/dashboard/chemical/details/"
-        dsstox_search_df.insert(
-            dsstox_search_df.columns.get_loc("DTXSID") + 1, "DTXSID_URL", comptox_url + dsstox_search_df["DTXSID"]
-        )
         # Store search results
         self.search_results = dsstox_search_df
 
