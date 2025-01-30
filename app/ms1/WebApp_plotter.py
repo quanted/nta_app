@@ -103,7 +103,7 @@ class WebApp_plotter:
         self.rcParam_dict = {
             "font.family": "serif",
             "figure.facecolor": self.color_dict["fig_face_c"],
-            "figure.subplot.hspace": 1000,
+            "figure.subplot.hspace": 0.95,
             "axes.facecolor": self.color_dict["axes_face_c"],
             "axes.edgecolor": self.color_dict["axes_edge_c"],
             "axes.titlecolor": self.color_dict["axes_title_c"],
