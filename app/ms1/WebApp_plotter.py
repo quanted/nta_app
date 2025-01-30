@@ -128,7 +128,10 @@ class WebApp_plotter:
         plt.rcParams.update(self.rcParam_dict)
 
     def _check_for_seq(
-        self, df_seq: Union[None, pd.DataFrame], debug_list: list[Any]
+        self,
+        df_seq: Union[None, pd.DataFrame],
+        debug_list: list[Any],
+        df_in: pd.DataFrame,
     ) -> tuple[pd.DataFrame, str, list[Any], list[str], list[int]]:
         """Handles the sequence data for plotting.
 
@@ -1293,7 +1296,7 @@ class WebApp_plotter:
         debug_list.append(df_in.columns.values)
 
         ## check for sequence df
-        seq_results = self._check_for_seq(df_seq, debug_list)
+        seq_results = self._check_for_seq(df_seq, debug_list, df_in)
         df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list = seq_results
 
         ## clean sequence data
