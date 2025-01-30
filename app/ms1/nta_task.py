@@ -1459,14 +1459,10 @@ class NtaRun:
         # Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
 
+        # If hcd search is not to be performed, replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
         if self.parameters["search_hcd"][1] != "yes":
-            
-        # Adds an empty column that will hold the DTXSID hyperlinks
-        dsstox_search_df.insert(dsstox_search_df.columns.get_loc("DTXSID") + 1, "DTXSID_HYPERLINK", "")
-
-        # Populates the DTXSID_HYPERLINK column into the corresponding hyperlink
-        for index, row in dsstox_search_df.iterrows():
-            dsstox_search_df.loc[index, "DTXSID_HYPERLINK"] = make_hyperlink(dsstox_search_df.loc[index, "DTXSID"])
+            for index, row in dsstox_search_df.iterrows():
+                dsstox_search_df.loc[index, "DTXSID"] = make_hyperlink(dsstox_search_df.loc[index, "DTXSID"])
 
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
@@ -1495,6 +1491,9 @@ class NtaRun:
             hcd_results = batch_search_hcd(dtxsid_list)
             # Merge retrieved hazard info with dashboard search results
             self.search_results = self.search_results.merge(hcd_results, how="left", on="DTXSID")
+            # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
+            for index, row in self.search_results.iterrows():
+                self.search_results.loc[index, "DTXSID"] = make_hyperlink(self.search_results.loc[index, "DTXSID"])
             # Update Chemical Results output
             self.data_map["Chemical Results"] = self.search_results
 
