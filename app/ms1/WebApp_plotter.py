@@ -1,19 +1,24 @@
 """
 Class for producing plots for web app
-2023/02/23
+2025/01/17
 E. Tyler Carr
 """
+import logging
+from typing import Any, Literal, Union
 
+from matplotlib.axes._axes import Axes
+from matplotlib.figure import Figure
 from matplotlib.patches import FancyBboxPatch
 import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
+from matplotlib.ticker import MaxNLocator
 import math
+import numpy as np
+import pandas as pd
 
-# from .functions_Universal_v3 import parse_headers
-from .task_functions import parse_headers, determine_string_width
-import io
-import logging
+from .task_functions import determine_string_width, parse_headers
+
+## set axes return type annotation alias for the WAPlotter._make_subplots() method
+AxesType = Union[np.ndarray[np.ndarray[Axes]], np.ndarray[Axes], Axes]
 
 # set up logging
 logger = logging.getLogger("nta_app.ms1")
@@ -23,6 +28,770 @@ class WebApp_plotter:
     """
     Class that takes in a path to .xlsx or .csv file, stores data as dataframes and provides methods for plotting
     """
+
+    def __init__(self):
+        self.color_mode = "light"
+        self._set_color_dict(self.color_mode)  ## creates self.color_dict
+        self._set_rcParams_dict()  ## creates self.rcParams_dict using self.color_dict
+        self._set_rcParams()  ## by default sets rcParams with "light" mode enabled
+
+    def _set_color_dict(self, color_mode: Literal["light", "dark"] = "light") -> None:
+        """Updates self.color_dict from light to dark or vice versa. Updates self.color_mode.
+
+        Parameters
+        ----------
+        color_mode : Literal["light", "dark"], default "light"
+            Which mode to set the colors to.
+        """
+        if color_mode == "light":
+            self.color_dict = {
+                "fig_face_c": "#e6e6e6",
+                "axes_face_c": "white",
+                "axes_edge_c": "black",
+                "axes_title_c": "black",
+                "text_c": "black",
+                "xtick_c": "black",
+                "ytick_c": "black",
+                "legend_font_c": "white",
+                "legend_bg_c": "#f2f2f2",
+                "legend_edge_c": "black",
+                "scatter_colors": [
+                    "teal",
+                    "orange",
+                    "magenta",
+                    "blue",
+                    "green",
+                    "red",
+                    "cyan",
+                    "yellow",
+                    "white",
+                    "black",
+                ],
+            }
+        elif color_mode == "dark":
+            self.color_dict = {
+                "fig_face_c": "black",
+                "axes_face_c": "#0d0d0d",
+                "axes_edge_c": "white",
+                "axes_title_c": "white",
+                "text_c": "white",
+                "xtick_c": "white",
+                "ytick_c": "white",
+                "legend_font_c": "black",
+                "legend_bg_c": "#a2a2a2",
+                "legend_edge_c": "black",
+                "scatter_colors": [
+                    "cyan",
+                    "orange",
+                    "magenta",
+                    "blue",
+                    "green",
+                    "red",
+                    "teal",
+                    "yellow",
+                    "white",
+                    "black",
+                ],
+            }
+        else:
+            raise ValueError(f"The `color_mode` parameter must be 'light' or 'dark', not {color_mode}")
+
+        self.color_mode = color_mode
+
+    def _set_rcParams_dict(self):
+        """Sets the self.rcParams_dict for styling plots."""
+        self.rcParam_dict = {
+            "font.family": "serif",
+            "figure.facecolor": self.color_dict["fig_face_c"],
+            "figure.subplot.hspace": 1000,
+            "axes.facecolor": self.color_dict["axes_face_c"],
+            "axes.edgecolor": self.color_dict["axes_edge_c"],
+            "axes.titlecolor": self.color_dict["axes_title_c"],
+            "axes.titlepad": 10.0,
+            "text.color": self.color_dict["text_c"],
+            "xtick.color": self.color_dict["xtick_c"],
+            "ytick.color": self.color_dict["ytick_c"],
+            "xtick.labelsize": 16,
+            "ytick.labelsize": 16,
+            "xtick.major.size": 5,
+            "ytick.major.size": 5,
+            "xtick.major.width": 0.9,
+            "ytick.major.width": 0.9,
+            "mathtext.fontset": "custom",
+            "mathtext.rm": "serif",
+            "mathtext.it": "serif:italic",
+            "mathtext.bf": "serif:bold",
+        }
+
+    def _set_rcParams(self):
+        """Sets the plt.rcParams for styling plots using self.rcParams_dict."""
+        plt.rcParams.update(self.rcParam_dict)
+
+    def _check_for_seq(
+        self, df_seq: Union[None, pd.DataFrame], debug_list: list[Any]
+    ) -> tuple[pd.DataFrame, str, list[Any], list[str], list[int]]:
+        """Handles the sequence data for plotting.
+
+        Parameters
+        ----------
+        df_seq : Union[None, pd.DataFrame]
+            The sequence data.
+        debug_list : list[Any]
+            The debug_list. Will likely an empty list when initially calling this function.
+
+        Returns
+        -------
+        tuple[pd.DataFrame, str, list[Any], list[str], list[int]]
+            The sequence df, a boolean values indicating whether to order samples or not,
+            nd updated debug_list (only updated if df_seq = None), a list of unique sample groups,
+            and a list of sample indices for each sample group.
+
+        This code was written by Alex Chao.
+        """
+        if df_seq is None:
+            # Sort dataframe columns alphabetically prior to parsing headers
+            df_in = df_in.reindex(sorted(df_in.columns), axis=1)  # Remove sorting to
+            df_in = df_in[
+                ["Feature_ID"] + [col for col in df_in.columns if col != "Feature_ID"]
+            ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
+
+            # Debug_list
+            debug_list.append("After sorting: df_in columns")
+            debug_list.append(df_in.columns.values)
+
+            # If there is no sequence file, create a dummy sequence dataframe containing the sample names straight from the input data file
+            headers = parse_headers(df_in)
+            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
+
+            # Debug_list
+            debug_list.append("Samples from parse_headers")
+            debug_list.append(abundance)
+
+            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
+            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
+            # Remove these from the sample list below
+            column_prefixes_to_remove = [
+                "Mean_",
+                "Median_",
+                "STD_",
+                "N_Abun_",
+                "CV_",
+                "Replicate_Percent_",
+                "Occurrence_Count",
+            ]
+            abundance = [
+                entry
+                for entry in abundance
+                if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
+            ]
+
+            df_loc_seq = pd.DataFrame()
+            df_loc_seq["Sample Sequence"] = abundance
+            order_samples = False
+        else:
+            df_loc_seq = df_seq
+            order_samples = True
+
+        # AC Check if sample sequence file has more than one column, second column would be the sample group column
+        if len(df_loc_seq.columns) > 1:
+            sample_group_unique = df_loc_seq.iloc[:, 1].unique().tolist()
+        else:  # If there is no sample group column, assign all samples to sample group 'Sample'
+            sample_group_unique = ["Sample"]
+            # Create the sample group column in the dataframe
+            df_loc_seq["Sample_Group"] = "Sample"
+
+        # AC Loop through sample group column and get indices of samples for each sample group
+        indices_list = []
+        for i in range(len(sample_group_unique)):
+            temp_indices = df_loc_seq.index[df_loc_seq.iloc[:, 1] == sample_group_unique[i]].tolist()
+            indices_list.append(temp_indices)
+
+        return df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list
+
+    def _clean_seq_data(
+        self, df_in: pd.DataFrame, df_loc_seq: pd.DataFrame, order_samples: bool
+    ) -> tuple[pd.DataFrame, list[list[str]], list[Any]]:
+        """Cleans the sequence data for creating sequence scatter plot.
+
+        Parameters
+        ----------
+        df_in : pd.DataFrame
+            The tracer statistics df.
+        df_loc_deq : pd.DataFrame
+            The sequence df returned from self._check_for_seq().
+        order_samples : bool
+            Whether to order samples, as returned from self._check_for_seq()
+
+        Returns
+        -------
+        tuple[pd.DataFrame, list[list[str]]]
+            A dataframe with cleaned/ordered samples and a list containing lists of chemicals --
+            there is one nested list for each figure that will be produced (max of 16 per list)
+            (e.g., for 17 chemicals we would have [[chem_1, ..., chem_16], [chem_17]]).
+        """
+        ## start by getting df with chemical names and abundance at each location in sequential order
+        abundance = None
+        if order_samples:
+            col_names = [x for x in df_loc_seq.iloc[:, 0]]
+            col_names.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
+            df_in["Chemical_Name"] = ["" for x in df_in.iloc[:, 0].values]
+            df = df_in[col_names].copy()
+        else:
+            # Sort dataframe columns alphabetically prior to parsing headers
+            df_in = df_in.reindex(sorted(df_in.columns), axis=1)
+            df_in = df_in[
+                ["Feature_ID"] + [col for col in df_in.columns if col != "Feature_ID"]
+            ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
+
+            headers = parse_headers(df_in)
+            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
+            abundance.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
+            # abundance.remove('Detection_Count(all_samples)')
+            # abundance.remove('Detection_Count(all_samples)(%)')
+            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
+            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
+            # Remove these from the sample list below
+            column_prefixes_to_remove = [
+                "Mean_",
+                "Median_",
+                "STD_",
+                "N_Abun_",
+                "CV_",
+                "Replicate_Percent_",
+                "Occurrence_Count",
+            ]
+            abundance = [
+                entry
+                for entry in abundance
+                if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
+            ]
+
+            df = df_in[abundance].copy()
+
+        # our list of final chemical names with appropriate capitalization
+        chemical_names = df_in["Chemical Name"]
+
+        ## split chem names into a nested list, one list of chem_names per plot
+        chem_names = [[]]
+        og_index = 0
+        for c in chemical_names:
+            if len(chem_names[og_index]) < 16:
+                chem_names[og_index].append(c)
+            else:
+                chem_names.append([c])
+                og_index += 1
+
+        return df, chem_names, abundance
+
+    def _make_subplots(
+        self,
+        chem_names: list[list[str]],
+        same_frame: bool = False,
+        share_y: bool = False,
+        y_scale: Literal["linear", "log"] = "linear",
+    ) -> tuple[tuple[Figure, AxesType, tuple[int], str]]:
+        """Creates figures and axes for plotting features.
+
+        Parameters
+        ----------
+        chem_names : list[list[str]]
+            The nested list of list of chemical names to be plotted. Each nested list represents a single
+            figure (max 16 per nested list. This input is part of the output of self._clean_seq_data().
+        same_frame : bool, default False
+            Determines if every figure should have the same shape of (nrows=4, ncols=4).
+            If True, ensures that all figures have a shape=(4, 4).
+            If False, generates as many shape=(4, 4) figures it can fill,
+            then it may make a final figure with a smaller shape depending
+            on how many chemicals are left to plot.
+        share_y : bool, default False
+            If True, each row of plots will share a y-axis labels on the first column.
+        y_scale : Literal["linear", "log"], default "linear"
+            Whether the y-axis scale will be linear or logarithmic.
+
+        Returns
+        -------
+        tuple[tuple[Figure, AxesType, tuple[int], str]]
+            A tuple contains a single tuple per Figure (i.e. per 16 chemicals to plot). Each tuple contains
+            the Figure object, the axes for the figure (1 or 2 dimensional np.ndarray of Axes for n_chems > 1,
+            or just an Axes object for n_chems=1), the shape of the figure/axes (e.g., (4, 4) for 4x4 subplots),
+            and the subtitle string used for plotting.
+        """
+        ## ensure each list within chem_names is the right length
+        for c_list in chem_names:
+            if len(c_list) > 16:
+                raise Exception("You have a list within chem_names whose length is longer than 16")
+
+        # create figs and axes for each list within chem_names
+        n_plots = len(chem_names)
+        i = 0
+        subtitle_i = 0
+        figs_axes = []
+        while i < n_plots:
+            c_list = chem_names[i]
+            n_chems = len(c_list)
+
+            ## setup fig and axes for this plot based on number of chems; if same_frame, then all plots get a 4x4
+            if (n_chems in [13, 14, 15, 16]) or (same_frame == True):
+                nrows, ncols = 4, 4
+            elif n_chems == 1:
+                nrows, ncols = 1, 1
+            elif n_chems == 2:
+                nrows, ncols = 2, 1
+            elif n_chems == 3:
+                nrows, ncols = 3, 1
+            elif n_chems == 4:
+                nrows, ncols = 2, 2
+            elif n_chems in [5, 6]:
+                nrows, ncols = 2, 3
+            elif n_chems in [7, 8, 9]:
+                nrows, ncols = 3, 3
+            elif n_chems in [10, 11, 12]:
+                nrows, ncols = 3, 4
+
+            fig, ax = plt.subplots(
+                nrows=nrows,
+                ncols=ncols,
+                sharex=False,
+                sharey=share_y,
+                subplot_kw={"yscale": y_scale},
+                constrained_layout=True,
+            )
+
+            ## set subtitles and turn grid lines on
+            if (n_chems == 1) and (same_frame == False):
+                # generate the subtitle for the plot to state which chemicals are being plotted
+                subtitle = f"Chemical {subtitle_i+1}"
+                # turn on grid and get shape
+                ax.grid()
+                shape = (1, 1)
+            else:
+                # generate the subtitle for the plot to state which chemicals are being plotted
+                subtitle_f = subtitle_i + n_chems
+                subtitle = f"Chemicals {subtitle_i+1}-{subtitle_f}"
+                subtitle_i = subtitle_f
+                # get shape of axis object
+                axe = ax.ravel()  # have to unpack gridspec object (from subplots() function)
+                gs = axe[0].get_gridspec()
+                shape = (gs.nrows, gs.ncols)
+
+                # remove unused subplot axes
+                for j in range(n_chems, gs.ncols * gs.nrows):
+                    axe[j].set_axis_off()
+
+                # setting axes grids and ticks
+                for j in range(0, n_chems):
+                    # turn on the grids
+                    axe[j].grid()
+
+            # a few more fig aesthetics, append our list of tupples to return, then iterate to next figure
+            fig.set_size_inches(14, 8)
+            # if share y is not on, we need extra space between plots horizontally (width w_pad)
+            if share_y == False and y_scale == "linear":
+                fig.tight_layout(pad=2.5, h_pad=1, w_pad=3.5)
+            else:
+                fig.tight_layout(pad=2.5, h_pad=1, w_pad=4.5)
+            figs_axes.append((fig, ax, shape, subtitle))
+            i += 1
+
+        return figs_axes
+
+    def _add_legend(self, fig: Figure, sample_group_unique: list[str]) -> Figure:
+        """Adds a legend to the figure based on the sample names in sample_group_unique"""
+        ## background box
+        bg_patch = FancyBboxPatch(
+            xy=(0.536, 1.044),
+            width=0.416,
+            height=0.092,
+            boxstyle="round,pad=0.008",
+            fc=self.color_dict["legend_bg_c"],
+            ec=self.color_dict["legend_edge_c"],
+            lw=2,
+            transform=fig.transFigure,
+            figure=fig,
+        )
+        fig.patches.extend([bg_patch])
+        # AC 1/3/2022 Add legend back to figure with colors denoted by sample group
+        # legend innards
+        # AC Loop through legend label generation
+        legend_x_coord = []  # List of x-coordinates for sample group in legend
+        # character_increment = 0.018  # How much to increment x-coordinate per character
+        base_separation = 0.025  # Flat base amount of separation between group labels
+
+        for b in range(len(sample_group_unique)):
+            # Get x coordinate of sample group legend text based on number of characters
+            if b == 0:
+                legend_x_coord.append(0.55)  # First x-coordinate is always 0.55
+                # char_count = len(sample_group_unique[b])
+                # next_x_increment = char_count * character_increment + base_separation
+                next_x_increment = determine_string_width(sample_group_unique[b]) + base_separation
+            else:
+                last_value = legend_x_coord[-1]
+                legend_x_coord.append(last_value + next_x_increment)
+                # char_count = len(sample_group_unique[b])
+                # next_x_increment = char_count * character_increment + base_separation
+                next_x_increment = determine_string_width(sample_group_unique[b]) + base_separation
+        # Display the legend text for each sample group
+        for a in range(len(sample_group_unique)):
+            fig.text(
+                legend_x_coord[a],
+                1.08,
+                sample_group_unique[a],
+                backgroundcolor=self.color_dict["scatter_colors"][a],
+                c=self.color_dict["legend_font_c"],
+                fontsize=23,
+                fontfamily="serif",
+                fontweight=500,
+            )
+
+        return fig
+
+    def _add_fit(
+        self,
+        ax: Axes,
+        x_values_list: list[list[float]],
+        y_values_list: list[list[float]],
+        sample_group_unique: list[str],
+    ) -> Axes:
+        """Adds a quadratic best fit curve to ax.
+
+        It must be that len(x_values_list) = len(y_values_list) = len(sample_group_unique)
+
+        Parameters
+        ----------
+        ax : Axes
+            The Axes object to add the curve of best fit to.
+        x_values_list : list[list[float]]
+            The nested lists of x values corresponding to each subplot.
+        y_values_list : list[list[float]]
+            The nested lists of y values corresponding to each subplot.
+        sample_group_unique : list[str]
+            The list of sample names.
+
+        Returns
+        -------
+        Axes
+            The updated Axes object with plotted quadratic curves of best fit.
+        """
+        for b in range(len(sample_group_unique)):
+            if len(x_values_list[b]) > 2:
+                x_fit = np.linspace(
+                    min(x_values_list[b]),
+                    max(x_values_list[b]),
+                    len(x_values_list[b]),
+                )
+                coefs = np.polyfit(
+                    x_fit,
+                    y_values_list[b],
+                    2,
+                )
+                domain = np.linspace(x_fit[0], x_fit[-1], 60)
+                y_fit = np.polyval(coefs, domain)
+                # QA check, someimtes fit gives a negative value at the edge, looks horrible
+                if y_fit[-1] < 0:
+                    y_fit = x_fit[:-1]
+                    x_fit = x_fit[:-1]
+                if y_fit[0] < 0:
+                    y_fit = y_fit[1:]
+                    x_fit = x_fit[1:]
+                ax.plot(domain, y_fit, color=self.color_dict["scatter_colors"][b], lw=3, zorder=100)
+
+        return ax
+
+    def _set_y_ticks(self, ax: Axes, y_scale: Literal["linear", "log"], y_step: str) -> Axes:
+        """Updates ax to have y_step evenly spaced (in linear or log space) tick marks."""
+        ylims = ax.get_ylim()
+
+        if y_scale == "linear":
+            locator = MaxNLocator(nbins=y_step - 2, prune="lower")
+            y_ticks = locator.tick_values(vmin=min(ylims), vmax=max(ylims))
+            ax.set_yticks(y_ticks)
+        else:
+            y_ticks_full = np.logspace(np.log10(min(ylims)), np.log10(max(ylims)), y_step)
+            ## round to 2 sig figs
+            y_ticks = [
+                (yy // 10 ** int(np.floor(np.log10(yy)) - 2)) * 10 ** int(np.floor(np.log10(yy)) - 2)
+                for yy in y_ticks_full
+            ]
+            ## setup ytick labels (otherwise it will leave out some labels for some reason)
+            y_labels = [
+                f"${((np.floor(yy/10**(len(str(int(yy)))-2))*10**(len(str(int(yy)))-2)) / 10**int(np.floor(np.log10(yy))))} \\times 10^{{{int(np.floor(np.log10(yy)))}}}$"
+                for yy in y_ticks
+            ]
+            ax.set_yticks([], minor=True)
+            ax.set_yticks(y_ticks, y_labels)
+
+        return ax
+
+    def _plot_seq_scatter(
+        self,
+        df: pd.DataFrame,
+        chem_names: list[list[str]],
+        figs_axes: tuple[tuple[Figure, AxesType, tuple[int], str]],
+        legend: bool,
+        sample_group_unique: list[str],
+        indices_list: list[int],
+        x_label: str,
+        ion_token: str,
+        fit: bool,
+        n_seq: int,
+        y_step: Union[None, "int"],
+        y_scale: Literal["linear", "log"],
+    ) -> list[Figure]:
+        """Does the actual plotting for self.make_seq_scatter()."""
+        # plot each chemical in its respective subplot
+        # start by iterating through your sublists of chemicals (in groups of 16 or less)
+        sublist_index = 0
+        chem_index = 0  # index for pulling information from primary df
+        figs = []
+        x0, x1 = 0, n_seq + 1  # limits for xticks
+        while sublist_index < len(chem_names):
+            chem_sublist = chem_names[sublist_index]
+            fig, ax, shape, subtitle = (
+                figs_axes[sublist_index][0],
+                figs_axes[sublist_index][1],
+                figs_axes[sublist_index][2],
+                figs_axes[sublist_index][3],
+            )
+
+            # set x and y labels, and plot title
+            fig.text(0.5, -0.035, x_label, ha="center", va="center", fontsize=28)
+            fig.text(
+                -0.042,
+                0.5,
+                "Abundance",
+                ha="center",
+                va="center",
+                rotation="vertical",
+                fontsize=28,
+            )
+            # title = "Abundance vs. Sequence\n"
+            title = "Abundance across Samples\n"
+            sub = f"{subtitle}, ESI{ion_token}"
+            fig.text(0.05, 1.045, title, fontsize=32)
+            fig.text(0.05, 1.045, sub, fontsize=26)
+
+            if legend == True:
+                fig = self._add_legend(fig, sample_group_unique)
+
+            nrows, ncols = shape[0], shape[1]  # shape of subplot axis
+            row_index, col_index = (
+                0,
+                0,
+            )  # indices for which subplot to put a chemical in
+
+            # pick a different markersize and linewidths for different figure shapes
+            if ncols == 1:
+                m_size = 140
+                lin_w = 2.4
+            elif ncols == 2:
+                m_size = 90
+                lin_w = 2.3
+            elif ncols == 3:
+                m_size = 50
+                lin_w = 2.2
+            else:
+                m_size = 20
+                lin_w = 1.9
+
+            # iterate through each chemical in the chemical sublist
+            for chem in chem_sublist:
+                # AC Loop through x/y data generation for each sample group
+
+                x_values_list = []
+                y_values_list = []
+
+                # For each sample group, go through each list of indices, pulling out x and y values from each group
+                for h in range(len(sample_group_unique)):
+                    x_values_temp = [x + 1 for x in indices_list[h][:]]
+                    y_values_temp = [y for y in df.iloc[chem_index, x_values_temp]]
+
+                    # get rid of nan values and set x_values
+                    y_keep_index = []
+                    for i, y in enumerate(y_values_temp):
+                        ## if na_filter=False when calling pd.read_excel/read_csv, math.isnan() will not work
+                        try:
+                            if math.isnan(y) == False:
+                                y_keep_index.append(i)
+                        except:
+                            if y != "":
+                                y_keep_index.append(i)
+
+                    y_values_temp = [y_values_temp[i] for i in y_keep_index]
+                    x_values_temp = [x_values_temp[i] for i in y_keep_index]
+
+                    x_values_list.append(x_values_temp)
+                    y_values_list.append(y_values_temp)
+
+                ## Now that we have values, actually plot. First handle a single chem
+                if (nrows == 1) and (ncols == 1):
+                    # AC Loop through scatter plot generation
+                    # ax.scatter(x_values_list[0], y_values_list[0], color=c_aes[0], s=m_size, zorder=100)
+                    for k in range(len(sample_group_unique)):
+                        ax.scatter(
+                            x_values_list[k],
+                            y_values_list[k],
+                            color=self.color_dict["scatter_colors"][k],
+                            s=m_size,
+                            zorder=100,
+                        )
+
+                    ax.set_title(chem, fontsize=24, fontweight=600)
+
+                    ## fits to plot
+                    if fit == True:
+                        ax = self._add_fit(ax, x_values_list, y_values_list, sample_group_unique)
+
+                    ## update xticks
+                    ax.set_xlim(x0, x1)
+
+                    if y_step is not None:
+                        ax = self._set_y_ticks(ax, y_scale, y_step)
+
+                ## now deal with 2 and 3 chemicals
+                elif (nrows != 1) and (ncols == 1):
+                    # AC Loop through scatter plot generation
+                    for k in range(len(sample_group_unique)):
+                        ax[row_index].scatter(
+                            x_values_list[k],
+                            y_values_list[k],
+                            color=self.color_dict["scatter_colors"][k],
+                            s=m_size,
+                            zorder=100,
+                        )
+
+                    ax[row_index].set_title(chem, fontsize=18, fontweight=600)
+
+                    ## add fits to plot
+                    if fit == True:
+                        ax[row_index] = self._add_fit(ax[row_index], x_values_list, y_values_list, sample_group_unique)
+
+                    ## update xticks
+                    xticks = [t for t in ax[0].get_xticks() if t >= x0 and t <= x1]
+                    for r in range(nrows):
+                        ## make sure all plots have the same xlims
+                        ax[r].set_xlim(x0, x1)
+                        ## if the plot below has axes on, then remove xticks
+                        try:
+                            if ax[r + 1].axison:
+                                ax[r].set_xticks(
+                                    ticks=xticks,
+                                    labels=["" for x in xticks],
+                                    rotation=60,
+                                    fontsize=12,
+                                    ha="right",
+                                )
+                            else:
+                                pass
+                        except:
+                            pass
+
+                    ## yticks
+                    if y_step is not None:
+                        ax[row_index] = self._set_y_ticks(ax[row_index], y_scale, y_step)
+
+                    ## iterate to next plot
+                    row_index += 1
+
+                ## finally deal with any more than 3 chemicals
+                else:
+                    try:
+                        # AC Loop through scatter plot generation
+                        for k in range(len(sample_group_unique)):
+                            ax[row_index, col_index].scatter(
+                                x_values_list[k],
+                                y_values_list[k],
+                                color=self.color_dict["scatter_colors"][k],
+                                s=m_size,
+                                zorder=100,
+                            )
+
+                        ## Adjust fontsize of subplot based on chemical name length
+                        if len(chem) > 20:
+                            chem_plot_fontsize = 400 / len(chem)
+                        else:
+                            chem_plot_fontsize = 18
+
+                        ax[row_index, col_index].set_title(chem, fontsize=chem_plot_fontsize, fontweight=600)
+
+                        ## add fits to plot
+                        if fit == True:
+                            ax[row_index, col_index] = self._add_fit(
+                                ax[row_index, col_index], x_values_list, y_values_list, sample_group_unique
+                            )
+
+                        ## yticks
+                        if y_step is not None:
+                            ax[row_index, col_index] = self._set_y_ticks(ax[row_index, col_index], y_scale, y_step)
+
+                        ## iterate to next plot
+                        col_index += 1
+
+                    except:
+                        row_index += 1
+                        column_index = 0
+
+                        # AC Loop through scatter plot generation
+                        for k in range(len(sample_group_unique)):
+                            ax[row_index, column_index].scatter(
+                                x_values_list[k],
+                                y_values_list[k],
+                                color=self.color_dict["scatter_colors"][k],
+                                s=m_size,
+                                zorder=100,
+                            )
+
+                        ## Adjust fontsize of subplot based on chemical name length
+                        if len(chem) > 20:
+                            chem_plot_fontsize = 400 / len(chem)
+                        else:
+                            chem_plot_fontsize = 18
+                        ax[row_index, column_index].set_title(chem, fontsize=chem_plot_fontsize, fontweight=600)
+
+                        ## add fits to plot
+                        if fit == True:
+                            ax[row_index, column_index] = self._add_fit(
+                                ax[row_index, column_index], x_values_list, y_values_list, sample_group_unique
+                            )
+
+                        ## update xticks
+                        xticks = [t for t in ax[0, 0].get_xticks() if t >= x0 and t <= x1]
+                        for r in range(nrows):
+                            for c in range(ncols):
+                                ## make sure all plots have the same xlims
+                                ax[r, c].set_xlim(x0, x1)
+                                ## if the plot below has axes on, then remove xticks
+                                try:
+                                    if ax[r + 1, c].axison:
+                                        ax[r, c].set_xticks(
+                                            ticks=xticks,
+                                            labels=["" for x in xticks],
+                                            rotation=60,
+                                            fontsize=12,
+                                            ha="right",
+                                        )
+                                    else:
+                                        pass
+                                except:
+                                    pass
+
+                        ## yticks
+                        if y_step is not None:
+                            ax[row_index, column_index] = self._set_y_ticks(
+                                ax[row_index, column_index], y_scale, y_step
+                            )
+
+                        ## iterate to next plot
+                        col_index = 1
+
+                ## iterate to the next chemical
+                chem_index += 1
+
+            figs.append(fig)
+
+            ## iterate to next sublist of chemicals (next figure)
+            sublist_index += 1
+
+        return figs
 
     def make_seq_line(
         self,
@@ -454,611 +1223,121 @@ class WebApp_plotter:
 
     def make_seq_scatter(
         self,
-        df_in,
-        seq_csv,
-        ionization,
-        y_scale="log",
-        fit=True,
-        share_y=True,
-        y_fixed=False,
-        y_step=4,
-        same_frame=False,
-        legend=True,
-        chemical_names=None,
-        dark_mode=False,
-    ):
+        df_in: pd.DataFrame,
+        df_seq: Union[None, pd.DataFrame],
+        ionization: Literal["pos", "neg"] = "pos",
+        fit: bool = True,
+        y_scale: Literal["linear", "log"] = "linear",
+        y_step: Union[None, int] = 4,
+        share_y: bool = False,
+        same_frame: bool = False,
+        legend: bool = True,
+        dark_mode: bool = False,
+    ) -> tuple[list[Any], pd.DataFrame, list[Any]]:
+        """Creates a run sequence scatter plot for ESI+ or ESI-.
+
+        This method is mainly for organization, most of the real work is
+        handled by calling other methods.
+
+        Parameters
+        ----------
+        df_in : pd.DataFrame
+            The "tracer detection statistics" data for either ESI+ or ESI-.
+        df_seq : Union[None, pd.DataFrame]
+            The run sequence data.
+        ionization : Literal["pos", "neg"], default "pos"
+            The ionization mode, used in the plot title. Use "pos" for ESI+, or "neg" for ESI-.
+        fit : bool, default True
+            If True, fits a quadratic best-fit curve through each sequence that have >=3 points.
+        y_scale : Literal["linear", "log"], default "linear"
+            The scale of the y-axes. Use "lin" for linear scale, or "log" for logarithmic scale.
+        y_step : Union[None, int], default 4
+            This parameter forces a specific number of y-ticks to use. If None, matplotlib will automatically
+            assign the y-ticks (this is unpredictable and may cause scaling issues - it is recommended to use
+            an integer value).
+        share_y : bool, default False
+            If True, the y-axes for the subplots on each row will be shared.
+        same_frame : bool, default False
+            Determines if each figure produced will have the same shape of (nrows=4, ncols=4).
+            This is useful only when > 16 plots will be made. For example, if there are 17 chemicals of interest
+            and same_frame = False, then there will be one 4x4 figure and one 1x1 figure; while if same_frame = True,
+            then two 4x4 figures will be made, the first will have 16 subplots, while the latter will have 1.
+        legend : bool, default True
+            If True, adds a legend to the top right of the figures.
+        dark_mode : bool, default False
+            If True, sets color scheme of figures to dark mode.
+
+        Returns
+        -------
+        tuple[list, pd.DataFrame, list]
+            A tuple whose first element is a listOfPNGs, second element is the df of data, and whose final element
+            is a list of debug items "list of lists/dataframes/etc for debugging purposes".
         """
-        Method to make line plot of abundance vs. sequence faceted by chemical names.
-        ------------------------------------------------------------------------------
-        df_in (str):
-            The data frame to be used for plotting.
-        seq_csv (str):
-            The path to a csv file whose first column yields the location labels,
-            and whose second column yields the associated sequence number to that location
-        ionization (str):
-            Determines which type of ESI to use for plots
-            "pos": ESI+
-            "neg": ESI-
-        y_scale (str):
-            Determines whether y-axes are plotted on log or linear scale
-            "log" : log scale (default)
-            "linear" : linear scale
-        y_fixed (bool):
-            Determines whether or not the y-ticks will be fixed for all plots
-            True: ensures that the y-ticks are fixed for every plot
-            False: lets matplotlib decide the y-ticks... this can cause y-ticks to differ between figures
-        y_step (int):
-            gives the number of ticks that will appear on a fixed y-axis
-            only works when y_fixed=True
-        same_frame (bool):
-            Determines if every figure should have the same shape of (nrows=4, ncols=4)
-            True: will ensure that all figures have a shape=(4, 4)
-            False: will generate as many shape=(4, 4) figures it can fill,
-                then it may make a final figure with a smaller shape depending
-                on how many chemicals are left to plot
-        legend (bool):
-            Determines whether or not to build a legend for differentiating MB and Pooled locations
-            True: will place a legend in the top right of figure for MB and Pooled locations
-            False: no legend is generated
-        chemical_names (list[str]):
-            A list chemical names that you want plotted.
-            If chemical_names=None, then all chemicals in data_path will be plotted
-        dark_mode (bool):
-            Determines if the plots will be made in dark mode or not
-        ------------------------------------------------------------------------------
-        By default there is no output unless save_image=True, in which case .png files will
-        be saved to disk.
-        """
-
-        listOfPNGs = []
-        debug_list = []  # List of lists/dataframes/etc to export out of function for debugging purposes
-
-        # Debug_list
-        debug_list.append("Beginning of make_seq_scatter: df_in columns")
-        debug_list.append(df_in.columns.values)
-
-        ##########################################################
-        ###     set df_tracer and check for sequence data      ###
-        ##########################################################
-
-        # check if there is a sequence csv file
-        if seq_csv is None:
-            # Sort dataframe columns alphabetically prior to parsing headers
-            df_in = df_in.reindex(sorted(df_in.columns), axis=1)  # Remove sorting to
-            df_in = df_in[
-                ["Feature ID"] + [col for col in df_in.columns if col != "Feature ID"]
-            ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
-
-            # Debug_list
-            debug_list.append("After sorting: df_in columns")
-            debug_list.append(df_in.columns.values)
-
-            # If there is no sequence file, create a dummy sequence dataframe containing the sample names straight from the input data file
-            headers = parse_headers(df_in)
-            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-
-            # Debug_list
-            debug_list.append("Samples from parse_headers")
-            debug_list.append(abundance)
-
-            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
-            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
-            # Remove these from the sample list below
-            column_prefixes_to_remove = [
-                "Mean_",
-                "Median_",
-                "STD_",
-                "N_Abun_",
-                "CV_",
-                "Replicate_Percent_",
-                "Occurrence_Count",
-            ]
-            abundance = [
-                entry
-                for entry in abundance
-                if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
-            ]
-
-            df_loc_seq = pd.DataFrame()
-            df_loc_seq["Sample Sequence"] = abundance
-            order_samples = False
-        else:
-            df_loc_seq = seq_csv
-            order_samples = True
+        ## data validation
         if ionization == "pos":
             ion_token = "+"
         elif ionization == "neg":
             ion_token = "-"
-
-        ############################################################
-        ###   Setting colors for plotting before cleaning data   ###
-        ############################################################
-
-        c_aes = [
-            "teal",
-            "Orange",
-            "magenta",
-            "b",
-            "g",
-            "r",
-            "c",
-            "y",
-            "w",
-            "k",
-        ]  # for scatter points
-        c_leg_text = "white"  # for legend text
-        c_leg_bg = "#f2f2f2"  # for legend background
-        c_leg_ec = "#000"  # for legend edgecolor
-
-        # if dark_mode=True, turn teal into cyan; and fix legend colors
-        if dark_mode == True:
-            c_aes[0] = "cyan"
-            c_leg_text = "black"
-            c_leg_bg = "#333"
-            c_leg_ec = "#fff"
-
-        # AC Check if sample sequence file has more than one column, second column would be the sample group column
-        if len(df_loc_seq.columns) > 1:
-            sample_group_unique = df_loc_seq.iloc[:, 1].unique().tolist()
-        else:  # If there is no sample group column, assign all samples to sample group 'Sample'
-            sample_group_unique = ["Sample"]
-            # Create the sample group column in the dataframe
-            df_loc_seq["Sample_Group"] = "Sample"
-
-        # AC Loop through sample group column and get indices of samples for each sample group
-        indices_list = []
-        for i in range(len(sample_group_unique)):
-            temp_indices = df_loc_seq.index[df_loc_seq.iloc[:, 1] == sample_group_unique[i]].tolist()
-            indices_list.append(temp_indices)
-
-        ################################################
-        ###             Clean the data               ###
-        ################################################
-
-        # start by getting df with chemical names and abundance at each location in sequential order
-        if order_samples:
-            col_names = [x for x in df_loc_seq.iloc[:, 0]]
-            col_names.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
-            # col_names.insert(0, 'Chemical_Name')
-            df = df_in[col_names].copy()
         else:
-            # Sort dataframe columns alphabetically prior to parsing headers
-            df_in = df_in.reindex(sorted(df_in.columns), axis=1)
-            df_in = df_in[
-                ["Feature ID"] + [col for col in df_in.columns if col != "Feature ID"]
-            ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
+            raise ValueError(f"The `ionization` parameter must be 'pos' or 'neg', not {ionization}")
 
-            headers = parse_headers(df_in)
-            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-            abundance.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
-            # Remove these from the sample list below
-            column_prefixes_to_remove = [
-                "Mean_",
-                "Median_",
-                "STD_",
-                "N_Abun_",
-                "CV_",
-                "Replicate_Percent_",
-                "Occurrence_Count",
-            ]
-            abundance = [
-                entry
-                for entry in abundance
-                if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
-            ]
+        if y_scale not in ("linear", "log"):
+            raise ValueError(f"The `y_scale` parameter must be 'linear' or 'log', not {y_scale}")
+        pass
 
-            df = df_in[abundance].copy()
+        ## setup output datastructures
+        listOfPNGs = []
+        debug_list = []  # List of lists/dataframes/etc to export out of function for debugging purposes
 
-        # our list of final chemical names with appropriate capitalization
-        chemical_names = df_in["Chemical_Name"]
+        debug_list.append("Beginning of make_seq_scatter: df_in columns")
+        debug_list.append(df_in.columns.values)
 
-        # split chem names into a nested list, one list of chem_names per plot
-        # since each plot can only comfortably fit 16 chemicals
-        chem_names = [[]]
-        og_index = 0
-        for c in chemical_names:
-            if len(chem_names[og_index]) < 16:
-                chem_names[og_index].append(c)
-            else:
-                chem_names.append([c])
-                og_index += 1
+        ## check for sequence df
+        seq_results = self._check_for_seq(df_seq, debug_list)
+        df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list = seq_results
 
-        ################################################
-        ###        Set up figures and axes           ###
-        ###      And set up global aesthetics        ###
-        ################################################
+        ## clean sequence data
+        df, chem_names, abundance = self._clean_seq_data(df_in, df_loc_seq, order_samples)
 
-        # start by getting fig and axes objects by calling make_subplots()
-        if y_fixed == True:
-            # we need to get the minimum and maximum abundencies to auto generate our plot y-ranges
-            y_max = df.max(numeric_only=True).max()
-            y_min = df.min(numeric_only=True).min()
+        ## handle dark mode / light mode options
+        if dark_mode == True and self.color_mode != "dark":
+            self._set_color_dict("dark")
+            self._set_rcParams_dict()
+            self._set_rcParams()
+        elif dark_mode == False and self.color_mode == "dark":
+            self._set_color_dict("light")
+            self._set_rcParams_dict()
+            self._set_rcParams()
 
-            # get a tupple of tupples that hold figs and axes objects for our faceted plots
-            figs_axes = make_subplots(
-                chem_names,
-                y_max,
-                y_min,
-                y_scale=y_scale,
-                share_y=share_y,
-                y_steps=y_step,
-                same_frame=same_frame,
-                dark_mode=dark_mode,
-            )
-        else:
-            figs_axes = make_subplots(
-                chem_names,
-                share_y=share_y,
-                y_scale=y_scale,
-                same_frame=same_frame,
-                dark_mode=dark_mode,
-            )
+        ## setup figs and axes
+        figs_axes = self._make_subplots(chem_names=chem_names, same_frame=same_frame, share_y=share_y, y_scale=y_scale)
 
-        ####################################################
-        ###      Split up by plot_type and plot          ###
-        ####################################################
-
+        ## now plot
         x_label = "Samples"  # label for plot
         if order_samples:
             n_seq = len(df_loc_seq)  # number of sequences
         else:
             n_seq = len(abundance)  # number of samples
 
-        # plot each chemical in its respective subplot
-        # start by iterating through your sublists of chemicals (in groups of 16 or less)
-        sublist_index = 0
-        chem_index = 0  # index for pulling information from primary df
-        while sublist_index < len(chem_names):
-            chem_sublist = chem_names[sublist_index]
-            fig, ax, shape, subtitle = (
-                figs_axes[sublist_index][0],
-                figs_axes[sublist_index][1],
-                figs_axes[sublist_index][2],
-                figs_axes[sublist_index][3],
-            )
-            # Add padding to fix issue of cropping on edge of figure - AC 9/25/2023
-            fig.tight_layout(pad=2.5)
+        listOfPNGs = self._plot_seq_scatter(
+            df,
+            chem_names,
+            figs_axes,
+            legend,
+            sample_group_unique,
+            indices_list,
+            x_label,
+            ion_token,
+            fit,
+            n_seq,
+            y_step,
+            y_scale,
+        )
 
-            # set x and y labels, and plot title
-            fig.text(0.5, -0.035, x_label, ha="center", va="center", fontsize=28)
-            fig.text(
-                -0.042,
-                0.5,
-                "Abundance",
-                ha="center",
-                va="center",
-                rotation="vertical",
-                fontsize=28,
-            )
-            title = "Abundance across Samples\n"
-            sub = f"{subtitle}, ESI{ion_token}"
-            fig.text(0.05, 1.045, title, fontsize=32)
-            fig.text(0.05, 1.045, sub, fontsize=26)
-
-            # AC 1/3/2022 Add legend back to figure with colors denoted by sample group
-            if legend == True:
-                # background box
-                bg_patch = FancyBboxPatch(
-                    xy=(0.536, 1.044),
-                    width=0.416,
-                    height=0.092,
-                    boxstyle="round,pad=0.008",
-                    fc=c_leg_bg,
-                    ec=c_leg_ec,
-                    lw=2,
-                    transform=fig.transFigure,
-                    figure=fig,
-                )
-                fig.patches.extend([bg_patch])
-                # legend innards
-                # AC Loop through legend label generation
-                legend_x_coord = []  # List of x-coordinates for sample group in legend
-                # character_increment = 0.018  # How much to increment x-coordinate per character
-                base_separation = 0.025  # Flat base amount of separation between group labels
-
-                for b in range(len(sample_group_unique)):
-                    # Get x coordinate of sample group legend text based on number of characters
-                    if b == 0:
-                        legend_x_coord.append(0.55)  # First x-coordinate is always 0.55
-                        # char_count = len(sample_group_unique[b])
-                        # next_x_increment = char_count * character_increment + base_separation
-                        next_x_increment = determine_string_width(sample_group_unique[b]) + base_separation
-                    else:
-                        last_value = legend_x_coord[-1]
-                        legend_x_coord.append(last_value + next_x_increment)
-                        # char_count = len(sample_group_unique[b])
-                        # next_x_increment = char_count * character_increment + base_separation
-                        next_x_increment = determine_string_width(sample_group_unique[b]) + base_separation
-                # Display the legend text for each sample group
-                for a in range(len(sample_group_unique)):
-                    fig.text(
-                        legend_x_coord[a],
-                        1.08,
-                        sample_group_unique[a],
-                        backgroundcolor=c_aes[a],
-                        c=c_leg_text,
-                        fontsize=23,
-                        fontfamily="serif",
-                        fontweight=500,
-                    )
-
-            nrows, ncols = shape[0], shape[1]  # shape of subpot axis
-            row_index, col_index = (
-                0,
-                0,
-            )  # indices for which subplot to put a chemical in
-
-            # pick a different markersize and linewidths for different figure shapes
-            if ncols == 1:
-                m_size = 140
-                lin_w = 2.4
-            elif ncols == 2:
-                m_size = 90
-                lin_w = 2.3
-            elif ncols == 3:
-                m_size = 50
-                lin_w = 2.2
-            else:
-                m_size = 20
-                lin_w = 1.9
-            # iterate through each chemical in the chemical sublist
-            for chem in chem_sublist:
-                ##############################################################
-                ###      Get x and y values from each location to plot     ###
-                ##############################################################
-
-                # AC Loop through x/y data generation for each sample group
-
-                x_values_list = []
-                y_values_list = []
-
-                # For each sample group, go through each list of indices, pulling out x and y values from each group
-                for h in range(len(sample_group_unique)):
-                    x_values_temp = [x + 1 for x in indices_list[h][:]]
-                    y_values_temp = [y for y in df.iloc[chem_index, x_values_temp]]
-
-                    # get rid of nan values and set x_values
-                    y_keep_index = []
-                    for i, y in enumerate(y_values_temp):
-                        if math.isnan(y) == False:
-                            y_keep_index.append(i)
-                    y_values_temp = [y_values_temp[i] for i in y_keep_index]
-                    x_values_temp = [x_values_temp[i] for i in y_keep_index]
-
-                    x_values_list.append(x_values_temp)
-                    y_values_list.append(y_values_temp)
-
-                ###############################################################
-                ###                 Actually start plotting                 ###
-                ###############################################################
-
-                # plot the chemical abundance vs sequence in appropriate subplot
-                # first deal with a single chemical
-                if (nrows == 1) and (ncols == 1):
-                    # AC Loop through scatter plot generation
-                    # ax.scatter(x_values_list[0], y_values_list[0], color=c_aes[0], s=m_size, zorder=100)
-                    for k in range(len(sample_group_unique)):
-                        ax.scatter(
-                            x_values_list[k],
-                            y_values_list[k],
-                            color=c_aes[k],
-                            s=m_size,
-                            zorder=100,
-                        )
-                    ax.set_title(chem, fontsize=24, fontweight=600)
-
-                    # add a quadratic fits to plot
-                    if fit == True:
-                        # AC Loop through quadratic plot generation
-                        for b in range(len(sample_group_unique)):
-                            if len(x_values_list[b]) > 2:
-                                x_fit = np.linspace(
-                                    min(x_values_list[b]),
-                                    max(x_values_list[b]),
-                                    len(x_values_list[b]),
-                                )
-                                coefs = np.polyfit(x_fit, y_values_list[b], 2)
-                                y_fit = np.polyval(coefs, x_fit)
-                                # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                                if y_fit[-1] < 0:
-                                    y_fit = x_fit[:-1]
-                                    x_fit = x_fit[:-1]
-                                if y_fit[0] < 0:
-                                    y_fit = y_fit[1:]
-                                    x_fit = x_fit[1:]
-                                ax.plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
-
-                # now deal with 2 and 3 chemicals
-                elif (nrows != 1) and (ncols == 1):
-                    # AC Loop through scatter plot generation
-                    for k in range(len(sample_group_unique)):
-                        ax[row_index].scatter(
-                            x_values_list[k],
-                            y_values_list[k],
-                            color=c_aes[k],
-                            s=m_size,
-                            zorder=100,
-                        )
-
-                    ax[row_index].set_title(chem, fontsize=18, fontweight=600)
-
-                    # add a quadratic fits to plot
-                    if fit == True:
-                        # AC Loop through quadratic plot generation
-                        for b in range(len(sample_group_unique)):
-                            if len(x_values_list[b]) > 2:
-                                x_fit = np.linspace(
-                                    min(x_values_list[b]),
-                                    max(x_values_list[b]),
-                                    len(x_values_list[b]),
-                                )
-                                coefs = np.polyfit(x_fit, y_values_list[b], 2)
-                                y_fit = np.polyval(coefs, x_fit)
-                                # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                                if y_fit[-1] < 0:
-                                    y_fit = x_fit[:-1]
-                                    x_fit = x_fit[:-1]
-                                if y_fit[0] < 0:
-                                    y_fit = y_fit[1:]
-                                    x_fit = x_fit[1:]
-                                ax[row_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
-
-                    # iterate to next plot
-                    row_index += 1
-
-                # finally deal with any more than 3 chemicals
-                else:
-                    try:
-                        # AC Loop through scatter plot generation
-                        for k in range(len(sample_group_unique)):
-                            ax[row_index, col_index].scatter(
-                                x_values_list[k],
-                                y_values_list[k],
-                                color=c_aes[k],
-                                s=m_size,
-                                zorder=100,
-                            )
-
-                        # Adjust fontsize of subplot based on chemical name length
-                        if len(chem) > 20:
-                            chem_plot_fontsize = 360 / len(chem)
-                        else:
-                            chem_plot_fontsize = 18
-
-                        ax[row_index, col_index].set_title(chem, fontsize=chem_plot_fontsize, fontweight=600)
-
-                        # add a quadratic fits to plot
-                        if fit == True:
-                            # AC Loop through quadratic plot generation
-                            for b in range(len(sample_group_unique)):
-                                if len(x_values_list[b]) > 2:
-                                    x_fit = np.linspace(
-                                        min(x_values_list[b]),
-                                        max(x_values_list[b]),
-                                        len(x_values_list[b]),
-                                    )
-                                    coefs = np.polyfit(x_fit, y_values_list[b], 2)
-                                    y_fit = np.polyval(coefs, x_fit)
-                                    # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                                    if y_fit[-1] < 0:
-                                        y_fit = x_fit[:-1]
-                                        x_fit = x_fit[:-1]
-                                    if y_fit[0] < 0:
-                                        y_fit = y_fit[1:]
-                                        x_fit = x_fit[1:]
-                                    ax[row_index, col_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
-
-                        # iterate to next plot
-                        col_index += 1
-
-                    # try block fails after hitting the last column, so you jump to the next row
-                    except:
-                        row_index += 1
-                        column_index = 0
-
-                        # AC Loop through scatter plot generation
-                        for k in range(len(sample_group_unique)):
-                            ax[row_index, column_index].scatter(
-                                x_values_list[k],
-                                y_values_list[k],
-                                color=c_aes[k],
-                                s=m_size,
-                                zorder=100,
-                            )
-
-                        # Adjust fontsize of subplot based on chemical name length
-                        if len(chem) > 20:
-                            chem_plot_fontsize = 360 / len(chem)
-                        else:
-                            chem_plot_fontsize = 18
-                        ax[row_index, column_index].set_title(chem, fontsize=chem_plot_fontsize, fontweight=600)
-
-                        # add a quadratic fits to plot
-                        if fit == True:
-                            # AC Loop through quadratic plot generation
-                            for b in range(len(sample_group_unique)):
-                                if len(x_values_list[b]) > 2:
-                                    x_fit = np.linspace(
-                                        min(x_values_list[b]),
-                                        max(x_values_list[b]),
-                                        len(x_values_list[b]),
-                                    )
-                                    coefs = np.polyfit(x_fit, y_values_list[b], 2)
-                                    y_fit = np.polyval(coefs, x_fit)
-                                    # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                                    if y_fit[-1] < 0:
-                                        y_fit = x_fit[:-1]
-                                        x_fit = x_fit[:-1]
-                                    if y_fit[0] < 0:
-                                        y_fit = y_fit[1:]
-                                        x_fit = x_fit[1:]
-                                    ax[row_index, column_index].plot(x_fit, y_fit, color=c_aes[b], lw=3, zorder=100)
-
-                        # iterate to next plot
-                        col_index = 1
-
-                # iterate to the next chemical
-                chem_index += 1
-
-            ########################################################
-            ###               Setup shared x-axis                ###
-            ########################################################
-
-            # set x_ticks -- need to make sure the axis is so labels go to the highest row of plots
-            # first for a single chemical (one plot)
-            x0, x1 = 0, n_seq + 1  # limits for xticks
-            if (nrows == 1) and (ncols == 1):
-                ax.set_xlim(x0, x1)
-            # 2 or 3 chemicals
-            elif nrows != 1 and ncols == 1:
-                xticks = [t for t in ax[0].get_xticks() if t >= x0 and t <= x1]
-                for r in range(nrows):
-                    # make sure all plots have the same xlims
-                    ax[r].set_xlim(x0, x1)
-                    # if the plot below has axes on, then remove xticks
-                    try:
-                        if ax[r + 1].axison:
-                            ax[r].set_xticks(
-                                ticks=xticks,
-                                labels=["" for x in xticks],
-                                rotation=60,
-                                fontsize=12,
-                                ha="right",
-                            )
-                        else:
-                            pass
-                    except:
-                        pass
-            # 4 or more chemicals
-            else:
-                xticks = [t for t in ax[0, 0].get_xticks() if t >= x0 and t <= x1]
-                for r in range(nrows):
-                    for c in range(ncols):
-                        # make sure all plots have the same xlims
-                        ax[r, c].set_xlim(x0, x1)
-                        # if the plot below has axes on, then remove xticks
-                        try:
-                            if ax[r + 1, c].axison:
-                                ax[r, c].set_xticks(
-                                    ticks=xticks,
-                                    labels=["" for x in xticks],
-                                    rotation=60,
-                                    fontsize=12,
-                                    ha="right",
-                                )
-                            else:
-                                pass
-                        except:
-                            pass
-
-            # 5/20/2024 AC: Add this code to address tracer plot bug
-            listOfPNGs.append(fig)
-
-            # iterate to the next figure
-            sublist_index += 1
+        # for i, fig in enumerate(listOfPNGs):
+        #     fig.savefig(f"./seq_{ionization}_{y_step}ticks-{str(i+1).zfill(2)}.png", bbox_inches="tight")
 
         return listOfPNGs, df, debug_list
-        # return listOfPNGs, chem_names
 
     def make_loc_plot(
         self,
@@ -1783,18 +2062,18 @@ def make_subplots(
                 axe[j].grid()
 
                 # if y_fixed == True then set the ticks
-                if (y_max is not None) and (y_min is not None):
-                    # Need to find the floor-nearest-power-of-ten for ymax and ymin
-                    y_max_pow = int(np.floor(np.log10(y_max)))
-                    y_min_pow = int(np.floor(np.log10(y_min)))
-                    n = y_steps  # number of ticks on y-axis
-                    # set y value ranges
-                    axe[j].set_ylim([10 ** (y_min_pow - 1), 10 ** (y_max_pow + 1)])
-                    # pick the tick locations and labels
-                    axe[j].set_yticks(
-                        ticks=[10**x for x in np.linspace(y_min_pow, y_max_pow, n)],
-                        labels=[f"$10^{{{int(x)}}}$" for x in np.linspace(y_min_pow, y_max_pow, n)],
-                    )
+                # if (y_max is not None) and (y_min is not None):
+                # Need to find the floor-nearest-power-of-ten for ymax and ymin
+                y_max_pow = int(np.floor(np.log10(y_max)))
+                y_min_pow = int(np.floor(np.log10(y_min)))
+                n = y_steps  # number of ticks on y-axis
+                # set y value ranges
+                axe[j].set_ylim([10 ** (y_min_pow - 1), 10 ** (y_max_pow + 1)])
+                # pick the tick locations and labels
+                axe[j].set_yticks(
+                    ticks=[10**x for x in np.linspace(y_min_pow, y_max_pow, n)],
+                    labels=[f"$10^{{{int(x)}}}$" for x in np.linspace(y_min_pow, y_max_pow, n)],
+                )
 
         # a few more fig aesthetics, append our list of tupples to return, then iterate to next figure
         fig.set_size_inches(14, 8)
@@ -1804,6 +2083,7 @@ def make_subplots(
         else:
             fig.tight_layout(h_pad=1)
         figs_axes.append((fig, ax, shape, subtitle))
+        print(type(fig), type(ax[0][0]), type(shape), type(subtitle))
         i += 1
 
     return figs_axes
