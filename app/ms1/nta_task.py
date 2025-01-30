@@ -1460,7 +1460,7 @@ class NtaRun:
 
         # Populates the DTXSID_HYPERLINK column into the corresponding hyperlink
         for index, row in dsstox_search_df.iterrows():
-            dsstox_search_df["DTXSID_HYPERLINK"][index] = make_hyperlink(dsstox_search_df["DTXSID"][index])
+            dsstox_search_df.loc[index, "DTXSID_HYPERLINK"] = make_hyperlink(dsstox_search_df.loc[index, "DTXSID"])
 
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df

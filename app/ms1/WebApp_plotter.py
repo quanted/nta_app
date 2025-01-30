@@ -234,7 +234,7 @@ class WebApp_plotter:
         if order_samples:
             col_names = [x for x in df_loc_seq.iloc[:, 0]]
             col_names.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
-            df_in["Chemical_Name"] = ["" for x in df_in.iloc[:, 0].values]
+            # df_in["Chemical_Name"] = ["" for x in df_in.iloc[:, 0].values]
             df = df_in[col_names].copy()
         else:
             # Sort dataframe columns alphabetically prior to parsing headers
