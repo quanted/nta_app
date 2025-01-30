@@ -745,6 +745,10 @@ class NtaRun:
         else:
             min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
         max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
+        # CV text position scale so it doesn't overlap with plot boundary
+        text_position_x = 5
+        if (max_abundance_limit - min_abundance_limit) > 1000000:
+            text_position_x = 7.5
         # Create list, define blank strings
         li = []
         blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
@@ -808,7 +812,7 @@ class NtaRun:
             alpha=1,
         )
         a.text(
-            max_abundance_limit / 5,
+            max_abundance_limit / text_position_x,
             max_replicate_cv_value + 0.1,
             "CV = {}".format(max_replicate_cv_value),
             ha="center",
@@ -875,7 +879,7 @@ class NtaRun:
             alpha=1,
         )
         b.text(
-            max_abundance_limit / 5,
+            max_abundance_limit / text_position_x,
             max_replicate_cv_value + 0.1,
             "CV = {}".format(max_replicate_cv_value),
             ha="center",
