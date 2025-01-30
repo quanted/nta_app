@@ -1193,7 +1193,7 @@ class NtaRun:
 
             listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 df_in=self.tracer_dfs_out[1],
-                seq_csv=self.run_sequence_neg_df,
+                df_seq=self.run_sequence_neg_df,
                 ionization="neg",
                 y_scale=yaxis_scale,
                 fit=trendline_shown,
