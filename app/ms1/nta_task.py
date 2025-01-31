@@ -1467,8 +1467,7 @@ class NtaRun:
 
         # If hcd search is not to be performed, replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
         if self.parameters["search_hcd"][1] != "yes":
-            for index, row in dsstox_search_df.iterrows():
-                dsstox_search_df.loc[index, "DTXSID"] = make_hyperlink(dsstox_search_df.loc[index, "DTXSID"])
+            dsstox_search_df["DTXSID"] = dsstox_search_df["DTXSID"].apply(lambda x: make_hyperlink(x))
 
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
