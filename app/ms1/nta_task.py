@@ -1167,6 +1167,10 @@ class NtaRun:
 
         # Create plot
         if self.tracer_dfs_out[0] is not None:
+            # Troubleshooting NTAW-460
+            logger.info("self.tracer_dfs_out[1] shape= {}".format(self.tracer_dfs_out[0].shape))
+            logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[0].columns.values))
+
             listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 df_in=self.tracer_dfs_out[0],
                 df_seq=self.run_sequence_pos_df,
