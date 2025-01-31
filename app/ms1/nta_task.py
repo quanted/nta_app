@@ -1160,7 +1160,9 @@ class NtaRun:
             for df in self.dfs
         ]
         # Call format_tracer_file imported from utilities.py
-        self.tracer_dfs_out = [format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out]
+        self.tracer_dfs_out = [
+            task_fun.format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out
+        ]
 
         # Declare plotter
         df_WA = WebApp_plotter()
