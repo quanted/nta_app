@@ -1022,6 +1022,29 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     return dft, dfc
 
 
+def format_tracer_file(df_in):
+    """
+    Function for formatting the Tracer Detection Statistics dataframe(s). Calculates and inserts
+    two columns, "Mass Error (PPM)" and "Retention Time Difference", then returns the dataframe.
+
+    Args:
+        df_in (Pandas dataframe)
+    Returns:
+        df (dataframe with two additional columns, Mass Error (PPM) and Retention Time Difference)
+    """
+    # Copy dataframe
+    df = df_in.copy()
+    # Calculate retention time difference Series
+    rt_diff = df["Observed Retention Time"] - df["Retention_Time"]
+    # Calculate mass difference Series
+    mass_diff = ((df["Observed Mass"] - df["Monoisotopic_Mass"]) / df["Monoisotopic_Mass"]) * 1000000
+    # Insert mass difference Series as column 7
+    df.insert(7, "Mass Error (PPM)", mass_diff)
+    # Insert retention time difference Series as column 9
+    df.insert(9, "Retention Time Difference", rt_diff)
+    return df
+
+
 """FUNCTIONS FOR CLEANING FEATURES"""
 
 
