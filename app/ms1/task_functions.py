@@ -158,7 +158,7 @@ def parse_headers(df_in):
     groups = groupby(new_headers, itemgetter(1))
     # Extract column names from group tuples
     new_headers_list = [[item[0] for item in data] for (key, data) in groups]
-    # Check that replicate samples are present. Raise IndexError if no repliates samples are found.
+    # Check that replicate samples are present. Raise IndexError if no replicate samples are found.
     max_group_size = 0
     for item in new_headers_list:
         if len(item) > max_group_size:

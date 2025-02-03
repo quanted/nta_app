@@ -1509,8 +1509,7 @@ class NtaRun:
             # Merge retrieved hazard info with dashboard search results
             self.search_results = self.search_results.merge(hcd_results, how="left", on="DTXSID")
             # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
-            for index, row in self.search_results.iterrows():
-                self.search_results.loc[index, "DTXSID"] = make_hyperlink(self.search_results.loc[index, "DTXSID"])
+            self.search_results["DTXSID"] = self.search_results["DTXSID"].apply(lambda x: make_hyperlink(x))
             # Update Chemical Results output
             self.data_map["Chemical Results"] = self.search_results
 
