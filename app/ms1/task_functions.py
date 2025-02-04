@@ -763,10 +763,11 @@ def chunk_stats(
     output["MRL (10x)"] = output["MRL (10x)"].fillna(output[Mean_MB[0]])
     output["MRL (10x)"] = output["MRL (10x)"].fillna(0)
 
-    # NTAW-509, Replace Selected MRL and MRL multipler values with 0 if the minimum blank detection percentage is not met
+    # Obtain the blank replicate percentage column
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
     Abundance = output.columns[output.columns.str.contains(pat="Detection Percentage ")].tolist()
     Replicate_Percent_MB = [N for N in Abundance if any(x in N for x in blanks)]
+    # Replace Selected MRL and MRL multipler values with 0 if the feature does not pass the blank replicate criteria
     output.loc[output[Replicate_Percent_MB[0]] < min_blank_detection_percentage, "Selected MRL"] = 0
     output.loc[output[Replicate_Percent_MB[0]] < min_blank_detection_percentage, "MRL (3x)"] = 0
     output.loc[output[Replicate_Percent_MB[0]] < min_blank_detection_percentage, "MRL (5x)"] = 0
