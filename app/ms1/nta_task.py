@@ -607,7 +607,9 @@ class NtaRun:
         # NTAW-49: Raises custom ValueError if blank columns are improperly named in the input dataframes
         try:
             self.dfs = [
-                task_fun.chunk_stats(df, mrl_multiplier, min_blank_detection_percentage) if df is not None else None
+                task_fun.chunk_stats(df, min_blank_detection_percentage, mrl_multiplier=mrl_multiplier)
+                if df is not None
+                else None
                 for df in self.dfs
             ]
         except IndexError:
