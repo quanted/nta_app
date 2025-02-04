@@ -601,10 +601,15 @@ class NtaRun:
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
         mrl_multiplier = float(self.parameters["mrl_std_multiplier"][1])
+        # NTAW-509 Get miminum blank detection percentage
+        min_blank_detection_percentage = float(self.parameters["min_replicate_hits_blanks"][1])
         # Iterate through dfs, calling chunk_stats() function
         # NTAW-49: Raises custom ValueError if blank columns are improperly named in the input dataframes
         try:
-            self.dfs = [task_fun.chunk_stats(df, mrl_multiplier) if df is not None else None for df in self.dfs]
+            self.dfs = [
+                task_fun.chunk_stats(df, mrl_multiplier, min_blank_detection_percentage) if df is not None else None
+                for df in self.dfs
+            ]
         except IndexError:
             raise ValueError(
                 "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'Mb', 'MB', 'blank', 'Blank', 'BLANK']"
