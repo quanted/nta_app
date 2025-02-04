@@ -1,12 +1,18 @@
 NTA WebApp Version History and Known Issues Documentation
-Version 0.3.5
-Updated 12/19/2024
+Version 0.3.6
+Updated 2/4/2025
 
 *************
 Known Issues:
 *************
 1) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
 2) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
+
+************************
+Version 0.3.6 - 2/4/2025
+************************
+
+
 
 ************************
 Version 0.3.5 - 12/19/2024
