@@ -11,8 +11,10 @@ Known Issues:
 ************************
 Version 0.3.6 - 2/4/2025
 ************************
-
-
+- MS1 workflow:
+  - Improved error message responses
+  - Removed redundant 'hcd_search' sheet in the results excel workbook for Cheminformatics Hazard Module search
+  - Detection Statistics sheets - set 'Selected MRL' and MRL multiplier values to 0 if the feature does not pass blank replicate criteria
 
 ************************
 Version 0.3.5 - 12/19/2024
