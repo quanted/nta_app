@@ -32,7 +32,7 @@ def upload_page(request, form_data=None, form_files=None):
     current_datetime = datetime.datetime.now()
 
     # manually define current version of the WebApp
-    current_version = "0.3.5"
+    current_version = "0.3.6"
 
     # define inputParameters dictionary containing all the parameters and their attributes, labels, and initial values
     inputParameters = {
