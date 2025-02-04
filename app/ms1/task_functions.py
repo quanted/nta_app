@@ -706,13 +706,14 @@ def statistics(df_in):
     return output
 
 
-def chunk_stats(df_in, mrl_multiplier=3):
+def chunk_stats(df_in, mrl_multiplier=3, min_blank_detection_percentage):
     """
     Wrapper function for passing manageable-sized dataframe chunks to 'statistics' -- TMF 10/27/23
 
     Inputs:
         df_in (dataframe)
         mrl_multiplier (int, integer multiplier for MRL; default is 3)
+        min_blank_detection_percentage (float)
     Outputs:
         output (dataframe, dataframe with groupwise stats columns added)
     """
@@ -757,6 +758,15 @@ def chunk_stats(df_in, mrl_multiplier=3):
     output["MRL (10x)"] = (10 * output[Std_MB[0]]) + output[Mean_MB[0]]
     output["MRL (10x)"] = output["MRL (10x)"].fillna(output[Mean_MB[0]])
     output["MRL (10x)"] = output["MRL (10x)"].fillna(0)
+    
+    # NTAW-509, Replace Selected MRL and MRL multipler values with 0 if the minimum blank detection percentage is not met
+    blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
+    Abundance = output.columns[output.columns.str.contains(pat="Detection Percentage ")].tolist()
+    Replicate_Percent_MB = [N for N in Abundance if any(x in N for x in blanks)]
+    output.loc[output[Replicate_Percent_MB[0]] < min_blank_detection_percentage, "Selected MRL"] = 0
+    output.loc[output[Replicate_Percent_MB[0]] < min_blank_detection_percentage, "MRL (3x)"] = 0
+    output.loc[output[Replicate_Percent_MB[0]] < min_blank_detection_percentage, "MRL (5x)"] = 0
+    output.loc[output[Replicate_Percent_MB[0]] < min_blank_detection_percentage, "MRL (10x)"] = 0
     # Return dataframe with statistics calculated and MRL included, to be output as data_feature_stats
     return output
 
