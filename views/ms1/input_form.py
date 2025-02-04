@@ -29,6 +29,14 @@ class NtaInputs(forms.Form):
         required=False,
         validators=[FileExtensionValidator(["csv"])],
     )
+    na_val = forms.CharField(
+        max_length=10,
+        min_length=1,
+        empty_value="",
+        label="Input matrix non-detect value (optional)",
+        initial="",
+        required=False,
+    )
     pos_adducts = forms.MultipleChoiceField(
         label="Positive mode adducts",
         widget=forms.CheckboxSelectMultiple(attrs={"class": "two"}),
@@ -208,3 +216,35 @@ class NtaInputs(forms.Form):
         ),
         initial="mass",
     )
+
+    # def clean(self):
+    #     cleaned_data = super().clean()
+    #     # Check for pos input file
+    #     try:
+    #         pos_input = cleaned_data.get("pos_input")
+    #     except Exception:
+    #         pos_input = None
+    #     # Check for neg input file
+    #     try:
+    #         neg_input = cleaned_data.get("neg_input")
+    #     except Exception:
+    #         neg_input = None
+    #     # Check for tracer input file
+    #     try:
+    #         tracer_input = cleaned_data.get("tracer_input")
+    #     except Exception:
+    #         tracer_input = None
+    #     # If tracer input present, require run sequence files corresponding to data modes
+    #     if tracer_input:
+    #         if pos_input:
+    #             try:
+    #                 rspf_input = cleaned_data.get("run_sequence_pos_file")
+    #             except Exception:
+    #                 raise forms.ValidationError("Run sequence file required when tracer file is submitted.")
+    #         if neg_input:
+    #             try:
+    #                 rsnf_input = cleaned_data.get("run_sequence_neg_file")
+    #             except Exception:
+    #                 raise forms.ValidationError("Run sequence file required when tracer file is submitted.")
+
+    #     return cleaned_data

@@ -80,6 +80,7 @@ class MergeRun:
         in_docker=True,
     ):
         self.project_name = parameters["project_name"]
+        logger.info(f"\n============= Job ID: {jobid}")
         logger.info(input_data)
         self.input_ms1 = input_data["MS1"]
         # self.input_ms2 = [input_data["MS2_pos"], input_data["MS2_neg"]] # NTAW-158: Update how MS2 data is handled, needs to be a list of MS2 files / ignore this
@@ -103,6 +104,8 @@ class MergeRun:
         # self.ms1_data_map = (
         #     {"dsstox_search": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
         # )
+
+        logger.info(f"\n============= Job ID: {jobid}")
 
     def execute(self):
         self.set_status("Processing", create=True)
@@ -133,7 +136,7 @@ class MergeRun:
             for key in self.ms1_data_map.keys():
                 self.mongo_save(self.ms1_data_map[key], data_name=key)
         self.set_status("Completed", progress=self.n_files)
-        logger.info("Run Finished")
+        logger.info(f"[Job ID: {self.jobid}] Run Finished")
 
     def set_status(self, status, progress=0, create=False):
         self.step = status

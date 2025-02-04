@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.encoding import iri_to_uri
+from django.views.decorators.csrf import csrf_exempt
 
 
 from .. import links_left
@@ -20,13 +21,14 @@ if os.getenv("DEPLOY_ENV", "kube-dev") == "kube-prod":
     logger.setLevel(logging.WARNING)
 
 # hard-coded example file names for testing found in nta_app/input/ms1/
-example_pos_filename = "pooled_blood_pos_MPP.csv"
-example_neg_filename = "pooled_blood_neg_MPP.csv"
-example_tracer_filename = "pooled_blood_tracers.csv"
-example_run_sequence_pos_filename = "pooled_blood_run_sequence_pos.csv"
-example_run_sequence_neg_filename = "pooled_blood_run_sequence_neg.csv"
+example_pos_filename = "1a_MZmine3_pos.csv"
+example_neg_filename = "1b_MZmine3_neg.csv"
+example_tracer_filename = "WW2DW_Tracers_Amenable.csv"
+example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
+example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
 
 
+@csrf_exempt
 def input_page(request, form_data=None, form_files=None):
     model = "ms1"
     header = "Run NTA MS1 workflow"
@@ -35,9 +37,13 @@ def input_page(request, form_data=None, form_files=None):
     # generate a timestamp with the current time and date
     current_datetime = datetime.datetime.now()
 
+    # manually define current version of the WebApp
+    current_version = "0.3.6"
+
     # define inputParameters dictionary containing all the parameters and their attributes, labels, and initial values
     inputParameters = {
         "project_name": ["Project name", None],
+        "version": ["WebApp Version", current_version],
         "datetime": ["Date & time", str(current_datetime)],
         "test_files": ["Run test files only (debugging)", None],
         "pos_input": ["Positive mode file", None],
@@ -88,14 +94,28 @@ def input_page(request, form_data=None, form_files=None):
         # if input 'test_files' is 'no', then the user has not selected to run the test files and at
         # least one input file is required
         if request.POST["test_files"] == "no":
+            # Set requirement status to True
             form.fields["pos_input"].required = True
             form.fields["neg_input"].required = True
+            # If 'pos_input' file is present, the 'neg_input' file is not required
             if "pos_input" in request.FILES.keys():
-                # since the 'pos_input' file is present, the 'neg_input' file is not required
                 form.fields["neg_input"].required = False
+            # If 'neg_input' file is present, the 'pos_input' file is not required
             if "neg_input" in request.FILES.keys():
-                # since the 'neg_input' file is present, the 'pos_input' file is not required
                 form.fields["pos_input"].required = False
+        # else:
+        #     form.fields["na_val"].required = False
+        # # If tracer file is present, then run sequence files are required inputs
+        # if "tracer_input" in request.FILES.keys():
+        #     # Set requirement status to True
+        #     form.fields["run_sequence_pos_file"].required = True
+        #     form.fields["run_sequence_neg_file"].required = True
+        #     # If 'pos_input' file is present, the 'neg_input' file is not required
+        #     if "pos_input" in request.FILES.keys():
+        #         form.fields["run_sequence_neg_file"].required = False
+        #     # If 'neg_input' file is present, the 'pos_input' file is not required
+        #     if "neg_input" in request.FILES.keys():
+        #         form.fields["run_sequence_pos_file"].required = False
 
         if form.is_valid():
             logger.info("form is valid")
@@ -138,11 +158,7 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
 
-            # NTAW-387 - AC: Update passing of adducts into input parameters
-            # Comment out old code
-            # inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
-            # inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
-            # inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
+            # Get user-selected adducts via POST.getlist()
             inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts")
             inputParameters["neg_adducts"][1] = request.POST.getlist("neg_adducts")
             inputParameters["neutral_losses"][1] = request.POST.getlist("neutral_losses")
@@ -176,7 +192,6 @@ def input_page(request, form_data=None, form_files=None):
                 # handle case 2: the user has not selected to run the test files
                 if "pos_input" in request.FILES.keys():
                     pos_input = request.FILES["pos_input"]
-
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["pos_input"][1] = pos_input.name
                 else:
@@ -196,7 +211,7 @@ def input_page(request, form_data=None, form_files=None):
                     inputParameters["tracer_input"][1] = tracer_file.name
                 except Exception:
                     tracer_df = None
-
+                # Check for either (or both run sequence files)
                 try:
                     run_sequence_pos_file = request.FILES["run_sequence_pos_file"]
                     run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
@@ -218,12 +233,18 @@ def input_page(request, form_data=None, form_files=None):
             logger.info("Input Files: {} ".format(inputs))
 
             input_dfs = []
+            # Get user-input non-detect value, pass to file_manager.input_handler
+            # Try to convert to float if a number, if not store string
+            try:
+                na_value = float(parameters["na_val"])
+            except ValueError:
+                na_value = parameters["na_val"]
+            # Iterate through inputs, format, and append to input_dfs
             for index, df in enumerate(inputs):
                 if df is not None:
-                    input_dfs.append(file_manager.input_handler(df, index))
+                    input_dfs.append(file_manager.input_handler(df, index, na_value))
                 else:
                     input_dfs.append(None)
-            # input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs) if df is not None]
 
             # create a job ID
             job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
@@ -256,8 +277,12 @@ def input_page(request, form_data=None, form_files=None):
     # function name example: 'sip_input_page'
     html += render_to_string("ms1/nta_input_scripts.html")
     html += render_to_string("ms1/nta_input_css.html")
+    if "/external/" in request.path:  # adding this switch as a short-term fix to connect AMOS front end
+        input_start_form = "ms1/nta_input_start_drupal_nologin.html"
+    else:
+        input_start_form = "ms1/nta_input_start_drupal.html"
     html += render_to_string(
-        "ms1/nta_input_start_drupal.html",
+        input_start_form,
         {"MODEL": model, "TITLE": header},
         request=request,
     )

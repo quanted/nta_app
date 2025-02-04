@@ -79,7 +79,7 @@ class MS2Run:
     def __init__(
         self, parameters=None, mongo_address=None, jobid="00000000", results_link=None, verbose=True, in_docker=True
     ):
-        logger.info("MS2Run initialize - started")
+        logger.info("[Job ID: {}] MS2Run initialize - started".format(jobid))
         self.inputParameters = parameters["inputParameters"]
         self.project_name = parameters["project_name"]
         self.n_masses = 1
@@ -301,7 +301,9 @@ class MS2Run:
         self.prepare_progress = 0
 
     def set_status(self, status, create=False):
-        logger.info(f"\n============= Starting Process: \n============= {status} \n============= ")
+        logger.info(
+            f"\n============= Job ID: {self.jobid} \n============= Starting Process: \n============= {status}  \n============="
+        )
         self.step = status
         self.log_time()
         posts = self.mongo.posts

@@ -1,8 +1,19 @@
 # set up nta_app root logger
 import logging
 import os
+from datetime import datetime
+from pytz import timezone
 
 DEPLOY_ENV = os.getenv("DEPLOY_ENV", "kube-dev")
+
+
+# obtain datetime object containing the current date/time in UTC-5 (New York timezone)
+def get_us_east_timestamp(*args):
+    return datetime.now(timezone("US/Eastern")).timetuple()
+
+
+# Convert logging statement timestamp to the US/Eastern timezone.
+logging.Formatter.converter = get_us_east_timestamp
 
 logging.basicConfig(
     level=logging.WARNING,
