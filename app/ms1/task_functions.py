@@ -1045,56 +1045,56 @@ def format_tracer_file(df_in):
     return df
 
 
-# def check_run_seq(df_in, run_seq_in):
-#     """
-#     A function to check the sample names between the input data matrix and the run sequence file. The function
-#     accepts two parameters, and has two logic gates (length of sample names list and spelling check) where
-#     errors can be raised.
+def check_run_seq(df_in, run_seq_in):
+    """
+    A function to check the sample names between the input data matrix and the run sequence file. The function
+    accepts two parameters, and has two logic gates (length of sample names list and spelling check) where
+    errors can be raised.
 
-#     :param
-#         df_in: the Detection Statistics dataframe
-#         run_seq_in: The run sequence file, where the first column is the sample names
-#     :return:
-#         N/A
-#     """
-#     # Copy input df and run_seq
-#     df = df_in.copy()
-#     run_seq = run_seq_in.copy()
-#     # Define prefixes
-#     prefixes = [
-#         "Mean ",
-#         "Median ",
-#         "CV ",
-#         "STD ",
-#         "Detection Count ",
-#         "Detection Percentage ",
-#         "Detection",
-#         "MRL",
-#         "Selected MRL",
-#     ]
-#     # Parse df headers to get samples
-#     all_headers = parse_headers(df)
-#     samples = [
-#         item
-#         for subgroup in all_headers
-#         for item in subgroup
-#         if ((len(subgroup) > 1) and not any(x in item for x in prefixes))
-#     ]
-#     # Get sample names from run sequence file
-#     sequence = list(run_seq[run_seq.columns[0]])
-#     # Check samples and sequence are same length
-#     if len(samples) != len(sequence):
-#         raise ValueError(
-#             "The number of samples present in your data matrix doesn't match the run sequence file. Please check your inputs (NOTE: this can occur if sample replicates are not named correctly)."
-#         )
-#     # Instantiate misspells
-#     misspells = [x for x in samples if x not in sequence]
-#     if len(misspells) > 0:
-#         raise ValueError(
-#             "There is at least one sample identified in your data matrix that isn't in the run sequence file. Please check the spelling of sample names in both files."
-#         )
-#     # Return nothing
-#     return
+    :param
+        df_in: the Detection Statistics dataframe
+        run_seq_in: The run sequence file, where the first column is the sample names
+    :return:
+        N/A
+    """
+    # Copy input df and run_seq
+    df = df_in.copy()
+    run_seq = run_seq_in.copy()
+    # Define prefixes
+    prefixes = [
+        "Mean ",
+        "Median ",
+        "CV ",
+        "STD ",
+        "Detection Count ",
+        "Detection Percentage ",
+        "Detection",
+        "MRL",
+        "Selected MRL",
+    ]
+    # Parse df headers to get samples
+    all_headers = parse_headers(df)
+    samples = [
+        item
+        for subgroup in all_headers
+        for item in subgroup
+        if ((len(subgroup) > 1) and not any(x in item for x in prefixes))
+    ]
+    # Get sample names from run sequence file
+    sequence = list(run_seq[run_seq.columns[0]])
+    # Check samples and sequence are same length
+    if len(samples) != len(sequence):
+        raise ValueError(
+            "The number of samples present in your data matrix doesn't match the run sequence file. Please check your inputs (NOTE: this can occur if sample replicates are not named correctly)."
+        )
+    # Instantiate misspells
+    misspells = [x for x in samples if x not in sequence]
+    if len(misspells) > 0:
+        raise ValueError(
+            "There is at least one sample identified in your data matrix that isn't in the run sequence file. Please check the spelling of sample names in both files."
+        )
+    # Return nothing
+    return
 
 
 """FUNCTIONS FOR CLEANING FEATURES"""

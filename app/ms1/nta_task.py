@@ -1179,9 +1179,9 @@ class NtaRun:
                     "A run sequence file was not found. Please input a corresponding run sequence file for each input data file."
                 )
             # If run sequence file present, check sample names in run sequence against those in the dataframe.
-            # else:
-            #    # Pass positive mode data and positive run sequence file to check_run_seq()
-            #     task_fun.check_run_seq(self.dfs[0], self.run_sequence_pos_df)
+            else:
+                # Pass positive mode data and positive run sequence file to check_run_seq()
+                task_fun.check_run_seq(self.dfs[0], self.run_sequence_pos_df)
 
             listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 df_in=self.tracer_dfs_out[0],
@@ -1217,9 +1217,9 @@ class NtaRun:
                     "A run sequence file was not found. Please input a corresponding run sequence file for each input data file."
                 )
             # If run sequence file present, check sample names in run sequence against those in the dataframe.
-            # else:
-            #    # Pass negative mode data and negative run sequence file to check_run_seq()
-            #     task_fun.check_run_seq(self.dfs[1], self.run_sequence_neg_df)
+            else:
+                # Pass negative mode data and negative run sequence file to check_run_seq()
+                task_fun.check_run_seq(self.dfs[1], self.run_sequence_neg_df)
 
             listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 df_in=self.tracer_dfs_out[1],
