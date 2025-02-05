@@ -134,7 +134,7 @@ class OutputServer:
                     left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin")
                 )
                 sheet["H1"].alignment = Alignment(horizontal="center")
-                sheet["H1"].font = Font(color="000000")
+                sheet["H1"].font = Font(color="000000", bold=True)
 
             # Adjust column widths of sheet - NTAW-470 AC 6/26/2024
             # Get max value of string length for entire column, add one to it, and set the column width to this value
