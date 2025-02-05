@@ -10,6 +10,7 @@ from pymongo.errors import OperationFailure
 from gridfs.errors import NoFile
 import io
 import matplotlib as plt
+from openpyxl.styles import Font
 
 # used for parallelization
 # import concurrent.futures
@@ -111,7 +112,7 @@ class OutputServer:
     #
     # -----------------------------------------------------------------
 
-    def construct_excel_sheet(self, writer, name):
+    def construct_excel_sheet(self, writer, name, file_names):
         try:
             print(f"Constructing {name} file")
             start = time.perf_counter()
@@ -120,6 +121,16 @@ class OutputServer:
             json_string = db_record.read().decode("utf-8")
             df = pd.read_json(json_string, orient="split")
             df.to_excel(writer, sheet_name=name, index=False)
+            if name == "Chemical Results":
+                sheet_number = file_names.index(name)
+                workbook = writer.book
+                # Access the Chemical Results sheet
+                sheet = workbook.worksheets[sheet_number]
+                # Set the style of the DTSXID column to hyperlink. The excel column letter of the DTSXID column is always H as of 05Feb2025
+                for cell in sheet["H"]:
+                    cell.style = "Hyperlink"
+                # Format the column header to black font color
+                sheet["H1"].font = Font(color="000000")
 
             # Adjust column widths of sheet - NTAW-470 AC 6/26/2024
             # Get max value of string length for entire column, add one to it, and set the column width to this value
@@ -137,11 +148,11 @@ class OutputServer:
         file_names = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
         print(f"file_names: {file_names}")
         in_memory_buffer = BytesIO()
-        with pd.ExcelWriter(in_memory_buffer, engine="xlsxwriter") as writer:
+        with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             for name in file_names:
                 if "final_" in name:
                     continue
-                self.construct_excel_sheet(writer, name)
+                self.construct_excel_sheet(writer, name, file_names)
         return in_memory_buffer.getvalue()
 
     def add_tracer_plots_to_zip(self, zipf, jobid):
