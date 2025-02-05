@@ -5,14 +5,24 @@ Updated 2/4/2025
 *************
 Known Issues:
 *************
-1) MS1 workflow: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
-2) MS1 workflow: Features with a retention time of exactly 1 minute are being dropped from the results.
+
 
 ************************
 Version 0.3.6 - 2/4/2025
 ************************
-
-
+- MS1 workflow:
+  - Improved error message responses
+  - Removed redundant 'hcd_search' sheet in the results excel workbook for Cheminformatics Hazard Module search
+  - Detection Statistics sheets - set 'Selected MRL' and MRL multiplier values to 0 if the feature does not pass blank replicate criteria
+  - Added version info to the Analysis Parameters sheet
+  - Updated the test files to the WW2DW dataset
+  - Added functionality for the user to define a unique NaN value in their dataset
+      o Resolved Known Issue: Features with a retention time of exactly 1 minute are being dropped from the results.
+  - Added additional validation for run sequence files, requiring them when tracers are submitted and checking their contents against the user-input data matrices
+      o Resolved Known Issue: If a tracer results file is selected but no run sequence file is selected, an error is thrown.
+  - Updated the run sequence plots with improved y-axis tick marks and trendline smoothing
+- MS2 workflow:
+  - Added version info to the Analysis Parameters sheet
 
 ************************
 Version 0.3.5 - 12/19/2024
