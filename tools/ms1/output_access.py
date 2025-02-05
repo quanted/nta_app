@@ -10,12 +10,15 @@ from pymongo.errors import OperationFailure
 from gridfs.errors import NoFile
 import io
 import matplotlib as plt
+import logging
 
 # used for parallelization
 # import concurrent.futures
 # import collections
 
 # os.environ['IN_DOCKER'] = "False" #for local dev - also see similar switch in app/nta_task.py
+
+logger = logging.getLogger("nta_app.ms1")
 
 
 def datetime_handler(x):
@@ -114,6 +117,7 @@ class OutputServer:
     def construct_excel_sheet(self, writer, name):
         try:
             print(f"Constructing {name} file")
+            logger.info(f"Constructing {name} file")
             start = time.perf_counter()
             id = self.jobid + "_" + name
             db_record = self.gridfs.get(id)
