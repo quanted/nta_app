@@ -10,7 +10,7 @@ from pymongo.errors import OperationFailure
 from gridfs.errors import NoFile
 import io
 import matplotlib as plt
-from openpyxl.styles import Font
+from openpyxl.styles import Font, Border, Side, Alignment
 
 # used for parallelization
 # import concurrent.futures
@@ -129,7 +129,11 @@ class OutputServer:
                 # Set the style of the DTSXID column to hyperlink. The excel column letter of the DTSXID column is always H as of 05Feb2025
                 for cell in sheet["H"]:
                     cell.style = "Hyperlink"
-                # Format the column header to black font color
+                # Format the column header
+                sheet["H1"].border = Border(
+                    left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin")
+                )
+                sheet["H1"].alignment = Alignment(horizontal="center")
                 sheet["H1"].font = Font(color="000000")
 
             # Adjust column widths of sheet - NTAW-470 AC 6/26/2024
