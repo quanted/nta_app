@@ -1595,7 +1595,7 @@ class NtaRun:
         # NTAW-218, function to save the zip with excel file to MongoDB
         in_memory_zip = io.BytesIO()
         with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
-            excel_data = datamap_to_excel()
+            excel_data = self.datamap_to_excel()
             zipf.writestr("testfile.xlsx", excel_data)
             with open(in_memory_zip, "rb") as file_data:
                 self.gridfs.put(
