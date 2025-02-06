@@ -287,7 +287,7 @@ class NtaRun:
         self.store_data()
 
         # NTAW-218
-        self.save_zip_to_mongo()
+        # self.save_zip_to_mongo()
 
         # 9: set status to completed
         self.step = "Displaying results"
