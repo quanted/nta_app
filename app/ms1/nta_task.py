@@ -1597,7 +1597,8 @@ class NtaRun:
         with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
             excel_data = self.datamap_to_excel()
             zipf.writestr("testfile.xlsx", excel_data)
-        with open(in_memory_zip, "rb") as file_data:
+        with open(in_memory_zip.getvalue(), "rb") as file_data:
+            logger.info("start added the zipfile to MongoDB")
             self.gridfs.put(
                 file_data,
                 _id=f"{jobid}_zip",
