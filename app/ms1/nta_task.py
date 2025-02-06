@@ -1582,7 +1582,7 @@ class NtaRun:
 
     def datamap_to_excel(self):
         # NTAW-218, function to create an excel sheet from the datamap
-        in_memory_buffer = BytesIO()
+        in_memory_buffer = io.BytesIO()
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             for df_name, df in self.data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
@@ -1590,7 +1590,7 @@ class NtaRun:
 
     def save_zip_to_mongo(self):
         # NTAW-218, function to save the zip with excel file to MongoDB
-        in_memory_zip = BytesIO()
+        in_memory_zip = io.BytesIO()
         with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
             excel_data = datamap_to_excel()
             zipf.writestr("testfile.xlsx", excel_data)
