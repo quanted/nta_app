@@ -285,6 +285,9 @@ class NtaRun:
         self.step = "Storing data"
         self.store_data()
 
+        # NTAW-218
+        self.save_zip_to_mongo()
+
         # 9: set status to completed
         self.step = "Displaying results"
         self.set_status("Completed")
@@ -1576,3 +1579,26 @@ class NtaRun:
         project_name = self.parameters["project_name"][1]
         # Save item to MongoDB using item id
         self.gridfs.put(to_save, _id=id, encoding="utf-8", project_name=project_name)
+
+    def datamap_to_excel(self):
+        # NTAW-218, function to create an excel sheet from the datamap
+        in_memory_buffer = BytesIO()
+        with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
+            for df_name, df in self.data_map.items():
+                df.to_excel(writer, sheet_name=df_name, index=False)
+        return in_memory_buffer.getvalue()
+
+    def save_zip_to_mongo(self):
+        # NTAW-218, function to save the zip with excel file to MongoDB
+        in_memory_zip = BytesIO()
+        with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
+            excel_data = datamap_to_excel()
+            zipf.writestr("testfile.xlsx", excel_data)
+            with open(in_memory_zip, "rb") as file_data:
+                fs.put(
+                    file_data,
+                    _id=f"{jobid}_zip",
+                    filename="testing.zip",
+                    content_type="application/zip",
+                    project_name=project_name,
+                )

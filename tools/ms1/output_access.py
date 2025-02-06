@@ -283,6 +283,15 @@ class OutputServer:
         response["Content-length"] = in_memory_zip.tell()
         return response
 
+    def retrieve_zip(self):
+        # NTAW-218 function to retrieve results zipfile from MongoDB
+        retrieved_zip = self.gridfs.get(f"{self.jobid}_zip")
+        zip_filename = "testing.zip"
+        response = HttpResponse(retrieved_zip.getvalue(), content_type="application/zip")
+        response["Content-Disposition"] = "attachment; filename=" + zip_filename
+        response["Content-length"] = retrieved_zip.tell()
+        return response
+
     def decision_tree(self):
         data_pos_id = self.jobid + "_" + "All Detection Statistics (Pos)"
         data_neg_id = self.jobid + "_" + "All Detection Statistics (Neg)"
