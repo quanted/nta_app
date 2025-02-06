@@ -8,6 +8,7 @@ import shutil
 import json
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
+from zipfile import ZipFile, ZIP_DEFLATED
 
 # connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
 from .utilities import *
@@ -1584,8 +1585,10 @@ class NtaRun:
         # NTAW-218, function to create an excel sheet from the datamap
         in_memory_buffer = io.BytesIO()
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
+            logger.INFO("start converting data_map to excel")
             for df_name, df in self.data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
+            logger.INFO("finished converting data_map to excel")
         return in_memory_buffer.getvalue()
 
     def save_zip_to_mongo(self):
