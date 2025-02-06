@@ -1595,7 +1595,7 @@ class NtaRun:
             excel_data = datamap_to_excel()
             zipf.writestr("testfile.xlsx", excel_data)
             with open(in_memory_zip, "rb") as file_data:
-                fs.put(
+                self.gridfs.put(
                     file_data,
                     _id=f"{jobid}_zip",
                     filename="testing.zip",
