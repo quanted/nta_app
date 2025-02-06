@@ -103,19 +103,6 @@ def input_page(request, form_data=None, form_files=None):
             # If 'neg_input' file is present, the 'pos_input' file is not required
             if "neg_input" in request.FILES.keys():
                 form.fields["pos_input"].required = False
-        # else:
-        #     form.fields["na_val"].required = False
-        # # If tracer file is present, then run sequence files are required inputs
-        # if "tracer_input" in request.FILES.keys():
-        #     # Set requirement status to True
-        #     form.fields["run_sequence_pos_file"].required = True
-        #     form.fields["run_sequence_neg_file"].required = True
-        #     # If 'pos_input' file is present, the 'neg_input' file is not required
-        #     if "pos_input" in request.FILES.keys():
-        #         form.fields["run_sequence_neg_file"].required = False
-        #     # If 'neg_input' file is present, the 'pos_input' file is not required
-        #     if "neg_input" in request.FILES.keys():
-        #         form.fields["run_sequence_pos_file"].required = False
 
         if form.is_valid():
             logger.info("form is valid")
@@ -162,6 +149,9 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts")
             inputParameters["neg_adducts"][1] = request.POST.getlist("neg_adducts")
             inputParameters["neutral_losses"][1] = request.POST.getlist("neutral_losses")
+            logger.info("pos adducts list: {}".format(inputParameters["pos_adducts"][1]))
+            logger.info("neg adducts list: {}".format(inputParameters["neg_adducts"][1]))
+            logger.info("neutral adducts list: {}".format(inputParameters["neutral_losses"][1]))
 
             # two basic scenarios are possible: 1) the user has selected to run the test files, or 2) the user
             # has not selected to run the test files. If the user has selected to run the test files, then the
