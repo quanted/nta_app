@@ -126,15 +126,18 @@ class OutputServer:
                 workbook = writer.book
                 # Access the Chemical Results sheet
                 sheet = workbook.worksheets[sheet_number]
-                # Set the style of the DTSXID column to hyperlink. The excel column letter of the DTSXID column is always H as of 05Feb2025
-                for cell in sheet["H"]:
+                # Set the style of the DTSXID column to hyperlink. The excel column number of the DTSXID column is always 8 as of 06Feb2025
+                # for cell in sheet["H"]:
+                #     cell.style = "Hyperlink"
+                # # Format the column header
+                # sheet["H1"].border = Border(
+                #     left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin")
+                # )
+                # sheet["H1"].alignment = Alignment(horizontal="center")
+                # sheet["H1"].font = Font(color="000000", bold=True)
+                for i in range(sheet.max_row):
+                    cell = sheet.cell(row=i + 2, column=8)
                     cell.style = "Hyperlink"
-                # Format the column header
-                sheet["H1"].border = Border(
-                    left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin")
-                )
-                sheet["H1"].alignment = Alignment(horizontal="center")
-                sheet["H1"].font = Font(color="000000", bold=True)
 
             # Adjust column widths of sheet - NTAW-470 AC 6/26/2024
             # Get max value of string length for entire column, add one to it, and set the column width to this value
