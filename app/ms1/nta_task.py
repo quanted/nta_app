@@ -287,7 +287,7 @@ class NtaRun:
         self.store_data()
 
         # NTAW-218, store the pre-generated results excel file to MongoDB
-        # self.save_excel_to_mongo()
+        self.save_excel_to_mongo()
 
         # 9: set status to completed
         self.step = "Displaying results"
