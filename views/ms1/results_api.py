@@ -4,7 +4,6 @@ from ...tools.ms1.output_access import OutputServer
 def download_toxpi(request, jobid=None):
     server = OutputServer(jobid)
     response = server.final_result()
-    # response = server.retrieve_zip()
     return response
 
 
