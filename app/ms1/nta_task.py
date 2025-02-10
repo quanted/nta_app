@@ -1584,24 +1584,9 @@ class NtaRun:
     def save_excel_to_mongo(self):
         # NTAW-218, function to create an excel sheet from the datamap and save it to MongoDB
         in_memory_buffer = io.BytesIO()
-        if "Chemical Results" in self.data_map.keys():
-            chemical_results_present = True
-            self.data_map["Chemical Results"]["DTXSID"] = self.data_map["Chemical Results"]["DTXSID"].apply(
-                lambda x: make_hyperlink(x)
-            )
-            keys_list = list(self.data_map.keys())
-            sheet_number = keys_list.index("Chemical Results")
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             for df_name, df in self.data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
-            if chemical_results_present:
-                workbook = writer.book
-                # Access the Chemical Results sheet
-                sheet = workbook.worksheets[sheet_number]
-                # Set the style of the DTSXID column to hyperlink. The excel column number of the DTSXID column is always 8 as of 06Feb2025
-                for i in range(sheet.max_row):
-                    cell = sheet.cell(row=i + 2, column=8)
-                    cell.style = "Hyperlink"
         excel_data = in_memory_buffer.getvalue()
 
         # Save project name to MongoDB using jobid
