@@ -290,22 +290,6 @@ class OutputServer:
         response["Content-length"] = in_memory_zip.tell()
         return response
 
-    def retrieve_excel_file(self):
-        # NTAW-218 function to retrieve results excel file from MongoDB
-        retrieved_file = self.gridfs.get(f"{self.jobid}_excel").read()
-
-        filename = self.jobid + "_NTA_WebApp_results.xlsx"
-
-        in_memory_zip = BytesIO()
-        with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
-            zipf.writestr(filename, retrieved_file)
-
-        zip_filename = "nta_results_" + self.jobid + ".zip"
-        response = HttpResponse(in_memory_zip.getvalue(), content_type="application/zip")
-        response["Content-Disposition"] = "attachment; filename=" + zip_filename
-        response["Content-length"] = in_memory_zip.tell()
-        return response
-
     def decision_tree(self):
         data_pos_id = self.jobid + "_" + "All Detection Statistics (Pos)"
         data_neg_id = self.jobid + "_" + "All Detection Statistics (Neg)"
