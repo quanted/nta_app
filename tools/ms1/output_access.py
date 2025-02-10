@@ -229,25 +229,25 @@ class OutputServer:
         in_memory_zip = BytesIO()
 
         with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
-            excel_data = self.generate_excel()
-
-            # Update Excel file name to be named after project name and if not present, after Job ID
-            data_files = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
-            for name in data_files:
-                try:
-                    tracer_id = self.jobid + "_" + name
-                    db_record = self.gridfs.get(tracer_id)
-                    buffer = db_record.read()
-                    project_name = db_record.project_name
-                    if project_name:
-                        # filename = project_name.replace(" ", "_") + '_' + name + '.png'
-                        filename = project_name.replace(" ", "_") + "_NTA_WebApp_results.xlsx"
-                    else:
-                        # filename = tracer_id + '.png'
-                        filename = self.jobid + "_NTA_WebApp_results.xlsx"
-                    # zipf.writestr(filename, buffer)
-                except (OperationFailure, TypeError, NoFile) as e:
-                    break
+            # excel_data = self.generate_excel()
+            excel_data = self.gridfs.get(f"{self.jobid}_excel").read()
+            # # Update Excel file name to be named after project name and if not present, after Job ID
+            # data_files = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
+            # for name in data_files:
+            #     try:
+            #         tracer_id = self.jobid + "_" + name
+            #         db_record = self.gridfs.get(tracer_id)
+            #         buffer = db_record.read()
+            #         project_name = db_record.project_name
+            #         if project_name:
+            #             # filename = project_name.replace(" ", "_") + '_' + name + '.png'
+            #             filename = project_name.replace(" ", "_") + "_NTA_WebApp_results.xlsx"
+            #         else:
+            #             # filename = tracer_id + '.png'
+            #             filename = self.jobid + "_NTA_WebApp_results.xlsx"
+            #         # zipf.writestr(filename, buffer)
+            #     except (OperationFailure, TypeError, NoFile) as e:
+            #         break
 
             # db_record = self.gridfs.get(self.jobid)
             # buffer = db_record.read()
