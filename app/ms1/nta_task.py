@@ -1585,16 +1585,16 @@ class NtaRun:
         # NTAW-218, function to create an excel sheet from the datamap and save it to MongoDB
         in_memory_buffer = io.BytesIO()
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
-            logger.info("start converting data_map to excel")
             for df_name, df in self.data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
-            logger.info("finished converting data_map to excel")
         excel_data = in_memory_buffer.getvalue()
-        # Format id
-        id = self.jobid + "_excel"
-        # Get project name
+
+        # Save project name to MongoDB using jobid
         project_name = self.parameters["project_name"][1]
+        self.gridfs.put(project_name, _id=f"{self.jobid} + _project_name", encoding="utf-8")
+
         # Save results excel file to MongoDB using id
-        self.gridfs.put(excel_data, _id=id, project_name=project_name)
-        logger.info("finished saving excel file to MongoDB")
+        id = self.jobid + "_excel"
+        self.gridfs.put(excel_data, _id=id)
+
         return in_memory_buffer.getvalue()
