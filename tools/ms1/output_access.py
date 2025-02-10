@@ -232,7 +232,7 @@ class OutputServer:
             # excel_data = self.generate_excel()
             excel_data = self.gridfs.get(f"{self.jobid}_excel").read()
 
-            # ----- TODO: need to grab filenames from this code----------
+            # # ----- TODO: need to grab filenames from this code----------
             # # Update Excel file name to be named after project name and if not present, after Job ID
             # data_files = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
             # for name in data_files:
@@ -250,6 +250,9 @@ class OutputServer:
             #         # zipf.writestr(filename, buffer)
             #     except (OperationFailure, TypeError, NoFile) as e:
             #         break
+
+            project_name = excel_data.project_name
+            filename = project_name.replace(" ", "_") + "_NTA_WebApp_results.xlsx"
             # -----------------------------------------------------------
 
             # db_record = self.gridfs.get(self.jobid)
@@ -262,7 +265,7 @@ class OutputServer:
 
             # excel_filename = self.parameters['project_name'][1] + '_' + self.jobid + '.xlsx'
             # zipf.writestr('summary.xlsx', excel_data)
-            filename = "temp_filename.xlsx"
+            # filename = "temp_filename.xlsx"
             zipf.writestr(filename, excel_data)
 
             # self.add_tracer_plots_to_zip(zipf, self.jobid)
