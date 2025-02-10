@@ -112,47 +112,47 @@ class OutputServer:
     #
     # -----------------------------------------------------------------
 
-    def construct_excel_sheet(self, writer, name, file_names):
-        try:
-            print(f"Constructing {name} file")
-            start = time.perf_counter()
-            id = self.jobid + "_" + name
-            db_record = self.gridfs.get(id)
-            json_string = db_record.read().decode("utf-8")
-            df = pd.read_json(json_string, orient="split")
-            df.to_excel(writer, sheet_name=name, index=False)
-            if name == "Chemical Results":
-                sheet_number = file_names.index(name)
-                workbook = writer.book
-                # Access the Chemical Results sheet
-                sheet = workbook.worksheets[sheet_number]
-                # Set the style of the DTSXID column to hyperlink. The excel column number of the DTSXID column is always 8 as of 06Feb2025
-                for i in range(sheet.max_row):
-                    cell = sheet.cell(row=i + 2, column=8)
-                    cell.style = "Hyperlink"
+    # def construct_excel_sheet(self, writer, name, file_names):
+    #     try:
+    #         print(f"Constructing {name} file")
+    #         start = time.perf_counter()
+    #         id = self.jobid + "_" + name
+    #         db_record = self.gridfs.get(id)
+    #         json_string = db_record.read().decode("utf-8")
+    #         df = pd.read_json(json_string, orient="split")
+    #         df.to_excel(writer, sheet_name=name, index=False)
+    #         if name == "Chemical Results":
+    #             sheet_number = file_names.index(name)
+    #             workbook = writer.book
+    #             # Access the Chemical Results sheet
+    #             sheet = workbook.worksheets[sheet_number]
+    #             # Set the style of the DTSXID column to hyperlink. The excel column number of the DTSXID column is always 8 as of 06Feb2025
+    #             for i in range(sheet.max_row):
+    #                 cell = sheet.cell(row=i + 2, column=8)
+    #                 cell.style = "Hyperlink"
 
-            # Adjust column widths of sheet - NTAW-470 AC 6/26/2024
-            # Get max value of string length for entire column, add one to it, and set the column width to this value
-            for column in df:
-                column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
-                col_idx = df.columns.get_loc(column)
-                writer.sheets[name].set_column(col_idx, col_idx, column_width)
+    #         # Adjust column widths of sheet - NTAW-470 AC 6/26/2024
+    #         # Get max value of string length for entire column, add one to it, and set the column width to this value
+    #         for column in df:
+    #             column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+    #             col_idx = df.columns.get_loc(column)
+    #             writer.sheets[name].set_column(col_idx, col_idx, column_width)
 
-            stop = time.perf_counter()
-            print(f"Time to construct {name}: {stop - start}")
-        except Exception as e:
-            print(e)
+    #         stop = time.perf_counter()
+    #         print(f"Time to construct {name}: {stop - start}")
+    #     except Exception as e:
+    #         print(e)
 
-    def generate_excel(self):
-        file_names = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
-        print(f"file_names: {file_names}")
-        in_memory_buffer = BytesIO()
-        with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
-            for name in file_names:
-                if "final_" in name:
-                    continue
-                self.construct_excel_sheet(writer, name, file_names)
-        return in_memory_buffer.getvalue()
+    # def generate_excel(self):
+    #     file_names = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
+    #     print(f"file_names: {file_names}")
+    #     in_memory_buffer = BytesIO()
+    #     with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
+    #         for name in file_names:
+    #             if "final_" in name:
+    #                 continue
+    #             self.construct_excel_sheet(writer, name, file_names)
+    #     return in_memory_buffer.getvalue()
 
     def add_tracer_plots_to_zip(self, zipf, jobid):
         tracer_plots = self.gridfs.get(f"{self.jobid}_tracer_files").read().decode("utf-8").split("&&")
@@ -231,25 +231,6 @@ class OutputServer:
         with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
             # excel_data = self.generate_excel()
             excel_data = self.gridfs.get(f"{self.jobid}_excel").read()
-
-            # # ----- TODO: need to grab filenames from this code----------
-            # # Update Excel file name to be named after project name and if not present, after Job ID
-            # data_files = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
-            # for name in data_files:
-            #     try:
-            #         tracer_id = self.jobid + "_" + name
-            #         db_record = self.gridfs.get(tracer_id)
-            #         buffer = db_record.read()
-            #         project_name = db_record.project_name
-            #         if project_name:
-            #             # filename = project_name.replace(" ", "_") + '_' + name + '.png'
-            #             filename = project_name.replace(" ", "_") + "_NTA_WebApp_results.xlsx"
-            #         else:
-            #             # filename = tracer_id + '.png'
-            #             filename = self.jobid + "_NTA_WebApp_results.xlsx"
-            #         # zipf.writestr(filename, buffer)
-            #     except (OperationFailure, TypeError, NoFile) as e:
-            #         break
 
             project_name = str(self.gridfs.get(f"{self.jobid}_project_name").read(), "utf-8")
             filename = project_name.replace(" ", "_") + "_NTA_WebApp_results.xlsx"

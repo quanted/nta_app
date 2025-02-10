@@ -1568,7 +1568,7 @@ class NtaRun:
                 workbook = writer.book
                 sheet = workbook.worksheets[sheet_number]
                 for i in range(sheet.max_row):
-                    cell = sheet.cell(row=i + 2, column=3)
+                    cell = sheet.cell(row=i + 2, column=8)
                     cell.style = "Hyperlink"
         excel_data = in_memory_buffer.getvalue()
 
