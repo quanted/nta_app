@@ -1493,9 +1493,9 @@ class NtaRun:
         # Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
 
-        # If hcd search is not to be performed, replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
-        if self.parameters["search_hcd"][1] != "yes":
-            dsstox_search_df["DTXSID"] = dsstox_search_df["DTXSID"].apply(lambda x: make_hyperlink(x))
+        # # If hcd search is not to be performed, replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
+        # if self.parameters["search_hcd"][1] != "yes":
+        #     dsstox_search_df["DTXSID"] = dsstox_search_df["DTXSID"].apply(lambda x: make_hyperlink(x))
 
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
@@ -1524,8 +1524,8 @@ class NtaRun:
             hcd_results = batch_search_hcd(dtxsid_list)
             # Merge retrieved hazard info with dashboard search results
             self.search_results = self.search_results.merge(hcd_results, how="left", on="DTXSID")
-            # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
-            self.search_results["DTXSID"] = self.search_results["DTXSID"].apply(lambda x: make_hyperlink(x))
+            # # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
+            # self.search_results["DTXSID"] = self.search_results["DTXSID"].apply(lambda x: make_hyperlink(x))
             # Update Chemical Results output
             self.data_map["Chemical Results"] = self.search_results
 
@@ -1559,11 +1559,16 @@ class NtaRun:
         keys_list = list(self.data_map.keys())
         if "Chemical Results" in keys_list:
             chemical_results_present = True
+            # Convert the static DTXSID into hyperlink
+            self.data_map["Chemical Results"]["DTXSID"] = self.data_map["Chemical Results"]["DTXSID"].apply(
+                lambda x: make_hyperlink(x)
+            )
             sheet_number = keys_list.index("Chemical Results")
         # Convert self.data_map dictionary into an excel workbook
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             for df_name, df in self.data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
+            # Format DTXSID hyperlinks in the Chemical Results sheet
             if chemical_results_present:
                 workbook = writer.book
                 sheet = workbook.worksheets[sheet_number]
