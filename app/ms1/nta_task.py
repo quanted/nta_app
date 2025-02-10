@@ -1591,10 +1591,8 @@ class NtaRun:
 
         # Save project name to MongoDB using jobid
         project_name = self.parameters["project_name"][1]
-        self.gridfs.put(project_name, _id=f"{self.jobid} +_project_name", encoding="utf-8")
+        self.gridfs.put(project_name, _id=f"{self.jobid}_project_name", encoding="utf-8")
 
         # Save results excel file to MongoDB using id
         id = self.jobid + "_excel"
         self.gridfs.put(excel_data, _id=id)
-
-        return in_memory_buffer.getvalue()
