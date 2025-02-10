@@ -251,7 +251,7 @@ class OutputServer:
             #     except (OperationFailure, TypeError, NoFile) as e:
             #         break
 
-            project_name = self.gridfs.get(f"{self.jobid}_project_name").read()
+            project_name = str(self.gridfs.get(f"{self.jobid}_project_name").read(), "utf-8")
             filename = project_name.replace(" ", "_") + "_NTA_WebApp_results.xlsx"
             # -----------------------------------------------------------
 
