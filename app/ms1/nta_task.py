@@ -282,10 +282,8 @@ class NtaRun:
                 self.step = "Searching Cheminformatics Hazard Module database"
                 self.perform_hcd_search()
 
-        # 8: Store data to MongoDB
+        # 8: Store excel data to MongoDB
         self.step = "Storing data"
-        # self.store_data()
-        # NTAW-218, store the pre-generated results excel file to MongoDB
         self.save_excel_to_mongo()
 
         # 9: set status to completed
@@ -1495,9 +1493,9 @@ class NtaRun:
         # Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
 
-        # # If hcd search is not to be performed, replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
-        # if self.parameters["search_hcd"][1] != "yes":
-        #     dsstox_search_df["DTXSID"] = dsstox_search_df["DTXSID"].apply(lambda x: make_hyperlink(x))
+        # If hcd search is not to be performed, replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
+        if self.parameters["search_hcd"][1] != "yes":
+            dsstox_search_df["DTXSID"] = dsstox_search_df["DTXSID"].apply(lambda x: make_hyperlink(x))
 
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
@@ -1526,35 +1524,10 @@ class NtaRun:
             hcd_results = batch_search_hcd(dtxsid_list)
             # Merge retrieved hazard info with dashboard search results
             self.search_results = self.search_results.merge(hcd_results, how="left", on="DTXSID")
-            # # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
-            # self.search_results["DTXSID"] = self.search_results["DTXSID"].apply(lambda x: make_hyperlink(x))
+            # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
+            self.search_results["DTXSID"] = self.search_results["DTXSID"].apply(lambda x: make_hyperlink(x))
             # Update Chemical Results output
             self.data_map["Chemical Results"] = self.search_results
-
-    # def store_data(self):
-    #     """
-    #     Access "project_name" parameter, use gridfs to handle potentially large file chunks (16Mb)
-    #     and for each key in the self.data_map dictionary, call the mongo_save() function to save the output.
-
-    #     Args:
-    #         None
-    #     Returns:
-    #         None
-    #     """
-    #     # Update logger
-    #     logger.info(f"Storing data files to MongoDB")
-    #     # Get project name
-    #     project_name = self.parameters["project_name"][1]
-    #     # Access MongoDB storage
-    #     self.gridfs.put(
-    #         "&&".join(self.data_map.keys()),
-    #         _id=self.jobid + "_file_names",
-    #         encoding="utf-8",
-    #         project_name=project_name,
-    #     )
-    #     # For item in data_map dictionary, store in MongoDB
-    #     for key in self.data_map.keys():
-    #         self.mongo_save(self.data_map[key], step=key)
 
     def mongo_save(self, file, step=""):
         """
@@ -1581,11 +1554,22 @@ class NtaRun:
         self.gridfs.put(to_save, _id=id, encoding="utf-8", project_name=project_name)
 
     def save_excel_to_mongo(self):
-        # NTAW-218, function to create an excel sheet from the datamap and save it to MongoDB
+        # NTAW-218: create an excel sheet from the datamap and save it to MongoDB
         in_memory_buffer = io.BytesIO()
+        keys_list = list(self.data_map.keys())
+        if "Chemical Results" in keys_list:
+            chemical_results_present = True
+            sheet_number = keys_list.index("Chemical Results")
+        # Convert self.data_map dictionary into an excel workbook
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             for df_name, df in self.data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
+            if chemical_results_present:
+                workbook = writer.book
+                sheet = workbook.worksheets[sheet_number]
+                for i in range(sheet.max_row):
+                    cell = sheet.cell(row=i + 2, column=3)
+                    cell.style = "Hyperlink"
         excel_data = in_memory_buffer.getvalue()
 
         # Save project name to MongoDB using jobid
