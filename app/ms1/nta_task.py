@@ -284,8 +284,7 @@ class NtaRun:
 
         # 8: Store data to MongoDB
         self.step = "Storing data"
-        self.store_data()
-
+        # self.store_data()
         # NTAW-218, store the pre-generated results excel file to MongoDB
         self.save_excel_to_mongo()
 
@@ -1532,30 +1531,30 @@ class NtaRun:
             # Update Chemical Results output
             self.data_map["Chemical Results"] = self.search_results
 
-    def store_data(self):
-        """
-        Access "project_name" parameter, use gridfs to handle potentially large file chunks (16Mb)
-        and for each key in the self.data_map dictionary, call the mongo_save() function to save the output.
+    # def store_data(self):
+    #     """
+    #     Access "project_name" parameter, use gridfs to handle potentially large file chunks (16Mb)
+    #     and for each key in the self.data_map dictionary, call the mongo_save() function to save the output.
 
-        Args:
-            None
-        Returns:
-            None
-        """
-        # Update logger
-        logger.info(f"Storing data files to MongoDB")
-        # Get project name
-        project_name = self.parameters["project_name"][1]
-        # Access MongoDB storage
-        self.gridfs.put(
-            "&&".join(self.data_map.keys()),
-            _id=self.jobid + "_file_names",
-            encoding="utf-8",
-            project_name=project_name,
-        )
-        # For item in data_map dictionary, store in MongoDB
-        for key in self.data_map.keys():
-            self.mongo_save(self.data_map[key], step=key)
+    #     Args:
+    #         None
+    #     Returns:
+    #         None
+    #     """
+    #     # Update logger
+    #     logger.info(f"Storing data files to MongoDB")
+    #     # Get project name
+    #     project_name = self.parameters["project_name"][1]
+    #     # Access MongoDB storage
+    #     self.gridfs.put(
+    #         "&&".join(self.data_map.keys()),
+    #         _id=self.jobid + "_file_names",
+    #         encoding="utf-8",
+    #         project_name=project_name,
+    #     )
+    #     # For item in data_map dictionary, store in MongoDB
+    #     for key in self.data_map.keys():
+    #         self.mongo_save(self.data_map[key], step=key)
 
     def mongo_save(self, file, step=""):
         """
