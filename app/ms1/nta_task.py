@@ -1574,12 +1574,11 @@ class NtaRun:
                     sheet.column_dimensions[col_letter].width = column_width
             # Format DTXSID hyperlinks in the Chemical Results sheet
             if chemical_results_present:
-                workbook = writer.book
                 sheet = workbook.worksheets[sheet_number]
                 for i in range(sheet.max_row):
                     cell = sheet.cell(row=i + 2, column=8)
                     cell.style = "Hyperlink"
-                sheet.column_dimensions["H"].width = 16
+                sheet.column_dimensions["H"].width = 18
         excel_data = in_memory_buffer.getvalue()
 
         # Save project name to MongoDB using jobid
