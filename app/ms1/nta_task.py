@@ -1549,8 +1549,9 @@ class NtaRun:
         self.gridfs.put(to_save, _id=id, encoding="utf-8", project_name=project_name)
 
     def save_excel_to_mongo(self):
-        # NTAW-218: create an excel sheet from the datamap and save it to MongoDB
+        # Create an excel sheet from the datamap and save it to MongoDB
         in_memory_buffer = io.BytesIO()
+        # Obtain a list of all keys in the data map (These will become the excel workbook sheet names)
         keys_list = list(self.data_map.keys())
         if "Chemical Results" in keys_list:
             chemical_results_present = True
@@ -1567,15 +1568,17 @@ class NtaRun:
                 # Format column widths to fit the largest string contained within the column
                 sheet_num = keys_list.index(df_name)
                 sheet = workbook.worksheets[sheet_num]
+                # Format each column width to fit the longest string contained within the column
                 for column in df:
                     try:
                         column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
                         col_idx = df.columns.get_loc(column) + 1
                         col_letter = get_column_letter(col_idx)
                         sheet.column_dimensions[col_letter].width = column_width
+                    # NTAW-704: handle error where df[column] is recognised as a DataFrame, not a series
                     except AttributeError:
                         pass
-            # Format DTXSID hyperlinks in the Chemical Results sheet
+            # Format DTXSID column hyperlinks an column width in the Chemical Results sheet
             if chemical_results_present:
                 workbook = writer.book
                 sheet = workbook.worksheets[sheet_number]

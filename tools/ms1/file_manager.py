@@ -33,6 +33,7 @@ def tracer_handler(file):
 # format the input dataframe columns
 def fix_names(df, index):  # parse the Dataframe into a numpy array
     # df.columns = df.columns.str.replace(': Log2','') #log specific code
+    df.drop(df.columns[df.columns.str.startswith("Unnamed: ")], axis=1, inplace=True)
     df.columns = df.columns.str.replace(" ", "_")
     df.columns = df.columns.str.replace("#", "_")
     df.columns = df.columns.str.replace("\([^)]*\)", "")
