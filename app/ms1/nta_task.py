@@ -1561,6 +1561,7 @@ class NtaRun:
             sheet_number = keys_list.index("Chemical Results")
         # Convert self.data_map dictionary into an excel workbook
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
+            workbook = writer.book
             for df_name, df in self.data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
                 # Format column widths to fit the largest string contained within the column
