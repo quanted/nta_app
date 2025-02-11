@@ -1568,8 +1568,9 @@ class NtaRun:
                 sheet_num = keys_list.index(df_name)
                 sheet = workbook.worksheets[sheet_num]
                 for column in df:
-                    series = df[column].astype(str)
-                    column_width = max(series.map(len).max(), len(column)) + 1
+                    df[column] = df[column].astype(str)
+                    # column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+                    column_width = df[column].str.len().max() + 1
                     col_idx = df.columns.get_loc(column) + 1
                     col_letter = get_column_letter(col_idx)
                     sheet.column_dimensions[col_letter].width = column_width
