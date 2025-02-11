@@ -1562,11 +1562,11 @@ class NtaRun:
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             for df_name, df in self.data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
-                # Format column widths to fit the largest string contained within the column
-                for column in df:
-                    column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
-                    col_idx = df.columns.get_loc(column)
-                    writer.sheets[df_name].set_column(col_idx, col_idx, column_width)
+                # # Format column widths to fit the largest string contained within the column
+                # for column in df:
+                #     column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+                #     col_idx = df.columns.get_loc(column)
+                #     writer.sheets[df_name].set_column(col_idx, col_idx, column_width)
             # Format DTXSID hyperlinks in the Chemical Results sheet
             if chemical_results_present:
                 workbook = writer.book
