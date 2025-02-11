@@ -1568,12 +1568,13 @@ class NtaRun:
                 sheet_num = keys_list.index(df_name)
                 sheet = workbook.worksheets[sheet_num]
                 for column in df:
-                    df[column] = df[column].astype(str)
-                    # column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
-                    column_width = df[column].str.len().max() + 1
-                    col_idx = df.columns.get_loc(column) + 1
-                    col_letter = get_column_letter(col_idx)
-                    sheet.column_dimensions[col_letter].width = column_width
+                    try:
+                        column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+                        col_idx = df.columns.get_loc(column) + 1
+                        col_letter = get_column_letter(col_idx)
+                        sheet.column_dimensions[col_letter].width = column_width
+                    except AttributeError:
+                        pass
             # Format DTXSID hyperlinks in the Chemical Results sheet
             if chemical_results_present:
                 workbook = writer.book
