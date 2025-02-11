@@ -9,6 +9,7 @@ import json
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 from zipfile import ZipFile, ZIP_DEFLATED
+from openpyxl.utils import get_column_letter
 
 # connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
 from .utilities import *
@@ -1562,11 +1563,14 @@ class NtaRun:
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             for df_name, df in self.data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
-                # # Format column widths to fit the largest string contained within the column
-                # for column in df:
-                #     column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
-                #     col_idx = df.columns.get_loc(column)
-                #     writer.sheets[df_name].set_column(col_idx, col_idx, column_width)
+                # Format column widths to fit the largest string contained within the column
+                sheet_num = keys_list.index(df_name)
+                sheet = workbook.worksheets[sheet_num]
+                for column in df:
+                    column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+                    col_idx = df.columns.get_loc(column) + 1
+                    col_letter = get_column_letter(col_idx)
+                    sheet.column_dimensions[col_letter].width = column_width
             # Format DTXSID hyperlinks in the Chemical Results sheet
             if chemical_results_present:
                 workbook = writer.book
@@ -1574,6 +1578,7 @@ class NtaRun:
                 for i in range(sheet.max_row):
                     cell = sheet.cell(row=i + 2, column=8)
                     cell.style = "Hyperlink"
+                sheet.column_dimensions["H"].width = 16
         excel_data = in_memory_buffer.getvalue()
 
         # Save project name to MongoDB using jobid
