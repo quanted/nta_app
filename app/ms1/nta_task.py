@@ -220,7 +220,6 @@ class NtaRun:
         # 3b: Occurrence heatmap
         self.step = "Create heatmap"
         self.store_heatmap()
-        # self.occurrence_heatmap(self.dfs)
 
         # 4a: check tracers (optional)
         self.step = "Checking tracers"
@@ -240,7 +239,6 @@ class NtaRun:
         # 4b: CV Scatterplot
         self.step = "Create scatterplot"
         self.store_scatterplots()
-        # self.cv_scatterplot(self.dfs)
 
         # 5a: clean features
         self.step = "Cleaning features"
@@ -1141,6 +1139,7 @@ class NtaRun:
         in_memory_buffer = io.BytesIO()
         # Obtain a list of all keys in the data map (These will become the excel workbook sheet names)
         keys_list = list(self.data_map.keys())
+        chemical_results_present = None
         if "Chemical Results" in keys_list:
             chemical_results_present = True
             # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
@@ -1148,6 +1147,8 @@ class NtaRun:
                 lambda x: make_hyperlink(x)
             )
             sheet_number = keys_list.index("Chemical Results")
+        else:
+            pass
         # Convert self.data_map dictionary into an excel workbook
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             workbook = writer.book
@@ -1174,6 +1175,8 @@ class NtaRun:
                     cell = sheet.cell(row=i + 2, column=8)
                     cell.style = "Hyperlink"
                 sheet.column_dimensions["H"].width = 18
+            else:
+                pass
         excel_data = in_memory_buffer.getvalue()
 
         # Save project name to MongoDB using jobid
