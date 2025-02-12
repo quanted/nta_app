@@ -689,9 +689,7 @@ class NtaRun:
 
     def store_heatmap(self):
         # Store in class variable CREATE NEW FUNCTION IN NTA_TASK
-        self.occurrence_heatmaps_out.append(
-            occurrence_heatmap(input_dfs=self.dfs, parameters=self.parameters, data_map=self.data_map)
-        )
+        self.occurrence_heatmaps_out.append(occurrence_heatmap(parameters=self.parameters, data_map=self.data_map))
         # Map to outputs
         self.occurrence_heatmap_map["occurrence_heatmap"] = self.occurrence_heatmaps_out[0]
         project_name = self.parameters["project_name"][1]
