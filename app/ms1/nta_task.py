@@ -1147,8 +1147,6 @@ class NtaRun:
                 lambda x: make_hyperlink(x)
             )
             sheet_number = keys_list.index("Chemical Results")
-        else:
-            pass
         # Convert self.data_map dictionary into an excel workbook
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             workbook = writer.book
@@ -1175,8 +1173,6 @@ class NtaRun:
                     cell = sheet.cell(row=i + 2, column=8)
                     cell.style = "Hyperlink"
                 sheet.column_dimensions["H"].width = 18
-            else:
-                pass
         excel_data = in_memory_buffer.getvalue()
 
         # Save project name to MongoDB using jobid
