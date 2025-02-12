@@ -14,6 +14,9 @@ from openpyxl.utils import get_column_letter
 # connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
 from .utilities import *
 
+from .heatmap import *
+from .cv_scatterplot import *
+
 from . import task_functions as task_fun
 from .WebApp_plotter import WebApp_plotter
 import io
@@ -219,7 +222,8 @@ class NtaRun:
 
         # 3b: Occurrence heatmap
         self.step = "Create heatmap"
-        self.occurrence_heatmap(self.dfs)
+        self.store_heatmap()
+        # self.occurrence_heatmap(self.dfs)
 
         # 4a: check tracers (optional)
         self.step = "Checking tracers"
@@ -238,7 +242,8 @@ class NtaRun:
 
         # 4b: CV Scatterplot
         self.step = "Create scatterplot"
-        self.cv_scatterplot(self.dfs)
+        self.store_scatterplots()
+        # self.cv_scatterplot(self.dfs)
 
         # 5a: clean features
         self.step = "Cleaning features"
@@ -668,6 +673,35 @@ class NtaRun:
                 self.dfs[1], self.pass_through[1]
             )
         return
+
+    def store_scatterplots(self):
+        self.cv_scatterplots_out.append(cv_scatterplot(parameters=self.parameters, data_map=self.data_map))
+        # Map to outputs
+        self.cv_scatterplot_map["cv_scatterplot"] = self.cv_scatterplots_out[0]
+        project_name = self.parameters["project_name"][1]
+        self.gridfs.put(
+            "&&".join(self.cv_scatterplot_map.keys()),
+            _id=self.jobid + "_cv_scatterplots",
+            encoding="utf-8",
+            project_name=project_name,
+        )
+        self.mongo_save(self.cv_scatterplot_map["cv_scatterplot"], step="cv_scatterplot")
+
+    def store_heatmap(self):
+        # Store in class variable CREATE NEW FUNCTION IN NTA_TASK
+        self.occurrence_heatmaps_out.append(
+            occurrence_heatmap(input_dfs=self.dfs, parameters=self.parameters, data_map=self.data_map)
+        )
+        # Map to outputs
+        self.occurrence_heatmap_map["occurrence_heatmap"] = self.occurrence_heatmaps_out[0]
+        project_name = self.parameters["project_name"][1]
+        self.gridfs.put(
+            "&&".join(self.occurrence_heatmap_map.keys()),
+            _id=self.jobid + "_occurrence_heatmaps",
+            encoding="utf-8",
+            project_name=project_name,
+        )
+        self.mongo_save(self.occurrence_heatmap_map["occurrence_heatmap"], step="occurrence_heatmap")
 
     def cv_scatterplot(self, input_dfs):
         """
