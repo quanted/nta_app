@@ -20,8 +20,9 @@ from .cv_scatterplot import *
 from . import task_functions as task_fun
 from .WebApp_plotter import WebApp_plotter
 import io
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
+
+# import matplotlib.pyplot as plt
+# from matplotlib.colors import LinearSegmentedColormap
 
 
 logger = logging.getLogger("nta_app.ms1")
@@ -675,6 +676,7 @@ class NtaRun:
         return
 
     def store_scatterplots(self):
+        # Store in class variable
         self.cv_scatterplots_out.append(cv_scatterplot(parameters=self.parameters, data_map=self.data_map))
         # Map to outputs
         self.cv_scatterplot_map["cv_scatterplot"] = self.cv_scatterplots_out[0]
@@ -685,10 +687,11 @@ class NtaRun:
             encoding="utf-8",
             project_name=project_name,
         )
+        # Save to MongoDB
         self.mongo_save(self.cv_scatterplot_map["cv_scatterplot"], step="cv_scatterplot")
 
     def store_heatmap(self):
-        # Store in class variable CREATE NEW FUNCTION IN NTA_TASK
+        # Store in class variable
         self.occurrence_heatmaps_out.append(occurrence_heatmap(parameters=self.parameters, data_map=self.data_map))
         # Map to outputs
         self.occurrence_heatmap_map["occurrence_heatmap"] = self.occurrence_heatmaps_out[0]
@@ -699,451 +702,452 @@ class NtaRun:
             encoding="utf-8",
             project_name=project_name,
         )
+        # Save to MongoDB
         self.mongo_save(self.occurrence_heatmap_map["occurrence_heatmap"], step="occurrence_heatmap")
 
-    def cv_scatterplot(self, input_dfs):
-        """
-        Accesses the processed dataframes and the tracer results from self.data_map and
-        create two scatterplots - the abundance (x-axis) vs CV (y-axis) for blank samples
-        and unknown samples. The points are colored, with known tracer chemicals displayed
-        red and unknown chemical features in white. Save to self.cv_scatterplot_map and
-        output.
+    # def cv_scatterplot(self, input_dfs):
+    #     """
+    #     Accesses the processed dataframes and the tracer results from self.data_map and
+    #     create two scatterplots - the abundance (x-axis) vs CV (y-axis) for blank samples
+    #     and unknown samples. The points are colored, with known tracer chemicals displayed
+    #     red and unknown chemical features in white. Save to self.cv_scatterplot_map and
+    #     output.
 
-        Args:
-            input_dfs (list of Pandas dataframes)
-        Returns:
-            None
-        """
-        # Set defaults
-        plt.rcdefaults()
-        # Set title
-        titleText = "CV vs. Abundance"
-        # Get user input CV threshold, convert to float
-        max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
-        max_replicate_cv_value = float(max_replicate_cv_value)
+    #     Args:
+    #         input_dfs (list of Pandas dataframes)
+    #     Returns:
+    #         None
+    #     """
+    #     # Set defaults
+    #     plt.rcdefaults()
+    #     # Set title
+    #     titleText = "CV vs. Abundance"
+    #     # Get user input CV threshold, convert to float
+    #     max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
+    #     max_replicate_cv_value = float(max_replicate_cv_value)
 
-        # get dataframe 'All Detection Statistics (Pos)' if it exists else None
-        dfPos = (
-            self.data_map["All Detection Statistics (Pos)"]
-            if "All Detection Statistics (Pos)" in self.data_map
-            else None
-        )
-        # get dataframe 'All Detection Statistics (Neg)' if it exists else None
-        dfNeg = (
-            self.data_map["All Detection Statistics (Neg)"]
-            if "All Detection Statistics (Neg)" in self.data_map
-            else None
-        )
-        # get 'Tracer Detection Statistics' if it exists else None
-        dfTracer = (
-            self.data_map["Tracer Detection Statistics"] if "Tracer Detection Statistics" in self.data_map else None
-        )
-        # Add conditional; if tracer exists reformat
-        if dfTracer is not None:
-            tracers = dfTracer[["Observed Mass", "Observed Retention Time"]].copy()
-            tracers.rename({"Observed Mass": "Mass"}, axis=1, inplace=True)
-            tracers.rename({"Observed Retention Time": "Retention Time"}, axis=1, inplace=True)
-            tracers["spike"] = 1
-            logger.info("cv scatterplot tracers columns= {}".format(tracers.columns.values))
-        # combine the two dataframes, ignore non-existing dataframes
-        dfCombined = (
-            pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
-            if dfPos is not None and dfNeg is not None
-            else dfPos
-            if dfPos is not None
-            else dfNeg
-            if dfNeg is not None
-            else None
-        )
-        # Get sample headers
-        all_headers = task_fun.parse_headers(dfCombined)
-        non_samples = ["MRL"]
-        sam_headers = [
-            sublist[0][:-1]
-            for sublist in all_headers
-            if len(sublist) > 1
-            if not any(x in sublist[0] for x in non_samples)
-        ]
-        # Isolate sample_groups from stats columns
-        prefixes = ["Mean ", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
-        sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
-        # Find CV cols from df, subset cv_df from df
-        cv_cols = ["CV " + col for col in sample_groups]
-        cv_df = dfCombined[cv_cols]
-        # Find CV cols from df, subset cv_df from df
-        mean_cols = ["Mean " + col for col in sample_groups]
-        mean_df = dfCombined[mean_cols]
-        # Carry over Mass and Retention_Time
-        cv_df["Mass"] = dfCombined["Mass"]
-        cv_df["Retention Time"] = dfCombined["Retention Time"]
-        # AC 2/8/2024 Get minimum and maximum abundance values of dataframe (mean columns) for the purposes of setting the x-axis range
-        min_abundance_value = mean_df.min(numeric_only=True).min()
-        max_abundance_value = mean_df.max(numeric_only=True).max()
-        if (
-            min_abundance_value == 0
-        ):  # If minimum abundance value is zero, then set minimum limit to zero (to avoid log issues on zero)
-            min_abundance_limit = 0
-        else:
-            min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
-        max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
-        # CV text position scale so it doesn't overlap with plot boundary
-        text_position_x = 5
-        if (max_abundance_limit - min_abundance_limit) > 1000000:
-            text_position_x = 7.5
-        # Create list, define blank strings
-        li = []
-        blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
-        # Loop through sample groups
-        for x in sample_groups:
-            # Take each sample's CV and mean, store in dummy variable
-            cv = "CV " + x
-            mean = "Mean " + x
-            dum = pd.concat([cv_df[cv], mean_df[mean]], axis=1)
-            dum.rename({cv: "CV"}, axis=1, inplace=True)
-            dum.rename({mean: "Mean"}, axis=1, inplace=True)
-            dum["sample"] = x
-            dum["Mass"] = cv_df["Mass"]
-            dum["Retention Time"] = cv_df["Retention Time"]
-            # Add sample type (blank or sample)
-            if any(i in x for i in blanks):
-                dum["type"] = "blank"
-            else:
-                dum["type"] = "sample"
-            # Append to list
-            li.append(dum)
+    #     # get dataframe 'All Detection Statistics (Pos)' if it exists else None
+    #     dfPos = (
+    #         self.data_map["All Detection Statistics (Pos)"]
+    #         if "All Detection Statistics (Pos)" in self.data_map
+    #         else None
+    #     )
+    #     # get dataframe 'All Detection Statistics (Neg)' if it exists else None
+    #     dfNeg = (
+    #         self.data_map["All Detection Statistics (Neg)"]
+    #         if "All Detection Statistics (Neg)" in self.data_map
+    #         else None
+    #     )
+    #     # get 'Tracer Detection Statistics' if it exists else None
+    #     dfTracer = (
+    #         self.data_map["Tracer Detection Statistics"] if "Tracer Detection Statistics" in self.data_map else None
+    #     )
+    #     # Add conditional; if tracer exists reformat
+    #     if dfTracer is not None:
+    #         tracers = dfTracer[["Observed Mass", "Observed Retention Time"]].copy()
+    #         tracers.rename({"Observed Mass": "Mass"}, axis=1, inplace=True)
+    #         tracers.rename({"Observed Retention Time": "Retention Time"}, axis=1, inplace=True)
+    #         tracers["spike"] = 1
+    #         logger.info("cv scatterplot tracers columns= {}".format(tracers.columns.values))
+    #     # combine the two dataframes, ignore non-existing dataframes
+    #     dfCombined = (
+    #         pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
+    #         if dfPos is not None and dfNeg is not None
+    #         else dfPos
+    #         if dfPos is not None
+    #         else dfNeg
+    #         if dfNeg is not None
+    #         else None
+    #     )
+    #     # Get sample headers
+    #     all_headers = task_fun.parse_headers(dfCombined)
+    #     non_samples = ["MRL"]
+    #     sam_headers = [
+    #         sublist[0][:-1]
+    #         for sublist in all_headers
+    #         if len(sublist) > 1
+    #         if not any(x in sublist[0] for x in non_samples)
+    #     ]
+    #     # Isolate sample_groups from stats columns
+    #     prefixes = ["Mean ", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
+    #     sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
+    #     # Find CV cols from df, subset cv_df from df
+    #     cv_cols = ["CV " + col for col in sample_groups]
+    #     cv_df = dfCombined[cv_cols]
+    #     # Find CV cols from df, subset cv_df from df
+    #     mean_cols = ["Mean " + col for col in sample_groups]
+    #     mean_df = dfCombined[mean_cols]
+    #     # Carry over Mass and Retention_Time
+    #     cv_df["Mass"] = dfCombined["Mass"]
+    #     cv_df["Retention Time"] = dfCombined["Retention Time"]
+    #     # AC 2/8/2024 Get minimum and maximum abundance values of dataframe (mean columns) for the purposes of setting the x-axis range
+    #     min_abundance_value = mean_df.min(numeric_only=True).min()
+    #     max_abundance_value = mean_df.max(numeric_only=True).max()
+    #     if (
+    #         min_abundance_value == 0
+    #     ):  # If minimum abundance value is zero, then set minimum limit to zero (to avoid log issues on zero)
+    #         min_abundance_limit = 0
+    #     else:
+    #         min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
+    #     max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
+    #     # CV text position scale so it doesn't overlap with plot boundary
+    #     text_position_x = 5
+    #     if (max_abundance_limit - min_abundance_limit) > 1000000:
+    #         text_position_x = 7.5
+    #     # Create list, define blank strings
+    #     li = []
+    #     blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
+    #     # Loop through sample groups
+    #     for x in sample_groups:
+    #         # Take each sample's CV and mean, store in dummy variable
+    #         cv = "CV " + x
+    #         mean = "Mean " + x
+    #         dum = pd.concat([cv_df[cv], mean_df[mean]], axis=1)
+    #         dum.rename({cv: "CV"}, axis=1, inplace=True)
+    #         dum.rename({mean: "Mean"}, axis=1, inplace=True)
+    #         dum["sample"] = x
+    #         dum["Mass"] = cv_df["Mass"]
+    #         dum["Retention Time"] = cv_df["Retention Time"]
+    #         # Add sample type (blank or sample)
+    #         if any(i in x for i in blanks):
+    #             dum["type"] = "blank"
+    #         else:
+    #             dum["type"] = "sample"
+    #         # Append to list
+    #         li.append(dum)
 
-        # Concatenate plot, drop NAs
-        plot = pd.concat(li)
-        plot.dropna(axis=0, subset=["CV", "Mean"], how="any", inplace=True)
-        logger.info("cv scatterplot plot columns= {}".format(plot.columns.values))
+    #     # Concatenate plot, drop NAs
+    #     plot = pd.concat(li)
+    #     plot.dropna(axis=0, subset=["CV", "Mean"], how="any", inplace=True)
+    #     logger.info("cv scatterplot plot columns= {}".format(plot.columns.values))
 
-        # Conditional for if tracers are present:
-        if dfTracer is not None:
-            # Merge df with tracers to get labels
-            plot2 = pd.merge(plot, tracers, how="left", on=["Mass", "Retention Time"])
-        else:
-            # If tracer plot doesn't exist, still need to create a spike column that is empty
-            plot["spike"] = ""
-            plot2 = plot.copy()
+    #     # Conditional for if tracers are present:
+    #     if dfTracer is not None:
+    #         # Merge df with tracers to get labels
+    #         plot2 = pd.merge(plot, tracers, how="left", on=["Mass", "Retention Time"])
+    #     else:
+    #         # If tracer plot doesn't exist, still need to create a spike column that is empty
+    #         plot["spike"] = ""
+    #         plot2 = plot.copy()
 
-        plot2.replace(np.nan, 0, inplace=True)
-        # Define subplots, set height and width
-        f, axes = plt.subplots(1, 2)
-        f.set_figheight(5)
-        f.set_figwidth(15)
-        # Set palette
-        palette = ["whitesmoke", "firebrick"]
-        sns.set_palette(palette, 2)
-        # Blank plot
-        a = sns.scatterplot(
-            data=plot2.loc[((plot2["type"] == "blank")), :].sort_values("spike"),
-            x="Mean",
-            y="CV",
-            hue="spike",
-            edgecolor="black",
-            alpha=0.5,
-            ax=axes[0],
-        )
-        # Add CV red dashed line
-        a.axhline(
-            y=max_replicate_cv_value,
-            color="red",
-            linestyle="dashed",
-            linewidth=1.5,
-            alpha=1,
-        )
-        a.text(
-            max_abundance_limit / text_position_x,
-            max_replicate_cv_value + 0.1,
-            "CV = {}".format(max_replicate_cv_value),
-            ha="center",
-            va="center_baseline",
-            weight="bold",
-            size=14,
-        )
-        # Perform occurrence counts above and below CV by sample type
-        red_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"])
-        red_flag_count = sum(
-            plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"] > max_replicate_cv_value
-        )
+    #     plot2.replace(np.nan, 0, inplace=True)
+    #     # Define subplots, set height and width
+    #     f, axes = plt.subplots(1, 2)
+    #     f.set_figheight(5)
+    #     f.set_figwidth(15)
+    #     # Set palette
+    #     palette = ["whitesmoke", "firebrick"]
+    #     sns.set_palette(palette, 2)
+    #     # Blank plot
+    #     a = sns.scatterplot(
+    #         data=plot2.loc[((plot2["type"] == "blank")), :].sort_values("spike"),
+    #         x="Mean",
+    #         y="CV",
+    #         hue="spike",
+    #         edgecolor="black",
+    #         alpha=0.5,
+    #         ax=axes[0],
+    #     )
+    #     # Add CV red dashed line
+    #     a.axhline(
+    #         y=max_replicate_cv_value,
+    #         color="red",
+    #         linestyle="dashed",
+    #         linewidth=1.5,
+    #         alpha=1,
+    #     )
+    #     a.text(
+    #         max_abundance_limit / text_position_x,
+    #         max_replicate_cv_value + 0.1,
+    #         "CV = {}".format(max_replicate_cv_value),
+    #         ha="center",
+    #         va="center_baseline",
+    #         weight="bold",
+    #         size=14,
+    #     )
+    #     # Perform occurrence counts above and below CV by sample type
+    #     red_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"])
+    #     red_flag_count = sum(
+    #         plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 1)), "CV"] > max_replicate_cv_value
+    #     )
 
-        white_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"])
-        white_flag_count = sum(
-            plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
-        )
+    #     white_count = len(plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"])
+    #     white_flag_count = sum(
+    #         plot2.loc[((plot2["type"] == "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
+    #     )
 
-        # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
-        legend = a.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
-        # Set legend labels
-        if dfTracer is not None:
-            legend.get_texts()[0].set_text(f"unknowns ({white_flag_count} of {white_count} above line)")
-            try:
-                legend.get_texts()[1].set_text(
-                    f"tracers ({red_flag_count} of {red_count} above line)"
-                )  # If tracers are present, add secondary legend label
-            except IndexError:  # If no tracers found in blanks, set alternate legend
-                # legend.set_text("tracers 0 of 0 above line)")
-                pass
-        # Make it pretty
-        frame = legend.get_frame()  # sets up for color, edge, and transparency
-        frame.set_facecolor("lightgray")  # color of legend
-        frame.set_edgecolor("black")  # edge color of legend
-        frame.set_alpha(1)  # deals with transparency
-        # Adjust axes labels
-        axes[0].set_title(titleText + ": Blanks", fontsize=18, weight="bold")
-        axes[0].set_xlabel("Mean Abundance", fontsize=14)
-        axes[0].set_ylabel("CV", fontsize=14)
-        axes[0].set_ylim(0, 2.5)
-        axes[0].set_xlim(
-            min_abundance_limit, max_abundance_limit
-        )  # Set x-axis to scale based on the min/max data points
-        axes[0].set(xscale="log")
-        axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
-        axes[0].tick_params(axis="both", which="both", labelsize=12)
+    #     # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
+    #     legend = a.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
+    #     # Set legend labels
+    #     if dfTracer is not None:
+    #         legend.get_texts()[0].set_text(f"unknowns ({white_flag_count} of {white_count} above line)")
+    #         try:
+    #             legend.get_texts()[1].set_text(
+    #                 f"tracers ({red_flag_count} of {red_count} above line)"
+    #             )  # If tracers are present, add secondary legend label
+    #         except IndexError:  # If no tracers found in blanks, set alternate legend
+    #             # legend.set_text("tracers 0 of 0 above line)")
+    #             pass
+    #     # Make it pretty
+    #     frame = legend.get_frame()  # sets up for color, edge, and transparency
+    #     frame.set_facecolor("lightgray")  # color of legend
+    #     frame.set_edgecolor("black")  # edge color of legend
+    #     frame.set_alpha(1)  # deals with transparency
+    #     # Adjust axes labels
+    #     axes[0].set_title(titleText + ": Blanks", fontsize=18, weight="bold")
+    #     axes[0].set_xlabel("Mean Abundance", fontsize=14)
+    #     axes[0].set_ylabel("CV", fontsize=14)
+    #     axes[0].set_ylim(0, 2.5)
+    #     axes[0].set_xlim(
+    #         min_abundance_limit, max_abundance_limit
+    #     )  # Set x-axis to scale based on the min/max data points
+    #     axes[0].set(xscale="log")
+    #     axes[0].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
+    #     axes[0].tick_params(axis="both", which="both", labelsize=12)
 
-        # Sample plot
-        b = sns.scatterplot(
-            data=plot2.loc[((plot2["type"] != "blank")), :].sort_values("spike"),
-            x="Mean",
-            y="CV",
-            hue="spike",
-            edgecolor="black",
-            alpha=0.5,
-            ax=axes[1],
-        )
-        # Add CV red dashed line
-        b.axhline(
-            y=max_replicate_cv_value,
-            color="red",
-            linestyle="dashed",
-            linewidth=1.5,
-            alpha=1,
-        )
-        b.text(
-            max_abundance_limit / text_position_x,
-            max_replicate_cv_value + 0.1,
-            "CV = {}".format(max_replicate_cv_value),
-            ha="center",
-            va="center_baseline",
-            weight="bold",
-            size=14,
-        )
-        # Perform occurrence counts above and below CV by sample type
-        red_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"])
-        red_flag_count = sum(
-            plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"] > max_replicate_cv_value
-        )
-        white_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"])
-        white_flag_count = sum(
-            plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
-        )
-        # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
-        legend = b.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
-        # Set legend labels
-        if dfTracer is not None:
-            legend.get_texts()[0].set_text(f"unknowns ({white_flag_count} of {white_count} above line)")
-            legend.get_texts()[1].set_text(
-                f"tracers ({red_flag_count} of {red_count} above line)"
-            )  # If tracers are present, add secondary legend label
-        # Make it pretty
-        frame = legend.get_frame()  # sets up for color, edge, and transparency
-        frame.set_facecolor("lightgray")  # color of legend
-        frame.set_edgecolor("black")  # edge color of legend
-        frame.set_alpha(1)  # deals with transparency
-        # Adjust axes labels
-        axes[1].set_title(titleText + ": Non-blanks", fontsize=18, weight="bold")
-        axes[1].set_xlabel("Mean Abundance", fontsize=14)
-        axes[1].set_ylabel("CV", fontsize=14)
-        axes[1].set_ylim(0, 2.5)
-        axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
-        axes[1].set(xscale="log")
-        axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
-        axes[1].tick_params(axis="both", which="both", labelsize=12)
-        # Convert the plot to a bytes-like object
-        buffer = io.BytesIO()
-        plt.savefig(buffer)
-        buffer.seek(0)
-        # Store in class variable
-        self.cv_scatterplots_out.append(buffer.getvalue())
-        # Map to outputs
-        self.cv_scatterplot_map["cv_scatterplot"] = self.cv_scatterplots_out[0]
-        project_name = self.parameters["project_name"][1]
-        self.gridfs.put(
-            "&&".join(self.cv_scatterplot_map.keys()),
-            _id=self.jobid + "_cv_scatterplots",
-            encoding="utf-8",
-            project_name=project_name,
-        )
-        self.mongo_save(self.cv_scatterplot_map["cv_scatterplot"], step="cv_scatterplot")
-        # reset plt
-        plt.clf()
+    #     # Sample plot
+    #     b = sns.scatterplot(
+    #         data=plot2.loc[((plot2["type"] != "blank")), :].sort_values("spike"),
+    #         x="Mean",
+    #         y="CV",
+    #         hue="spike",
+    #         edgecolor="black",
+    #         alpha=0.5,
+    #         ax=axes[1],
+    #     )
+    #     # Add CV red dashed line
+    #     b.axhline(
+    #         y=max_replicate_cv_value,
+    #         color="red",
+    #         linestyle="dashed",
+    #         linewidth=1.5,
+    #         alpha=1,
+    #     )
+    #     b.text(
+    #         max_abundance_limit / text_position_x,
+    #         max_replicate_cv_value + 0.1,
+    #         "CV = {}".format(max_replicate_cv_value),
+    #         ha="center",
+    #         va="center_baseline",
+    #         weight="bold",
+    #         size=14,
+    #     )
+    #     # Perform occurrence counts above and below CV by sample type
+    #     red_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"])
+    #     red_flag_count = sum(
+    #         plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 1)), "CV"] > max_replicate_cv_value
+    #     )
+    #     white_count = len(plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"])
+    #     white_flag_count = sum(
+    #         plot2.loc[((plot2["type"] != "blank") & (plot2["spike"] == 0)), "CV"] > max_replicate_cv_value
+    #     )
+    #     # Only generate legend if tracers are submitted -- THIS ISN'T TRUE RIGHT NOW
+    #     legend = b.legend(title="Unfiltered Occurrences", fontsize=14, title_fontsize=16)
+    #     # Set legend labels
+    #     if dfTracer is not None:
+    #         legend.get_texts()[0].set_text(f"unknowns ({white_flag_count} of {white_count} above line)")
+    #         legend.get_texts()[1].set_text(
+    #             f"tracers ({red_flag_count} of {red_count} above line)"
+    #         )  # If tracers are present, add secondary legend label
+    #     # Make it pretty
+    #     frame = legend.get_frame()  # sets up for color, edge, and transparency
+    #     frame.set_facecolor("lightgray")  # color of legend
+    #     frame.set_edgecolor("black")  # edge color of legend
+    #     frame.set_alpha(1)  # deals with transparency
+    #     # Adjust axes labels
+    #     axes[1].set_title(titleText + ": Non-blanks", fontsize=18, weight="bold")
+    #     axes[1].set_xlabel("Mean Abundance", fontsize=14)
+    #     axes[1].set_ylabel("CV", fontsize=14)
+    #     axes[1].set_ylim(0, 2.5)
+    #     axes[1].set_xlim(min_abundance_limit, max_abundance_limit)
+    #     axes[1].set(xscale="log")
+    #     axes[1].set_yticks([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])
+    #     axes[1].tick_params(axis="both", which="both", labelsize=12)
+    #     # Convert the plot to a bytes-like object
+    #     buffer = io.BytesIO()
+    #     plt.savefig(buffer)
+    #     buffer.seek(0)
+    #     # Store in class variable
+    #     self.cv_scatterplots_out.append(buffer.getvalue())
+    #     # Map to outputs
+    #     self.cv_scatterplot_map["cv_scatterplot"] = self.cv_scatterplots_out[0]
+    #     project_name = self.parameters["project_name"][1]
+    #     self.gridfs.put(
+    #         "&&".join(self.cv_scatterplot_map.keys()),
+    #         _id=self.jobid + "_cv_scatterplots",
+    #         encoding="utf-8",
+    #         project_name=project_name,
+    #     )
+    #     self.mongo_save(self.cv_scatterplot_map["cv_scatterplot"], step="cv_scatterplot")
+    #     # reset plt
+    #     plt.clf()
 
-    def occurrence_heatmap(self, input_dfs):
-        """
-        Accesses the processed dataframes from self.data_map and other user submitted
-        parameters (max replicate CV, min replicate hits, and mrl std_dev multiplier).
-        Apply thresholds to the dataframes and organize into the heatmap. Cells are colored
-        red for CV flags, gray for not-present or filtered out, and white for real features.
-        Save to self.occurrence_heatmap_out and output.
+    # def occurrence_heatmap(self, input_dfs):
+    #     """
+    #     Accesses the processed dataframes from self.data_map and other user submitted
+    #     parameters (max replicate CV, min replicate hits, and mrl std_dev multiplier).
+    #     Apply thresholds to the dataframes and organize into the heatmap. Cells are colored
+    #     red for CV flags, gray for not-present or filtered out, and white for real features.
+    #     Save to self.occurrence_heatmap_out and output.
 
-        Args:
-            input_dfs (list of Pandas dataframes)
-        Returns:
-            None
-        """
-        plt.rcdefaults()
-        # Get user input CV and Replicate thresholds
-        max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
-        min_replicate_hits_percent = self.parameters["min_replicate_hits"][1]
-        min_replicate_blanks_hit_percent = self.parameters["min_replicate_hits_blanks"][1]
-        MRL_mult = float(self.parameters["mrl_std_multiplier"][1])
-        # convert max_replicate_cv_value to a numeric value
-        max_replicate_cv_value = pd.to_numeric(self.parameters["max_replicate_cv"][1], errors="coerce")
-        # convert min_replicate_hits_percent to a numeric value
-        min_replicate_hits_percent = pd.to_numeric(self.parameters["min_replicate_hits"][1], errors="coerce")
-        # convert min_replicate_blanks_hits_percent to a numeric value
-        min_replicate_blanks_hits_percent = pd.to_numeric(
-            self.parameters["min_replicate_hits_blanks"][1], errors="coerce"
-        )
-        # get dataframe 'All Detection Statistics (Pos)' if it exists else None
-        dfPos = (
-            self.data_map["All Detection Statistics (Pos)"]
-            if "All Detection Statistics (Pos)" in self.data_map
-            else None
-        )
-        # get dataframe 'All Detection Statistics (Neg)' if it exists else None
-        dfNeg = (
-            self.data_map["All Detection Statistics (Neg)"]
-            if "All Detection Statistics (Neg)" in self.data_map
-            else None
-        )
-        # combine the two dataframes. Ignnore non-existing dataframes
-        dfCombined = (
-            pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
-            if dfPos is not None and dfNeg is not None
-            else dfPos
-            if dfPos is not None
-            else dfNeg
-            if dfNeg is not None
-            else None
-        )
+    #     Args:
+    #         input_dfs (list of Pandas dataframes)
+    #     Returns:
+    #         None
+    #     """
+    #     plt.rcdefaults()
+    #     # Get user input CV and Replicate thresholds
+    #     max_replicate_cv_value = self.parameters["max_replicate_cv"][1]
+    #     min_replicate_hits_percent = self.parameters["min_replicate_hits"][1]
+    #     min_replicate_blanks_hit_percent = self.parameters["min_replicate_hits_blanks"][1]
+    #     MRL_mult = float(self.parameters["mrl_std_multiplier"][1])
+    #     # convert max_replicate_cv_value to a numeric value
+    #     max_replicate_cv_value = pd.to_numeric(self.parameters["max_replicate_cv"][1], errors="coerce")
+    #     # convert min_replicate_hits_percent to a numeric value
+    #     min_replicate_hits_percent = pd.to_numeric(self.parameters["min_replicate_hits"][1], errors="coerce")
+    #     # convert min_replicate_blanks_hits_percent to a numeric value
+    #     min_replicate_blanks_hits_percent = pd.to_numeric(
+    #         self.parameters["min_replicate_hits_blanks"][1], errors="coerce"
+    #     )
+    #     # get dataframe 'All Detection Statistics (Pos)' if it exists else None
+    #     dfPos = (
+    #         self.data_map["All Detection Statistics (Pos)"]
+    #         if "All Detection Statistics (Pos)" in self.data_map
+    #         else None
+    #     )
+    #     # get dataframe 'All Detection Statistics (Neg)' if it exists else None
+    #     dfNeg = (
+    #         self.data_map["All Detection Statistics (Neg)"]
+    #         if "All Detection Statistics (Neg)" in self.data_map
+    #         else None
+    #     )
+    #     # combine the two dataframes. Ignnore non-existing dataframes
+    #     dfCombined = (
+    #         pd.concat([dfPos, dfNeg], axis=0, ignore_index=True, sort=False)
+    #         if dfPos is not None and dfNeg is not None
+    #         else dfPos
+    #         if dfPos is not None
+    #         else dfNeg
+    #         if dfNeg is not None
+    #         else None
+    #     )
 
-        # Get sample headers
-        all_headers = task_fun.parse_headers(dfCombined)
-        non_samples = ["MRL"]
-        sam_headers = [
-            sublist[0][:-1]
-            for sublist in all_headers
-            if len(sublist) > 1
-            if not any(x in sublist[0] for x in non_samples)
-        ]
-        # Isolate sample_groups from stats columns
-        prefixes = ["Mean ", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
-        sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
-        logger.info("sample_groups= {}".format(sample_groups))
-        # Blank_MDL - need to check what the blank samples are actually named
-        blank_strings = ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"]
-        blank_col = [item for item in sample_groups if any(x in item for x in blank_strings)]
-        logger.info("blank_col= {}".format(blank_col))
-        blank_mean = "Mean " + blank_col[0]
-        blank_std = "STD " + blank_col[0]
-        # AC Add blank replicate percentage column grab NTAW574
-        blank_rper = "Detection Percentage " + blank_col[0]
+    #     # Get sample headers
+    #     all_headers = task_fun.parse_headers(dfCombined)
+    #     non_samples = ["MRL"]
+    #     sam_headers = [
+    #         sublist[0][:-1]
+    #         for sublist in all_headers
+    #         if len(sublist) > 1
+    #         if not any(x in sublist[0] for x in non_samples)
+    #     ]
+    #     # Isolate sample_groups from stats columns
+    #     prefixes = ["Mean ", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
+    #     sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
+    #     logger.info("sample_groups= {}".format(sample_groups))
+    #     # Blank_MDL - need to check what the blank samples are actually named
+    #     blank_strings = ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"]
+    #     blank_col = [item for item in sample_groups if any(x in item for x in blank_strings)]
+    #     logger.info("blank_col= {}".format(blank_col))
+    #     blank_mean = "Mean " + blank_col[0]
+    #     blank_std = "STD " + blank_col[0]
+    #     # AC Add blank replicate percentage column grab NTAW574
+    #     blank_rper = "Detection Percentage " + blank_col[0]
 
-        # Calculate MDL
-        # AC 6/18/2024: Need to pull in MRL multiplier for MRL calculation
-        dfCombined["MDL"] = dfCombined[blank_mean] + MRL_mult * dfCombined[blank_std]
-        dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
-        dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
-        # AC Where blank replicate percentage column fails, zero out MDL - NTAW574
-        dfCombined.loc[dfCombined[blank_rper] < min_replicate_blanks_hits_percent, "MDL"] = 0
-        # Find CV, Rep_Percent, and Mean cols from df
-        cv_cols = ["CV " + col for col in sample_groups]
-        rper_cols = ["Detection Percentage " + col for col in sample_groups]
-        mean_cols = ["Mean " + col for col in sample_groups]
-        # Subset CV cols from df
-        cv_df = dfCombined[cv_cols]
+    #     # Calculate MDL
+    #     # AC 6/18/2024: Need to pull in MRL multiplier for MRL calculation
+    #     dfCombined["MDL"] = dfCombined[blank_mean] + MRL_mult * dfCombined[blank_std]
+    #     dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
+    #     dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
+    #     # AC Where blank replicate percentage column fails, zero out MDL - NTAW574
+    #     dfCombined.loc[dfCombined[blank_rper] < min_replicate_blanks_hits_percent, "MDL"] = 0
+    #     # Find CV, Rep_Percent, and Mean cols from df
+    #     cv_cols = ["CV " + col for col in sample_groups]
+    #     rper_cols = ["Detection Percentage " + col for col in sample_groups]
+    #     mean_cols = ["Mean " + col for col in sample_groups]
+    #     # Subset CV cols from df
+    #     cv_df = dfCombined[cv_cols]
 
-        # Get number of occurrences from the CV dataframe
-        titleText = (
-            "Heatmap of Feature Occurrences (n = "
-            + str(cv_df.size)
-            + ")\nSample Rep. Threshold = {}%; Blank Rep. Threshold = {}%; CV Threshold = {}; MRL Multiplier = {}".format(
-                min_replicate_hits_percent, min_replicate_blanks_hits_percent, max_replicate_cv_value, MRL_mult
-            )
-        )
+    #     # Get number of occurrences from the CV dataframe
+    #     titleText = (
+    #         "Heatmap of Feature Occurrences (n = "
+    #         + str(cv_df.size)
+    #         + ")\nSample Rep. Threshold = {}%; Blank Rep. Threshold = {}%; CV Threshold = {}; MRL Multiplier = {}".format(
+    #             min_replicate_hits_percent, min_replicate_blanks_hits_percent, max_replicate_cv_value, MRL_mult
+    #         )
+    #     )
 
-        # Blank out cvs in samples with <2 samples
-        for x, y, z in zip(cv_cols, rper_cols, mean_cols):
-            # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
-            # Check if replicate column is the blank column to determine which filter to apply - NTAW574
-            if y == blank_rper:
-                cv_df.loc[dfCombined[y] < min_replicate_blanks_hits_percent, x] = np.nan
-            else:
-                cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
-            cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
-            cv_df.loc[dfCombined[z] <= dfCombined["MDL"], x] = np.nan
-        # Add sum of Trues for condition applied to cv dataframe
-        cv_df["below count"] = (cv_df <= max_replicate_cv_value).sum(axis=1)
-        # Sort values by how many detects are present
-        cv_df = cv_df.sort_values("below count")
-        # Remove below count column
-        del cv_df[cv_df.columns[-1]]
-        # Create masks for CV cutoffs
-        above = cv_df > max_replicate_cv_value
-        below = cv_df <= max_replicate_cv_value
-        nan_ = cv_df.isna()
-        # Use masks to changes values in cv_df to 1, 0, -1
-        dum = np.where(above, 1, cv_df)
-        dum = np.where(below, 0, dum)
-        dum = np.where(nan_, -1, dum)
-        # Create matrix from discretized dataframe
-        cv_df_discrete = pd.DataFrame(dum, index=cv_df.index, columns=[col[3:] for col in cv_df.columns])
-        cv_df_trans = cv_df_discrete.transpose()
-        # Set Figure size and title
-        plt.figure(figsize=(40, 15))
-        plt.title(titleText, fontsize=40, pad=30, linespacing=1.5)
-        # Create custom color mapping
-        myColors = ((0.8, 0.8, 0.8, 1.0), (1.0, 1.0, 1.0, 1.0), (1, 0.0, 0.2, 1.0))
-        cmap = LinearSegmentedColormap.from_list("Custom", myColors, len(myColors))
-        # Plot heatmap
-        ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
-        ax.set_ylabel("Sample Set", fontsize=28)
-        ax.set_xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
-        ax.set(xticklabels=[])
-        ax.tick_params(axis="y", which="both", labelsize=24, labelrotation=0)
-        # Add outside border
-        ax.patch.set_edgecolor("black")
-        ax.patch.set_linewidth(2)
-        # Manually specify colorbar labelling after it's been generated
-        colorbar = ax.collections[0].colorbar
-        colorbar.ax.tick_params(labelsize=32)
-        colorbar.set_ticks([-0.667, 0, 0.667])
-        colorbar.set_ticklabels(
-            [
-                "no occurrence ({})".format(nan_.sum().sum()),
-                "CV <= {} ({})".format(max_replicate_cv_value, below.sum().sum()),
-                "CV > {} ({})".format(max_replicate_cv_value, above.sum().sum()),
-            ]
-        )
-        # Convert the plot to a bytes-like object
-        buffer = io.BytesIO()
-        plt.savefig(buffer)
-        buffer.seek(0)
-        # Store in class variable
-        self.occurrence_heatmaps_out.append(buffer.getvalue())
-        # Map to outputs
-        self.occurrence_heatmap_map["occurrence_heatmap"] = self.occurrence_heatmaps_out[0]
-        project_name = self.parameters["project_name"][1]
-        self.gridfs.put(
-            "&&".join(self.occurrence_heatmap_map.keys()),
-            _id=self.jobid + "_occurrence_heatmaps",
-            encoding="utf-8",
-            project_name=project_name,
-        )
-        self.mongo_save(self.occurrence_heatmap_map["occurrence_heatmap"], step="occurrence_heatmap")
-        # reset plt
-        plt.clf()
+    #     # Blank out cvs in samples with <2 samples
+    #     for x, y, z in zip(cv_cols, rper_cols, mean_cols):
+    #         # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
+    #         # Check if replicate column is the blank column to determine which filter to apply - NTAW574
+    #         if y == blank_rper:
+    #             cv_df.loc[dfCombined[y] < min_replicate_blanks_hits_percent, x] = np.nan
+    #         else:
+    #             cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
+    #         cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
+    #         cv_df.loc[dfCombined[z] <= dfCombined["MDL"], x] = np.nan
+    #     # Add sum of Trues for condition applied to cv dataframe
+    #     cv_df["below count"] = (cv_df <= max_replicate_cv_value).sum(axis=1)
+    #     # Sort values by how many detects are present
+    #     cv_df = cv_df.sort_values("below count")
+    #     # Remove below count column
+    #     del cv_df[cv_df.columns[-1]]
+    #     # Create masks for CV cutoffs
+    #     above = cv_df > max_replicate_cv_value
+    #     below = cv_df <= max_replicate_cv_value
+    #     nan_ = cv_df.isna()
+    #     # Use masks to changes values in cv_df to 1, 0, -1
+    #     dum = np.where(above, 1, cv_df)
+    #     dum = np.where(below, 0, dum)
+    #     dum = np.where(nan_, -1, dum)
+    #     # Create matrix from discretized dataframe
+    #     cv_df_discrete = pd.DataFrame(dum, index=cv_df.index, columns=[col[3:] for col in cv_df.columns])
+    #     cv_df_trans = cv_df_discrete.transpose()
+    #     # Set Figure size and title
+    #     plt.figure(figsize=(40, 15))
+    #     plt.title(titleText, fontsize=40, pad=30, linespacing=1.5)
+    #     # Create custom color mapping
+    #     myColors = ((0.8, 0.8, 0.8, 1.0), (1.0, 1.0, 1.0, 1.0), (1, 0.0, 0.2, 1.0))
+    #     cmap = LinearSegmentedColormap.from_list("Custom", myColors, len(myColors))
+    #     # Plot heatmap
+    #     ax = sns.heatmap(cv_df_trans, cmap=cmap, cbar_kws={"shrink": 0.2, "pad": 0.01})
+    #     ax.set_ylabel("Sample Set", fontsize=28)
+    #     ax.set_xlabel("Feature ID (n = " + str(len(cv_df)) + ")", fontsize=28)
+    #     ax.set(xticklabels=[])
+    #     ax.tick_params(axis="y", which="both", labelsize=24, labelrotation=0)
+    #     # Add outside border
+    #     ax.patch.set_edgecolor("black")
+    #     ax.patch.set_linewidth(2)
+    #     # Manually specify colorbar labelling after it's been generated
+    #     colorbar = ax.collections[0].colorbar
+    #     colorbar.ax.tick_params(labelsize=32)
+    #     colorbar.set_ticks([-0.667, 0, 0.667])
+    #     colorbar.set_ticklabels(
+    #         [
+    #             "no occurrence ({})".format(nan_.sum().sum()),
+    #             "CV <= {} ({})".format(max_replicate_cv_value, below.sum().sum()),
+    #             "CV > {} ({})".format(max_replicate_cv_value, above.sum().sum()),
+    #         ]
+    #     )
+    #     # Convert the plot to a bytes-like object
+    #     buffer = io.BytesIO()
+    #     plt.savefig(buffer)
+    #     buffer.seek(0)
+    #     # Store in class variable
+    #     self.occurrence_heatmaps_out.append(buffer.getvalue())
+    #     # Map to outputs
+    #     self.occurrence_heatmap_map["occurrence_heatmap"] = self.occurrence_heatmaps_out[0]
+    #     project_name = self.parameters["project_name"][1]
+    #     self.gridfs.put(
+    #         "&&".join(self.occurrence_heatmap_map.keys()),
+    #         _id=self.jobid + "_occurrence_heatmaps",
+    #         encoding="utf-8",
+    #         project_name=project_name,
+    #     )
+    #     self.mongo_save(self.occurrence_heatmap_map["occurrence_heatmap"], step="occurrence_heatmap")
+    #     # reset plt
+    #     plt.clf()
 
     def check_tracers(self):
         """
