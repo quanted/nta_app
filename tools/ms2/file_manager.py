@@ -41,6 +41,7 @@ class MS2_Parser:
         """
         OUTPUT = []
         with Open_Input(file_in) as file:
+            logger.info(f"filename:{file.filename}")
             all_lines = file.readlines()
             non_blank_lines = [
                 line for line in all_lines if line.strip()
@@ -55,7 +56,7 @@ class MS2_Parser:
                         "CHARGE": None,
                         "FRAG_MASS": [],
                         "FRAG_INTENSITY": [],
-                        "filename": file.filename,
+                        # "filename": file.filename,
                     }
                 elif line.startswith("PEPMASS"):
                     line = line.split(" ")[
@@ -86,6 +87,7 @@ class MS2_Parser:
         """
         OUTPUT = []
         with Open_Input(file_in) as file:
+            logger.info(f"filename: {file.filename}")
             all_lines = file.readlines()
             non_blank_lines = [
                 line for line in all_lines if line.strip()
@@ -100,7 +102,7 @@ class MS2_Parser:
                         "CHARGE": None,
                         "FRAG_MASS": [],
                         "FRAG_INTENSITY": [],
-                        "filename": file.filename,
+                        # "filename": file.filename,
                     }
                 elif line.startswith("PrecursorMZ:"):
                     result["MASS"] = float(line.split(" ")[1])

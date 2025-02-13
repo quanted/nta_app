@@ -9,6 +9,13 @@ import numpy as np
 import pandas as pd
 from .score_algo import SpectraScorer
 
+import logging
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger("nta_app.ms2")
+logger.setLevel(logging.INFO)
+
 
 class Feature:
     """
@@ -105,13 +112,13 @@ class Feature_MS2(Feature):
         self.set_neutral_mass(mass_is_neutral)
         self.ms2_spectrum = MS2_Spectrum(data_dict["FRAG_MASS"], data_dict["FRAG_INTENSITY"], precursor_mass=self.mass)
         self.total_signal = sum(self.ms2_spectrum.frag_intensity)
-        self.origin_file = data_dict["filename"]
+        # self.origin_file = data_dict["filename"]
         self.feature_data = {
             "ID": self.feature_id,
             "MASS_MGF": self.mass,
             "MASS_NEUTRAL": self.neutral_mass,
             "RT": self.rt,
-            "FILE NAME": self.origin_file,
+            # "FILE NAME": self.origin_file,
         }
 
         self.reference_scores = {
@@ -119,7 +126,7 @@ class Feature_MS2(Feature):
             "MASS_MGF": [],
             "MASS_NEUTRAL": [],
             "RT": [],
-            "FILE NAME": [],
+            # "FILE NAME": [],
             "DTXCID": [],
             "MASS": [],
             "FORMULA": [],
@@ -146,7 +153,7 @@ class Feature_MS2(Feature):
         self.reference_scores["MASS_MGF"].append(self.mass)
         self.reference_scores["MASS_NEUTRAL"].append(self.neutral_mass)
         self.reference_scores["RT"].append(self.rt)
-        self.reference_scores["FILE NAME"].append(self.origin_file)
+        # self.reference_scores["FILE NAME"].append(self.origin_file)
         self.reference_scores["DTXCID"].append(dtxcid)
         self.reference_scores["FORMULA"].append(formula)
         self.reference_scores["MASS"].append(mass)
@@ -159,7 +166,7 @@ class Feature_MS2(Feature):
             "MASS_MGF": [],
             "MASS_NEUTRAL": [],
             "RT": [],
-            "FILE NAME": [],
+            # "FILE NAME": [],
             "DTXCID": [],
             "MASS": [],
             "FORMULA": [],
@@ -174,7 +181,7 @@ class Feature_MS2(Feature):
             reference_scores["MASS_MGF"].append(self.mass)
             reference_scores["MASS_NEUTRAL"].append(self.neutral_mass)
             reference_scores["RT"].append(self.rt)
-            reference_scores["FILE NAME"].append(self.origin_file)
+            # reference_scores["FILE NAME"].append(self.origin_file)
             reference_scores["DTXCID"].append(identifiers[0])
             reference_scores["FORMULA"].append(identifiers[1])
             reference_scores["MASS"].append(identifiers[2])
@@ -214,7 +221,7 @@ class Feature_MS2(Feature):
             self.reference_scores["MASS_MGF"].append(self.mass)
             self.reference_scores["MASS_NEUTRAL"].append(self.neutral_mass)
             self.reference_scores["RT"].append(self.rt)
-            self.reference_scores["FILE NAME"].append(self.origin_file)
+            # self.reference_scores["FILE NAME"].append(self.origin_file)
             self.reference_scores["DTXCID"].append(identifiers[0])
             self.reference_scores["FORMULA"].append(identifiers[1])
             self.reference_scores["MASS"].append(identifiers[2])
@@ -330,7 +337,7 @@ class FeatureList:
             "MASS_MGF": [],
             "MASS_NEUTRAL": [],
             "RT": [],
-            "FILE NAME": [],
+            # "FILE NAME": [],
             "DTXCID": [],
             "MASS": [],
             "FORMULA": [],
