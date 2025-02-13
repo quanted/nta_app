@@ -41,7 +41,6 @@ class MS2_Parser:
         """
         OUTPUT = []
         with Open_Input(file_in) as file:
-            logger.info(f"filename:{file.filename}")
             all_lines = file.readlines()
             non_blank_lines = [
                 line for line in all_lines if line.strip()
@@ -50,18 +49,13 @@ class MS2_Parser:
             for line in non_blank_lines:
                 line = line.strip()  # Get rid of potential blank spaces at end of line
                 if line.startswith("BEGIN IONS"):
-<<<<<<< HEAD
                     result = {
                         "MASS": None,
                         "RT": None,
                         "CHARGE": None,
                         "FRAG_MASS": [],
                         "FRAG_INTENSITY": [],
-                        # "filename": file.filename,
                     }
-=======
-                    result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
->>>>>>> parent of 9e7cb07 (NTAW-238: Added code to pass in filename from MS2 file_manager functions into the MS2 feature object)
                 elif line.startswith("PEPMASS"):
                     line = line.split(" ")[
                         0
@@ -91,7 +85,6 @@ class MS2_Parser:
         """
         OUTPUT = []
         with Open_Input(file_in) as file:
-            logger.info(f"filename: {file.filename}")
             all_lines = file.readlines()
             non_blank_lines = [
                 line for line in all_lines if line.strip()
@@ -100,18 +93,14 @@ class MS2_Parser:
             for line in all_lines:
                 line = line.strip()  # Get rid of potential blank spaces at end of line
                 if line.startswith("Name:"):
-<<<<<<< HEAD
                     result = {
                         "MASS": None,
                         "RT": None,
                         "CHARGE": None,
                         "FRAG_MASS": [],
                         "FRAG_INTENSITY": [],
-                        # "filename": file.filename,
                     }
-=======
                     result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
->>>>>>> parent of 9e7cb07 (NTAW-238: Added code to pass in filename from MS2 file_manager functions into the MS2 feature object)
                 elif line.startswith("PrecursorMZ:"):
                     result["MASS"] = float(line.split(" ")[1])
                 elif line.startswith("Comment:"):  # RT is stored in the comment line for Waters MSP files
