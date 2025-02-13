@@ -49,7 +49,14 @@ class MS2_Parser:
             for line in non_blank_lines:
                 line = line.strip()  # Get rid of potential blank spaces at end of line
                 if line.startswith("BEGIN IONS"):
-                    result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
+                    result = {
+                        "MASS": None,
+                        "RT": None,
+                        "CHARGE": None,
+                        "FRAG_MASS": [],
+                        "FRAG_INTENSITY": [],
+                        "filename": file.filename,
+                    }
                 elif line.startswith("PEPMASS"):
                     line = line.split(" ")[
                         0
@@ -87,7 +94,14 @@ class MS2_Parser:
             for line in all_lines:
                 line = line.strip()  # Get rid of potential blank spaces at end of line
                 if line.startswith("Name:"):
-                    result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
+                    result = {
+                        "MASS": None,
+                        "RT": None,
+                        "CHARGE": None,
+                        "FRAG_MASS": [],
+                        "FRAG_INTENSITY": [],
+                        "filename": file.filename,
+                    }
                 elif line.startswith("PrecursorMZ:"):
                     result["MASS"] = float(line.split(" ")[1])
                 elif line.startswith("Comment:"):  # RT is stored in the comment line for Waters MSP files
@@ -135,9 +149,14 @@ class Open_Input(object):
     def __init__(self, file_in):
         if isinstance(file_in, str):
             self.file_obj = open(file_in, "r")
+            # Get the input filename
+            self.filename = file_in.split("/").pop()
+            logger.info(f"filename: {self.filename}")
         else:
             decoded_file = file_in.read().decode("utf-8")
             self.file_obj = io.StringIO(decoded_file)
+            # Get the input filename
+            self.filename = "temp_filename.xxx"
 
     def __enter__(self):
         return self.file_obj

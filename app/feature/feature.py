@@ -105,11 +105,13 @@ class Feature_MS2(Feature):
         self.set_neutral_mass(mass_is_neutral)
         self.ms2_spectrum = MS2_Spectrum(data_dict["FRAG_MASS"], data_dict["FRAG_INTENSITY"], precursor_mass=self.mass)
         self.total_signal = sum(self.ms2_spectrum.frag_intensity)
+        self.origin_file = data_dict[“filename”]
         self.feature_data = {
             "ID": self.feature_id,
             "MASS_MGF": self.mass,
             "MASS_NEUTRAL": self.neutral_mass,
             "RT": self.rt,
+            "FILE NAME" : self.origin_file
         }
 
         self.reference_scores = {
@@ -124,6 +126,7 @@ class Feature_MS2(Feature):
             "SUM_SCORE": [],
             "Q-SCORE": [],
             "PERCENTILE": [],
+            "FILE NAME": []
         }
 
     def set_neutral_mass(self, is_neutral):
