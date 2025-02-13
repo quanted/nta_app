@@ -100,6 +100,7 @@ class MS2_Parser:
                         "FRAG_MASS": [],
                         "FRAG_INTENSITY": [],
                     }
+                    result = {"MASS": None, "RT": None, "CHARGE": None, "FRAG_MASS": [], "FRAG_INTENSITY": []}
                 elif line.startswith("PrecursorMZ:"):
                     result["MASS"] = float(line.split(" ")[1])
                 elif line.startswith("Comment:"):  # RT is stored in the comment line for Waters MSP files
