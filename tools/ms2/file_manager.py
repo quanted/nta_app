@@ -41,6 +41,8 @@ class MS2_Parser:
         """
         OUTPUT = []
         with Open_Input(file_in) as file:
+            filename = file.name.split("/").pop()
+            logger.info(f"filename: {filename}")
             all_lines = file.readlines()
             non_blank_lines = [
                 line for line in all_lines if line.strip()
@@ -85,6 +87,8 @@ class MS2_Parser:
         """
         OUTPUT = []
         with Open_Input(file_in) as file:
+            filename = file.name.split("/").pop()
+            logger.info(f"filename: {filename}")
             all_lines = file.readlines()
             non_blank_lines = [
                 line for line in all_lines if line.strip()
