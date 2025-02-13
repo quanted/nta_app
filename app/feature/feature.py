@@ -110,6 +110,7 @@ class Feature_MS2(Feature):
             "MASS_MGF": self.mass,
             "MASS_NEUTRAL": self.neutral_mass,
             "RT": self.rt,
+        }
 
         self.reference_scores = {
             "ID": [],
