@@ -150,7 +150,8 @@ class Open_Input(object):
         if isinstance(file_in, str):
             self.file_obj = open(file_in, "r")
             # Get the input filename
-            self.filename = file_in.split("/").pop()
+            # self.filename = file_in.split("/").pop()
+            self.filename = "temp_filename.xxx"
             logger.info(f"filename: {self.filename}")
         else:
             decoded_file = file_in.read().decode("utf-8")

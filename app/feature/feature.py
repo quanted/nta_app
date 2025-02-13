@@ -119,6 +119,7 @@ class Feature_MS2(Feature):
             "MASS_MGF": [],
             "MASS_NEUTRAL": [],
             "RT": [],
+            "FILE NAME": [],
             "DTXCID": [],
             "MASS": [],
             "FORMULA": [],
@@ -126,7 +127,6 @@ class Feature_MS2(Feature):
             "SUM_SCORE": [],
             "Q-SCORE": [],
             "PERCENTILE": [],
-            "FILE NAME": [],
         }
 
     def set_neutral_mass(self, is_neutral):
@@ -146,6 +146,7 @@ class Feature_MS2(Feature):
         self.reference_scores["MASS_MGF"].append(self.mass)
         self.reference_scores["MASS_NEUTRAL"].append(self.neutral_mass)
         self.reference_scores["RT"].append(self.rt)
+        self.reference_scores["FILE NAME"].append(self.origin_file)
         self.reference_scores["DTXCID"].append(dtxcid)
         self.reference_scores["FORMULA"].append(formula)
         self.reference_scores["MASS"].append(mass)
@@ -158,6 +159,7 @@ class Feature_MS2(Feature):
             "MASS_MGF": [],
             "MASS_NEUTRAL": [],
             "RT": [],
+            "FILE NAME": [],
             "DTXCID": [],
             "MASS": [],
             "FORMULA": [],
@@ -172,6 +174,7 @@ class Feature_MS2(Feature):
             reference_scores["MASS_MGF"].append(self.mass)
             reference_scores["MASS_NEUTRAL"].append(self.neutral_mass)
             reference_scores["RT"].append(self.rt)
+            reference_scores["FILE NAME"].append(self.origin_file)
             reference_scores["DTXCID"].append(identifiers[0])
             reference_scores["FORMULA"].append(identifiers[1])
             reference_scores["MASS"].append(identifiers[2])
@@ -211,6 +214,7 @@ class Feature_MS2(Feature):
             self.reference_scores["MASS_MGF"].append(self.mass)
             self.reference_scores["MASS_NEUTRAL"].append(self.neutral_mass)
             self.reference_scores["RT"].append(self.rt)
+            self.reference_scores["FILE NAME"].append(self.origin_file)
             self.reference_scores["DTXCID"].append(identifiers[0])
             self.reference_scores["FORMULA"].append(identifiers[1])
             self.reference_scores["MASS"].append(identifiers[2])
@@ -326,6 +330,7 @@ class FeatureList:
             "MASS_MGF": [],
             "MASS_NEUTRAL": [],
             "RT": [],
+            "FILE NAME": [],
             "DTXCID": [],
             "MASS": [],
             "FORMULA": [],
