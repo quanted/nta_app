@@ -130,11 +130,10 @@ class MS2Run:
         for file in grid_out:
             file_index = grid_out.index(file)
             filename = self.inputParameters["fileUpload"][1][file_index]
-            logger.info(f"filename: {filename}")
             if file.mode == "neg":
-                self.input_dfs["neg"].append(MS2_Parser.parse_file(file))
+                self.input_dfs["neg"].append(MS2_Parser.parse_file(file, filename))
             else:
-                self.input_dfs["pos"].append(MS2_Parser.parse_file(file))
+                self.input_dfs["pos"].append(MS2_Parser.parse_file(file, filename))
 
     def construct_featurelist(self):
         """

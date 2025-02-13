@@ -18,11 +18,11 @@ class MS2_Parser:
     """ """
 
     @staticmethod
-    def parse_file(file, **kwargs):
-        parser = MS2_Parser._get_parser(file.filetype)
-        return parser(file, **kwargs)
+    def parse_file(file, filename, **kwargs):
+        parser = MS2_Parser._get_parser(file.filetype, filename)
+        return parser(file, filename, **kwargs)
 
-    def _get_parser(file_type):
+    def _get_parser(file_type, filename):
         if str(file_type).lower() == "mgf":
             return MS2_Parser._mgf_parser
         elif str(file_type).lower() == "msp":
@@ -32,7 +32,7 @@ class MS2_Parser:
         else:
             raise ValueError(file_type)
 
-    def _mgf_parser(file_in):
+    def _mgf_parser(file_in, filename):
         """
         Output: list of dictionaries sturcutres as follows:
                 [{'Mass': float, 'RT': float, 'CHARGE': str, 'FRAG_MASS': [float], 'FRAG_INTENSITY':[float]}, ...]
@@ -41,7 +41,7 @@ class MS2_Parser:
         """
         OUTPUT = []
         with Open_Input(file_in) as file:
-            filename = "temp_filename.xxx"
+            # filename = "temp_filename.xxx"
             logger.info(f"filename: {filename}")
             logger.info(f"file: {file}")
             all_lines = file.readlines()
@@ -79,7 +79,7 @@ class MS2_Parser:
                     result["FRAG_INTENSITY"].append(float(frag_intensity))
         return OUTPUT
 
-    def _msp_parser(file_in):
+    def _msp_parser(file_in, filename):
         """
         Output: list of dictionaries sturcutres as follows:
                 [{'Mass': float, 'RT': float, 'CHARGE': str, 'FRAG_MASS': [float], 'FRAG_INTENSITY':[float]}, ...]
@@ -88,7 +88,7 @@ class MS2_Parser:
         """
         OUTPUT = []
         with Open_Input(file_in) as file:
-            filename = "temp_filename.xxx"
+            # filename = "temp_filename.xxx"
             logger.info(f"filename: {filename}")
             logger.info(f"file: {file}")
             all_lines = file.readlines()
