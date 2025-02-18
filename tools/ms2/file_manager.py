@@ -55,7 +55,7 @@ class MS2_Parser:
                         "CHARGE": None,
                         "FRAG_MASS": [],
                         "FRAG_INTENSITY": [],
-                        "FILE_NAME": [filename],
+                        "FILE_NAME": filename,
                     }
                 elif line.startswith("PEPMASS"):
                     line = line.split(" ")[
@@ -75,7 +75,7 @@ class MS2_Parser:
                     mass_frag, frag_intensity = MS2_Parser._seperate_line(line)
                     result["FRAG_MASS"].append(float(mass_frag))
                     result["FRAG_INTENSITY"].append(float(frag_intensity))
-        logger.info(f"filename: {result['FILE_NAME'][0]}")
+        logger.info(f"filename: {result['FILE_NAME']}")
         return OUTPUT
 
     def _msp_parser(file_in, filename):
@@ -101,7 +101,7 @@ class MS2_Parser:
                         "CHARGE": None,
                         "FRAG_MASS": [],
                         "FRAG_INTENSITY": [],
-                        "FILE_NAME": [filename],
+                        "FILE_NAME": filename,
                     }
                 elif line.startswith("PrecursorMZ:"):
                     result["MASS"] = float(line.split(" ")[1])
