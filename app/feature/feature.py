@@ -105,11 +105,13 @@ class Feature_MS2(Feature):
         self.set_neutral_mass(mass_is_neutral)
         self.ms2_spectrum = MS2_Spectrum(data_dict["FRAG_MASS"], data_dict["FRAG_INTENSITY"], precursor_mass=self.mass)
         self.total_signal = sum(self.ms2_spectrum.frag_intensity)
+        self.origin_file = data_dict["FILE_NAME"]
         self.feature_data = {
             "ID": self.feature_id,
             "MASS_MGF": self.mass,
             "MASS_NEUTRAL": self.neutral_mass,
             "RT": self.rt,
+            "FILE_NAME": self.origin_file,
         }
 
         self.reference_scores = {
@@ -124,6 +126,7 @@ class Feature_MS2(Feature):
             "SUM_SCORE": [],
             "Q-SCORE": [],
             "PERCENTILE": [],
+            "FILE_NAME": [],
         }
 
     def set_neutral_mass(self, is_neutral):
@@ -148,6 +151,7 @@ class Feature_MS2(Feature):
         self.reference_scores["MASS"].append(mass)
         self.reference_scores["SINGLE_SCORES"].append(scores)
         self.reference_scores["SUM_SCORE"].append(sum(scores))
+        self.reference_scores["FILE_NAME"].append(self.origin_file)
 
     def dask_calc_similarity(self, spectra_dict):
         reference_scores = {
@@ -216,6 +220,7 @@ class Feature_MS2(Feature):
             ]
             self.reference_scores["SINGLE_SCORES"].append(single_scores)
             self.reference_scores["SUM_SCORE"].append(sum(single_scores))
+            self.reference_scores["FILE_NAME"].append(self.origin_file)
 
     def __eq__(self, other):
         mass_equivalent = abs((other.mass - self.mass) / self.mass) * 1000000 < self.mass_accuracy
@@ -330,6 +335,7 @@ class FeatureList:
             "SUM_SCORE": [],
             "Q-SCORE": [],
             "PERCENTILE": [],
+            "FILE_NAME": [],
         }
 
         for feature in self.feature_list:
