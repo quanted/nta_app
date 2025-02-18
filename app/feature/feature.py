@@ -111,7 +111,6 @@ class Feature_MS2(Feature):
             "MASS_MGF": self.mass,
             "MASS_NEUTRAL": self.neutral_mass,
             "RT": self.rt,
-            "FILE_NAME": self.origin_file,
         }
 
         self.reference_scores = {
@@ -151,7 +150,6 @@ class Feature_MS2(Feature):
         self.reference_scores["MASS"].append(mass)
         self.reference_scores["SINGLE_SCORES"].append(scores)
         self.reference_scores["SUM_SCORE"].append(sum(scores))
-        self.reference_scores["FILE_NAME"].append(self.origin_file)
 
     def dask_calc_similarity(self, spectra_dict):
         reference_scores = {
@@ -220,7 +218,6 @@ class Feature_MS2(Feature):
             ]
             self.reference_scores["SINGLE_SCORES"].append(single_scores)
             self.reference_scores["SUM_SCORE"].append(sum(single_scores))
-            self.reference_scores["FILE_NAME"].append(self.origin_file)
 
     def __eq__(self, other):
         mass_equivalent = abs((other.mass - self.mass) / self.mass) * 1000000 < self.mass_accuracy
