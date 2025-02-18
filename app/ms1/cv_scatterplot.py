@@ -123,7 +123,7 @@ def cv_scatterplot(parameters, data_map):
     # CV text position scale so it doesn't overlap with plot boundary
     text_position_x = 5
     if (max_abundance_limit - min_abundance_limit) > 1000000:
-        text_position_x = 7.5
+        text_position_x = 7
     # Define subplots, set height and width
     f, axes = plt.subplots(1, 2)
     f.set_figheight(5)
