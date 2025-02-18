@@ -81,20 +81,6 @@ def cv_scatterplot(parameters, data_map):
     # Carry over Mass and Retention_Time
     cv_df["Mass"] = dfCombined["Mass"]
     cv_df["Retention Time"] = dfCombined["Retention Time"]
-    # AC 2/8/2024 Get minimum and maximum abundance values of dataframe (mean columns) for the purposes of setting the x-axis range
-    min_abundance_value = mean_df.min(numeric_only=True).min()
-    max_abundance_value = mean_df.max(numeric_only=True).max()
-    if (
-        min_abundance_value == 0
-    ):  # If minimum abundance value is zero, then set minimum limit to zero (to avoid log issues on zero)
-        min_abundance_limit = 0
-    else:
-        min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
-    max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
-    # CV text position scale so it doesn't overlap with plot boundary
-    text_position_x = 5
-    if (max_abundance_limit - min_abundance_limit) > 1000000:
-        text_position_x = 7.5
     # Create list, define blank strings
     li = []
     blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
@@ -129,6 +115,15 @@ def cv_scatterplot(parameters, data_map):
         plot["spike"] = ""
         plot2 = plot.copy()
     plot2.replace(np.nan, 0, inplace=True)
+    # Get minimum and maximum abundance values for the purposes of setting the x-axis range
+    min_abundance_value = plot2["Mean"].min()
+    max_abundance_value = plot2["Mean"].max()
+    min_abundance_limit = 10 ** math.floor(math.log10(min_abundance_value))
+    max_abundance_limit = 10 ** math.ceil(math.log10(max_abundance_value))
+    # CV text position scale so it doesn't overlap with plot boundary
+    text_position_x = 5
+    if (max_abundance_limit - min_abundance_limit) > 1000000:
+        text_position_x = 7.5
     # Define subplots, set height and width
     f, axes = plt.subplots(1, 2)
     f.set_figheight(5)
