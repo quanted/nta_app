@@ -75,6 +75,7 @@ class MS2_Parser:
                     mass_frag, frag_intensity = MS2_Parser._seperate_line(line)
                     result["FRAG_MASS"].append(float(mass_frag))
                     result["FRAG_INTENSITY"].append(float(frag_intensity))
+        logger.info(f"filename: {result['FILE_NAME'][0]}")
         return OUTPUT
 
     def _msp_parser(file_in, filename):
