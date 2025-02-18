@@ -112,6 +112,8 @@ class Feature_MS2(Feature):
             "RT": self.rt,
         }
 
+        self.origin_file = data_dict["FILE_NAME"]
+
         self.reference_scores = {
             "ID": [],
             "MASS_MGF": [],
@@ -330,7 +332,6 @@ class FeatureList:
             "SUM_SCORE": [],
             "Q-SCORE": [],
             "PERCENTILE": [],
-            "FILE_NAME": [],
         }
 
         for feature in self.feature_list:
