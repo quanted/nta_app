@@ -149,9 +149,9 @@ def input_page(request, form_data=None, form_files=None):
             # Get user-selected adducts via POST.getlist()
             # inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
             # logger.info("pos adducts list v2: {}".format(inputParameters["pos_adducts"][1]))
-            inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts")
-            inputParameters["neg_adducts"][1] = request.POST.getlist("neg_adducts")
-            inputParameters["neutral_losses"][1] = request.POST.getlist("neutral_losses")
+            inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts[]")
+            inputParameters["neg_adducts"][1] = request.POST.getlist("neg_adducts[]")
+            inputParameters["neutral_losses"][1] = request.POST.getlist("neutral_losses[]")
             logger.info("pos adducts list: {}".format(inputParameters["pos_adducts"][1]))
             logger.info("neg adducts list: {}".format(inputParameters["neg_adducts"][1]))
             logger.info("neutral adducts list: {}".format(inputParameters["neutral_losses"][1]))
