@@ -147,11 +147,20 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["search_mode"][1] = parameters["search_mode"]
 
             # Get user-selected adducts via POST.getlist()
-            # inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
-            # logger.info("pos adducts list v2: {}".format(inputParameters["pos_adducts"][1]))
-            inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts[]")
-            inputParameters["neg_adducts"][1] = request.POST.getlist("neg_adducts[]")
-            inputParameters["neutral_losses"][1] = request.POST.getlist("neutral_losses[]")
+            # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
+            adduct_li = [
+                ("pos_adducts", "pos_adducts[]"),
+                ("neg_adducts", "neg_adducts[]"),
+                ("neutral_losses", "neutral_losses[]"),
+            ]
+            for item in adduct_li:
+                qed = request.POST.getlist(item[0])
+                amos = request.POST.getlist(item[1])
+                if len(amos) > len(qed):
+                    inputParameters[item[0]][1] = amos
+                else:
+                    inputParameters[item[0]][1] = qed
+            # Print selected adducts to logger
             logger.info("pos adducts list: {}".format(inputParameters["pos_adducts"][1]))
             logger.info("neg adducts list: {}".format(inputParameters["neg_adducts"][1]))
             logger.info("neutral adducts list: {}".format(inputParameters["neutral_losses"][1]))
