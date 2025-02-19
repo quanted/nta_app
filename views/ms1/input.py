@@ -110,6 +110,7 @@ def input_page(request, form_data=None, form_files=None):
             # get parameters from the Request object. Note that the parameters are in the form of a QueryDict.
             parameters = request.POST
             parameters = parameters.dict()
+            logger.info("parameters dict items: {}".format(parameters.items()))
 
             # get the uploaded files from the Request object. Note that the files are in the form of a
             # MultiValueDict. The MultiValueDict is a subclass of the standard Python dictionary that
@@ -146,8 +147,8 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["search_mode"][1] = parameters["search_mode"]
 
             # Get user-selected adducts via POST.getlist()
-            inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
-            logger.info("pos adducts list v2: {}".format(inputParameters["pos_adducts"][1]))
+            # inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
+            # logger.info("pos adducts list v2: {}".format(inputParameters["pos_adducts"][1]))
             inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts")
             inputParameters["neg_adducts"][1] = request.POST.getlist("neg_adducts")
             inputParameters["neutral_losses"][1] = request.POST.getlist("neutral_losses")
