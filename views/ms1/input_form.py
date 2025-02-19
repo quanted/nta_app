@@ -66,7 +66,7 @@ class NtaInputs(forms.Form):
         required=False,
     )
     neutral_losses = forms.MultipleChoiceField(
-        label="Neutral losses (both modes)",
+        label="Neutral losses and solvent modifiers (both modes)",
         widget=forms.CheckboxSelectMultiple(attrs={"class": "two"}),
         choices=(
             ("H2O", mark_safe("[M-H<sub>2</sub>O]")),
