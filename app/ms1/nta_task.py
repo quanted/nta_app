@@ -191,6 +191,8 @@ class NtaRun:
         self.set_status("Processing", create=True)
         # 1f: create an analysis_parameters sheet
         self.create_analysis_parameters_sheet()
+        # 1g: create run sequence sheets
+        self.create_run_sequence_sheets()
         # 2: assign ids, separate passthrough cols, filter void volume, and flag duplicates
         self.step = "Flagging duplicates"
         self.assign_id()
@@ -423,6 +425,26 @@ class NtaRun:
 
         # add the dataframe to the data_map with the sheet name of 'Analysis Parameters'
         self.data_map["Analysis Parameters"] = df_analysis_parameters
+
+        return
+
+    def create_run_sequence_sheets(self):
+        """
+        If there are run sequence files submitted, create a sheet for each mode of run sequence file. This is for the AMOS visualizations to be able to grab the sequence information for
+        run seequence plots
+
+        Args:
+            None
+        Notes:
+            In a future version, we would like to directly pass this information to AMOS separately rather than storing it in the results file where it increases the complexity of the results
+        Returns:
+            None
+        """
+
+        if self.run_sequence_pos_df is not None:
+            self.data_map["Run Sequence (pos)"] = self.run_sequence_pos_df
+        if self.run_sequence_neg_df is not None:
+            self.data_map["Run Sequence (neg)"] = self.run_sequence_neg_df
 
         return
 
