@@ -177,6 +177,11 @@ class NtaRun:
         self.occurrence_heatmaps_out = []
         self.cv_scatterplots_out = []
 
+        # NTAW-594
+        self.blank_headers, self.sample_headers = task_fun.get_sample_and_blank_headers(self.dfs[0])
+        logger.info(f"blank headers: {self.blank_headers}")
+        logger.info(f"sample headers: {self.sample_headers}")
+
     def execute(self):
         self.step = "Check for existence of required columns"
         # 1a: check existence of "Ionization mode" column

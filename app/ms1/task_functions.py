@@ -164,6 +164,23 @@ def parse_headers(df_in):
     return new_headers_list
 
 
+# NTAW-594
+def get_sample_and_blank_headers(df):
+    all_headers = parse_headers(df)
+
+    # get all header groups
+    header_groups = [item for item in all_headers if (len(item) > 1)]
+
+    # get blank headers
+    allowed_blank_formats = ["Blank", "blank", "BLANK", "MB", "Mb", "mb", "mB"]
+    blank_headers = [item for item in all_headers if any(x in head for head in item for x in allowed_blank_formats)]
+
+    # get sample headers
+    sample_headers = [item for item in header_groups if not any(item == x for x in blank_headers)]
+
+    return blank_headers, sample_headers
+
+
 """PASS-THROUGH COLUMNS FUNCTION"""
 
 

@@ -56,42 +56,6 @@ def fix_names(df, index):  # parse the Dataframe into a numpy array
     return df
 
 
-# def parse_headers(df, index):  # group headers into a group of samples
-#     # global df
-#     headers = [[], []]
-#     headers[index] = df.columns.values.tolist()
-#     countS = 0
-#     countD = 0
-#     new_headers = [[], []]
-#     New_Headers = [None, None]
-#     Headers = [None, None]
-#     groups = [None, None]
-#     for s in range(0, len(headers[index]) - 1):
-#         # print headers[s],headers[s+1],list(set(str(headers[s])) - set(str(headers[s+1])))
-#         if "blank" or "Blank" or "MB" in headers[index][s]:
-#             if differences(str(headers[index][s]), str(headers[index][s + 1])) < 2:  # 3 is more common
-#                 countS += 1
-#             if differences(str(headers[index][s]), str(headers[index][s + 1])) >= 2:
-#                 countD += 1
-#                 countS = countS + 1
-#         else:
-#             if differences(str(headers[index][s]), str(headers[index][s + 1])) < 2:  # 2 is more common
-#                 countS += 1
-#             if differences(str(headers[index][s]), str(headers[index][s + 1])) >= 2:
-#                 countD += 1
-#                 countS = countS + 1
-#             # print "These are different "
-#         if "_Flags" in headers[index][s]:
-#             break
-#         new_headers[index].append([headers[index][countS], countD])
-#         new_headers[index].sort(key=itemgetter(1))
-#         groups[index] = groupby(new_headers[index], itemgetter(1))
-#         New_Headers[index] = [[item[0] for item in data] for (key, data) in groups[index]]
-#     Headers[index] = New_Headers[index]
-#     # print((Headers[1]))
-#     return Headers[index]
-
-
 def common_substrings(ls=None):
     match = SequenceMatcher(None, ls[0], ls[len(ls) - 1]).find_longest_match(0, len(ls[0]), 0, len(ls[len(ls) - 1]))
     common = ls[0][match.a : match.a + match.size]
@@ -106,8 +70,8 @@ def common_substrings(ls=None):
     return lsnew
 
 
-def differences(s1, s2):  # find the number of different characters between two strings (headers)
-    s1 = re.sub(re.compile(r"\([^)]*\)"), "", s1)
-    s2 = re.sub(re.compile(r"\([^)]*\)"), "", s2)
-    count = sum(1 for a, b in zip(s1, s2) if a != b) + abs(len(s1) - len(s2))
-    return count
+# def differences(s1, s2):  # find the number of different characters between two strings (headers)
+#     s1 = re.sub(re.compile(r"\([^)]*\)"), "", s1)
+#     s2 = re.sub(re.compile(r"\([^)]*\)"), "", s2)
+#     count = sum(1 for a, b in zip(s1, s2) if a != b) + abs(len(s1) - len(s2))
+#     return count
