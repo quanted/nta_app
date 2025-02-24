@@ -178,7 +178,8 @@ class NtaRun:
         self.cv_scatterplots_out = []
 
         # NTAW-594
-        self.blank_headers, self.sample_headers = task_fun.get_sample_and_blank_headers(self.dfs[0])
+        self.all_headers, self.blank_headers, self.sample_headers = task_fun.get_sample_and_blank_headers(self.dfs[0])
+        logger.info(f"all headers: {self.all_headers}")
         logger.info(f"blank headers: {self.blank_headers}")
         logger.info(f"sample headers: {self.sample_headers}")
 

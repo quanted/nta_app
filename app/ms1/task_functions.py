@@ -178,7 +178,7 @@ def get_sample_and_blank_headers(df):
     # get sample headers
     sample_headers = [item for item in header_groups if not any(item == x for x in blank_headers)]
 
-    return blank_headers, sample_headers
+    return all_headers, blank_headers, sample_headers
 
 
 """PASS-THROUGH COLUMNS FUNCTION"""
