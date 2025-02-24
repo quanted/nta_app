@@ -1177,6 +1177,8 @@ class NtaRun:
                 # Format column widths to fit the largest string contained within the column
                 sheet_num = keys_list.index(df_name)
                 sheet = workbook.worksheets[sheet_num]
+                # Freezes the top row of every sheet in the excel file.
+                sheet.freeze_panes = "A2"
                 # Format each column width to fit the longest string contained within the column
                 for column in df:
                     try:
