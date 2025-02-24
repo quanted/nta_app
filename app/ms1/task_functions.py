@@ -184,7 +184,7 @@ def get_sample_and_blank_headers(df):
 """PASS-THROUGH COLUMNS FUNCTION"""
 
 
-def passthrucol(df_in):
+def passthrucol(df_in, all_headers):
     """
     Find all columns in dfs that aren't necessary (i.e., not Mass and RT) and store
     these columns to be later appended to the output -- TMF 11/20/23
@@ -197,8 +197,6 @@ def passthrucol(df_in):
     """
     # Make a copy of the input df
     df = df_in.copy()
-    # Parse headers
-    all_headers = parse_headers(df)
     # Define active_cols: Keep 'Feature ID' in pt_headers to merge later
     active_cols = ["Retention_Time", "Mass", "Ionization_Mode"]
     # Create list of pass through headers that are not in the active columns
