@@ -569,9 +569,11 @@ class NtaRun:
         Returns:
             None
         """
-        # Submit dfs to passthrucol() function, store outputs separately
-        self.pass_through = [task_fun.passthrucol(df)[0] if df is not None else None for df in self.dfs]
-        self.dfs = [task_fun.passthrucol(df)[1] if df is not None else None for df in self.dfs]
+        # Submit dfs and all_headers to passthrucol() function, store outputs separately
+        self.pass_through = [
+            task_fun.passthrucol(df, self.all_headers)[0] if df is not None else None for df in self.dfs
+        ]
+        self.dfs = [task_fun.passthrucol(df, self.all_headers)[1] if df is not None else None for df in self.dfs]
         return
 
     def filter_void_volume(self, min_rt):
