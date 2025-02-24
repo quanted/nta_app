@@ -136,18 +136,11 @@ def parse_headers(df_in):
     # Iterate through list of columns, calling differences() function
     # When differences() return is greater than some value, increase countD (group assigner)
     for s in range(0, len(headers) - 1):
-        if "blank" or "Blank" or "MB" in headers[s]:
-            if differences(str(headers[s]), str(headers[s + 1])) < 2:  # 3 is more common
-                countS += 1
-            if differences(str(headers[s]), str(headers[s + 1])) >= 2:
-                countD += 1
-                countS = countS + 1
-        else:
-            if differences(str(headers[s]), str(headers[s + 1])) < 2:  # 2 is more common
-                countS += 1
-            if differences(str(headers[s]), str(headers[s + 1])) >= 2:
-                countD += 1
-                countS = countS + 1
+        if differences(str(headers[s]), str(headers[s + 1])) < 2:  # 2 is more common
+            countS += 1
+        if differences(str(headers[s]), str(headers[s + 1])) >= 2:
+            countD += 1
+            countS = countS + 1
         if "_Flags" in headers[s]:
             break
         # Add list of columns to list
