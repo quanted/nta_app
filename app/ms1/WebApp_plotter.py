@@ -151,49 +151,9 @@ class WebApp_plotter:
 
         This code was written by Alex Chao.
         """
-        if df_seq is None:
-            # Sort dataframe columns alphabetically prior to parsing headers
-            df_in = df_in.reindex(sorted(df_in.columns), axis=1)  # Remove sorting to
-            df_in = df_in[
-                ["Feature ID"] + [col for col in df_in.columns if col != "Feature ID"]
-            ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
 
-            # Debug_list
-            debug_list.append("After sorting: df_in columns")
-            debug_list.append(df_in.columns.values)
-
-            # If there is no sequence file, create a dummy sequence dataframe containing the sample names straight from the input data file
-            headers = parse_headers(df_in)
-            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-
-            # Debug_list
-            debug_list.append("Samples from parse_headers")
-            debug_list.append(abundance)
-
-            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
-            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
-            # Remove these from the sample list below
-            column_prefixes_to_remove = [
-                "Mean_",
-                "Median_",
-                "STD_",
-                "N_Abun_",
-                "CV_",
-                "Replicate_Percent_",
-                "Occurrence_Count",
-            ]
-            abundance = [
-                entry
-                for entry in abundance
-                if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
-            ]
-
-            df_loc_seq = pd.DataFrame()
-            df_loc_seq["Sample Sequence"] = abundance
-            order_samples = False
-        else:
-            df_loc_seq = df_seq
-            order_samples = True
+        df_loc_seq = df_seq
+        order_samples = True
 
         # AC Check if sample sequence file has more than one column, second column would be the sample group column
         if len(df_loc_seq.columns) > 1:
@@ -239,37 +199,6 @@ class WebApp_plotter:
             col_names.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
             # df_in["Chemical_Name"] = ["" for x in df_in.iloc[:, 0].values]
             df = df_in[col_names].copy()
-        else:
-            # Sort dataframe columns alphabetically prior to parsing headers
-            df_in = df_in.reindex(sorted(df_in.columns), axis=1)
-            df_in = df_in[
-                ["Feature ID"] + [col for col in df_in.columns if col != "Feature ID"]
-            ]  # Move mass column to front of dataframe; if a sample replicate is the first column when parsing headers it loses that replicate from the group
-
-            headers = parse_headers(df_in)
-            abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-            abundance.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
-            # abundance.remove('Detection_Count(all_samples)')
-            # abundance.remove('Detection_Count(all_samples)(%)')
-            # 5/21/2024 AC: In certain cases if the samples have multiple layers of repetition to their naming,
-            # the parse_headers function will grab the mean/CV/std/median columns as samples in addition to the raw samples.
-            # Remove these from the sample list below
-            column_prefixes_to_remove = [
-                "Mean_",
-                "Median_",
-                "STD_",
-                "N_Abun_",
-                "CV_",
-                "Replicate_Percent_",
-                "Occurrence_Count",
-            ]
-            abundance = [
-                entry
-                for entry in abundance
-                if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
-            ]
-
-            df = df_in[abundance].copy()
 
         # our list of final chemical names with appropriate capitalization
         chemical_names = df_in["Chemical_Name"]
