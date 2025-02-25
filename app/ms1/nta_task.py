@@ -1064,8 +1064,10 @@ class NtaRun:
             self.sample_headers,
         )
         # Map df and df_flagged outputs to Final Occurrence Matrices sheets
-        self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready)
-        self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(self.mpp_ready_flagged)
+        self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready, self.blank_headers, self.sample_headers)
+        self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(
+            self.mpp_ready_flagged, self.blank_headers, self.sample_headers
+        )
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save=True):
         """

@@ -82,7 +82,7 @@ def make_hyperlink(value, url="https://comptox.epa.gov/dashboard/chemical/detail
 #     return df
 
 
-def reduced_file(df_in):
+def reduced_file(df_in, blank_headers, sample_headers):
     """
     Take dataframe, and remove unnecessary columns in preparation for output.
 
@@ -93,29 +93,10 @@ def reduced_file(df_in):
     """
     # Copy dataframe
     df = df_in.copy()
-    # Get grouped headers
-    headers = task_fun.parse_headers(df)
-    logger.info(f"reduced_file_headers= {headers}")
-    # Define list of strings for blanks and blank_sub means
-    keeps_str = ["MB_", "blank", "blanks", "BLANK", "Blank", "Mean", "Sub"]
-    # Identify columns to drop
-    to_drop = [
-        item for sublist in headers for item in sublist if (len(sublist) > 1) & (not any(x in item for x in keeps_str))
-    ]
-    # Add CV, Detection Count, Median, and STD columns to the list
-    to_drop.extend(df.columns[(df.columns.str.contains(pat="CV |Detection Count |Median |STD ") == True)].tolist())
-    # Add original mean (not blank-subtracted means) to the list
-    to_drop.extend(
-        df.columns[
-            (df.columns.str.contains(pat="Mean ") == True)
-            & (df.columns.str.contains(pat="MB|blank|blanks|BLANK|Blank|Sub") == False)
-        ].tolist()
-    )
-    # Check for Mean_ALLMB, if present add to list
-    if "Mean_ALLMB" in df.columns.values.tolist():
-        to_drop.extend(["Mean_ALLMB"])
 
-    logger.info(f"reduced_file_to_drop= {to_drop}")
+    # Identify columns to drop
+    sample_groups = blank_headers + sample_headers
+    to_drop = [item for sublist in sample_groups for item in sublist] + ["MRL (3x)", "MRL (5x)", "MRL (10x)"]
 
     # Drop columns in list from df
     df.drop(to_drop, axis=1, inplace=True)
