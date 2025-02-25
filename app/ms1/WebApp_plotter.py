@@ -209,7 +209,7 @@ class WebApp_plotter:
             temp_indices = df_loc_seq.index[df_loc_seq.iloc[:, 1] == sample_group_unique[i]].tolist()
             indices_list.append(temp_indices)
 
-        return df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list
+        return df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list, abundance
 
     def _clean_seq_data(
         self, df_in: pd.DataFrame, df_loc_seq: pd.DataFrame, order_samples: bool
@@ -1297,7 +1297,7 @@ class WebApp_plotter:
 
         ## check for sequence df
         seq_results = self._check_for_seq(df_seq, debug_list, df_in)
-        df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list = seq_results
+        df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list, check_seq_abundance = seq_results
 
         ## clean sequence data
         df, chem_names, abundance = self._clean_seq_data(df_in, df_loc_seq, order_samples)
@@ -1340,7 +1340,9 @@ class WebApp_plotter:
         # for i, fig in enumerate(listOfPNGs):
         #     fig.savefig(f"./seq_{ionization}_{y_step}ticks-{str(i+1).zfill(2)}.png", bbox_inches="tight")
 
-        return listOfPNGs, df, debug_list
+        ntaw594log = [check_seq_abundance, abundance]
+
+        return listOfPNGs, df, debug_list, ntaw594log
 
     def make_loc_plot(
         self,
