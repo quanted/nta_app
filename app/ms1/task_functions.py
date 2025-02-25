@@ -785,7 +785,7 @@ def chunk_stats(
     return output
 
 
-def column_sort_DFS(df_in, passthru):
+def column_sort_DFS(df_in, passthru, all_headers):
     """
     Function that sorts columns for the data_feature_statistics outputs -- TMF 11/21/23
 
@@ -798,8 +798,6 @@ def column_sort_DFS(df_in, passthru):
     # Copy df and passthru
     df = df_in.copy()
     pt = passthru.copy()
-    # Parse headers
-    all_headers = parse_headers(df)
     # Get all cols, group roots (i.e., drop unique value from sample groups)
     all_cols = df.columns.tolist()
     non_samples = ["MRL"]

@@ -690,18 +690,18 @@ class NtaRun:
         # sort dataframe columns for data_feature_statistics (DFS) output
         if self.dfs[0] is not None and self.dfs[1] is not None:
             self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
-                self.dfs[0], self.pass_through[0]
+                self.dfs[0], self.pass_through[0], self.all_headers
             )
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
-                self.dfs[1], self.pass_through[1]
+                self.dfs[1], self.pass_through[1], self.all_headers
             )
         elif self.dfs[0] is not None:
             self.data_map["All Detection Statistics (Pos)"] = task_fun.column_sort_DFS(
-                self.dfs[0], self.pass_through[0]
+                self.dfs[0], self.pass_through[0], self.all_headers
             )
         else:
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
-                self.dfs[1], self.pass_through[1]
+                self.dfs[1], self.pass_through[1], self.all_headers
             )
         return
 
