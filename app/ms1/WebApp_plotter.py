@@ -151,7 +151,6 @@ class WebApp_plotter:
 
         This code was written by Alex Chao.
         """
-        abundance = None
         if df_seq is None:
             # Sort dataframe columns alphabetically prior to parsing headers
             df_in = df_in.reindex(sorted(df_in.columns), axis=1)  # Remove sorting to
@@ -210,7 +209,7 @@ class WebApp_plotter:
             temp_indices = df_loc_seq.index[df_loc_seq.iloc[:, 1] == sample_group_unique[i]].tolist()
             indices_list.append(temp_indices)
 
-        return df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list, abundance
+        return df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list
 
     def _clean_seq_data(
         self, df_in: pd.DataFrame, df_loc_seq: pd.DataFrame, order_samples: bool
@@ -1298,7 +1297,7 @@ class WebApp_plotter:
 
         ## check for sequence df
         seq_results = self._check_for_seq(df_seq, debug_list, df_in)
-        df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list, check_seq_abundance = seq_results
+        df_loc_seq, order_samples, debug_list, sample_group_unique, indices_list = seq_results
 
         ## clean sequence data
         df, chem_names, abundance = self._clean_seq_data(df_in, df_loc_seq, order_samples)
@@ -1341,9 +1340,7 @@ class WebApp_plotter:
         # for i, fig in enumerate(listOfPNGs):
         #     fig.savefig(f"./seq_{ionization}_{y_step}ticks-{str(i+1).zfill(2)}.png", bbox_inches="tight")
 
-        ntaw594log = [check_seq_abundance, abundance]
-
-        return listOfPNGs, df, debug_list, ntaw594log
+        return listOfPNGs, df, debug_list
 
     def make_loc_plot(
         self,

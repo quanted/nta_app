@@ -835,7 +835,7 @@ class NtaRun:
                 # Pass positive mode data and positive run sequence file to check_run_seq()
                 task_fun.check_run_seq(self.dfs[0], self.run_sequence_pos_df, self.blank_headers, self.sample_headers)
 
-            listOfPNGs, df_debug, debug_list, ntaw594log = df_WA.make_seq_scatter(
+            listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 df_in=self.tracer_dfs_out[0],
                 df_seq=self.run_sequence_pos_df,
                 ionization="pos",
@@ -849,8 +849,6 @@ class NtaRun:
                 # chemical_names=None,
                 dark_mode=False,
             )
-            logger.info("check_seq_abundance1= {}".format(ntaw594log[0]))
-            logger.info("clean_seq_abundance1= {}".format(ntaw594log[1]))
             self.tracer_plots_out.append(listOfPNGs)
 
         else:
@@ -874,7 +872,7 @@ class NtaRun:
                 # Pass negative mode data and negative run sequence file to check_run_seq()
                 task_fun.check_run_seq(self.dfs[1], self.run_sequence_neg_df, self.blank_headers, self.sample_headers)
 
-            listOfPNGs, df_debug, debug_list, ntaw594log = df_WA.make_seq_scatter(
+            listOfPNGs, df_debug, debug_list = df_WA.make_seq_scatter(
                 df_in=self.tracer_dfs_out[1],
                 df_seq=self.run_sequence_neg_df,
                 ionization="neg",
@@ -888,8 +886,6 @@ class NtaRun:
                 # chemical_names=None,
                 dark_mode=False,
             )
-            logger.info("check_seq_abundance2= {}".format(ntaw594log[0]))
-            logger.info("clean_seq_abundance2= {}".format(ntaw594log[1]))
 
             self.tracer_plots_out.append(listOfPNGs)
             logger.info("df_debug shape= {}".format(df_debug.shape))
