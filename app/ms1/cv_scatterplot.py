@@ -72,6 +72,7 @@ def cv_scatterplot(parameters, data_map):
     # Isolate sample_groups from stats columns
     prefixes = ["Mean ", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
     sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
+    logger.info(f"sample_groups_scatterplot= {sample_groups}")
     # Find CV cols from df, subset cv_df from df
     cv_cols = ["CV " + col for col in sample_groups]
     cv_df = dfCombined[cv_cols]
@@ -83,7 +84,7 @@ def cv_scatterplot(parameters, data_map):
     cv_df["Retention Time"] = dfCombined["Retention Time"]
     # Create list, define blank strings
     li = []
-    blanks = ["MB1", "BLK", "Blank", "BLANK", "blank", "MB", "mb"]
+    blanks = ["mb", "mB", "Mb", "MB", "blank", "Blank", "BLANK"]
     # Loop through sample groups
     for x in sample_groups:
         # Take each sample's CV and mean, store in dummy variable
