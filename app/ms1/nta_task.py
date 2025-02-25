@@ -851,6 +851,7 @@ class NtaRun:
             )
 
             self.tracer_plots_out.append(listOfPNGs)
+            logger.info(f"debug_list_1: {debug_list}")
 
         else:
             self.tracer_plots_out.append(None)
@@ -891,7 +892,7 @@ class NtaRun:
             self.tracer_plots_out.append(listOfPNGs)
             logger.info("df_debug shape= {}".format(df_debug.shape))
             logger.info("df_debug columns= {}".format(df_debug.columns.values))
-
+            logger.info(f"debug_list_2: {debug_list}")
         else:
             self.tracer_plots_out.append(None)
 

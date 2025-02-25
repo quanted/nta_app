@@ -165,7 +165,6 @@ class WebApp_plotter:
             # If there is no sequence file, create a dummy sequence dataframe containing the sample names straight from the input data file
             headers = parse_headers(df_in)
             abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-            logger.info(f"_check_for_seq abundance1= {abundance}")
 
             # Debug_list
             debug_list.append("Samples from parse_headers")
@@ -188,7 +187,6 @@ class WebApp_plotter:
                 for entry in abundance
                 if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
             ]
-            logger.info(f"_check_for_seq abundance2= {abundance}")
 
             df_loc_seq = pd.DataFrame()
             df_loc_seq["Sample Sequence"] = abundance
@@ -250,7 +248,6 @@ class WebApp_plotter:
 
             headers = parse_headers(df_in)
             abundance = [item for sublist in headers for item in sublist if len(sublist) > 1]
-            logger.info(f"_clean_seq_data abundance1= {abundance}")
             abundance.insert(0, "Chemical_Name")  # AC 1/4/2024 Add in chemical name column to dataframe
             # abundance.remove('Detection_Count(all_samples)')
             # abundance.remove('Detection_Count(all_samples)(%)')
@@ -271,7 +268,6 @@ class WebApp_plotter:
                 for entry in abundance
                 if not any(entry.startswith(prefix) for prefix in column_prefixes_to_remove)
             ]
-            logger.info(f"_clean_seq_data abundance2= {abundance}")
 
             df = df_in[abundance].copy()
 
