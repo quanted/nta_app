@@ -1691,10 +1691,7 @@ def combine_doc(doc1, doc2, tracer_df=False):
     return dfc
 
 
-def MPP_Ready(
-    dfc,
-    pts,
-):
+def MPP_Ready(dfc, pts, blank_headers, sample_headers):
     """
     Function that re-combines the pass-through columns with the processed dataframe
     plus some final column sorting.
@@ -1717,17 +1714,10 @@ def MPP_Ready(
     else:
         dfc = pd.merge(dfc, pts[1], how="left", on=["Feature ID"])
         pt_cols = pts[1].columns.tolist()
-    # Parse headers, get sample values and blank subtracted means
-    Headers = parse_headers(dfc)
-    # Get raw sample values
-    raw_samples = [
-        item
-        for sublist in Headers
-        for item in sublist
-        if (len(sublist) > 2)
-        if ("BlankSub" not in item)
-        if not any(x in item for x in pt_cols)
-    ]
+
+    # Get raw sample headers
+    sample_groups = blank_headers + sample_headers
+    raw_samples = [item for sublist in sample_groups for item in sublist] + ["MRL (3x)", "MRL (5x)", "MRL (10x)"]
     # Get blank subtracted means
     blank_subtracted_means = dfc.columns[dfc.columns.str.contains(pat="BlankSub")].tolist()
     # Establish ordering of all possible front matter (tracer/no tracer, flags/no flags, etc.)

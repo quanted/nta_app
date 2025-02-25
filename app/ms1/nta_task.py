@@ -1043,11 +1043,15 @@ class NtaRun:
         self.mpp_ready = task_fun.MPP_Ready(
             self.df_combined,
             self.pass_through,
+            self.blank_headers,
+            self.sample_headers,
         )
         # Prep combined df_flagged for output by combining with passthrough cols and formatting
         self.mpp_ready_flagged = task_fun.MPP_Ready(
             self.df_flagged_combined,
             self.pass_through,
+            self.blank_headers,
+            self.sample_headers,
         )
         # Map df and df_flagged outputs to Final Occurrence Matrices sheets
         self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready)
