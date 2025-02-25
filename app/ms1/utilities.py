@@ -95,6 +95,7 @@ def reduced_file(df_in):
     df = df_in.copy()
     # Get grouped headers
     headers = task_fun.parse_headers(df)
+    logger.info(f"reduced_file_headers= {headers}")
     # Define list of strings for blanks and blank_sub means
     keeps_str = ["MB_", "blank", "blanks", "BLANK", "Blank", "Mean", "Sub"]
     # Identify columns to drop
@@ -113,6 +114,9 @@ def reduced_file(df_in):
     # Check for Mean_ALLMB, if present add to list
     if "Mean_ALLMB" in df.columns.values.tolist():
         to_drop.extend(["Mean_ALLMB"])
+
+    logger.info(f"reduced_file_to_drop= {to_drop}")
+
     # Drop columns in list from df
     df.drop(to_drop, axis=1, inplace=True)
     # Return reduced df
