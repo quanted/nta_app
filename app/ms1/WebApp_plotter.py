@@ -151,6 +151,7 @@ class WebApp_plotter:
 
         This code was written by Alex Chao.
         """
+        abundance = None
         if df_seq is None:
             # Sort dataframe columns alphabetically prior to parsing headers
             df_in = df_in.reindex(sorted(df_in.columns), axis=1)  # Remove sorting to
