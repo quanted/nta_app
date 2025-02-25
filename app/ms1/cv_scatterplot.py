@@ -66,7 +66,6 @@ def cv_scatterplot(parameters, data_map, blank_headers, sample_headers):
     # Get sample headers
     headers = blank_headers + sample_headers
     sample_groups = [sublist[0][:-1] for sublist in headers]
-    logger.info(f"sample_groups_scatterplot= {sample_groups}")
 
     # Find CV cols from df, subset cv_df from df
     cv_cols = ["CV " + col for col in sample_groups]
