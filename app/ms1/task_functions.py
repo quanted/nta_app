@@ -964,18 +964,6 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     # Copy original dataframes
     df1 = df.copy()
     df2 = tracers_file.copy()
-    # Get sample names; define prefixes, call parse_headers(), and iterate through list avoiding prefixes
-    prefixes = [
-        "Mean ",
-        "Median ",
-        "CV ",
-        "STD ",
-        "Detection Count ",
-        "Detection Percentage ",
-        "Detection",
-        "MRL",
-        "Selected MRL",
-    ]
 
     sample_groups = blank_headers + sample_headers
     samples = [item for sublist in sample_groups for item in sublist]
@@ -1063,7 +1051,7 @@ def format_tracer_file(df_in):
     return df
 
 
-def check_run_seq(df_in, run_seq_in):
+def check_run_seq(df_in, run_seq_in, blank_headers, sample_headers):
     """
     A function to check the sample names between the input data matrix and the run sequence file. The function
     accepts two parameters, and has two logic gates (length of sample names list and spelling check) where
@@ -1078,26 +1066,9 @@ def check_run_seq(df_in, run_seq_in):
     # Copy input df and run_seq
     df = df_in.copy()
     run_seq = run_seq_in.copy()
-    # Define prefixes
-    prefixes = [
-        "Mean ",
-        "Median ",
-        "CV ",
-        "STD ",
-        "Detection Count ",
-        "Detection Percentage ",
-        "Detection",
-        "MRL",
-        "Selected MRL",
-    ]
-    # Parse df headers to get samples
-    all_headers = parse_headers(df)
-    samples = [
-        item
-        for subgroup in all_headers
-        for item in subgroup
-        if ((len(subgroup) > 1) and not any(x in item for x in prefixes))
-    ]
+    # Get sample groups
+    sample_groups = blank_headers + sample_headers
+    samples = [item for sublist in sample_groups for item in sublist]
     # Get sample names from run sequence file
     sequence = list(run_seq[run_seq.columns[0]])
     # Check samples and sequence are same length
