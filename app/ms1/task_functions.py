@@ -657,7 +657,7 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
 """CALCULATE STATISTICS FUNCTIONS"""
 
 
-def statistics(df_in):
+def statistics(df_in, blank_headers, sample_headers):
     """
     Calculates statistics (mean, median, std, CV, N_Abun, & Percent Abun) on
     the dataframe. Includes logic statement for determining if the dataframe is
@@ -670,9 +670,8 @@ def statistics(df_in):
     """
     # Create copy
     df = df_in.copy()
-    # Parse headers, get sample headers
-    all_headers = parse_headers(df_in)
-    sam_headers = [i for i in all_headers if len(i) > 1]
+    # get sample header groups
+    sam_headers = blank_headers + sample_headers
     # Create column names for each statistics from sam_headers
     mean_cols = ["Mean " + i[0][:-1] for i in sam_headers]
     med_cols = ["Median " + i[0][:-1] for i in sam_headers]
@@ -717,6 +716,8 @@ def statistics(df_in):
 def chunk_stats(
     df_in,
     min_blank_detection_percentage,
+    blank_headers,
+    sample_headers,
     mrl_multiplier=3,
 ):
     """
@@ -735,7 +736,7 @@ def chunk_stats(
     n = 5000
     # 'if' statement for chunks: if no chunks needed, send to 'statistics', else chunk and iterate
     if df.shape[0] < n:
-        output = statistics(df)
+        output = statistics(df, blank_headers, sample_headers)
     else:
         # Create list of Data.Frame chunks
         list_df = [df[i : i + n] for i in range(0, df.shape[0], n)]
@@ -743,7 +744,7 @@ def chunk_stats(
         li = []
         # iterate through list_df, calculating 'statistics' on chunks and appending to li
         for df in list_df:
-            li.append(statistics(df))
+            li.append(statistics(df, blank_headers, sample_headers))
         # concatenate li, sort, and calculate 'Rounded_Mass' + 'Max CV Across Samples'
         output = pd.concat(li, axis=0)
     # Sort output mass and add two new columns

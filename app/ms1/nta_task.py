@@ -639,14 +639,20 @@ class NtaRun:
         # NTAW-49: Raises custom ValueError if blank columns are improperly named in the input dataframes
         try:
             self.dfs = [
-                task_fun.chunk_stats(df, min_blank_detection_percentage, mrl_multiplier=mrl_multiplier)
+                task_fun.chunk_stats(
+                    df,
+                    min_blank_detection_percentage,
+                    self.blank_headers,
+                    self.sample_headers,
+                    mrl_multiplier=mrl_multiplier,
+                )
                 if df is not None
                 else None
                 for df in self.dfs
             ]
         except IndexError:
             raise ValueError(
-                "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'Mb', 'MB', 'blank', 'Blank', 'BLANK']"
+                "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'Mb','mB', 'MB', 'blank', 'Blank', 'BLANK']"
             )
         # Get positive adducts, print to logger
         pos_adducts_selected = self.parameters["pos_adducts"][1]
