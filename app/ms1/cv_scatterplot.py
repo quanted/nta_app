@@ -20,7 +20,7 @@ except ModuleNotFoundError:
     logger.error("Seaborn is not installed. Please run 'pip install seaborn' to install it.")
 
 
-def cv_scatterplot(parameters, data_map):
+def cv_scatterplot(parameters, data_map, blank_headers, sample_headers):
     """
     Accesses the processed dataframes and the tracer results from self.data_map and
     create two scatterplots - the abundance (x-axis) vs CV (y-axis) for blank samples
@@ -64,15 +64,10 @@ def cv_scatterplot(parameters, data_map):
         else None
     )
     # Get sample headers
-    all_headers = parse_headers(dfCombined)
-    non_samples = ["MRL"]
-    sam_headers = [
-        sublist[0][:-1] for sublist in all_headers if len(sublist) > 1 if not any(x in sublist[0] for x in non_samples)
-    ]
-    # Isolate sample_groups from stats columns
-    prefixes = ["Mean ", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
-    sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
+    headers = blank_headers + sample_headers
+    sample_groups = [sublist[0][:-1] for sublist in headers]
     logger.info(f"sample_groups_scatterplot= {sample_groups}")
+
     # Find CV cols from df, subset cv_df from df
     cv_cols = ["CV " + col for col in sample_groups]
     cv_df = dfCombined[cv_cols]

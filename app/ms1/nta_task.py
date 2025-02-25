@@ -710,7 +710,14 @@ class NtaRun:
 
     def store_scatterplots(self):
         # Store in class variable
-        self.cv_scatterplots_out.append(cv_scatterplot(parameters=self.parameters, data_map=self.data_map))
+        self.cv_scatterplots_out.append(
+            cv_scatterplot(
+                parameters=self.parameters,
+                data_map=self.data_map,
+                blank_headers=self.blank_headers,
+                sample_headers=self.sample_headers,
+            )
+        )
         # Map to outputs
         self.cv_scatterplot_map["cv_scatterplot"] = self.cv_scatterplots_out[0]
         project_name = self.parameters["project_name"][1]
