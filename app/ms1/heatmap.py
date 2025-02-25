@@ -22,7 +22,7 @@ except ModuleNotFoundError:
     logger.error("Seaborn is not installed. Please run 'pip install seaborn' to install it.")
 
 
-def occurrence_heatmap(parameters, data_map):
+def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
     """
     Accesses the processed dataframes from self.data_map and other user submitted
     parameters (max replicate CV, min replicate hits, and mrl std_dev multiplier).
@@ -62,18 +62,12 @@ def occurrence_heatmap(parameters, data_map):
         else None
     )
     # Get sample headers
-    all_headers = parse_headers(dfCombined)
-    non_samples = ["MRL"]
-    sam_headers = [
-        sublist[0][:-1] for sublist in all_headers if len(sublist) > 1 if not any(x in sublist[0] for x in non_samples)
-    ]
-    # Isolate sample_groups from stats columns
-    prefixes = ["Mean ", "Median ", "CV ", "STD ", "Detection Count ", "Detection Percentage "]
-    sample_groups = [item for item in sam_headers if not any(x in item for x in prefixes)]
+    headers = blank_headers + sample_headers
+    sample_groups = [sublist[0][:-1] for sublist in headers]
     logger.info("sample_groups= {}".format(sample_groups))
+
     # Blank_MDL - need to check what the blank samples are actually named
-    blank_strings = ["MB", "Mb", "mb", "BLANK", "Blank", "blank", "BLK", "Blk"]
-    blank_col = [item for item in sample_groups if any(x in item for x in blank_strings)]
+    blank_col = [sublist[0][:-1] for sublist in blank_headers]
     logger.info("blank_col= {}".format(blank_col))
     blank_mean = "Mean " + blank_col[0]
     blank_std = "STD " + blank_col[0]

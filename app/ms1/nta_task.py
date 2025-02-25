@@ -725,7 +725,14 @@ class NtaRun:
 
     def store_heatmap(self):
         # Store in class variable
-        self.occurrence_heatmaps_out.append(occurrence_heatmap(parameters=self.parameters, data_map=self.data_map))
+        self.occurrence_heatmaps_out.append(
+            occurrence_heatmap(
+                parameters=self.parameters,
+                data_map=self.data_map,
+                blank_headers=self.blank_headers,
+                sample_headers=self.sample_headers,
+            )
+        )
         # Map to outputs
         self.occurrence_heatmap_map["occurrence_heatmap"] = self.occurrence_heatmaps_out[0]
         project_name = self.parameters["project_name"][1]
