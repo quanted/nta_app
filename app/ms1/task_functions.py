@@ -946,7 +946,7 @@ def column_sort_TSR(df_in, passthru):
 """FUNCTION FOR CHECKING TRACERS"""
 
 
-def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Difference, ppm):
+def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Difference, ppm, blank_headers, sample_headers):
     """
     Function that takes dataframe and the optional tracers input, identifies which features
     are a tracer, and which samples the tracers are present in -- TMF 12/11/23
@@ -976,13 +976,9 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
         "MRL",
         "Selected MRL",
     ]
-    all_headers = parse_headers(df1)
-    samples = [
-        item
-        for subgroup in all_headers
-        for item in subgroup
-        if ((len(subgroup) > 1) and not any(x in item for x in prefixes))
-    ]
+
+    sample_groups = blank_headers + sample_headers
+    samples = [item for sublist in sample_groups for item in sublist]
     # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
     df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI+", "Esi+")
     df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi+", "Esi+")

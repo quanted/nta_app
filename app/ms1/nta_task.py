@@ -770,6 +770,8 @@ class NtaRun:
                     mass_accuracy_tr,
                     float(self.parameters["rt_accuracy_tr"][1]),
                     ppm,
+                    self.blank_headers,
+                    self.sample_headers,
                 )[0]
                 if df is not None
                 else None
@@ -784,6 +786,8 @@ class NtaRun:
                     mass_accuracy_tr,
                     float(self.parameters["rt_accuracy_tr"][1]),
                     ppm,
+                    self.blank_headers,
+                    self.sample_headers,
                 )[1]
                 if df is not None
                 else None
