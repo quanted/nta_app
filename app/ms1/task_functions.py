@@ -610,7 +610,7 @@ def dup_matrix_flag(df_in, mass_cutoff, rt_cutoff, ppm):
     return output
 
 
-def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
+def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, blank_headers, sample_headers):
     """
     Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff.
     Includes logic statement for determining if the dataframe is too large to
@@ -630,9 +630,11 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm):
     """
     # Copy the dataframe
     df = df_in.copy()
-    # Parse headers to find sample columns
-    all_headers = parse_headers(df)
-    sam_headers = [item for sublist in all_headers for item in sublist if len(sublist) > 1]
+
+    # Get sample columns
+    sample_groups = blank_headers + sample_headers
+    sam_headers = [item for sublist in sample_groups for item in sublist]
+
     # Calculate 'all_sample_mean', sort df by 'all_sample_mean', reset index
     df["all_sample_mean"] = df[sam_headers].mean(axis=1)  # mean intensity across all samples
     df.sort_values(by=["all_sample_mean"], inplace=True, ascending=False)

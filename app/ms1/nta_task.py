@@ -610,7 +610,10 @@ class NtaRun:
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
         # Perform duplicate flagging functions
         self.dfs = [
-            task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm) if df is not None else None for df in self.dfs
+            task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, self.blank_headers, self.sample_headers)
+            if df is not None
+            else None
+            for df in self.dfs
         ]
         return
 
