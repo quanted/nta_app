@@ -1127,6 +1127,13 @@ d3.csv(csv_path).then(function(data) {
 
     // check first row of data to determine which string is used for MB
     var row_keys = Object.keys(data[1]);
+
+    console.log("NTAW-711 debug start ------------")
+    console.log(data);
+    console.log(data[1]);
+    console.log(Object.keys(data[1]));
+    console.log("NTAW-711 debug end --------------")
+
     var blank_perc_header = false;
     for (key of row_keys) {
       if (key.startsWith("Detection Percentage ")) {
