@@ -295,6 +295,7 @@ class NtaRun:
         # 8: Store excel data to MongoDB
         self.step = "Storing data"
         self.save_excel_to_mongo()
+        self.save_decision_tree_info_to_mongo()
 
         # 9: set status to completed
         self.step = "Displaying results"
@@ -1247,3 +1248,11 @@ class NtaRun:
         # Save results excel file to MongoDB using id
         id = self.jobid + "_excel"
         self.gridfs.put(excel_data, _id=id)
+
+    def save_decision_tree_info_to_mongo(self):
+        # This funciton is a result of NTAW-711 and is only required for the decision tree on the MS1 QED deploymet
+        self.mongo_save(self.data_map["Analysis Parameters"], step="Analysis Parameters")
+        if "All Detection Statistics (Pos)" in self.data_map:
+            self.mongo_save(self.data_map["All Detection Statistics (Pos)"], step="All Detection Statistics (Pos)")
+        if "All Detection Statistics (Neg)" in self.data_map:
+            self.mongo_save(self.data_map["All Detection Statistics (Neg)"], step="All Detection Statistics (Neg)")
