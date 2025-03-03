@@ -1211,7 +1211,7 @@ class NtaRun:
             )
             # Check length of "Chemical Results"
             sheet_limit = 500, 000
-            chem_res = self.data_map["Chemical Results"]
+            chem_res = self.data_map["Chemical Results"][1]
             # If "Chemical Results" is bigger than limit, chunk into smaller sizes
             if len(chem_res) > sheet_limit:
                 # Set counter
