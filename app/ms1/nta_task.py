@@ -165,6 +165,7 @@ class NtaRun:
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), "../../.."))
         self.data_map = {}
+        self.chem_res_map = {}
         self.tracer_map = {}
         self.occurrence_heatmap_map = {}
         self.cv_scatterplot_map = {}

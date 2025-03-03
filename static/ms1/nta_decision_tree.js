@@ -194,6 +194,10 @@ d3.csv(csv_path).then(function(data) {
    * 
    ***********************************************/ 
   
+    console.log("NTAW-711 debug start ------------")
+    console.log(data);
+    console.log("NTAW-711 debug end --------------")
+  
   // Blank Replicate Threshold A
   var sliderBlankRepA = document.getElementById("ThreshSliderRange_blankRepA"),
     inputBoxBlankRepA = document.getElementById("ThreshSliderNumber_blankRepA");
