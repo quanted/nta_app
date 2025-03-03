@@ -1210,7 +1210,7 @@ class NtaRun:
                 lambda x: make_hyperlink(x)
             )
             # Check length of "Chemical Results"
-            sheet_limit = 100, 000
+            sheet_limit = 500, 000
             # If "Chemical Results" is bigger than limit, chunk into smaller sizes
             if len(self.data_map["Chemical Results"]) > sheet_limit:
                 # Set counter
@@ -1236,13 +1236,13 @@ class NtaRun:
             id = self.jobid + "_excel"
             self.gridfs.put(chem_data, _id=id)
 
-    # Create excel book for QAQC
-    QAQC_data = create_excel_book(self.data_map, chem_res=False)
-    # Save project name to MongoDB using jobid
-    self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_QAQC", encoding="utf-8")
-    # Save results excel file to MongoDB using id
-    id = self.jobid + "_excel"
-    self.gridfs.put(QAQC_data, _id=id)
+        # Create excel book for QAQC
+        QAQC_data = create_excel_book(self.data_map, chem_res=False)
+        # Save project name to MongoDB using jobid
+        self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_QAQC", encoding="utf-8")
+        # Save results excel file to MongoDB using id
+        id = self.jobid + "_excel"
+        self.gridfs.put(QAQC_data, _id=id)
 
     # def save_excel_to_mongo(self):
     #     # Create an excel sheet from the datamap and save it to MongoDB
