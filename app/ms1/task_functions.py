@@ -1886,6 +1886,24 @@ def determine_string_width(input_string):
     return temp_increment
 
 
+def chunk_dataframe(df, chunk_size):
+    """
+    Function for splitting a dataframe into chunks for printing into separate
+    sheets of an excel workbook.
+
+    Args:
+        df (dataframe; chemical results returned from searching DSSTox)
+        chunk_size (int; number of rows desired on a given sheet)
+    Returns:
+        df[i * chunk_size:(i + 1) * chunk_size] (chunk of dataframe)
+    """
+    # Calculate number of chunks required by 'chunk_size' parameter
+    number_chunks = len(df) // chunk_size + 1
+    # Iterate through the range of 'number_chunks',
+    for i in range(number_chunks):
+        yield df[i * chunk_size : (i + 1) * chunk_size]
+
+
 def create_excel_book(d, chem_res=False):
     """
     Function for creating excel book from python dictionary, where dict keys

@@ -1211,12 +1211,13 @@ class NtaRun:
             )
             # Check length of "Chemical Results"
             sheet_limit = 500, 000
+            chem_res = self.data_map["Chemical Results"]
             # If "Chemical Results" is bigger than limit, chunk into smaller sizes
-            if len(self.data_map["Chemical Results"]) > sheet_limit:
+            if len(chem_res) > sheet_limit:
                 # Set counter
                 i = 1
                 # Iterate through "Chemical Results", saving new chunks into 'chem_res_map'
-                for chunk in chunk_dataframe(self.data_map["Chemical Results"], sheet_limit):
+                for chunk in task_fun.chunk_dataframe(chem_res, sheet_limit):
                     # Assemble sheet name
                     sheet = "Chemical Results " + str(i)
                     # Assign dataframe chunk to sheet dict key
@@ -1225,11 +1226,11 @@ class NtaRun:
                     i += 1
             else:
                 # If "Chemical Results" is under limit, save into 'chem_res_map'
-                self.chem_res_map["Chemical Results"] = self.data_map["Chemical Results"]
+                self.chem_res_map["Chemical Results"] = chem_res
             # Remove key from 'data_map'
             del self.data_map["Chemical Results"]
             # Create excel book from Chemical Results
-            chem_data = create_excel_book(self.chem_res_map, chem_res=True)
+            chem_data = task_fun.create_excel_book(self.chem_res_map, chem_res=True)
             # Save project name to MongoDB using jobid
             self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_chemical_results", encoding="utf-8")
             # Save results excel file to MongoDB using id
@@ -1237,7 +1238,7 @@ class NtaRun:
             self.gridfs.put(chem_data, _id=id)
 
         # Create excel book for QAQC
-        QAQC_data = create_excel_book(self.data_map, chem_res=False)
+        QAQC_data = task_fun.create_excel_book(self.data_map, chem_res=False)
         # Save project name to MongoDB using jobid
         self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_QAQC", encoding="utf-8")
         # Save results excel file to MongoDB using id
