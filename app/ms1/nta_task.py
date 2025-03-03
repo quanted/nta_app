@@ -1234,7 +1234,7 @@ class NtaRun:
             # Save project name to MongoDB using jobid
             self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_chemical_results", encoding="utf-8")
             # Save results excel file to MongoDB using id
-            id = self.jobid + "_excel"
+            id = self.jobid + "_excel_chem"
             self.gridfs.put(chem_data, _id=id)
 
         # Create excel book for QAQC
@@ -1242,7 +1242,7 @@ class NtaRun:
         # Save project name to MongoDB using jobid
         self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_QAQC", encoding="utf-8")
         # Save results excel file to MongoDB using id
-        id = self.jobid + "_excel"
+        id = self.jobid + "_excel_qaqc"
         self.gridfs.put(QAQC_data, _id=id)
 
     # def save_excel_to_mongo(self):
