@@ -1199,55 +1199,101 @@ class NtaRun:
         self.gridfs.put(to_save, _id=id, encoding="utf-8", project_name=project_name)
 
     def save_excel_to_mongo(self):
-        # Create an excel sheet from the datamap and save it to MongoDB
-        in_memory_buffer = io.BytesIO()
+        # Get project name
+        project_name = self.parameters["project_name"][1]
         # Obtain a list of all keys in the data map (These will become the excel workbook sheet names)
         keys_list = list(self.data_map.keys())
-        chemical_results_present = None
+        # Check for 'Chemical Results' in keys list
         if "Chemical Results" in keys_list:
-            chemical_results_present = True
             # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
             self.data_map["Chemical Results"]["DTXSID"] = self.data_map["Chemical Results"]["DTXSID"].apply(
                 lambda x: make_hyperlink(x)
             )
-            sheet_number = keys_list.index("Chemical Results")
-        # Convert self.data_map dictionary into an excel workbook
-        with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
-            workbook = writer.book
-            for df_name, df in self.data_map.items():
-                df.to_excel(writer, sheet_name=df_name, index=False)
-                # Format column widths to fit the largest string contained within the column
-                sheet_num = keys_list.index(df_name)
-                sheet = workbook.worksheets[sheet_num]
-                # Freezes the top row of every sheet in the excel file.
-                sheet.freeze_panes = "A2"
-                # Format each column width to fit the longest string contained within the column
-                for column in df:
-                    try:
-                        column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
-                        col_idx = df.columns.get_loc(column) + 1
-                        col_letter = get_column_letter(col_idx)
-                        sheet.column_dimensions[col_letter].width = column_width
-                    # NTAW-704: handle error where df[column] is recognised as a DataFrame, not a series
-                    except AttributeError:
-                        pass
-            # Format DTXSID column hyperlinks an column width in the Chemical Results sheet
-            if chemical_results_present:
-                workbook = writer.book
-                sheet = workbook.worksheets[sheet_number]
-                for i in range(sheet.max_row):
-                    cell = sheet.cell(row=i + 2, column=8)
-                    cell.style = "Hyperlink"
-                sheet.column_dimensions["H"].width = 18
-        excel_data = in_memory_buffer.getvalue()
+            # Check length of "Chemical Results"
+            sheet_limit = 100, 000
+            # If "Chemical Results" is bigger than limit, chunk into smaller sizes
+            if len(self.data_map["Chemical Results"]) > sheet_limit:
+                # Set counter
+                i = 1
+                # Iterate through "Chemical Results", saving new chunks into 'chem_res_map'
+                for chunk in chunk_dataframe(self.data_map["Chemical Results"], sheet_limit):
+                    # Assemble sheet name
+                    sheet = "Chemical Results " + str(i)
+                    # Assign dataframe chunk to sheet dict key
+                    self.chem_res_map[sheet] = chunk
+                    # Increase counter
+                    i += 1
+            else:
+                # If "Chemical Results" is under limit, save into 'chem_res_map'
+                self.chem_res_map["Chemical Results"] = self.data_map["Chemical Results"]
+            # Remove key from 'data_map'
+            del self.data_map["Chemical Results"]
+            # Create excel book from Chemical Results
+            chem_data = create_excel_book(self.chem_res_map, chem_res=True)
+            # Save project name to MongoDB using jobid
+            self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_chemical_results", encoding="utf-8")
+            # Save results excel file to MongoDB using id
+            id = self.jobid + "_excel"
+            self.gridfs.put(chem_data, _id=id)
 
-        # Save project name to MongoDB using jobid
-        project_name = self.parameters["project_name"][1]
-        self.gridfs.put(project_name, _id=f"{self.jobid}_project_name", encoding="utf-8")
+    # Create excel book for QAQC
+    QAQC_data = create_excel_book(self.data_map, chem_res=False)
+    # Save project name to MongoDB using jobid
+    self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_QAQC", encoding="utf-8")
+    # Save results excel file to MongoDB using id
+    id = self.jobid + "_excel"
+    self.gridfs.put(QAQC_data, _id=id)
 
-        # Save results excel file to MongoDB using id
-        id = self.jobid + "_excel"
-        self.gridfs.put(excel_data, _id=id)
+    # def save_excel_to_mongo(self):
+    #     # Create an excel sheet from the datamap and save it to MongoDB
+    #     in_memory_buffer = io.BytesIO()
+    #     # Obtain a list of all keys in the data map (These will become the excel workbook sheet names)
+    #     keys_list = list(self.data_map.keys())
+    #     chemical_results_present = None
+    #     if "Chemical Results" in keys_list:
+    #         chemical_results_present = True
+    #         # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
+    #         self.data_map["Chemical Results"]["DTXSID"] = self.data_map["Chemical Results"]["DTXSID"].apply(
+    #             lambda x: make_hyperlink(x)
+    #         )
+    #         sheet_number = keys_list.index("Chemical Results")
+    #     # Convert self.data_map dictionary into an excel workbook
+    #     with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
+    #         workbook = writer.book
+    #         for df_name, df in self.data_map.items():
+    #             df.to_excel(writer, sheet_name=df_name, index=False)
+    #             # Format column widths to fit the largest string contained within the column
+    #             sheet_num = keys_list.index(df_name)
+    #             sheet = workbook.worksheets[sheet_num]
+    #             # Freezes the top row of every sheet in the excel file.
+    #             sheet.freeze_panes = "A2"
+    #             # Format each column width to fit the longest string contained within the column
+    #             for column in df:
+    #                 try:
+    #                     column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+    #                     col_idx = df.columns.get_loc(column) + 1
+    #                     col_letter = get_column_letter(col_idx)
+    #                     sheet.column_dimensions[col_letter].width = column_width
+    #                 # NTAW-704: handle error where df[column] is recognised as a DataFrame, not a series
+    #                 except AttributeError:
+    #                     pass
+    #         # Format DTXSID column hyperlinks an column width in the Chemical Results sheet
+    #         if chemical_results_present:
+    #             workbook = writer.book
+    #             sheet = workbook.worksheets[sheet_number]
+    #             for i in range(sheet.max_row):
+    #                 cell = sheet.cell(row=i + 2, column=8)
+    #                 cell.style = "Hyperlink"
+    #             sheet.column_dimensions["H"].width = 18
+    #     excel_data = in_memory_buffer.getvalue()
+
+    #     # Save project name to MongoDB using jobid
+    #     project_name = self.parameters["project_name"][1]
+    #     self.gridfs.put(project_name, _id=f"{self.jobid}_project_name", encoding="utf-8")
+
+    #     # Save results excel file to MongoDB using id
+    #     id = self.jobid + "_excel"
+    #     self.gridfs.put(excel_data, _id=id)
 
     def save_decision_tree_info_to_mongo(self):
         # This funciton is a result of NTAW-711 and is only required for the decision tree on the MS1 QED deploymet

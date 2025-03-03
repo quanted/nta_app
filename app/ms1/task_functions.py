@@ -6,6 +6,8 @@ from itertools import groupby
 import os
 import re
 import logging
+from openpyxl.utils import get_column_letter
+import io
 
 
 logger = logging.getLogger("nta_app.ms1")
@@ -1882,3 +1884,50 @@ def determine_string_width(input_string):
             temp_increment = temp_increment + skinny_increment
     # Return float value of string size
     return temp_increment
+
+
+def create_excel_book(d, chem_res=False):
+    """
+    Function for creating excel book from python dictionary, where dict keys
+    are sheet names and dict items (dfs) are sheet contents.
+
+    Args:
+        d (dictionary; key:dataframe items)
+        chem_res (Boolean; does the submitted dictionary d contain Chemical Results info)
+    Returns:
+        excel_data (pd.ExcelWriter output)
+    """
+    # Create an excel sheet from the datamap and save it to MongoDB
+    in_memory_buffer = io.BytesIO()
+    # Get list of keys in the dictionary
+    keys_list = list(d.keys())
+    # Convert self.data_map dictionary into an excel workbook
+    with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
+        workbook = writer.book
+        for df_name, df in d.items():
+            df.to_excel(writer, sheet_name=df_name, index=False)
+            # Format column widths to fit the largest string contained within the column
+            sheet_num = keys_list.index(df_name)
+            sheet = workbook.worksheets[sheet_num]
+            # Freezes the top row of every sheet in the excel file.
+            sheet.freeze_panes = "A2"
+            # Format each column width to fit the longest string contained within the column
+            for column in df:
+                try:
+                    column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+                    col_idx = df.columns.get_loc(column) + 1
+                    col_letter = get_column_letter(col_idx)
+                    sheet.column_dimensions[col_letter].width = column_width
+                # NTAW-704: handle error where df[column] is recognised as a DataFrame, not a series
+                except AttributeError:
+                    pass
+        # Format DTXSID column hyperlinks an column width in the Chemical Results sheet
+        if chem_res:
+            workbook = writer.book
+            for sheet in workbook.worksheets:
+                for i in range(sheet.max_row):
+                    cell = sheet.cell(row=i + 2, column=8)
+                    cell.style = "Hyperlink"
+                sheet.column_dimensions["H"].width = 18
+    excel_data = in_memory_buffer.getvalue()
+    return excel_data
