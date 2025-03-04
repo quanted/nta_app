@@ -205,7 +205,9 @@ class NtaRun:
         # 2: assign ids, separate passthrough cols, filter void volume, and flag duplicates
         self.step = "Flagging duplicates"
         self.assign_id()
+        logger.info("POS df columns post feat id: {}".format(self.dfs[0].columns.tolist()))
         self.pass_through_cols()
+        logger.info("POS df columns post pass through: {}".format(self.dfs[0].columns.tolist()))
         self.filter_void_volume(float(self.parameters["minimum_rt"][1]))  # throw out features below this (void volume)
         self.filter_duplicates()
         if self.verbose:
@@ -217,7 +219,7 @@ class NtaRun:
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
                 logger.info("NEG df columns: {}".format(self.dfs[1].columns))
-
+        logger.info("POS df columns post duplicates: {}".format(self.dfs[0].columns.tolist()))
         # 3a: statistics
         self.step = "Calculating statistics"
         self.calc_statistics()
