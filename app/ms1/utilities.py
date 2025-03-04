@@ -157,42 +157,68 @@ def api_search_masses_batch(masses, accuracy, batchsize=50, jobid="00000"):
     # Get length of masses list
     n_masses = len(masses)
     # Print to logger
-    logging.info("Sending {} masses in batches of {}".format(n_masses, batchsize))
-    # Set starting index i to 0
-    i = 0
+    logging.info("===========Sending {} masses in batches of {}===========".format(n_masses, batchsize))
+    # Get masses list into list of lists based on batchsize
+    masses_li = [masses[i : i + batchsize] for i in range(0, len(masses), batchsize)]
+    logging.info("===========Finished retrieving batches from DSSTox===========")
     # Iterate through masses in batchsize chunks, calling the api_search_masses() function.
-    # Store POST return in dsstox_search_json; if first chunk, read_json into dsstox_search_df.
-    # All subsequent chunks, read_json into new_search_df, and concatenate to dsstox_search_df.
-    while i < n_masses:
-        end = i + batchsize - 1
-        if end > n_masses - 1:
-            end = n_masses - 1
-        # Call api_search_masses() for masses[i:end+1]
-        response = api_search_masses(masses[i : end + 1], accuracy, jobid)
-        # check if we got a successful response
-        if not response.ok:
-            raise requests.exceptions.HTTPError(
-                "Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off."
-            )
-        # Get JSON results as string; can be an empty string if no hits
-        dsstox_search_json = io.StringIO(json.dumps(response.json()["results"]))
-        # For first chunk, read_json into dsstox_search_df
-        if i == 0:
-            dsstox_search_df = pd.read_json(
-                dsstox_search_json,
-                orient="split",
-                dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
-            )
-        # All other chunks, read_json into new_search_df and concatenate to dsstox_search_df
-        else:
-            new_search_df = pd.read_json(
-                dsstox_search_json,
-                orient="split",
-                dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
-            )
-            dsstox_search_df = pd.concat([dsstox_search_df, new_search_df], ignore_index=True)
-        # Increase start index by batchsize
-        i = i + batchsize
+    responses = [api_search_masses(x, accuracy, jobid) for x in masses_li]
+    # Check responses ok, raise error if not
+    response_checks = [x.ok for x in responses]
+    response_checks = pd.Series(response_checks)
+    if not response_checks.all():
+        raise requests.exceptions.HTTPError(
+            "Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off."
+        )
+    else:
+        logging.info("===========All responses are OK===========")
+    # get json results as strings for responses from responses list
+    dsstox_search_json = [io.StringIO(json.dumps(x.json()["results"])) for x in responses]
+    logging.info("===========Finished converting JSON results to strings===========")
+    # Read and concatenate json strings
+    dsstox_search_df = pd.concat(
+        [
+            pd.read_json(x, orient="split", dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"})
+            for x in dsstox_search_json
+        ],
+        ignore_index=True,
+    )
+    logging.info("===========Finished reading and concatenating JSON results===========")
+    # # Set starting index i to 0
+    # i = 0
+    # # Iterate through masses in batchsize chunks, calling the api_search_masses() function.
+    # # Store POST return in dsstox_search_json; if first chunk, read_json into dsstox_search_df.
+    # # All subsequent chunks, read_json into new_search_df, and concatenate to dsstox_search_df.
+    # while i < n_masses:
+    #     end = i + batchsize - 1
+    #     if end > n_masses - 1:
+    #         end = n_masses - 1
+    #     # Call api_search_masses() for masses[i:end+1]
+    #     response = api_search_masses(masses[i : end + 1], accuracy, jobid)
+    #     # check if we got a successful response
+    #     if not response.ok:
+    #         raise requests.exceptions.HTTPError(
+    #             "Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off."
+    #         )
+    #     # Get JSON results as string; can be an empty string if no hits
+    #     dsstox_search_json = io.StringIO(json.dumps(response.json()["results"]))
+    #     # For first chunk, read_json into dsstox_search_df
+    #     if i == 0:
+    #         dsstox_search_df = pd.read_json(
+    #             dsstox_search_json,
+    #             orient="split",
+    #             dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
+    #         )
+    #     # All other chunks, read_json into new_search_df and concatenate to dsstox_search_df
+    #     else:
+    #         new_search_df = pd.read_json(
+    #             dsstox_search_json,
+    #             orient="split",
+    #             dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
+    #         )
+    #         dsstox_search_df = pd.concat([dsstox_search_df, new_search_df], ignore_index=True)
+    #     # Increase start index by batchsize
+    #     i = i + batchsize
     # Return dataframe
     return dsstox_search_df
 
