@@ -1092,7 +1092,7 @@ class NtaRun:
             None
         """
         # Update logger
-        logging.info(
+        logger.info(
             "Rows flagged for dashboard search: {} out of {}".format(
                 len(self.df_flagged_combined.loc[self.df_flagged_combined["For_Dashboard_Search"] == "1", :]),
                 len(self.df_flagged_combined),

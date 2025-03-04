@@ -157,10 +157,10 @@ def api_search_masses_batch(masses, accuracy, batchsize=50, jobid="00000"):
     # Get length of masses list
     n_masses = len(masses)
     # Print to logger
-    logging.info("===========Sending {} masses in batches of {}===========".format(n_masses, batchsize))
+    logger.info("===========Sending {} masses in batches of {}===========".format(n_masses, batchsize))
     # Get masses list into list of lists based on batchsize
     masses_li = [masses[i : i + batchsize] for i in range(0, len(masses), batchsize)]
-    logging.info("===========Finished retrieving batches from DSSTox===========")
+    logger.info("===========Finished retrieving batches from DSSTox===========")
     # Iterate through masses in batchsize chunks, calling the api_search_masses() function.
     responses = [api_search_masses(x, accuracy, jobid) for x in masses_li]
     # Check responses ok, raise error if not
@@ -171,10 +171,10 @@ def api_search_masses_batch(masses, accuracy, batchsize=50, jobid="00000"):
             "Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off."
         )
     else:
-        logging.info("===========All responses are OK===========")
+        logger.info("===========All responses are OK===========")
     # get json results as strings for responses from responses list
     dsstox_search_json = [io.StringIO(json.dumps(x.json()["results"])) for x in responses]
-    logging.info("===========Finished converting JSON results to strings===========")
+    logger.info("===========Finished converting JSON results to strings===========")
     # Read and concatenate json strings
     dsstox_search_df = pd.concat(
         [
@@ -183,7 +183,7 @@ def api_search_masses_batch(masses, accuracy, batchsize=50, jobid="00000"):
         ],
         ignore_index=True,
     )
-    logging.info("===========Finished reading and concatenating JSON results===========")
+    logger.info("===========Finished reading and concatenating JSON results===========")
     # # Set starting index i to 0
     # i = 0
     # # Iterate through masses in batchsize chunks, calling the api_search_masses() function.
