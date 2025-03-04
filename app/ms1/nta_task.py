@@ -178,12 +178,6 @@ class NtaRun:
         self.occurrence_heatmaps_out = []
         self.cv_scatterplots_out = []
 
-        # NTAW-594
-        self.all_headers, self.blank_headers, self.sample_headers = task_fun.get_sample_and_blank_headers(self.dfs)
-        logger.info(f"all headers: {self.all_headers}")
-        logger.info(f"blank headers: {self.blank_headers}")
-        logger.info(f"sample headers: {self.sample_headers}")
-
     def execute(self):
         self.step = "Check for existence of required columns"
         # 1a: check existence of "Ionization mode" column
@@ -194,6 +188,11 @@ class NtaRun:
         self.check_retention_time_column(self.dfs)
         # 1d: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
+        # NTAW-594
+        self.all_headers, self.blank_headers, self.sample_headers = task_fun.get_sample_and_blank_headers(self.dfs)
+        logger.info(f"all headers: {self.all_headers}")
+        logger.info(f"blank headers: {self.blank_headers}")
+        logger.info(f"sample headers: {self.sample_headers}")
         # 1e: create a status in mongo
         self.set_status("Processing", create=True)
         # 1f: create an analysis_parameters sheet
