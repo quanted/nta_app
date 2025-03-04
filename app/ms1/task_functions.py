@@ -200,7 +200,12 @@ def passthrucol(df_in, all_headers):
     # Make a copy of the input df
     df = df_in.copy()
     # Define active_cols: Keep 'Feature ID' in pt_headers to merge later
-    active_cols = ["Retention_Time", "Mass", "Ionization_Mode"]
+    active_cols = [
+        "Retention_Time",
+        "Mass",
+        "Ionization_Mode",
+        "Compound",
+    ]
     # Create list of pass through headers that are not in the active columns
     pt_headers = ["Feature ID"] + [
         item
@@ -1495,6 +1500,8 @@ def clean_features(df_in, controls, tracer_df=False):
     docs["Duplicate Feature?"] = df["Duplicate Feature?"]
     if tracer_df:
         docs["Tracer Chemical Match?"] = df["Tracer Chemical Match?"]
+    if "Compound" in df.columns.tolist():
+        docs["Compound"] = df["Compound"]
     # Define lists of various column names
     blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
     Abundance = df.columns[df.columns.str.contains(pat="Detection Percentage ")].tolist()
@@ -1655,39 +1662,26 @@ def combine_doc(doc1, doc2, tracer_df=False):
         Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
         dfc = doc2.copy()
     # Select columns for keeping, with tracer conditional
-    if tracer_df:
-        to_keep = (
-            [
-                "Feature ID",
-                "BlkStd_cutoff",
-                "Tracer Chemical Match?",
-                "Duplicate Feature?",
-                "Feature Removed?",
-                "Possible Occurrence Count",
-                "Unfiltered Occurrence Count",
-                "Final Occurrence Count (with flags)",
-                "Final Occurrence Count",
-            ]
-            + Mean_MB
-            + Mean_Samples
-        )
-    else:
-        to_keep = (
-            [
-                "Feature ID",
-                "BlkStd_cutoff",
-                "Duplicate Feature?",
-                "Feature Removed?",
-                "Possible Occurrence Count",
-                "Unfiltered Occurrence Count",
-                "Final Occurrence Count (with flags)",
-                "Final Occurrence Count",
-            ]
-            + Mean_MB
-            + Mean_Samples
-        )
+
+    ordering = [
+        "Feature ID",
+        "Compound",
+        "BlkStd_cutoff",
+        "Tracer Chemical Match?",
+        "Duplicate Feature?",
+        "Feature Removed?",
+        "Possible Occurrence Count",
+        "Unfiltered Occurrence Count",
+        "Final Occurrence Count (with flags)",
+        "Final Occurrence Count",
+    ]
+    # Get dft columns in list
+    all_cols = dfc.columns.tolist()
+    # Front matter list comp
+    front_matter = [item for item in ordering if item in all_cols]
+    cols = front_matter + Mean_MB + Mean_Samples
     # Subset with columns to keep; change 'BlkStd_cutoff' to MRL
-    dfc = dfc[to_keep]
+    dfc = dfc[cols]
     dfc.rename({"BlkStd_cutoff": "Selected MRL"}, axis=1, inplace=True)
     # Sort by 'Mass' and 'Retention_Time'
     dfc = dfc.sort_values(["Feature ID"], ascending=[True])
@@ -1729,6 +1723,7 @@ def MPP_Ready(dfc, pts, blank_headers, sample_headers):
         "Ionization_Mode",
         "Mass",
         "Retention_Time",
+        "Compound",
         "Tracer Chemical Match?",
         "Duplicate Feature?",
         "Is Adduct or Loss?",
