@@ -188,10 +188,18 @@ class OutputServer:
 
         with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
             # excel_data = self.generate_excel()
-            excel_data = self.gridfs.get(f"{self.jobid}_excel").read()
-
+            qaqc_data = self.gridfs.get(f"{self.jobid}_excel_qaqc").read()
             project_name = str(self.gridfs.get(f"{self.jobid}_project_name").read(), "utf-8")
-            filename = project_name.replace(" ", "_") + "_NTA_WebApp_results.xlsx"
+            filename = project_name.replace(" ", "_") + "_NTA_WebApp_QAQC.xlsx"
+            zipf.writestr(filename, qaqc_data)
+
+            try:
+                chem_data = self.gridfs.get(f"{self.jobid}_excel_chem").read()
+                project_name = str(self.gridfs.get(f"{self.jobid}_project_name").read(), "utf-8")
+                filename = project_name.replace(" ", "_") + "_NTA_WebApp_chemical_results.xlsx"
+                zipf.writestr(filename, chem_data)
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass
             # -----------------------------------------------------------
 
             # db_record = self.gridfs.get(self.jobid)
@@ -205,7 +213,6 @@ class OutputServer:
             # excel_filename = self.parameters['project_name'][1] + '_' + self.jobid + '.xlsx'
             # zipf.writestr('summary.xlsx', excel_data)
             # filename = "temp_filename.xlsx"
-            zipf.writestr(filename, excel_data)
 
             # self.add_tracer_plots_to_zip(zipf, self.jobid)
             try:
