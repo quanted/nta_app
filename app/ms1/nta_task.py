@@ -179,23 +179,15 @@ class NtaRun:
         self.cv_scatterplots_out = []
 
     def execute(self):
-        logger.info("POS df columns beginning: {}".format(self.dfs[0].columns.tolist()))
         self.step = "Check for existence of required columns"
         # 1a: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
-        logger.info("POS df columns post ion mode: {}".format(self.dfs[0].columns.tolist()))
         # 1b: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
         # 1c: check for alternate spellings of 'Retention_Time' column
         self.check_retention_time_column(self.dfs)
         # 1d: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
-        # NTAW-594
-        self.all_headers, self.blank_headers, self.sample_headers = task_fun.get_sample_and_blank_headers(self.dfs)
-        logger.info(f"all headers: {self.all_headers}")
-        logger.info(f"blank headers: {self.blank_headers}")
-        logger.info(f"sample headers: {self.sample_headers}")
-        logger.info("POS df columns post headers: {}".format(self.dfs[0].columns.tolist()))
         # 1e: create a status in mongo
         self.set_status("Processing", create=True)
         # 1f: create an analysis_parameters sheet
@@ -205,9 +197,12 @@ class NtaRun:
         # 2: assign ids, separate passthrough cols, filter void volume, and flag duplicates
         self.step = "Flagging duplicates"
         self.assign_id()
-        logger.info("POS df columns post feat id: {}".format(self.dfs[0].columns.tolist()))
+        # NTAW-594
+        self.all_headers, self.blank_headers, self.sample_headers = task_fun.get_sample_and_blank_headers(self.dfs)
+        logger.info(f"all headers: {self.all_headers}")
+        logger.info(f"blank headers: {self.blank_headers}")
+        logger.info(f"sample headers: {self.sample_headers}")
         self.pass_through_cols()
-        logger.info("POS df columns post pass through: {}".format(self.dfs[0].columns.tolist()))
         self.filter_void_volume(float(self.parameters["minimum_rt"][1]))  # throw out features below this (void volume)
         self.filter_duplicates()
         if self.verbose:
@@ -219,7 +214,6 @@ class NtaRun:
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
                 logger.info("NEG df columns: {}".format(self.dfs[1].columns))
-        logger.info("POS df columns post duplicates: {}".format(self.dfs[0].columns.tolist()))
         # 3a: statistics
         self.step = "Calculating statistics"
         self.calc_statistics()
