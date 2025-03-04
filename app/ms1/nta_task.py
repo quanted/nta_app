@@ -179,9 +179,11 @@ class NtaRun:
         self.cv_scatterplots_out = []
 
     def execute(self):
+        logger.info("POS df columns beginning: {}".format(self.dfs[0].columns.tolist()))
         self.step = "Check for existence of required columns"
         # 1a: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
+        logger.info("POS df columns post ion mode: {}".format(self.dfs[0].columns.tolist()))
         # 1b: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
         # 1c: check for alternate spellings of 'Retention_Time' column
@@ -193,6 +195,7 @@ class NtaRun:
         logger.info(f"all headers: {self.all_headers}")
         logger.info(f"blank headers: {self.blank_headers}")
         logger.info(f"sample headers: {self.sample_headers}")
+        logger.info("POS df columns post headers: {}".format(self.dfs[0].columns.tolist()))
         # 1e: create a status in mongo
         self.set_status("Processing", create=True)
         # 1f: create an analysis_parameters sheet
