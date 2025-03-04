@@ -189,13 +189,13 @@ class OutputServer:
         with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
             # excel_data = self.generate_excel()
             qaqc_data = self.gridfs.get(f"{self.jobid}_excel_qaqc").read()
-            project_name = str(self.gridfs.get(f"{self.jobid}_project_name").read(), "utf-8")
+            project_name = str(self.gridfs.get(f"{self.jobid}_project_name_QAQC").read(), "utf-8")
             filename = project_name.replace(" ", "_") + "_NTA_WebApp_QAQC.xlsx"
             zipf.writestr(filename, qaqc_data)
 
             try:
                 chem_data = self.gridfs.get(f"{self.jobid}_excel_chem").read()
-                project_name = str(self.gridfs.get(f"{self.jobid}_project_name").read(), "utf-8")
+                project_name = str(self.gridfs.get(f"{self.jobid}_project_name_chemical_results").read(), "utf-8")
                 filename = project_name.replace(" ", "_") + "_NTA_WebApp_chemical_results.xlsx"
                 zipf.writestr(filename, chem_data)
             except (OperationFailure, TypeError, NoFile) as e:
