@@ -76,6 +76,12 @@ def run_ms2(parameters, mongo_address=None, jobid="00000000", results_link="", v
 FILENAMES = {"final_output": ["CFMID_results_pos", "CFMID_results_neg", "input_parameters"]}
 
 
+# Define function for tracking Dask memory usage
+def log_worker_memory():
+    mem_usage = dask_client.run(lambda: psutil.virtual_memory().perent)
+    logger.info(f"Worker Memory Usage: {mem_usage}")
+
+
 class MS2Run:
     def __init__(
         self, parameters=None, mongo_address=None, jobid="00000000", results_link=None, verbose=True, in_docker=True
@@ -103,6 +109,7 @@ class MS2Run:
 
     def execute(self):
         self.set_status("Parsing MS2 Data", create=True)
+        log_worker_memory()
         self.parse_uploaded_files()
 
         self.set_status("Extracting Spectra Data")
