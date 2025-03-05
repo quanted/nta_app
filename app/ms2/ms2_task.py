@@ -27,16 +27,6 @@ NO_DASK = False  # set this to True to run locally without dask (for debug purpo
 # Set up logging
 logger = logging.getLogger("nta_app.ms2")
 
-# Initialize Dask client
-client = Client()
-logger.info("Dask client initialized")
-
-
-# Define function to track dask memory usage:
-def log_worker_memory():
-    mem_usage = client.run(lambda: psutil.virtual_memory().percent)
-    logger.info(f"Worker Memory Usage: {mem_usage}")
-
 
 def run_ms2_dask(parameters, jobid="00000000", verbose=True):
     # log parameters
@@ -113,7 +103,6 @@ class MS2Run:
 
     def execute(self):
         self.set_status("Parsing MS2 Data", create=True)
-        log_worker_memory()
         self.parse_uploaded_files()
 
         self.set_status("Extracting Spectra Data")
