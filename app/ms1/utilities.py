@@ -184,41 +184,6 @@ def api_search_masses_batch(masses, accuracy, batchsize=50, jobid="00000"):
         ignore_index=True,
     )
     logger.info("===========Finished reading and concatenating JSON results===========")
-    # # Set starting index i to 0
-    # i = 0
-    # # Iterate through masses in batchsize chunks, calling the api_search_masses() function.
-    # # Store POST return in dsstox_search_json; if first chunk, read_json into dsstox_search_df.
-    # # All subsequent chunks, read_json into new_search_df, and concatenate to dsstox_search_df.
-    # while i < n_masses:
-    #     end = i + batchsize - 1
-    #     if end > n_masses - 1:
-    #         end = n_masses - 1
-    #     # Call api_search_masses() for masses[i:end+1]
-    #     response = api_search_masses(masses[i : end + 1], accuracy, jobid)
-    #     # check if we got a successful response
-    #     if not response.ok:
-    #         raise requests.exceptions.HTTPError(
-    #             "Unable to access DSSTOX API. Please contact an administrator or try turning the DSSTox search option off."
-    #         )
-    #     # Get JSON results as string; can be an empty string if no hits
-    #     dsstox_search_json = io.StringIO(json.dumps(response.json()["results"]))
-    #     # For first chunk, read_json into dsstox_search_df
-    #     if i == 0:
-    #         dsstox_search_df = pd.read_json(
-    #             dsstox_search_json,
-    #             orient="split",
-    #             dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
-    #         )
-    #     # All other chunks, read_json into new_search_df and concatenate to dsstox_search_df
-    #     else:
-    #         new_search_df = pd.read_json(
-    #             dsstox_search_json,
-    #             orient="split",
-    #             dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
-    #         )
-    #         dsstox_search_df = pd.concat([dsstox_search_df, new_search_df], ignore_index=True)
-    #     # Increase start index by batchsize
-    #     i = i + batchsize
     # Return dataframe
     return dsstox_search_df
 

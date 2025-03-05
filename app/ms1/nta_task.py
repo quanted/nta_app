@@ -1120,6 +1120,7 @@ class NtaRun:
                 batchsize=150,
                 jobid=self.jobid,
             )
+            logger.info("===========DSSTox retrieval returned to nta_task===========")
         # If searching by formula, call api_search_masses_batch()
         else:
             formulas = task_fun.formulas(to_search)
@@ -1138,13 +1139,16 @@ class NtaRun:
         dsstox_search_df = self.mpp_ready_flagged[["Feature ID", "Mass", "Retention Time"]].merge(
             dsstox_search_df, how="right", left_on="Mass", right_on="INPUT"
         )
+        logger.info("===========API results merged with mpp_ready dataframe===========")
         # Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
-
+        logger.info("===========Toxcast % active calculated===========")
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
+        logger.info("===========API Results mapped to self.data_map===========")
         # Store search results
         self.search_results = dsstox_search_df
+        logger.info("===========API Results stored in self.search_results===========")
 
     def perform_hcd_search(self):
         """
