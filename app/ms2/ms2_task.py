@@ -109,22 +109,27 @@ class MS2Run:
         logger.info(f"Dask Worker Memory Usage: {mem_usage}")
 
     def execute(self):
+        self.log_worker_memory()
         self.set_status("Parsing MS2 Data", create=True)
-        log_worker_memory()
         self.parse_uploaded_files()
+        self.log_worker_memory()
 
         self.set_status("Extracting Spectra Data")
         self.construct_featurelist()
-
+        self.log_worker_memory()
+        
         self.set_status("Retrieving Reference Spectra")
         self.get_CFMID_spectra()
-
+        self.log_worker_memory()
+        
         self.set_status("Calculating Similarity Scores")
         self.calc_CFMID_similarity()
-
+        self.log_worker_memory()
+        
         self.set_status("Saving Data")
         self.save_data()
-
+        self.log_worker_memory()
+        
         self.set_status("Completed")
         # self.send_email()
         logger.critical("Run Finished")
