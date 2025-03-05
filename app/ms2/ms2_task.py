@@ -53,13 +53,24 @@ def run_ms2_dask(parameters, jobid="00000000", verbose=True):
     # dask_input_dfs = dask_client.scatter(input_dfs)
     logger.info("Submitting Nta ms2 Dask task")
     task = dask_client.submit(
-        run_ms2, parameters, mongo_address, jobid, results_link=link_address, verbose=verbose, in_docker=in_docker, dask_client=dask_client
+        run_ms2,
+        parameters,
+        mongo_address,
+        jobid,
+        results_link=link_address,
+        verbose=verbose,
+        in_docker=in_docker,
+        dask_client=dask_client,
     )  # dask_input_dfs, mongo_address, jobid, results_link=link_address,verbose=verbose, in_docker=in_docker)
     fire_and_forget(task)
 
 
-def run_ms2(parameters, mongo_address=None, jobid="00000000", results_link="", verbose=True, in_docker=True, dask_client=None):
-    ms2_run = MS2Run(parameters, mongo_address, jobid, results_link, verbose, in_docker=in_docker, dask_client)
+def run_ms2(
+    parameters, mongo_address=None, jobid="00000000", results_link="", verbose=True, in_docker=True, dask_client=None
+):
+    ms2_run = MS2Run(
+        parameters, mongo_address, jobid, results_link, verbose, in_docker=in_docker, dask_client=dask_client
+    )
     try:
         ms2_run.execute()
     except Exception as e:
@@ -76,10 +87,16 @@ def run_ms2(parameters, mongo_address=None, jobid="00000000", results_link="", v
 FILENAMES = {"final_output": ["CFMID_results_pos", "CFMID_results_neg", "input_parameters"]}
 
 
-
 class MS2Run:
     def __init__(
-        self, parameters=None, mongo_address=None, jobid="00000000", results_link=None, verbose=True, in_docker=True, dask_client
+        self,
+        parameters=None,
+        mongo_address=None,
+        jobid="00000000",
+        results_link=None,
+        verbose=True,
+        in_docker=True,
+        dask_client=None,
     ):
         logger.info("[Job ID: {}] MS2Run initialize - started".format(jobid))
         self.inputParameters = parameters["inputParameters"]
@@ -101,7 +118,7 @@ class MS2Run:
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.step = "Started"  # tracks the current step (for fail messages)
         self.time_log = {"step": [], "start": []}
-        self.dask_client = dask_client # Store Dask client inside the class
+        self.dask_client = dask_client  # Store Dask client inside the class
 
     # Create function for tracking Dask memory usage
     def log_worker_memory(self):
@@ -117,19 +134,19 @@ class MS2Run:
         self.set_status("Extracting Spectra Data")
         self.construct_featurelist()
         self.log_worker_memory()
-        
+
         self.set_status("Retrieving Reference Spectra")
         self.get_CFMID_spectra()
         self.log_worker_memory()
-        
+
         self.set_status("Calculating Similarity Scores")
         self.calc_CFMID_similarity()
         self.log_worker_memory()
-        
+
         self.set_status("Saving Data")
         self.save_data()
         self.log_worker_memory()
-        
+
         self.set_status("Completed")
         # self.send_email()
         logger.critical("Run Finished")
