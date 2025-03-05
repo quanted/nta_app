@@ -1210,41 +1210,41 @@ class NtaRun:
             self.data_map["Chemical Results"]["DTXSID"] = self.data_map["Chemical Results"]["DTXSID"].apply(
                 lambda x: make_hyperlink(x)
             )
+            logger.info("===========Convert DTXSIDs to hyperlinks===========")
             # Check length of "Chemical Results"
             sheet_limit = 500000
-            chem_res = self.data_map["Chemical Results"]
             # If "Chemical Results" is bigger than limit, chunk into smaller sizes
-            if len(chem_res) > sheet_limit:
+            if len(self.data_map["Chemical Results"]) > sheet_limit:
                 # Set counter
                 i = 1
                 # Iterate through "Chemical Results", saving new chunks into 'chem_res_map'
-                for chunk in task_fun.chunk_dataframe(chem_res, sheet_limit):
+                for chunk in task_fun.chunk_dataframe(self.data_map["Chemical Results"], sheet_limit):
                     # Assemble sheet name
                     sheet = "Chemical Results " + str(i)
                     # Assign dataframe chunk to sheet dict key
                     self.chem_res_map[sheet] = chunk
                     # Increase counter
                     i += 1
+                logger.info("===========Chemical Results split into separate sheets===========")
             else:
                 # If "Chemical Results" is under limit, save into 'chem_res_map'
-                self.chem_res_map["Chemical Results"] = chem_res
+                self.chem_res_map["Chemical Results"] = self.data_map["Chemical Results"]
             # Remove key from 'data_map'
             del self.data_map["Chemical Results"]
             # Create excel book from Chemical Results
-            chem_data = task_fun.create_excel_book(self.chem_res_map, chem_res=True)
             # Save project name to MongoDB using jobid
             self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_chemical_results", encoding="utf-8")
             # Save results excel file to MongoDB using id
             id = self.jobid + "_excel_chem"
-            self.gridfs.put(chem_data, _id=id)
-
+            self.gridfs.put(task_fun.create_excel_book(self.chem_res_map, chem_res=True), _id=id)
+            logger.info("===========Saved Chemical Results excel book to MongoDB===========")
         # Create excel book for QAQC
-        QAQC_data = task_fun.create_excel_book(self.data_map, chem_res=False)
         # Save project name to MongoDB using jobid
         self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_QAQC", encoding="utf-8")
         # Save results excel file to MongoDB using id
         id = self.jobid + "_excel_qaqc"
-        self.gridfs.put(QAQC_data, _id=id)
+        self.gridfs.put(task_fun.create_excel_book(self.data_map, chem_res=False), _id=id)
+        logger.info("===========Saved QAQC excel book to MongoDB===========")
 
     def save_decision_tree_info_to_mongo(self):
         # This funciton is a result of NTAW-711 and is only required for the decision tree on the MS1 QED deploymet
