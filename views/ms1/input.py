@@ -26,6 +26,7 @@ example_neg_filename = "1b_MZmine3_neg.csv"
 example_tracer_filename = "WW2DW_Tracers_Amenable.csv"
 example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
 example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
+example_surrogate_filename = "qNTA_Surrogate_Input_File_WW2DW.csv"
 
 
 @csrf_exempt
@@ -77,6 +78,7 @@ def input_page(request, form_data=None, form_files=None):
         "search_dsstox": ["Search DSSTox for possible structures", None],
         "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", None],
         "search_mode": ["Search dashboard by", None],
+        "qnta_analysis": ["Perform qNTA?", None],
     }
     logger.debug("input_page: inputParameters: {} ".format(inputParameters))
 
@@ -145,6 +147,7 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["search_dsstox"][1] = parameters["search_dsstox"]
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
+            inputParameters["do_qnta"][1] = parameters["do_qnta"]
 
             # Get user-selected adducts via POST.getlist()
             # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
