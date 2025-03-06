@@ -10,7 +10,7 @@ import json
 import asyncio
 import io
 import psutil
-from dask.diagnostics import get_task_stream
+from dask.distributed import get_task_stream
 
 from dask.graph_manipulation import bind
 from datetime import datetime
