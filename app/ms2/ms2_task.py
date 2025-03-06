@@ -129,15 +129,19 @@ class MS2Run:
 
         self.set_status("Extracting Spectra Data")
         self.construct_featurelist()
+        self.log_memory_usage("Extracting Spectra Data")
 
         self.set_status("Retrieving Reference Spectra")
         self.get_CFMID_spectra()
+        self.log_memory_usage("Retrieving Reference Spectra")
 
         self.set_status("Calculating Similarity Scores")
         self.calc_CFMID_similarity()
+        self.log_memory_usage("Calculating Similarity Scores")
 
         self.set_status("Saving Data")
         self.save_data()
+        self.log_memory_usage("Saving Data")
 
         self.set_status("Completed")
         # self.send_email()
