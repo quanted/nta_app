@@ -115,11 +115,14 @@ class MS2Run:
         self.time_log = {"step": [], "start": []}
 
     def log_memory_usage(self, step_name):
-        """Logs memory usage using Dask diagnostics."""
-        with ResourceProfiler() as mem_profiler:
-            logger.info("[Job ID: %s] Memory usage after %s: %s", self.jobid, step_name, mem_profiler.results)
+        """Logs the current memory usage."""
+        process = psutil.Process()
+        mem_info = process.memory_info().rss / (1024 * 1024)  # Convert bytes to MB
+        logger.info("[Job ID: %s] Memory usage after %s: %.2f MB", self.jobid, step_name, mem_info)
 
     def execute(self):
+        self.log_memory_usage("Start")
+
         self.set_status("Parsing MS2 Data", create=True)
         self.parse_uploaded_files()
         self.log_memory_usage("Parsing MS2 Data")
