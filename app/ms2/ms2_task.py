@@ -10,6 +10,7 @@ import json
 import asyncio
 import io
 import psutil
+from dask.diagnostics import ResourceProfiler
 
 from dask.graph_manipulation import bind
 from datetime import datetime
@@ -114,20 +115,41 @@ class MS2Run:
         self.time_log = {"step": [], "start": []}
 
     def execute(self):
-        self.set_status("Parsing MS2 Data", create=True)
-        self.parse_uploaded_files()
+        with ResourceProfiler() as mem_profiler:
+            logger.info(f"Memory usage: {mem_profiler.results}")
+            self.set_status("Parsing MS2 Data", create=True)
+            self.parse_uploaded_files()
+            logger.info(f"Memory usage: {mem_profiler.results}")
 
-        self.set_status("Extracting Spectra Data")
-        self.construct_featurelist()
+            self.set_status("Extracting Spectra Data")
+            self.construct_featurelist()
+            logger.info(f"Memory usage: {mem_profiler.results}")
 
-        self.set_status("Retrieving Reference Spectra")
-        self.get_CFMID_spectra()
+            self.set_status("Retrieving Reference Spectra")
+            self.get_CFMID_spectra()
+            logger.info(f"Memory usage: {mem_profiler.results}")
 
-        self.set_status("Calculating Similarity Scores")
-        self.calc_CFMID_similarity()
+            self.set_status("Calculating Similarity Scores")
+            self.calc_CFMID_similarity()
+            logger.info(f"Memory usage: {mem_profiler.results}")
 
-        self.set_status("Saving Data")
-        self.save_data()
+            self.set_status("Saving Data")
+            self.save_data()
+            logger.info(f"Memory usage: {mem_profiler.results}")
+        # self.set_status("Parsing MS2 Data", create=True)
+        # self.parse_uploaded_files()
+
+        # self.set_status("Extracting Spectra Data")
+        # self.construct_featurelist()
+
+        # self.set_status("Retrieving Reference Spectra")
+        # self.get_CFMID_spectra()
+
+        # self.set_status("Calculating Similarity Scores")
+        # self.calc_CFMID_similarity()
+
+        # self.set_status("Saving Data")
+        # self.save_data()
 
         self.set_status("Completed")
         # self.send_email()
