@@ -78,7 +78,7 @@ def input_page(request, form_data=None, form_files=None):
         "search_dsstox": ["Search DSSTox for possible structures", None],
         "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", None],
         "search_mode": ["Search dashboard by", None],
-        "qnta_analysis": ["Perform qNTA?", None],
+        "do_qnta": ["Perform qNTA?", None],
     }
     logger.debug("input_page: inputParameters: {} ".format(inputParameters))
 
