@@ -406,27 +406,29 @@ class WebApp_plotter:
         """
         for b in range(len(sample_group_unique)):
             if len(x_values_list[b]) > 2:
-                x_fit = np.linspace(
-                    min(x_values_list[b]),
-                    max(x_values_list[b]),
-                    len(x_values_list[b]),
-                )
-                coefs = np.polyfit(
-                    x_fit,
-                    y_values_list[b],
-                    2,
-                )
-                domain = np.linspace(x_fit[0], x_fit[-1], 60)
-                y_fit = np.polyval(coefs, domain)
-                # QA check, someimtes fit gives a negative value at the edge, looks horrible
-                if y_fit[-1] < 0:
-                    y_fit = x_fit[:-1]
-                    x_fit = x_fit[:-1]
-                if y_fit[0] < 0:
-                    y_fit = y_fit[1:]
-                    x_fit = x_fit[1:]
-                ax.plot(domain, y_fit, color=self.color_dict["scatter_colors"][b], lw=3, zorder=100)
-
+                try:
+                    x_fit = np.linspace(
+                        min(x_values_list[b]),
+                        max(x_values_list[b]),
+                        len(x_values_list[b]),
+                    )
+                    coefs = np.polyfit(
+                        x_fit,
+                        y_values_list[b],
+                        2,
+                    )
+                    domain = np.linspace(x_fit[0], x_fit[-1], 60)
+                    y_fit = np.polyval(coefs, domain)
+                    # QA check, someimtes fit gives a negative value at the edge, looks horrible
+                    if y_fit[-1] < 0:
+                        y_fit = x_fit[:-1]
+                        x_fit = x_fit[:-1]
+                    if y_fit[0] < 0:
+                        y_fit = y_fit[1:]
+                        x_fit = x_fit[1:]
+                    ax.plot(domain, y_fit, color=self.color_dict["scatter_colors"][b], lw=3, zorder=100)
+                except:
+                    continue
         return ax
 
     def _set_y_ticks(self, ax: Axes, y_scale: Literal["linear", "log"], y_step: str) -> Axes:
