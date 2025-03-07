@@ -64,6 +64,15 @@ def run_ms2_dask(parameters, jobid="00000000", verbose=True):
     )  # dask_input_dfs, mongo_address, jobid, results_link=link_address,verbose=verbose, in_docker=in_docker)
     fire_and_forget(task)
 
+    try:
+        import time
+
+        time.sleep(5)
+        memory_profile = dask_client.profile()
+        logger.info("[Dask Memory Profile] %s", memory_profile)
+    except Exception as e:
+        logger.error("Failed to capture Dask memory profile: %s", repr(e))
+
 
 def run_ms2(parameters, mongo_address=None, jobid="00000000", results_link="", verbose=True, in_docker=True):
     ms2_run = MS2Run(parameters, mongo_address, jobid, results_link, verbose, in_docker=in_docker)
@@ -113,6 +122,7 @@ class MS2Run:
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.step = "Started"  # tracks the current step (for fail messages)
         self.time_log = {"step": [], "start": []}
+        self.client = None
 
     def log_memory_usage(self, step_name):
         """Logs the current memory usage."""
@@ -120,28 +130,43 @@ class MS2Run:
         mem_info = process.memory_info().rss / (1024 * 1024)  # Convert bytes to MB
         logger.info("[Job ID: %s] Memory usage after %s: %.2f MB", self.jobid, step_name, mem_info)
 
+    def log_dask_memory(self, step_name):
+        # Logs memory usage from all workers in a Dask cluster.
+        if not self.client:
+            return  # Skip if Dask client is not set
+        try:
+            worker_memory = self.client.run(lambda: psutil.Process().memory_info().rss / (1024 * 1024))
+            logger.info("[Job ID: %s] Memory after %s - %s", self.jobid, step_name, worker_memory)
+        except Exception as e:
+            logger.error("Failed to log Dask worker memory: %s", repr(e))
+
     def execute(self):
         self.log_memory_usage("Start")
 
         self.set_status("Parsing MS2 Data", create=True)
         self.parse_uploaded_files()
         self.log_memory_usage("Parsing MS2 Data")
+        self.log_dask_memory("Parsing MS2 Data")
 
         self.set_status("Extracting Spectra Data")
         self.construct_featurelist()
         self.log_memory_usage("Extracting Spectra Data")
+        self.log_dask_memory("Extracting Spectra Data")
 
         self.set_status("Retrieving Reference Spectra")
         self.get_CFMID_spectra()
         self.log_memory_usage("Retrieving Reference Spectra")
+        self.log_dask_memory("Retrieving Reference Spectra")
 
         self.set_status("Calculating Similarity Scores")
         self.calc_CFMID_similarity()
         self.log_memory_usage("Calculating Similarity Scores")
+        self.log_dask_memory("Calculating Similarity Scores")
 
         self.set_status("Saving Data")
         self.save_data()
         self.log_memory_usage("Saving Data")
+        self.log_dask_memory("Saving Data")
 
         self.set_status("Completed")
         # self.send_email()
