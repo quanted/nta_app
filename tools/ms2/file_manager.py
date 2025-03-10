@@ -97,14 +97,40 @@ class MS2_Parser:
                 if line.startswith("Name:"):
                     result = {
                         "MASS": None,
+                        "Precursor_type": None,
                         "RT": None,
                         "CHARGE": None,
                         "FRAG_MASS": [],
                         "FRAG_INTENSITY": [],
                         "FILE_NAME": filename,
                     }
+                elif line.startswith("Precursor_type:"):  # Grab the precursor/adduct type
+                    result["Precursor_type"] = line.split(" ")[1]
                 elif line.startswith("PrecursorMZ:"):
-                    result["MASS"] = float(line.split(" ")[1])
+                    temp_precursor = float(line.split(" ")[1])
+                    # Modify the precursor mass depending on what the precursor type is
+                    if result["Precursor_type"] == "[M+Na]+":
+                        result["MASS"] = temp_precursor - 21.981942
+                    elif result["Precursor_type"] == "[M+NH4]+":
+                        result["MASS"] = temp_precursor - 17.026547
+                    elif result["Precursor_type"] == "[M+H-H2O]+":
+                        result["MASS"] = temp_precursor + 18.010565
+                    elif result["Precursor_type"] == "[M+K]+":
+                        result["MASS"] = temp_precursor - 37.955882
+                    elif result["Precursor_type"] == "[M+2Na]2+":
+                        result["MASS"] = (temp_precursor * 2) - 44.971712
+                    elif result["Precursor_type"] == "[M+2H]2+":
+                        result["MASS"] = (temp_precursor * 2) - 1.007825
+                    elif result["Precursor_type"] == "[M+H+Na]2+":
+                        result["MASS"] = (temp_precursor * 2) - 22.98977
+                    elif result["Precursor_type"] == "[M+Na-2H]-":
+                        result["MASS"] = temp_precursor - 21.981942
+                    elif result["Precursor_type"] == "[M-H2O-H]-":
+                        result["MASS"] = temp_precursor + 18.010565
+                    elif result["Precursor_type"] == "[M-2H]2-":
+                        result["MASS"] = (temp_precursor * 2) + 1.007825
+                    else:
+                        result["MASS"] = temp_precursor  # If no precursor type, the assumption is M+H/M-H
                 elif line.startswith("Comment:"):  # RT is stored in the comment line for Waters MSP files
                     line = line.split(" ")[1]
                     result["RT"] = float(line.split("_")[0])
