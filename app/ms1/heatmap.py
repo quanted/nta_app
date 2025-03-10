@@ -84,6 +84,9 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
     cv_cols = ["CV " + col for col in sample_groups]
     rper_cols = ["Detection Percentage " + col for col in sample_groups]
     mean_cols = ["Mean " + col for col in sample_groups]
+    logger.info("cv_cols= {}".format(cv_cols))
+    logger.info("rper_cols= {}".format(rper_cols))
+    logger.info("mean_cols= {}".format(mean_cols))
     # Subset CV cols from df
     cv_df = dfCombined[cv_cols]
     # Get number of occurrences from the CV dataframe
