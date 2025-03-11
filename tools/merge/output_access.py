@@ -51,10 +51,26 @@ class OutputServer:
         return JsonResponse(response_data)
 
     def final_result(self):
-        self.file_names = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
-        if len(self.file_names) == 1:
-            return self._package_csv()
-        return self._package_xlsx()
+        # self.file_names = self.gridfs.get(f"{self.jobid}_file_names").read().decode("utf-8").split("&&")
+        # if len(self.file_names) == 1:
+        #     return self._package_csv()
+        # return self._package_xlsx()
+
+        in_memory_zip = BytesIO()
+
+        with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
+            # excel_data = self.generate_excel()
+            excel_data = self.gridfs.get(f"{self.jobid}_merge_excel").read()
+            project_name = str(self.gridfs.get(f"{self.jobid}_project_name").read(), "utf-8")
+            filename = project_name.replace(" ", "_") + "_chemical_results.xlsx"
+            zipf.writestr(filename, excel_data)
+
+        zip_filename = "nta_results_merged" + self.jobid + ".zip"
+
+        response = HttpResponse(in_memory_zip.getvalue(), content_type="application/zip")
+        response["Content-Disposition"] = "attachment; filename=" + zip_filename
+        response["Content-length"] = in_memory_zip.tell()
+        return response
 
     def _package_xlsx(self):
         print(f"Serving xlsx file")

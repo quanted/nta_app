@@ -1,5 +1,9 @@
 import pandas as pd
 import os
+
+# NTAW-733
+import io
+
 import csv
 import time
 import logging
@@ -135,6 +139,10 @@ class MergeRun:
             logger.info("Store data to each file name")
             for key in self.ms1_data_map.keys():
                 self.mongo_save(self.ms1_data_map[key], data_name=key)
+
+            # NTAW-733
+            self.save_excel_to_mongo()
+
         self.set_status("Completed", progress=self.n_files)
         logger.info(f"[Job ID: {self.jobid}] Run Finished")
 
@@ -176,3 +184,48 @@ class MergeRun:
         to_save = file.to_json(orient="split")
         id = self.jobid + "_" + data_name
         self.gridfs.put(to_save, _id=id, encoding="utf-8", project_name=self.project_name)
+
+    # NTAW-733
+    def save_excel_to_mongo(self):
+        # Create an excel sheet from the datamap and save it to MongoDB
+        in_memory_buffer = io.BytesIO()
+        # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
+        # self.ms1_data_map["chemical_results"]["DTXSID"] = self.ms1_data_map["chemical_results"]["DTXSID"].apply(
+        #     lambda x: make_hyperlink(x)
+        # )
+        # Convert self.ms1_data_map dictionary into an excel workbook
+        with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
+            workbook = writer.book
+            for df_name, df in self.ms1_data_map.items():
+                df.to_excel(writer, sheet_name=df_name, index=False)
+            #     sheet = workbook.worksheets[0]
+            #     # Freeze the first row in the sheet
+            #     sheet.freeze_panes = "A2"
+            #     # Format each column width to fit the longest string contained within the column
+            #     for column in df:
+            #         try:
+            #             column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+            #             col_idx = df.columns.get_loc(column) + 1
+            #             col_letter = get_column_letter(col_idx)
+            #             sheet.column_dimensions[col_letter].width = column_width
+            #         except AttributeError:
+            #             pass
+            # # Format DTXSID column hyperlinks
+            # workbook = writer.book
+            # sheet = workbook.worksheets[0]
+            # for i in range(sheet.max_row):
+            #     cell = sheet.cell(row=i + 2, column=8)
+            #     cell.style = "Hyperlink"
+            # # Format extra long column widths
+            # sheet.column_dimensions["H"].width = 18
+            # sheet.column_dimensions["G"].width = 54
+            # sheet.column_dimensions["I"].width = 54
+            # sheet.column_dimensions["L"].width = 54
+
+        excel_data = in_memory_buffer.getvalue()
+        # Save project name to MongoDB using jobid
+        project_name = self.project_name
+        self.gridfs.put(project_name, _id=f"{self.jobid}_project_name", encoding="utf-8")
+        # Save results excel file to MongoDB using id
+        id = self.jobid + "_merge_excel"
+        self.gridfs.put(excel_data, _id=id)
