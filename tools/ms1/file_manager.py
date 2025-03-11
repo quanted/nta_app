@@ -19,12 +19,12 @@ def input_handler(file, index, na_value):
         # Attempt reading with different encodings
         try:
             df = pd.read_csv(file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True)
-        except UnicodeDecodeError:
+        except:
             try:
                 df = pd.read_csv(
                     file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="latin-1"
                 )
-            except UnicodeDecodeError:
+            except:
                 try:
                     df = pd.read_csv(
                         file,
@@ -34,7 +34,7 @@ def input_handler(file, index, na_value):
                         na_filter=True,
                         encoding="ISO-8859-1",
                     )
-                except UnicodeDecodeError:
+                except:
                     df = pd.read_csv(
                         file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="cp1252"
                     )
