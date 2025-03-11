@@ -13,7 +13,7 @@ import json
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 from django.urls import reverse
-from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs
+from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, make_hyperlink
 from .merge_functions import process_MS2_data
 from ...tools.ms2.send_email import send_ms2_finished
 
@@ -129,18 +129,19 @@ class MergeRun:
             # self.ms1_data_map["dsstox_search"] = process_MS2_data(
             #     self.input_ms1, self.input_ms2, self.mass_accuracy_tolerance, self.rt_tolerance
             # )
-            logger.info("Store file names")
-            self.gridfs.put(
-                "&&".join(self.ms1_data_map.keys()),
-                _id=self.jobid + "_file_names",
-                encoding="utf-8",
-                project_name=self.project_name,
-            )
-            logger.info("Store data to each file name")
-            for key in self.ms1_data_map.keys():
-                self.mongo_save(self.ms1_data_map[key], data_name=key)
+            # logger.info("Store file names")
+            # self.gridfs.put(
+            #     "&&".join(self.ms1_data_map.keys()),
+            #     _id=self.jobid + "_file_names",
+            #     encoding="utf-8",
+            #     project_name=self.project_name,
+            # )
+            # logger.info("Store data to each file name")
+            # for key in self.ms1_data_map.keys():
+            #     self.mongo_save(self.ms1_data_map[key], data_name=key)
 
             # NTAW-733
+            logger.info("Store results excel sheet to MongoDB")
             self.save_excel_to_mongo()
 
         self.set_status("Completed", progress=self.n_files)
@@ -190,37 +191,37 @@ class MergeRun:
         # Create an excel sheet from the datamap and save it to MongoDB
         in_memory_buffer = io.BytesIO()
         # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
-        # self.ms1_data_map["chemical_results"]["DTXSID"] = self.ms1_data_map["chemical_results"]["DTXSID"].apply(
-        #     lambda x: make_hyperlink(x)
-        # )
+        self.ms1_data_map["chemical_results"]["DTXSID"] = self.ms1_data_map["chemical_results"]["DTXSID"].apply(
+            lambda x: make_hyperlink(x)
+        )
         # Convert self.ms1_data_map dictionary into an excel workbook
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             workbook = writer.book
             for df_name, df in self.ms1_data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
-            #     sheet = workbook.worksheets[0]
-            #     # Freeze the first row in the sheet
-            #     sheet.freeze_panes = "A2"
-            #     # Format each column width to fit the longest string contained within the column
-            #     for column in df:
-            #         try:
-            #             column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
-            #             col_idx = df.columns.get_loc(column) + 1
-            #             col_letter = get_column_letter(col_idx)
-            #             sheet.column_dimensions[col_letter].width = column_width
-            #         except AttributeError:
-            #             pass
-            # # Format DTXSID column hyperlinks
-            # workbook = writer.book
-            # sheet = workbook.worksheets[0]
-            # for i in range(sheet.max_row):
-            #     cell = sheet.cell(row=i + 2, column=8)
-            #     cell.style = "Hyperlink"
-            # # Format extra long column widths
-            # sheet.column_dimensions["H"].width = 18
-            # sheet.column_dimensions["G"].width = 54
-            # sheet.column_dimensions["I"].width = 54
-            # sheet.column_dimensions["L"].width = 54
+                sheet = workbook.worksheets[0]
+                # Freeze the first row in the sheet
+                sheet.freeze_panes = "A2"
+                # Format each column width to fit the longest string contained within the column
+                for column in df:
+                    try:
+                        column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+                        col_idx = df.columns.get_loc(column) + 1
+                        col_letter = get_column_letter(col_idx)
+                        sheet.column_dimensions[col_letter].width = column_width
+                    except AttributeError:
+                        pass
+            # Format DTXSID column hyperlinks
+            workbook = writer.book
+            sheet = workbook.worksheets[0]
+            for i in range(sheet.max_row):
+                cell = sheet.cell(row=i + 2, column=8)
+                cell.style = "Hyperlink"
+            # Format extra long column widths
+            sheet.column_dimensions["H"].width = 18
+            sheet.column_dimensions["G"].width = 54
+            sheet.column_dimensions["I"].width = 54
+            sheet.column_dimensions["L"].width = 54
 
         excel_data = in_memory_buffer.getvalue()
         # Save project name to MongoDB using jobid

@@ -22,3 +22,17 @@ def connect_to_mongo_gridfs(address):
     print("Connecting to mongodb at {}".format(address))
     fs = gridfs.GridFS(db)
     return fs
+
+
+def make_hyperlink(value, url="https://comptox.epa.gov/dashboard/chemical/details/{}"):
+    """
+    Function is used to display a URL as a hyperlink when the returned string is passed into an Excel cell.
+    The hyperlink text will display the 'value' parameter.
+
+    Args:
+        value (string; dynamic part of the destination url)
+        url (string, static part of the destination url with curly cr)
+    Returns:
+        The Excel hyperlink command.
+    """
+    return '=HYPERLINK("%s", "%s")' % (url.format(value), value)

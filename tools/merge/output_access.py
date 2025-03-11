@@ -72,77 +72,77 @@ class OutputServer:
         response["Content-length"] = in_memory_zip.tell()
         return response
 
-    def _package_xlsx(self):
-        print(f"Serving xlsx file")
-        initial = time.perf_counter()
-        in_memory_xlsx = BytesIO()
-        with pd.ExcelWriter(in_memory_xlsx, engine="openpyxl") as writer:
-            for file in self.file_names:
-                try:
-                    start = time.perf_counter()
-                    id = self.jobid + "_" + file
-                    db_record = self.gridfs.get(id)
-                    json_string = db_record.read().decode("utf-8")
-                    df = pd.read_json(json_string, orient="split")
-                    df.to_excel(writer, sheet_name=file, index=False)
-                    stop = time.perf_counter()
-                    print(f"========= Time to construct sheet {file}: {stop - start}")
-                except Exception as e:
-                    print(e)
-                    continue
-        response = StreamingHttpResponse(
-            in_memory_xlsx.getvalue(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        response["Content-Disposition"] = f"attachment; filename=merged_summary_{self.jobid}.xlsx"
-        end = time.perf_counter()
-        print(f"Time to get xlsx: {end - initial}")
-        return response
+    # def _package_xlsx(self):
+    #     print(f"Serving xlsx file")
+    #     initial = time.perf_counter()
+    #     in_memory_xlsx = BytesIO()
+    #     with pd.ExcelWriter(in_memory_xlsx, engine="openpyxl") as writer:
+    #         for file in self.file_names:
+    #             try:
+    #                 start = time.perf_counter()
+    #                 id = self.jobid + "_" + file
+    #                 db_record = self.gridfs.get(id)
+    #                 json_string = db_record.read().decode("utf-8")
+    #                 df = pd.read_json(json_string, orient="split")
+    #                 df.to_excel(writer, sheet_name=file, index=False)
+    #                 stop = time.perf_counter()
+    #                 print(f"========= Time to construct sheet {file}: {stop - start}")
+    #             except Exception as e:
+    #                 print(e)
+    #                 continue
+    #     response = StreamingHttpResponse(
+    #         in_memory_xlsx.getvalue(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    #     )
+    #     response["Content-Disposition"] = f"attachment; filename=merged_summary_{self.jobid}.xlsx"
+    #     end = time.perf_counter()
+    #     print(f"Time to get xlsx: {end - initial}")
+    #     return response
 
-    def _package_csv(self):
-        in_memory_zip = BytesIO()
-        with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
-            for file in self.file_names:
-                try:
-                    record_id = self.jobid + "_" + file
-                    db_record = self.gridfs.get(record_id)
-                    json_string = db_record.read().decode("utf-8")
-                    df = pd.read_json(json_string, orient="split")
-                    project_name = db_record.project_name
-                    if project_name:
-                        filename = project_name.replace(" ", "_") + "_" + file + ".csv"
-                    else:
-                        filename = record_id + ".csv"
+    # def _package_csv(self):
+    #     in_memory_zip = BytesIO()
+    #     with ZipFile(in_memory_zip, "w", ZIP_DEFLATED) as zipf:
+    #         for file in self.file_names:
+    #             try:
+    #                 record_id = self.jobid + "_" + file
+    #                 db_record = self.gridfs.get(record_id)
+    #                 json_string = db_record.read().decode("utf-8")
+    #                 df = pd.read_json(json_string, orient="split")
+    #                 project_name = db_record.project_name
+    #                 if project_name:
+    #                     filename = project_name.replace(" ", "_") + "_" + file + ".csv"
+    #                 else:
+    #                     filename = record_id + ".csv"
 
-                    # NTAW-631: Convert all merged columns to numeric and round to two decimals places
-                    df.loc[:, df.columns.str.startswith("RT_")] = df.loc[:, df.columns.str.startswith("RT_")].apply(
-                        pd.to_numeric, errors="coerce"
-                    )
-                    df.loc[:, df.columns.str.startswith("RT_")] = df.loc[:, df.columns.str.startswith("RT_")].round(2)
-                    df.loc[:, df.columns.str.startswith("SUM_SCORE_")] = df.loc[
-                        :, df.columns.str.startswith("SUM_SCORE_")
-                    ].apply(pd.to_numeric, errors="coerce")
-                    df.loc[:, df.columns.str.startswith("SUM_SCORE_")] = df.loc[
-                        :, df.columns.str.startswith("SUM_SCORE_")
-                    ].round(2)
-                    df.loc[:, df.columns.str.startswith("QUOTIENT_SCORE_")] = df.loc[
-                        :, df.columns.str.startswith("QUOTIENT_SCORE_")
-                    ].apply(pd.to_numeric, errors="coerce")
-                    df.loc[:, df.columns.str.startswith("QUOTIENT_SCORE_")] = df.loc[
-                        :, df.columns.str.startswith("QUOTIENT_SCORE_")
-                    ].round(2)
-                    df.loc[:, df.columns.str.startswith("PERCENTILE_SCORE_")] = df.loc[
-                        :, df.columns.str.startswith("PERCENTILE_SCORE_")
-                    ].apply(pd.to_numeric, errors="coerce")
-                    df.loc[:, df.columns.str.startswith("PERCENTILE_SCORE_")] = df.loc[
-                        :, df.columns.str.startswith("PERCENTILE_SCORE_")
-                    ].round(2)
+    #                 # NTAW-631: Convert all merged columns to numeric and round to two decimals places
+    #                 df.loc[:, df.columns.str.startswith("RT_")] = df.loc[:, df.columns.str.startswith("RT_")].apply(
+    #                     pd.to_numeric, errors="coerce"
+    #                 )
+    #                 df.loc[:, df.columns.str.startswith("RT_")] = df.loc[:, df.columns.str.startswith("RT_")].round(2)
+    #                 df.loc[:, df.columns.str.startswith("SUM_SCORE_")] = df.loc[
+    #                     :, df.columns.str.startswith("SUM_SCORE_")
+    #                 ].apply(pd.to_numeric, errors="coerce")
+    #                 df.loc[:, df.columns.str.startswith("SUM_SCORE_")] = df.loc[
+    #                     :, df.columns.str.startswith("SUM_SCORE_")
+    #                 ].round(2)
+    #                 df.loc[:, df.columns.str.startswith("QUOTIENT_SCORE_")] = df.loc[
+    #                     :, df.columns.str.startswith("QUOTIENT_SCORE_")
+    #                 ].apply(pd.to_numeric, errors="coerce")
+    #                 df.loc[:, df.columns.str.startswith("QUOTIENT_SCORE_")] = df.loc[
+    #                     :, df.columns.str.startswith("QUOTIENT_SCORE_")
+    #                 ].round(2)
+    #                 df.loc[:, df.columns.str.startswith("PERCENTILE_SCORE_")] = df.loc[
+    #                     :, df.columns.str.startswith("PERCENTILE_SCORE_")
+    #                 ].apply(pd.to_numeric, errors="coerce")
+    #                 df.loc[:, df.columns.str.startswith("PERCENTILE_SCORE_")] = df.loc[
+    #                     :, df.columns.str.startswith("PERCENTILE_SCORE_")
+    #                 ].round(2)
 
-                    csv_string = df.to_csv(index=False)
-                    zipf.writestr(filename, csv_string)
-                except (OperationFailure, TypeError, NoFile) as e:
-                    break
-        zip_filename = "nta_results_merged" + self.jobid + ".zip"
-        response = HttpResponse(in_memory_zip.getvalue(), content_type="application/zip")
-        response["Content-Disposition"] = "attachment; filename=" + zip_filename
-        response["Content-length"] = in_memory_zip.tell()
-        return response
+    #                 csv_string = df.to_csv(index=False)
+    #                 zipf.writestr(filename, csv_string)
+    #             except (OperationFailure, TypeError, NoFile) as e:
+    #                 break
+    #     zip_filename = "nta_results_merged" + self.jobid + ".zip"
+    #     response = HttpResponse(in_memory_zip.getvalue(), content_type="application/zip")
+    #     response["Content-Disposition"] = "attachment; filename=" + zip_filename
+    #     response["Content-length"] = in_memory_zip.tell()
+    #     return response
