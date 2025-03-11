@@ -78,6 +78,7 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
     dfCombined["MDL"] = dfCombined[blank_mean] + MRL_mult * dfCombined[blank_std]
     dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
     dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
+    logger.info("dfCombined cols= {}".format(dfCombined.columns))
     # AC Where blank replicate percentage column fails, zero out MDL - NTAW574
     dfCombined.loc[dfCombined[blank_rper] < min_replicate_blanks_hits_percent, "MDL"] = 0
     # Find CV, Rep_Percent, and Mean cols from df
