@@ -207,17 +207,22 @@ class MergeRun:
                         sheet.column_dimensions[col_letter].width = column_width
                     except AttributeError:
                         pass
-            # Format DTXSID column hyperlinks
-            workbook = writer.book
-            sheet = workbook.worksheets[0]
-            for i in range(sheet.max_row):
-                cell = sheet.cell(row=i + 2, column=8)
-                cell.style = "Hyperlink"
-            # Format extra long column widths
-            sheet.column_dimensions["H"].width = 18
-            sheet.column_dimensions["G"].width = 54
-            sheet.column_dimensions["I"].width = 54
-            sheet.column_dimensions["L"].width = 54
+                # Format DTXSID column hyperlinks
+                for i in range(sheet.max_row):
+                    cell = sheet.cell(row=i + 2, column=8)
+                    cell.style = "Hyperlink"
+                # Format decimal columns to scientific notation
+                for cell in sheet["O"]:
+                    cell.number_format = "0.00E+00"
+                for cell in sheet["U"]:
+                    cell.number_format = "0.00E+00"
+                # Format extra long column widths
+                sheet.column_dimensions["H"].width = 18
+                sheet.column_dimensions["G"].width = 54
+                sheet.column_dimensions["I"].width = 54
+                sheet.column_dimensions["L"].width = 54
+                sheet.column_dimensions["O"].width = 18
+                sheet.column_dimensions["U"].width = 18
 
         excel_data = in_memory_buffer.getvalue()
         # Save project name to MongoDB using jobid
