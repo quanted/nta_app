@@ -1,9 +1,6 @@
 import pandas as pd
 import os
-
-# NTAW-733
 import io
-
 import csv
 import time
 import logging
@@ -141,7 +138,6 @@ class MergeRun:
             # for key in self.ms1_data_map.keys():
             #     self.mongo_save(self.ms1_data_map[key], data_name=key)
 
-            # NTAW-733
             logger.info("Store results excel sheet to MongoDB")
             self.save_excel_to_mongo()
 
@@ -187,7 +183,6 @@ class MergeRun:
         id = self.jobid + "_" + data_name
         self.gridfs.put(to_save, _id=id, encoding="utf-8", project_name=self.project_name)
 
-    # NTAW-733
     def save_excel_to_mongo(self):
         # Create an excel sheet from the datamap and save it to MongoDB
         in_memory_buffer = io.BytesIO()
