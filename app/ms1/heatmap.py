@@ -100,6 +100,9 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
     )
     # Blank out cvs in samples with <2 samples
     for x, y, z in zip(cv_cols, rper_cols, mean_cols):
+        logger.info("x= {}".format(x))
+        logger.info("y= {}".format(y))
+        logger.info("z= {}".format(z))
         # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
         # Check if replicate column is the blank column to determine which filter to apply - NTAW574
         if y == blank_rper:
