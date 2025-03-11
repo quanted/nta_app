@@ -179,6 +179,8 @@ class NtaRun:
         self.cv_scatterplots_out = []
 
     def execute(self):
+        # 0.9: Normalize all column names
+        self.normalize_column_names(self.dfs)
         self.step = "Check for existence of required columns"
         # 1a: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
@@ -299,6 +301,26 @@ class NtaRun:
         self.step = "Displaying results"
         self.set_status("Completed")
         logger.warning("MS1 job {}: Processing complete.".format(self.jobid))
+
+    def normalize_column_names(self, input_dfs):
+        """
+        Normalize all column names in a list of DataFrames
+
+        This function attempts to eliminate issues with the naming of columns in the input dataframes, including hidden spaces and encoding issues
+
+        Args:
+            self: The instance of the class (typically associated with object-oriented programming).
+            input_dfs (list of pandas.DataFrame): A list of pandas DataFrames to check and modify.
+        Returns:
+            None: This function operates in place and modifies the input DataFrames.
+        Example:
+        """
+        for df in input_dfs:
+            df.columns = df.columns.astype(str)  # Ensure all column names are strings
+            df.columns = df.columns.str.strip()  # Remove leading/trailing spaces
+            df.columns = df.columns.str.replace(r"\s+", " ", regex=True)  # Normalize spaces
+            df.columns = df.columns.str.replace("\xa0", " ")  # Remove non-breaking spaces
+        return
 
     def check_existence_of_ionization_mode_column(self, input_dfs):
         """

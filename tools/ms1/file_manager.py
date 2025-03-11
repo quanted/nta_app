@@ -17,37 +17,12 @@ def input_handler(file, index, na_value):
         df = pd.read_csv(file, sep="\t", comment="#", na_values=na_value)
     if ext == ".csv":
         # Read .csv file, add user-selected na_value to list of default na values for pandas na filter
-        # Attempt reading with different encodings
-        # df = pd.read_csv(
-        #     file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="ISO-8859-1"
-        # )
+        # Encode the CSV file as ISO-8859-1 to avoid issues with specific non-UTF8 characters
         raw_data = file.read()
         decoded_data = raw_data.decode("ISO-8859-1", errors="replace")
         df = pd.read_csv(
             io.StringIO(decoded_data), comment="#", na_values=na_value, keep_default_na=True, na_filter=True
         )
-
-        # try:
-        #     df = pd.read_csv(file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True)
-        # except:
-        #     try:
-        #         df = pd.read_csv(
-        #             file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="latin-1"
-        #         )
-        #     except:
-        #         try:
-        #             df = pd.read_csv(
-        #                 file,
-        #                 comment="#",
-        #                 na_values=na_value,
-        #                 keep_default_na=True,
-        #                 na_filter=True,
-        #                 encoding="ISO-8859-1",
-        #             )
-        #         except:
-        #             df = pd.read_csv(
-        #                 file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="cp1252"
-        #             )
 
     # Call fix names
     df = fix_names(df, index)
