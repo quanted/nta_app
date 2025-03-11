@@ -17,27 +17,31 @@ def input_handler(file, index, na_value):
     if ext == ".csv":
         # Read .csv file, add user-selected na_value to list of default na values for pandas na filter
         # Attempt reading with different encodings
-        try:
-            df = pd.read_csv(file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True)
-        except:
-            try:
-                df = pd.read_csv(
-                    file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="latin-1"
-                )
-            except:
-                try:
-                    df = pd.read_csv(
-                        file,
-                        comment="#",
-                        na_values=na_value,
-                        keep_default_na=True,
-                        na_filter=True,
-                        encoding="ISO-8859-1",
-                    )
-                except:
-                    df = pd.read_csv(
-                        file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="cp1252"
-                    )
+        df = pd.read_csv(
+            file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="ISO-8859-1"
+        )
+
+        # try:
+        #     df = pd.read_csv(file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True)
+        # except:
+        #     try:
+        #         df = pd.read_csv(
+        #             file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="latin-1"
+        #         )
+        #     except:
+        #         try:
+        #             df = pd.read_csv(
+        #                 file,
+        #                 comment="#",
+        #                 na_values=na_value,
+        #                 keep_default_na=True,
+        #                 na_filter=True,
+        #                 encoding="ISO-8859-1",
+        #             )
+        #         except:
+        #             df = pd.read_csv(
+        #                 file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="cp1252"
+        #             )
 
     # Call fix names
     df = fix_names(df, index)
