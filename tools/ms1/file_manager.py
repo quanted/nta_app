@@ -4,6 +4,7 @@ import pandas as pd
 from operator import itemgetter
 from itertools import groupby
 from difflib import SequenceMatcher
+import io
 
 
 # convert the user-supplied input file into dataframe
@@ -17,10 +18,14 @@ def input_handler(file, index, na_value):
     if ext == ".csv":
         # Read .csv file, add user-selected na_value to list of default na values for pandas na filter
         # Attempt reading with different encodings
-        df = pd.read_csv(
-            file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="ISO-8859-1"
-        )
-
+        # df = pd.read_csv(
+        #     file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="ISO-8859-1"
+        # )
+        with open(file, "rb") as f:
+            raw_data = f.read().decode("ISO-8859-1", errors="replace")  # Decode manually
+            df = pd.read_csv(
+                io.StringIO(raw_data), comment="#", na_values=na_value, keep_default_na=True, na_filter=True
+            )
         # try:
         #     df = pd.read_csv(file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True)
         # except:
