@@ -18,7 +18,13 @@ def input_handler(file, index, na_value):
         # Read .csv file, add user-selected na_value to list of default na values for pandas na filter
         # Attempt reading with different encodings
         df = pd.read_csv(
-            file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="latin-1"
+            file,
+            comment="#",
+            na_values=na_value,
+            keep_default_na=True,
+            na_filter=True,
+            encoding="latin-1",
+            errors="replace",
         )
 
         # try:
