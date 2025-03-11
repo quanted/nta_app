@@ -16,6 +16,7 @@ from django.urls import reverse
 from .utilities import connect_to_mongoDB, connect_to_mongo_gridfs, make_hyperlink
 from .merge_functions import process_MS2_data
 from ...tools.ms2.send_email import send_ms2_finished
+from openpyxl.utils import get_column_letter
 
 NO_DASK = False  # set this to True to run locally without dask (for debug purposes)
 
