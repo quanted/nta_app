@@ -21,11 +21,12 @@ def input_handler(file, index, na_value):
         # df = pd.read_csv(
         #     file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="ISO-8859-1"
         # )
-        with open(file, "rb") as f:
-            raw_data = f.read().decode("ISO-8859-1", errors="replace")  # Decode manually
-            df = pd.read_csv(
-                io.StringIO(raw_data), comment="#", na_values=na_value, keep_default_na=True, na_filter=True
-            )
+        raw_data = file.read()
+        decoded_data = raw_data.decode("ISO-8859-1", errors="replace")
+        df = pd.read_csv(
+            io.StringIO(decoded_data), comment="#", na_values=na_value, keep_default_na=True, na_filter=True
+        )
+
         # try:
         #     df = pd.read_csv(file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True)
         # except:
