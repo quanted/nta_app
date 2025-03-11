@@ -316,10 +316,11 @@ class NtaRun:
         Example:
         """
         for df in input_dfs:
-            df.columns = df.columns.astype(str)  # Ensure all column names are strings
-            df.columns = df.columns.str.strip()  # Remove leading/trailing spaces
-            df.columns = df.columns.str.replace(r"\s+", " ", regex=True)  # Normalize spaces
-            df.columns = df.columns.str.replace("\xa0", " ")  # Remove non-breaking spaces
+            if df is not None:
+                df.columns = df.columns.astype(str)  # Ensure all column names are strings
+                df.columns = df.columns.str.strip()  # Remove leading/trailing spaces
+                df.columns = df.columns.str.replace(r"\s+", " ", regex=True)  # Normalize spaces
+                df.columns = df.columns.str.replace("\xa0", " ")  # Remove non-breaking spaces
         return
 
     def check_existence_of_ionization_mode_column(self, input_dfs):
