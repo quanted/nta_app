@@ -105,7 +105,7 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
             cv_df.loc[dfCombined[y] < min_replicate_blanks_hits_percent, x] = np.nan
         else:
             cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
-        cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
+        # cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
         cv_df.loc[dfCombined[z] <= dfCombined["MDL"], x] = np.nan
     # Add sum of Trues for condition applied to cv dataframe
     cv_df["below count"] = (cv_df <= max_replicate_cv_value).sum(axis=1)
