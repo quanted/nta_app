@@ -187,7 +187,7 @@ class MergeRun:
         # Create an excel sheet from the datamap and save it to MongoDB
         in_memory_buffer = io.BytesIO()
         # Deletes the old DTXSID hyperlink column
-        self.ms1_data_map["Chemical_results"] = self.ms1_data_map["Chemical_results"].drop("CompTox links", axis=1)
+        self.ms1_data_map["chemical_results"] = self.ms1_data_map["chemical_results"].drop("CompTox links", axis=1)
         # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
         self.ms1_data_map["chemical_results"]["DTXSID"] = self.ms1_data_map["chemical_results"]["DTXSID"].apply(
             lambda x: make_hyperlink(x)
