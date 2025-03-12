@@ -98,11 +98,16 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
             min_replicate_hits_percent, min_replicate_blanks_hits_percent, max_replicate_cv_value, MRL_mult
         )
     )
+
+    for idx, col in enumerate(dfCombined.columns):
+        logger.info(f"dfCombined Column {idx+1}: {col}")
+
     # Blank out cvs in samples with <2 samples
     for x, y, z in zip(cv_cols, rper_cols, mean_cols):
         logger.info("x= {}".format(x))
         logger.info("y= {}".format(y))
         logger.info("z= {}".format(z))
+        logger.info("dfCombined[y] columns:" + dfCombined[y].columns.tolist())
         # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
         # Check if replicate column is the blank column to determine which filter to apply - NTAW574
         if y == blank_rper:
