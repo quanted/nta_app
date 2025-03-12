@@ -182,14 +182,20 @@ class NtaRun:
         # 0.9: Normalize all column names
         self.normalize_column_names(self.dfs)
         self.step = "Check for existence of required columns"
+        if self.dfs[0] is not None:
+            logger.info("nta_task.py 0.9 POS df shape: {}".format(self.dfs[0].shape))
         # 1a: check existence of "Ionization mode" column
         self.check_existence_of_ionization_mode_column(self.dfs)
+        if self.dfs[0] is not None:
+            logger.info("nta_task.py 1a POS df shape: {}".format(self.dfs[0].shape))
         # 1b: check existence of 'mass column'
         self.check_existence_of_mass_column(self.dfs)
         # 1c: check for alternate spellings of 'Retention_Time' column
         self.check_retention_time_column(self.dfs)
         # 1d: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
+        if self.dfs[0] is not None:
+            logger.info("nta_task.py 1d POS df shape: {}".format(self.dfs[0].shape))
         # 1e: create a status in mongo
         self.set_status("Processing", create=True)
         # 1f: create an analysis_parameters sheet
@@ -216,6 +222,8 @@ class NtaRun:
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
                 logger.info("NEG df columns: {}".format(self.dfs[1].columns))
+        if self.dfs[0] is not None:
+            logger.info("nta_task.py 2 POS df shape: {}".format(self.dfs[0].shape))
         # 3a: statistics
         self.step = "Calculating statistics"
         self.calc_statistics()
@@ -225,6 +233,9 @@ class NtaRun:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
+
+        if self.dfs[0] is not None:
+            logger.info("nta_task.py post-3a POS df shape: {}".format(self.dfs[0].shape))
 
         # 3b: Occurrence heatmap
         self.step = "Create heatmap"
