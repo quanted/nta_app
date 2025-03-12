@@ -739,7 +739,7 @@ class NtaRun:
                 self.dfs[0], self.pass_through[0], self.all_headers
             )
             logger.info("data_map all detection statistics shape")
-            logger.info(data_map["All Detection Statistics (Pos)"].shape)
+            logger.info(self.data_map["All Detection Statistics (Pos)"].shape)
         else:
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
                 self.dfs[1], self.pass_through[1], self.all_headers
