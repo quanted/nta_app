@@ -1231,10 +1231,16 @@ class NtaRun:
         # Check for 'Chemical Results' in keys list
         if "Chemical Results" in keys_list:
             # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
-            self.data_map["Chemical Results"]["DTXSID"] = self.data_map["Chemical Results"]["DTXSID"].apply(
-                lambda x: make_hyperlink(x)
-            )
+            # self.data_map["Chemical Results"]["DTXSID"] = self.data_map["Chemical Results"]["DTXSID"].apply(
+            #     lambda x: make_hyperlink(x)
+            # )
+            # Adds another column to hold the CompTox links.
             logger.info("===========Convert DTXSIDs to hyperlinks===========")
+            self.data_map["Chemical Results"].insert(
+                loc=8,
+                column="CompTox links",
+                value=self.data_map["Chemical Results"]["DTXSID"].apply(lambda x: make_hyperlink(x)),
+            )
             # Check length of "Chemical Results"
             sheet_limit = 500000
             # If "Chemical Results" is bigger than limit, chunk into smaller sizes

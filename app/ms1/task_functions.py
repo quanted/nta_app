@@ -1947,8 +1947,8 @@ def create_excel_book(d, chem_res=False):
             workbook = writer.book
             for sheet in workbook.worksheets:
                 for i in range(sheet.max_row):
-                    cell = sheet.cell(row=i + 2, column=8)
+                    cell = sheet.cell(row=i + 2, column=9)
                     cell.style = "Hyperlink"
-                sheet.column_dimensions["H"].width = 18
+                sheet.column_dimensions["I"].width = 18
     excel_data = in_memory_buffer.getvalue()
     return excel_data
