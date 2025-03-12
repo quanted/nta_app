@@ -44,6 +44,7 @@ def run_nta_dask(
 ):
     in_docker = os.environ.get("IN_DOCKER") != "False"
     mongo_address = os.environ.get("MONGO_SERVER")
+    logger.info("Mongo Address: {}".format(mongo_address))
 
     if NO_DASK:
         run_nta(
