@@ -860,16 +860,21 @@ def column_sort_DFS(df_in, passthru, all_headers):
         group_stats = [item for item in all_cols if sam in item]
         cols.append(group_stats)
     stats_cols = sum(cols, [])
+    logger.info("stats_cols")
+    logger.info(stats_cols, len(stats_col))
     # Combine into new column list
     new_col_org = front_matter + stats_cols
     logger.info("new_col_org")
-    logger.info(new_col_org)
+    logger.info(new_col_org, len(new_col_org))
     # Combine df and passthrough
     df = pd.merge(df, pt, how="left", on=["Feature ID"])
     logger.info("combined df and passthrough shape")
     logger.info(df.shape)
     # Subset data with new column list
     df_reorg = df[new_col_org]
+    logger.info("df_reorg shape")
+    logger.info(df_reorg.shape)
+
     df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
     df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
     df_reorg.rename(
