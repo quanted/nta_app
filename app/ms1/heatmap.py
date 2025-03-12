@@ -107,7 +107,8 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
         logger.info("x= {}".format(x))
         logger.info("y= {}".format(y))
         logger.info("z= {}".format(z))
-        logger.info("dfCombined[y] columns:" + dfCombined[y].columns.tolist())
+        logger.info("dfCombined[y]")
+        logger.info(dfCombined[y])
         # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
         # Check if replicate column is the blank column to determine which filter to apply - NTAW574
         if y == blank_rper:
