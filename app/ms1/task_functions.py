@@ -861,7 +861,7 @@ def column_sort_DFS(df_in, passthru, all_headers):
         cols.append(group_stats)
     stats_cols = sum(cols, [])
     logger.info("stats_cols")
-    logger.info(stats_cols, len(stats_col))
+    logger.info(stats_cols, len(stats_cols))
     # Combine into new column list
     new_col_org = front_matter + stats_cols
     logger.info("new_col_org")
