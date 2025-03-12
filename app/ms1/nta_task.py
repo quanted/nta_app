@@ -691,6 +691,10 @@ class NtaRun:
             raise ValueError(
                 "Blank samples not found. Blanks must have one of the following text strings present: ['mb', 'Mb','mB', 'MB', 'blank', 'Blank', 'BLANK']"
             )
+        logger.info("self.dfs[0] shape after chunk_stats():")
+        logger.info(self.dfs[0].shape)
+        for idx, col in enumerate(self.dfs[0].columns):
+            logger.info(f"dfCombined Column {idx+1}: {col}")
         # Get positive adducts, print to logger
         pos_adducts_selected = self.parameters["pos_adducts"][1]
         logger.info("pos adducts list: {}".format(self.parameters["pos_adducts"]))
@@ -744,6 +748,11 @@ class NtaRun:
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
                 self.dfs[1], self.pass_through[1], self.all_headers
             )
+        logger.info("self.data_map[Pos] shape after column_sort_DFS():")
+        logger.info(self.dfs[0].shape)
+        for idx, col in enumerate(self.data_map["All Detection Statistics (Pos)"].columns):
+            logger.info(f"dfCombined Column {idx+1}: {col}")
+
         return
 
     def store_scatterplots(self):
