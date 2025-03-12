@@ -813,6 +813,8 @@ def column_sort_DFS(df_in, passthru, all_headers):
     # Copy df and passthru
     df = df_in.copy()
     pt = passthru.copy()
+    logger.info("column_sort_DFS initial df shape")
+    logger.info(df.shape)
     # Get all cols, group roots (i.e., drop unique value from sample groups)
     all_cols = df.columns.tolist()
     non_samples = ["MRL"]
@@ -850,6 +852,8 @@ def column_sort_DFS(df_in, passthru, all_headers):
     ]
     front_matter = [item for item in ordering if item in front_matter]
     front_matter = pt_info + front_matter
+    logger.info("front_matter")
+    logger.info(front_matter)
     # Organize stats columns
     cols = []
     for sam in groups:
@@ -858,8 +862,12 @@ def column_sort_DFS(df_in, passthru, all_headers):
     stats_cols = sum(cols, [])
     # Combine into new column list
     new_col_org = front_matter + stats_cols
+    logger.info("new_col_org")
+    logger.info(new_col_org)
     # Combine df and passthrough
     df = pd.merge(df, pt, how="left", on=["Feature ID"])
+    logger.info("combined df and passthrough shape")
+    logger.info(df.shape)
     # Subset data with new column list
     df_reorg = df[new_col_org]
     df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
