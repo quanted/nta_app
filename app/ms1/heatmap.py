@@ -61,8 +61,6 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
         if dfNeg is not None
         else None
     )
-    logger.info("heatmap.py 64 - dfCombined shape:")
-    logger.info(dfCombined.shape)
     # Get sample headers
     headers = blank_headers + sample_headers
     sample_groups = [sublist[0][:-1] for sublist in headers]
@@ -80,16 +78,12 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
     dfCombined["MDL"] = dfCombined[blank_mean] + MRL_mult * dfCombined[blank_std]
     dfCombined["MDL"] = dfCombined["MDL"].fillna(dfCombined[blank_mean])
     dfCombined["MDL"] = dfCombined["MDL"].fillna(0)
-    logger.info("dfCombined cols= {}".format(dfCombined.columns))
     # AC Where blank replicate percentage column fails, zero out MDL - NTAW574
     dfCombined.loc[dfCombined[blank_rper] < min_replicate_blanks_hits_percent, "MDL"] = 0
     # Find CV, Rep_Percent, and Mean cols from df
     cv_cols = ["CV " + col for col in sample_groups]
     rper_cols = ["Detection Percentage " + col for col in sample_groups]
     mean_cols = ["Mean " + col for col in sample_groups]
-    logger.info("cv_cols= {}".format(cv_cols))
-    logger.info("rper_cols= {}".format(rper_cols))
-    logger.info("mean_cols= {}".format(mean_cols))
     # Subset CV cols from df
     cv_df = dfCombined[cv_cols]
     # Get number of occurrences from the CV dataframe
@@ -101,23 +95,15 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
         )
     )
 
-    for idx, col in enumerate(dfCombined.columns):
-        logger.info(f"dfCombined Column {idx+1}: {col}")
-
     # Blank out cvs in samples with <2 samples
     for x, y, z in zip(cv_cols, rper_cols, mean_cols):
-        logger.info("x= {}".format(x))
-        logger.info("y= {}".format(y))
-        logger.info("z= {}".format(z))
-        logger.info("dfCombined[{}]".format(y))
-        logger.info(dfCombined[y])
         # Replace cv_df values with nan in cv_col for n_abun and MDL cutoffs
         # Check if replicate column is the blank column to determine which filter to apply - NTAW574
         if y == blank_rper:
             cv_df.loc[dfCombined[y] < min_replicate_blanks_hits_percent, x] = np.nan
         else:
             cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
-        # cv_df.loc[dfCombined[y] < min_replicate_hits_percent, x] = np.nan
+        # Apply MDL filter to Mean Columns
         cv_df.loc[dfCombined[z] <= dfCombined["MDL"], x] = np.nan
     # Add sum of Trues for condition applied to cv dataframe
     cv_df["below count"] = (cv_df <= max_replicate_cv_value).sum(axis=1)
