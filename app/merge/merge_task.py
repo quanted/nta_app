@@ -216,7 +216,7 @@ class MergeRun:
                 # Format decimal columns to scientific notation
                 for cell in sheet["O"]:
                     cell.number_format = "0.00E+00"
-                for cell in sheet["U"]:
+                for cell in sheet["X"]:
                     cell.number_format = "0.00E+00"
                 # Format extra long column widths
                 sheet.column_dimensions["H"].width = 18
