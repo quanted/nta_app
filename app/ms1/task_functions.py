@@ -860,6 +860,8 @@ def column_sort_DFS(df_in, passthru, all_headers):
         group_stats = [item for item in all_cols if sam in item]
         cols.append(group_stats)
     stats_cols = sum(cols, [])
+    # Convert from list --> set --> list to remove duplicates in niche scenario where sample names overlap
+    stats_cols = list(sorted(set(stats_cols), key=stats_cols.index))
     logger.info("stats_cols")
     logger.info(stats_cols)
     logger.info(str(len(stats_cols)))
