@@ -679,10 +679,16 @@ def statistics(df_in, blank_headers, sample_headers):
     """
     # Create copy
     df = df_in.copy()
+    logger.info("task_fun statistics initial df shape:")
+    logger.info(df.shape)
     # get sample header groups
     sam_headers = blank_headers + sample_headers
+    logger.info("Sample headers:")
+    logger.info(sam_headers)
     # Create column names for each statistics from sam_headers
     mean_cols = ["Mean " + i[0][:-1] for i in sam_headers]
+    logger.info("mean_cols:")
+    logger.info(mean_cols)
     med_cols = ["Median " + i[0][:-1] for i in sam_headers]
     std_cols = ["STD " + i[0][:-1] for i in sam_headers]
     cv_cols = ["CV " + i[0][:-1] for i in sam_headers]

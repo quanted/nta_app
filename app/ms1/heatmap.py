@@ -61,6 +61,8 @@ def occurrence_heatmap(parameters, data_map, blank_headers, sample_headers):
         if dfNeg is not None
         else None
     )
+    logger.info("heatmap.py 64 - dfCombined shape:")
+    logger.info(dfCombined.shape)
     # Get sample headers
     headers = blank_headers + sample_headers
     sample_groups = [sublist[0][:-1] for sublist in headers]
