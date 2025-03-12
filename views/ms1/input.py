@@ -245,11 +245,20 @@ def input_page(request, form_data=None, form_files=None):
             except ValueError:
                 na_value = parameters["na_val"]
             # Iterate through inputs, format, and append to input_dfs
-            for index, df in enumerate(inputs):
-                if df is not None:
-                    input_dfs.append(file_manager.input_handler(df, index, na_value))
-                else:
-                    input_dfs.append(None)
+            # Use test_file_input_handler for test files
+            if parameters["test_files"] == "yes":
+                for index, df in enumerate(inputs):
+                    if df is not None:
+                        input_dfs.append(file_manager.test_file_input_handler(df, index, na_value))
+                    else:
+                        input_dfs.append(None)
+            # Use input_handler for user-submitted files
+            else:
+                for index, df in enumerate(inputs):
+                    if df is not None:
+                        input_dfs.append(file_manager.input_handler(df, index, na_value))
+                    else:
+                        input_dfs.append(None)
 
             # create a job ID
             job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))

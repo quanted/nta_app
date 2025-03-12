@@ -30,6 +30,26 @@ def input_handler(file, index, na_value):
     return df
 
 
+# convert the test file inputs into dataframe
+def test_file_input_handler(file, index, na_value):
+    # ext = os.path.splitext(file)[1]
+    # print(ext)
+    # Hard-coded to only accept .csv files
+    ext = ".csv"
+    if ext == ".tsv":
+        df = pd.read_csv(file, sep="\t", comment="#", na_values=na_value)
+    if ext == ".csv":
+        # Read .csv file, add user-selected na_value to list of default na values for pandas na filter
+        df = pd.read_csv(file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True)
+        df = pd.read_csv(
+            file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="ISO-8859-1"
+        )
+    # Call fix names
+    df = fix_names(df, index)
+    # Return formatted df
+    return df
+
+
 def tracer_handler(file):
     return pd.read_csv(file, comment="#", na_values=1 | 0)
 
