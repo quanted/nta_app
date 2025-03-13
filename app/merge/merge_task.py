@@ -186,11 +186,13 @@ class MergeRun:
     def save_excel_to_mongo(self):
         # Create an excel sheet from the datamap and save it to MongoDB
         in_memory_buffer = io.BytesIO()
-        # Deletes the old DTXSID hyperlink column
+        # Deletes the old DTXSID hyperlink column, since this column is passed in as 'Null'
         self.ms1_data_map["chemical_results"] = self.ms1_data_map["chemical_results"].drop("CompTox links", axis=1)
-        # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
-        self.ms1_data_map["chemical_results"]["DTXSID"] = self.ms1_data_map["chemical_results"]["DTXSID"].apply(
-            lambda x: make_hyperlink(x)
+        # Inserts a new CompTox links column
+        self.ms1_data_map["Chemical Results"].insert(
+            loc=8,
+            column="CompTox links",
+            value=self.ms1_data_map["Chemical Results"]["DTXSID"].apply(lambda x: make_hyperlink(x)),
         )
         # Convert self.ms1_data_map dictionary into an excel workbook
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
@@ -211,20 +213,20 @@ class MergeRun:
                         pass
                 # Format DTXSID column hyperlinks
                 for i in range(sheet.max_row):
-                    cell = sheet.cell(row=i + 2, column=8)
+                    cell = sheet.cell(row=i + 2, column=9)
                     cell.style = "Hyperlink"
                 # Format decimal columns to scientific notation
-                for cell in sheet["O"]:
+                for cell in sheet["P"]:
                     cell.number_format = "0.00E+00"
-                for cell in sheet["X"]:
+                for cell in sheet["Y"]:
                     cell.number_format = "0.00E+00"
                 # Format extra long column widths
-                sheet.column_dimensions["H"].width = 18
+                sheet.column_dimensions["I"].width = 18
                 sheet.column_dimensions["G"].width = 54
-                sheet.column_dimensions["I"].width = 54
-                sheet.column_dimensions["L"].width = 54
-                sheet.column_dimensions["O"].width = 18
-                sheet.column_dimensions["U"].width = 18
+                sheet.column_dimensions["J"].width = 54
+                sheet.column_dimensions["M"].width = 54
+                sheet.column_dimensions["P"].width = 18
+                sheet.column_dimensions["Y"].width = 18
 
         excel_data = in_memory_buffer.getvalue()
         # Save project name to MongoDB using jobid
