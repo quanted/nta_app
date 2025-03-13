@@ -189,10 +189,10 @@ class MergeRun:
         # Deletes the old DTXSID hyperlink column, since this column is passed in as 'Null'
         self.ms1_data_map["chemical_results"] = self.ms1_data_map["chemical_results"].drop("CompTox links", axis=1)
         # Inserts a new CompTox links column
-        self.ms1_data_map["Chemical Results"].insert(
+        self.ms1_data_map["chemical_results"].insert(
             loc=8,
             column="CompTox links",
-            value=self.ms1_data_map["Chemical Results"]["DTXSID"].apply(lambda x: make_hyperlink(x)),
+            value=self.ms1_data_map["chemical_results"]["DTXSID"].apply(lambda x: make_hyperlink(x)),
         )
         # Convert self.ms1_data_map dictionary into an excel workbook
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
