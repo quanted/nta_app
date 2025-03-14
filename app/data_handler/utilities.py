@@ -12,8 +12,8 @@ DSSTOX_API = os.environ.get("UBERTOOL_REST_SERVER")
 def connect_to_mongoDB(address):
     mongo = pymongo.MongoClient(host=address)
     mongo_db = mongo["nta_ms2_runs"]
-    # mongo.nta_ms2_runs.Collection.create_index([("date", pymongo.DESCENDING)], expireAfterSeconds=86400)
-    mongo.nta_ms2_runs.Collection.create_index([("date", pymongo.DESCENDING)], expireAfterSeconds=2592000)
+    mongo.nta_ms2_runs.Collection.create_index([("date", pymongo.DESCENDING)], expireAfterSeconds=86400)
+    # mongo.nta_ms2_runs.Collection.create_index([("date", pymongo.DESCENDING)], expireAfterSeconds=2592000)
     # ALL entries into mongo.nta_runs must have datetime.utcnow() timestamp, which is used to delete the record after 86400
     # seconds, 24 hours.
     return mongo_db
