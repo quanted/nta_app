@@ -72,15 +72,15 @@ def ms1_run_api(request):
             }
 
             # Validate numerical fields
-            MinValueValidator(0)(parameters['mass_accuracy'])
-            MinValueValidator(0)(parameters['rt_accuracy'])
-            MinValueValidator(0)(parameters['mass_accuracy_tr'])
-            MinValueValidator(0)(parameters['rt_accuracy_tr'])
-            MinValueValidator(0)(parameters['min_replicate_hits'])
-            MinValueValidator(0)(parameters['min_replicate_hits_blanks'])
-            MinValueValidator(0)(parameters['max_replicate_cv'])
-            MinValueValidator(0)(parameters['parent_ion_mass_accuracy'])
-            MinValueValidator(0)(parameters['minimum_rt'])
+            MinValueValidator(0)(float(parameters['mass_accuracy']))
+            MinValueValidator(0)(float(parameters['rt_accuracy']))
+            MinValueValidator(0)(float(parameters['mass_accuracy_tr']))
+            MinValueValidator(0)(float(parameters['rt_accuracy_tr']))
+            MinValueValidator(0)(float(parameters['min_replicate_hits']))
+            MinValueValidator(0)(float(parameters['min_replicate_hits_blanks']))
+            MinValueValidator(0)(float(parameters['max_replicate_cv']))
+            MinValueValidator(0)(float(parameters['parent_ion_mass_accuracy']))
+            MinValueValidator(0)(float(parameters['minimum_rt']))
 
             # get the uploaded files from the Request object. Note that the files are in the form of a
             # MultiValueDict. The MultiValueDict is a subclass of the standard Python dictionary that
@@ -139,7 +139,7 @@ def ms1_run_api(request):
             # run_sequence_neg_file, and tracer_input, which are handled separately
             inputParameters["project_name"][1] = parameters["project_name"]
             inputParameters["test_files"][1] = parameters["test_files"]
-            inputParameters["mass_accuracy_units"][1] = pos_input
+            inputParameters["mass_accuracy_units"][1] = parameters["mass_accuracy_units"]
             inputParameters["mass_accuracy"][1] = parameters["mass_accuracy"]
             inputParameters["rt_accuracy"][1] = parameters["rt_accuracy"]
             inputParameters["mass_accuracy_units_tr"][1] = parameters["mass_accuracy_units_tr"]
