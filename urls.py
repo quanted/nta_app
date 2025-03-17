@@ -8,6 +8,7 @@ from nta_app.views.ms1 import results_api as ms1_results_api
 from nta_app.views.ms1 import formula_list as ms1_formulas
 from nta_app.views.ms1 import ms1_test_files as ms1_test_files
 from nta_app.views.ms1 import decision_tree as ms1_decision_tree
+from nta_app.views.ms1 import ms1_input_api
 from nta_app.views.ms2 import ms2_test_files as ms2_test_files
 from nta_app.views.ms2 import upload as ms2_upload
 from nta_app.views.ms2 import processing as ms2_processing
@@ -86,6 +87,8 @@ urlpatterns = [
     path("ms1/external/ms1_test_files/", ms1_test_files.test_files_page),
     path("ms1/external/formulas/download", ms1_formulas.download_msready_formulas),
     path("ms1/external/ms1_test_files/download", ms1_test_files.download_test_files),
+    path("ms1/api/run", ms1_input_api.ms1_run_api),
+
 ]
 
 # Login requirement set url
