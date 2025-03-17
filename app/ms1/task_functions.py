@@ -1089,12 +1089,15 @@ def check_run_seq(df_in, run_seq_in, blank_headers, sample_headers):
     # Get sample names from run sequence file
     sequence = list(run_seq[run_seq.columns[0]])
     # Check samples and sequence are same length
-    if len(samples) != len(sequence):
-        # NTAW-749 Logger Statements
-        logger.info(f"check_run_seq len(samples): {len(samples)} ... samples: {samples}")
-        logger.info(f"check_run_seq len(sequence): {len(sequence)} ... sequence: {sequence}")
+    if len(samples) > len(sequence):
+        misspells = [x for x in samples if x not in sequence]
         raise ValueError(
-            "The number of samples present in your data matrix doesn't match the run sequence file. Please check your inputs (NOTE: this can occur if sample replicates are not named correctly)."
+            f'The number of samples present in your data matrix doesn\'t match the run sequence file. Sample(s) [{", ".join(misspells)}] found in MS1 input file but not in run sequence file. Please check your inputs (NOTE: this can occur if sample replicates are not named correctly).'
+        )
+    elif len(sequence) > len(samples):
+        misspells = [x for x in sequence if x not in samples]
+        raise ValueError(
+            f'The number of samples present in your data matrix doesn\'t match the run sequence file. Sample(s) [{", ".join(misspells)}] found in run sequence file but not in MS1 input file. Please check your inputs (NOTE: this can occur if sample replicates are not named correctly).'
         )
     # Instantiate misspells
     misspells = [x for x in samples if x not in sequence]
