@@ -14,7 +14,7 @@ from .. import links_left
 from ...tools.ms1 import file_manager
 from .input_form import NtaInputs
 from ...app.ms1.nta_task import run_nta_dask
-from ...app.data.atom_ranges import atom_ranges
+from ...data.atom_ranges import atom_ranges
 
 # set up logging
 logger = logging.getLogger("nta_app.views.ms1")
