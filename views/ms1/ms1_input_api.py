@@ -78,8 +78,9 @@ def ms1_run_api(request):
                 'search_dsstox': data.get('search_dsstox', 'yes'),
                 'search_hcd': data.get('search_hcd', 'no'),
                 'search_mode': data.get('search_mode', 'mass'),
-                "do_qnta": ["Perform qNTA?", None],
-                "atom_ranges": ["Atom filtering ranges", None],
+                "do_qnta": data.get('do_qnta', 'no'),
+                "atom_ranges": data.get("atom_ranges", None),
+                "na_val": data.get("na_val", ""),
             }
 
             # Validate numerical fields
