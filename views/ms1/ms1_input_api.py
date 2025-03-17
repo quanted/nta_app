@@ -43,7 +43,7 @@ def ms1_run_api(request):
     if request.method == 'POST':
         logger.info("POST received")
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.POST)
 
             # Initialize parameters dictionary from the POST data (but not files)
             parameters = {
