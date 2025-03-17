@@ -18,11 +18,12 @@ if os.getenv("DEPLOY_ENV", "kube-dev") == "kube-prod":
     logger.setLevel(logging.WARNING)
 
 # hard-coded example file names for testing found in nta_app/input/ms1/
-example_pos_filename = "pooled_blood_pos_MPP.csv"
-example_neg_filename = "pooled_blood_neg_MPP.csv"
-example_tracer_filename = "pooled_blood_tracers.csv"
-example_run_sequence_pos_filename = "pooled_blood_run_sequence_pos.csv"
-example_run_sequence_neg_filename = "pooled_blood_run_sequence_neg.csv"
+example_pos_filename = "1a_MZmine3_pos.csv"
+example_neg_filename = "1b_MZmine3_neg.csv"
+example_tracer_filename = "WW2DW_Tracers_Amenable.csv"
+example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
+example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
+example_surrogate_filename = "qNTA_Surrogate_Input_File_WW2DW.csv"
 
 def api_key_required(view_func):
     @wraps(view_func)
@@ -45,9 +46,17 @@ def ms1_run_api(request):
         try:
             data = request.POST
 
+            # generate a timestamp with the current time and date
+            current_datetime = datetime.datetime.now()
+
+            # manually define current version of the WebApp
+            current_version = "0.3.6"
+
             # Initialize parameters dictionary from the POST data (but not files)
             parameters = {
                 'project_name': data.get('project_name', 'Example nta'),
+                "version": ["WebApp Version", current_version],
+                "datetime": ["Date & time", str(current_datetime)],
                 'test_files': data.get('test_files', 'no'),
                 'pos_adducts': data.get('pos_adducts', ["Na", "K", "NH4"]),
                 'neg_adducts': data.get('neg_adducts', ["Cl", "HCO2", "CH3CO2", "FA"]),
@@ -68,7 +77,9 @@ def ms1_run_api(request):
                 'minimum_rt': data.get('minimum_rt', 0.00),
                 'search_dsstox': data.get('search_dsstox', 'yes'),
                 'search_hcd': data.get('search_hcd', 'no'),
-                'search_mode': data.get('search_mode', 'mass')
+                'search_mode': data.get('search_mode', 'mass'),
+                "do_qnta": ["Perform qNTA?", None],
+                "atom_ranges": ["Atom filtering ranges", None],
             }
 
             # Validate numerical fields
@@ -137,6 +148,9 @@ def ms1_run_api(request):
             # save the Request parameters in the inputParameters dictionary [0] is the label, [1] is the value
             # This does not include the uploaded files, pos_input, neg_input, run_sequence_pos_file,
             # run_sequence_neg_file, and tracer_input, which are handled separately
+            # save the Request parameters in the inputParameters dictionary [0] is the label, [1] is the value
+            # This does not include the uploaded files, pos_input, neg_input, run_sequence_pos_file,
+            # run_sequence_neg_file, and tracer_input, which are handled separately
             inputParameters["project_name"][1] = parameters["project_name"]
             inputParameters["test_files"][1] = parameters["test_files"]
             inputParameters["mass_accuracy_units"][1] = parameters["mass_accuracy_units"]
@@ -148,9 +162,7 @@ def ms1_run_api(request):
             inputParameters["tracer_plot_yaxis_format"][1] = parameters["tracer_plot_yaxis_format"]
             inputParameters["tracer_plot_trendline"][1] = parameters["tracer_plot_trendline"]
             inputParameters["min_replicate_hits"][1] = parameters["min_replicate_hits"]
-            inputParameters["min_replicate_hits_blanks"][1] = parameters[
-                "min_replicate_hits_blanks"
-            ]
+            inputParameters["min_replicate_hits_blanks"][1] = parameters["min_replicate_hits_blanks"]
             inputParameters["max_replicate_cv"][1] = parameters["max_replicate_cv"]
             inputParameters["mrl_std_multiplier"][1] = parameters["mrl_std_multiplier"]
             inputParameters["parent_ion_mass_accuracy"][1] = parameters["parent_ion_mass_accuracy"]
@@ -158,10 +170,36 @@ def ms1_run_api(request):
             inputParameters["search_dsstox"][1] = parameters["search_dsstox"]
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
-
-            inputParameters["pos_adducts"][1] = request.POST.getlist("pos_adducts")
-            inputParameters["neg_adducts"][1] = request.POST.getlist("neg_adducts")
-            inputParameters["neutral_losses"][1] = request.POST.getlist("neutral_losses")
+            inputParameters["do_qnta"][1] = parameters["do_qnta"]
+            
+            # Update atom filtering dictionary
+            # for item1 in atom_ranges:
+            #     for item2 in parameters["atom_ranges"]:
+            #         if item1["element"] == item2["element"]:
+            #             item1["min"] = item2["min"]
+            #             item1["max"] = item2["max"]
+            #             break
+            
+            # inputParameters["atom_ranges"][1] = atom_ranges
+            
+            # Get user-selected adducts via POST.getlist()
+            # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
+            adduct_li = [
+                ("pos_adducts", "pos_adducts[]"),
+                ("neg_adducts", "neg_adducts[]"),
+                ("neutral_losses", "neutral_losses[]"),
+            ]
+            for item in adduct_li:
+                qed = request.POST.getlist(item[0])
+                amos = request.POST.getlist(item[1])
+                if len(amos) > len(qed):
+                    inputParameters[item[0]][1] = amos
+                else:
+                    inputParameters[item[0]][1] = qed
+            # Print selected adducts to logger
+            logger.info("pos adducts list: {}".format(inputParameters["pos_adducts"][1]))
+            logger.info("neg adducts list: {}".format(inputParameters["neg_adducts"][1]))
+            logger.info("neutral adducts list: {}".format(inputParameters["neutral_losses"][1]))
 
             # two basic scenarios are possible: 1) the user has selected to run the test files, or 2) the user
             # has not selected to run the test files. If the user has selected to run the test files, then the
@@ -171,18 +209,12 @@ def ms1_run_api(request):
             if parameters["test_files"] == "yes":
                 # handle case 1: the user has selected to run the test files
                 # get the path and filename of the test files
-                example_data_dir = os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), "..", "..", "input/ms1"
-                )
+                example_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "input/ms1")
                 pos_input = os.path.join(example_data_dir, example_pos_filename)
                 neg_input = os.path.join(example_data_dir, example_neg_filename)
                 tracer_file = os.path.join(example_data_dir, example_tracer_filename)
-                run_sequence_pos_file = os.path.join(
-                    example_data_dir, example_run_sequence_pos_filename
-                )
-                run_sequence_neg_file = os.path.join(
-                    example_data_dir, example_run_sequence_neg_filename
-                )
+                run_sequence_pos_file = os.path.join(example_data_dir, example_run_sequence_pos_filename)
+                run_sequence_neg_file = os.path.join(example_data_dir, example_run_sequence_neg_filename)
                 # save the name of the files to the inputParameters dictionary
                 inputParameters["pos_input"][1] = pos_input
                 inputParameters["neg_input"][1] = neg_input
@@ -246,19 +278,34 @@ def ms1_run_api(request):
             logger.info("Input Files: {} ".format(inputs))
 
             input_dfs = []
-            for index, df in enumerate(inputs):
-                if df is not None:
-                    input_dfs.append(file_manager.input_handler(df, index))
-                else:
-                    input_dfs.append(None)
-            # input_dfs = [file_manager.input_handler(df, index) for index, df in enumerate(inputs) if df is not None]
+            # Get user-input non-detect value, pass to file_manager.input_handler
+            # Try to convert to float if a number, if not store string
+            try:
+                na_value = float(parameters["na_val"])
+            except ValueError:
+                na_value = parameters["na_val"]
+            # Iterate through inputs, format, and append to input_dfs
+            # Use test_file_input_handler for test files
+            if parameters["test_files"] == "yes":
+                for index, df in enumerate(inputs):
+                    if df is not None:
+                        input_dfs.append(file_manager.test_file_input_handler(df, index, na_value))
+                    else:
+                        input_dfs.append(None)
+            # Use input_handler for user-submitted files
+            else:
+                for index, df in enumerate(inputs):
+                    if df is not None:
+                        input_dfs.append(file_manager.input_handler(df, index, na_value))
+                    else:
+                        input_dfs.append(None)
 
             # create a job ID
             job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
             logger.info("job ID: " + job_id)
 
             # log the submission
-            logger.warn("MS1 Job {} Submitted. Parameters: {} ".format(job_id, inputParameters))
+            logger.warning("MS1 Job {} Submitted. Parameters: {} ".format(job_id, inputParameters))
 
             run_nta_dask(
                 inputParameters,
@@ -270,7 +317,7 @@ def ms1_run_api(request):
             )
             #return redirect("/nta/ms1/processing/" + job_id, permanent=True)
             processing_url = "/nta/ms1/processing/" + job_id
-            return JsonResponse({'status': 'success', 'status_url': processing_url}, status=200)
+            return JsonResponse({'status': 'success', 'job_id': job_id, 'status_url': processing_url}, status=200)
 
         except ValidationError as e:
             logger.info("Validation issue")
