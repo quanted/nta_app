@@ -1090,6 +1090,9 @@ def check_run_seq(df_in, run_seq_in, blank_headers, sample_headers):
     sequence = list(run_seq[run_seq.columns[0]])
     # Check samples and sequence are same length
     if len(samples) != len(sequence):
+        # NTAW-749 Logger Statements
+        logger.info(f"check_run_seq len(samples): {len(samples)} ... samples: {samples}")
+        logger.info(f"check_run_seq len(sequence): {len(sequence)} ... sequence: {sequence}")
         raise ValueError(
             "The number of samples present in your data matrix doesn't match the run sequence file. Please check your inputs (NOTE: this can occur if sample replicates are not named correctly)."
         )
@@ -1952,3 +1955,109 @@ def create_excel_book(d, chem_res=False):
                 sheet.column_dimensions["I"].width = 18
     excel_data = in_memory_buffer.getvalue()
     return excel_data
+
+
+def DSSTox_atom_filtering(df_in, atom_ranges):
+    """
+    Function that takes a dataframe of returned candidates from searching DSSTox
+    and user submitted ranges for atoms (CHONPS, Halogens, and other potential elements).
+    Using regex, the ranges of elements provided in the atom_ranges list are used to
+    filter the 'MOLECULAR_FORMULA' column of the dataframe.
+
+    Args:
+        df_in (pandas dataframe, return from DSSTox search functions)
+        atom_ranges (list of dicts, [{element:"X", min:#, max:#}, ...])
+    Returns:
+        df (pandas dataframe, with rows filtered)
+    """
+    # Copy input dataframe
+    df = df_in.copy()
+    # Drop candidates with no formula information
+    df = df.loc[~df["MOLECULAR_FORMULA"].isna(), :]
+    # Create separate 'atom_ranges' into 'to_search' and 'to_exclude'
+    to_search = [item for item in atom_ranges if (item["max"] - item["min"]) > 0]
+    to_exclude = [item["element"] for item in atom_ranges if (item["max"] - item["min"]) <= 0]
+    # Perform atom filtering - iterate through user-submitted 'to_search' and
+    # apply formula_atom_count() on the 'MOLECULAR_FORMULA' column. The result
+    # is stored in a new "{element} filter check" column (1 - pass, 0 - fail)
+    for item in to_search:
+        col = item["element"] + " filter check"
+        df[col] = df["MOLECULAR_FORMULA"].apply(
+            lambda x: formula_atom_count(x, item["element"], item["min"], item["max"])
+        )
+    # Flag candidates with elements from 'to_exclude'
+    df["Pass excluded elements filter?"] = df["MOLECULAR_FORMULA"].apply(lambda x: formula_exclude(x, to_exclude))
+    # Get '{element} filter check' columns in list
+    cols = [col for col in df.columns if " filter check" in col] + ["Pass excluded elements filter?"]
+    # Keep rows that pass for all '{element} filter check' columns and excluded elements
+    df_filtered = df.loc[(df[cols] == 1).all(axis=1), :].copy()
+    # Drop cols from df_filtered
+    df_filtered = df_filtered.drop(cols, axis=1)
+    # Return filtered dataframe
+    return df_filtered
+
+
+def formula_atom_count(
+    formula,
+    element,
+    minimum,
+    maximum,
+):
+    """
+    Function that takes in a chemical formula string, an element string, a
+    minimum integer, and a maximum integer. The function finds the element string
+    in the chemical formula string, and checks if the number associated with
+    the element string is >= min and <= max.
+
+    Args:
+        formula (string, from 'MOLECULAR_FORMULA' column)
+        element (string, the value associated with the 'element' key of atom_ranges dict)
+        minimum (int, the value associated with the 'min' key of atom_ranges dict)
+        maximum (int, the value associated with the 'max' key of atom_ranges dict)
+    Returns:
+        0 (fail) or 1 (pass)
+    """
+    # Assemble regex pattern with 'element' string
+    re_pattern = "(?<=" + element + ")\d+"
+    try:
+        # Search 'formula' for number following 'element'
+        element_count = int(re.search(re_pattern, formula).group())
+    except:
+        # Assemble regex pattern with 'element' string
+        re_pattern = "(" + element + "[A-Z]|" + element + "$)"
+        try:
+            # Check 'formula' for 'element' followed by capital letter or at end of string
+            if re.search(re_pattern, formula).group():
+                # If 'element' is followed by capital letter, set 'element_count' to 1
+                element_count = 1
+        except:
+            # 'element' not found in 'formula', set 'element_count' to 0
+            element_count = 0
+    # Check 'element_count'
+    if (element_count >= minimum) & (element_count <= maximum):
+        # return 1 if 'element_count' is within min-max range
+        return 1
+    # Return 0 if 'element_count' is outside min-max range
+    return 0
+
+
+def formula_exclude(
+    formula,
+    element_li,
+):
+    """
+    Function that takes in a chemical formula string and an element string.
+    The function searches for the element string in the chemical formula string,
+    and if found returns a fail (0), else returns a 1.
+
+    Args:
+        formula (string, from 'MOLECULAR_FORMULA' column)
+        element_li (list of string, 'element' values to be excluded from results)
+    Returns:
+        0 (fail) or 1 (pass)
+    """
+    # If any statement, return fail (0) if any excluded elements are found in formula
+    if any(element in formula for element in element_li):
+        return 0
+    # If no excluded elements found in formula return pass (1)
+    return 1
