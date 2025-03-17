@@ -34,16 +34,16 @@ def api_key_required(view_func):
     return _wrapped_view
 
 
-
+#@api_key_required  # Apply the decorator here
 @csrf_exempt
-@api_key_required  # Apply the decorator here
 def ms1_run_api(request):
     """
     The API to trigger an MS1 task
     """
     if request.method == 'POST':
+        logger.info("POST received")
         try:
-            data = json.loads(request.body)
+            data = request.POST
 
             # Initialize parameters dictionary from the POST data (but not files)
             parameters = {
@@ -273,9 +273,11 @@ def ms1_run_api(request):
             return JsonResponse({'status': 'success', 'status_url': processing_url}, status=200)
 
         except ValidationError as e:
+            logger.info("Validation issue")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
         except json.JSONDecodeError:
+            logger.info("Invalid JSON")
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-
+    logger.info("not a POST received")
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
                

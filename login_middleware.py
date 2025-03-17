@@ -24,10 +24,10 @@ class Http403Middleware(object):
     def __call__(self, request):
         response = self.get_response(request)
         if HttpResponseForbidden.status_code == response.status_code:
+            logger.info('status code is {}'.format(response.status_code))
             logger.info("User login session token timed out")
             return login(
-                request,
-                "<span style='color:red;'>Your session has timed out, please log back in to refresh your session.</span>",
+                request
             )
         else:
             return response
