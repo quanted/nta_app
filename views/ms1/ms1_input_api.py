@@ -200,7 +200,7 @@ def ms1_run_api(request):
                 file_validator = FileExtensionValidator(allowed_extensions=['csv'])
                 if "pos_input" in request.FILES.keys():
                     pos_input = request.FILES["pos_input"]
-                    file_validator(parameters['pos_input'])
+                    file_validator(pos_input)
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["pos_input"][1] = pos_input.name
                 else:
@@ -208,7 +208,7 @@ def ms1_run_api(request):
 
                 if "neg_input" in request.FILES.keys():
                     neg_input = request.FILES["neg_input"]
-                    file_validator(parameters['neg_input'])
+                    file_validator(neg_input)
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["neg_input"][1] = neg_input.name
                 else:
@@ -216,7 +216,7 @@ def ms1_run_api(request):
 
                 try:
                     tracer_file = request.FILES["tracer_input"]
-                    file_validator(parameters['tracer_input'])
+                    file_validator(tracer_file)
                     tracer_df = file_manager.tracer_handler(tracer_file)
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["tracer_input"][1] = tracer_file.name
@@ -225,7 +225,7 @@ def ms1_run_api(request):
 
                 try:
                     run_sequence_pos_file = request.FILES["run_sequence_pos_file"]
-                    file_validator(parameters['run_sequence_pos_file'])
+                    file_validator(run_sequence_pos_file)
                     run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["run_sequence_pos_file"][1] = run_sequence_pos_file.name
@@ -234,7 +234,7 @@ def ms1_run_api(request):
 
                 try:
                     run_sequence_neg_file = request.FILES["run_sequence_neg_file"]
-                    file_validator(parameters['run_sequence_neg_file'])
+                    file_validator(run_sequence_neg_file)
                     run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file.name
