@@ -143,6 +143,7 @@ def ms1_run_api(request):
                 "search_dsstox": ["Search DSSTox for possible structures", None],
                 "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", None],
                 "search_mode": ["Search dashboard by", None],
+                "do_qnta": ["Perform qNTA?", None],
             }
 
             # save the Request parameters in the inputParameters dictionary [0] is the label, [1] is the value
