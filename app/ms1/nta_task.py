@@ -1168,7 +1168,8 @@ class NtaRun:
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
         logger.info("===========Toxcast % active calculated===========")
         # Perform atom filtering on the DSSTox results
-        dsstox_search_df = task_fun.DSSTox_atom_filtering(dsstox_search_df, self.parameters["atom_ranges"][1])
+        if self.parameters["atom_ranges"][1]:
+            dsstox_search_df = task_fun.DSSTox_atom_filtering(dsstox_search_df, self.parameters["atom_ranges"][1])
         logger.info("===========Atom filtering completed===========")
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
