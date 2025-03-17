@@ -199,7 +199,7 @@ def input_page(request, form_data=None, form_files=None):
         "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", None],
         "search_mode": ["Search dashboard by", None],
         "do_qnta": ["Perform qNTA?", None],
-        "atom_ranges": ["Atom filtering ranges", atom_ranges],
+        "atom_ranges": ["Atom filtering ranges", None],
     }
     logger.debug("input_page: inputParameters: {} ".format(inputParameters))
 
@@ -269,7 +269,14 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
             inputParameters["do_qnta"][1] = parameters["do_qnta"]
-
+            # Update atom filtering dictionary
+            # for item1 in atom_ranges:
+            #     for item2 in parameters["atom_ranges"]:
+            #         if item1["element"] == item2["element"]:
+            #             item1["min"] = item2["min"]
+            #             item1["max"] = item2["max"]
+            #             break
+            inputParameters["atom_ranges"][1] = atom_ranges
             # Get user-selected adducts via POST.getlist()
             # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
             adduct_li = [
