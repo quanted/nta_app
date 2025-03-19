@@ -50,9 +50,9 @@ ALLOWED_HOSTS = ["*"]
 APPEND_SLASH = True
 
 ADMINS = (
-    ("Tom Purucker", "purucker.tom@epa.gov"),
+    ("Antony Williams", "williams.Aatony@epa.gov"),
     ("Jeffrey Minucci", "minucci.jeffrey@epa.gov"),
-    ("Deron Smith", "smith.deron@epa.gov"),
+    ("Alex Chao", "chao.alex@epa.gov"),
 )
 
 TEMPLATES = [
@@ -149,3 +149,16 @@ os.environ.update(
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 WSGI_APPLICATION = "wsgi.application"
+
+CORS_ALLOW_HEADERS = [
+'accept',
+'accept-encoding',
+'authorization',
+'content-type',
+'dnt',
+'origin',
+'user-agent',
+'x-csrftoken',
+'x-requested-with',
+'x-api-key',
+]
