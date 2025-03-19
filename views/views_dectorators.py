@@ -1,4 +1,8 @@
 # File to hold custom decorators to use in views functions (web pages and APIs)
+from functools import wraps
+from django.http import JsonResponse
+import os
+
 
 def api_key_required(view_func):
     """ Require API key listed in the kubernetes secret 'django-api-keys"""

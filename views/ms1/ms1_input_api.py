@@ -1,6 +1,5 @@
 # decorators.py
 from django.http import JsonResponse
-from functools import wraps
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.core.validators import MinValueValidator, FileExtensionValidator
