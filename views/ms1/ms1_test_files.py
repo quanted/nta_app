@@ -5,7 +5,8 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from .. import links_left
-
+from ..views_dectorators import api_key_required
+from django.views.decorators.csrf import csrf_exempt
 
 example_pos_filename = 'pooled_blood_pos_MPP.csv'
 example_neg_filename = 'pooled_blood_neg_MPP.csv'
@@ -109,3 +110,10 @@ def download_test_files(request):
 
     # Return the HTTP response
     return response
+
+# Below are API-key versions that wrap the above functions, intended for integration with AMOS or other apps / users
+
+@csrf_exempt
+@api_key_required
+def download_test_files_api_key(request):
+    return download_test_files(request)

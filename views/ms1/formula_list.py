@@ -8,6 +8,8 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from .. import links_left
+from ..views_dectorators import api_key_required
+from django.views.decorators.csrf import csrf_exempt
 
 DSSTOX_API = os.environ.get('UBERTOOL_REST_SERVER')
 
@@ -72,3 +74,10 @@ def download_msready_formulas(request):
     response['Content-Disposition'] = 'attachment; filename=' + zip_filename
     response['Content-length'] = in_memory_zip.tell()
     return response
+
+# Below are API-key versions that wrap the above functions, intended for integration with AMOS or other apps / users
+
+@csrf_exempt
+@api_key_required
+def download_msready_formulas_api_key(request):
+    return download_msready_formulas(request)

@@ -1,6 +1,5 @@
 # decorators.py
 from django.http import JsonResponse
-from functools import wraps
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.core.validators import MinValueValidator, FileExtensionValidator
@@ -11,6 +10,7 @@ import datetime
 import logging
 from ...app.ms1.nta_task import run_nta_dask
 from ...tools.ms1 import file_manager
+from ..views_dectorators import api_key_required
 
 # set up logging
 logger = logging.getLogger("nta_app.views.ms1")
@@ -25,17 +25,7 @@ example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
 example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
 example_surrogate_filename = "qNTA_Surrogate_Input_File_WW2DW.csv"
 
-def api_key_required(view_func):
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        api_key = request.headers.get('X-API-Key')
-        if api_key != 'test':  # Replace with your actual secret key
-            return JsonResponse({'status': 'error', 'message': 'Invalid or missing API key'}, status=403)
-        return view_func(request, *args, **kwargs)
-    return _wrapped_view
-
-
-#@api_key_required  # Apply the decorator here
+@api_key_required
 @csrf_exempt
 def ms1_run_api(request):
     """
@@ -52,7 +42,8 @@ def ms1_run_api(request):
             # manually define current version of the WebApp
             current_version = "0.3.6"
 
-            # Initialize parameters dictionary from the POST data (but not files)
+            # Initialize parameters dictionary from the POST data (but not files). Second argument gives
+            # the defualt value if the parameter is not passed in the POST request data.
             parameters = {
                 'project_name': data.get('project_name', 'Example nta'),
                 "version": ["WebApp Version", current_version],
@@ -83,7 +74,7 @@ def ms1_run_api(request):
                 "na_val": data.get("na_val", ""),
             }
 
-            # Validate numerical fields
+            # Validate numerical fields here
             MinValueValidator(0)(float(parameters['mass_accuracy']))
             MinValueValidator(0)(float(parameters['rt_accuracy']))
             MinValueValidator(0)(float(parameters['mass_accuracy_tr']))
@@ -198,6 +189,7 @@ def ms1_run_api(request):
                     inputParameters[item[0]][1] = amos
                 else:
                     inputParameters[item[0]][1] = qed
+
             # Print selected adducts to logger
             logger.info("pos adducts list: {}".format(inputParameters["pos_adducts"][1]))
             logger.info("neg adducts list: {}".format(inputParameters["neg_adducts"][1]))
@@ -230,8 +222,10 @@ def ms1_run_api(request):
                 run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
             else:
                 # handle case 2: the user has not selected to run the test files
-                            # Validate file extensions using Django's FileExtensionValidator
+                
+                # function to validate file extensions using Django's FileExtensionValidator
                 file_validator = FileExtensionValidator(allowed_extensions=['csv'])
+
                 if "pos_input" in request.FILES.keys():
                     pos_input = request.FILES["pos_input"]
                     file_validator(pos_input)
@@ -304,10 +298,9 @@ def ms1_run_api(request):
 
             # create a job ID
             job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
-            logger.info("job ID: " + job_id)
 
             # log the submission
-            logger.warning("MS1 Job {} Submitted. Parameters: {} ".format(job_id, inputParameters))
+            logger.warning("API - MS1 Job {} Submitted. Parameters: {} ".format(job_id, inputParameters))
 
             run_nta_dask(
                 inputParameters,
@@ -322,11 +315,10 @@ def ms1_run_api(request):
             return JsonResponse({'status': 'success', 'job_id': job_id, 'status_url': processing_url}, status=200)
 
         except ValidationError as e:
-            logger.info("Validation issue")
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            logger.warning("API - MS1 Job {} is NOT valid. Parameters: {} ".format(job_id, inputParameters))
+            return JsonResponse({'status': 'Input Validation Error', 'message': str(e)}, status=400)
         except json.JSONDecodeError:
             logger.info("Invalid JSON")
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-    logger.info("not a POST received")
+            return JsonResponse({'status': 'Error', 'message': 'Invalid JSON'}, status=400)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
                

@@ -81,6 +81,7 @@ urlpatterns = [
     path("upload", data_api.upload_api),
     path("upload/", data_api.upload_api),
     path("delete/", data_api.delete_api),
+    #
     # external APIs for connection to AMOS
     path("ms1/external/input/", ms1_input.input_page),
     path("ms1/external/output/<slug:jobid>", ms1_output.output_page),
@@ -88,6 +89,11 @@ urlpatterns = [
     path("ms1/external/formulas/download", ms1_formulas.download_msready_formulas),
     path("ms1/external/ms1_test_files/download", ms1_test_files.download_test_files),
     path("ms1/api/run", ms1_input_api.ms1_run_api),
+    path("ms1/api/status/<slug:jobid>", ms1_results_api.check_status_api_key),
+    path("ms1/api/output/<slug:jobid>", ms1_input_api.ms1_run_api),
+    path("ms1/api/formulas/download", ms1_formulas.download_msready_formulas_api_key),
+    path("ms1/api/ms1_test_files/download", ms1_test_files.download_test_files_api_key),
+
 
 ]
 
