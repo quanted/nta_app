@@ -311,7 +311,7 @@ def ms1_run_api(request):
                 job_id,
             )
             #return redirect("/nta/ms1/processing/" + job_id, permanent=True)
-            processing_url = "/nta/ms1/processing/" + job_id
+            processing_url = "/nta/ms1/api/status/" + job_id
             return JsonResponse({'status': 'success', 'job_id': job_id, 'status_url': processing_url}, status=200)
 
         except ValidationError as e:
