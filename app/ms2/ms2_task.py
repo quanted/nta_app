@@ -225,13 +225,14 @@ class MS2Run:
         start = time.perf_counter()  # Initialize start before the loop
 
         if self.n_masses > 0:
+            self.cfmid_responses = []
             for idx in range(0, self.n_masses, chunk_size):
                 chunk = all_masses[idx : min(idx + chunk_size, self.n_masses)]
-                self.cfmid_responses = []
+                batch_results = []
                 logger.info(f"API search: {chunk_size} of {len(all_masses)} structures")
                 logger.info(f"\t\t\t Total count: {idx}")
-                asyncio.run(ms2_api_search(self.cfmid_responses, chunk, self.precursor_mass_accuracy, self.jobid))
-
+                asyncio.run(ms2_api_search(batch_results, chunk, self.precursor_mass_accuracy, self.jobid))
+                self.cfmid_responses.append(batch_results)
             logger.info(f"API search time: {time.perf_counter() - start} for {len(all_masses)} structures")
         else:
             logger.warning("No masses to process.")
