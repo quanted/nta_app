@@ -176,7 +176,8 @@ def get_sample_and_blank_headers(dfs):
     header_groups = [item for item in all_headers if (len(item) > 1)]
     # get blank headers
     allowed_blank_formats = ["Blank", "blank", "BLANK", "MB", "Mb", "mb", "mB"]
-    blank_headers = [item for item in all_headers if any(x in head for head in item for x in allowed_blank_formats)]
+    # Should be more than one blank in group, so blank_headers uses header_groups
+    blank_headers = [item for item in header_groups if any(x in head for head in item for x in allowed_blank_formats)]
     # get sample headers
     sample_headers = [item for item in header_groups if not any(item == x for x in blank_headers)]
 
