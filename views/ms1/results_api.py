@@ -46,9 +46,11 @@ def get_output_api_key(request, jobid=None):
 @csrf_exempt
 @api_key_required
 def decision_tree_data_api_key(request, jobid=None):
+    """not currently assigned to a URL"""
     return decision_tree_data(request, jobid)
 
 @csrf_exempt
 @api_key_required
 def decision_tree_parameters_api_key(request, jobid=None):
+    """not currently assigned to a URL"""
     return decision_tree_analysis_parameters(request, jobid)

@@ -90,7 +90,7 @@ urlpatterns = [
     path("ms1/external/ms1_test_files/download", ms1_test_files.download_test_files),
     path("ms1/api/run", ms1_input_api.ms1_run_api),
     path("ms1/api/status/<slug:jobid>", ms1_results_api.check_status_api_key),
-    path("ms1/api/output/<slug:jobid>", ms1_input_api.ms1_run_api),
+    path("ms1/api/output/<slug:jobid>", ms1_results_api.get_output_api_key),
     path("ms1/api/formulas/download", ms1_formulas.download_msready_formulas_api_key),
     path("ms1/api/ms1_test_files/download", ms1_test_files.download_test_files_api_key),
 
