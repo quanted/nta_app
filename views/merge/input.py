@@ -35,7 +35,7 @@ def input_page(request, form_data=None, form_files=None):
             ms1_input = request.FILES.getlist("ms1_inputs")
 
             # NTAW-734
-            logger.info(f"Merge Parameters: {parameters}")
+            logger.warning(f"Merge Parameters: {parameters}")
 
             # NTAW-158 = AC 6/10/2024: Update parser to handle xlsx files. An xlsx file will create a dictionary with all the results sheets; only grab the chemical results sheet if it is a dict
             ms1_input_temp = fileParser.run(ms1_input[0])
