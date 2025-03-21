@@ -187,6 +187,8 @@ class NtaRun:
         self.cv_scatterplots_out = []
 
     def execute(self):
+        # 0: create a run status in MongoDB
+        self.set_status("Processing", create=True)
         # 0.9: Normalize all column names
         self.normalize_column_names(self.dfs)
         self.step = "Check for existence of required columns"
@@ -198,11 +200,9 @@ class NtaRun:
         self.check_retention_time_column(self.dfs)
         # 1d: sort dataframe columns alphabetically
         self.dfs = [df.reindex(sorted(df.columns), axis=1) if df is not None else None for df in self.dfs]
-        # 1e: create a status in mongo
-        self.set_status("Processing", create=True)
-        # 1f: create an analysis_parameters sheet
+        # 1e: create an analysis_parameters sheet
         self.create_analysis_parameters_sheet()
-        # 1g: create run sequence sheets
+        # 1f: create run sequence sheets
         self.create_run_sequence_sheets()
         # 2: assign ids, separate passthrough cols, filter void volume, and flag duplicates
         self.step = "Flagging duplicates"
