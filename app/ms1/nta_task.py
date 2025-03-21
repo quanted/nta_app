@@ -39,6 +39,7 @@ def run_nta_dask(
     tracer_df=None,
     run_sequence_pos_df=None,
     run_sequence_neg_df=None,
+    qnta_df=None,
     jobid="00000000",
     verbose=True,
 ):
@@ -53,6 +54,7 @@ def run_nta_dask(
             tracer_df,
             run_sequence_pos_df,
             run_sequence_neg_df,
+            qnta_df,
             mongo_address,
             jobid,
             verbose,
@@ -97,6 +99,7 @@ def run_nta(
     tracer_df=None,
     run_sequence_pos_df=None,
     run_sequence_neg_df=None,
+    qnta_df=None,
     mongo_address=None,
     jobid="00000000",
     verbose=True,
@@ -108,6 +111,7 @@ def run_nta(
         tracer_df,
         run_sequence_pos_df,
         run_sequence_neg_df,
+        qnta_df,
         mongo_address,
         jobid,
         verbose,
@@ -134,6 +138,7 @@ class NtaRun:
         tracer_df=None,
         run_sequence_pos_df=None,
         run_sequence_neg_df=None,
+        qnta_df=None,
         mongo_address=None,
         jobid="00000000",
         verbose=True,
@@ -147,6 +152,7 @@ class NtaRun:
         self.tracer_dfs_out = None
         self.run_sequence_pos_df = run_sequence_pos_df
         self.run_sequence_neg_df = run_sequence_neg_df
+        self.qnta_df = qnta_df
         self.dfs = input_dfs
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values
         self.docs = None
@@ -167,6 +173,7 @@ class NtaRun:
         self.base_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), "../../.."))
         self.data_map = {}
         self.chem_res_map = {}
+        self.qnta_map = {}
         self.tracer_map = {}
         self.occurrence_heatmap_map = {}
         self.cv_scatterplot_map = {}
@@ -284,6 +291,10 @@ class NtaRun:
         if self.verbose:
             logger.info("Combined modes.")
             logger.info("combined df length: {}".format(len(self.df_combined)))
+
+        # Optional: Perform qNTA
+        self.step = "Performing qNTA (if selected)"
+        self.perform_qNTA()
 
         # 7: search dashboard
         if self.parameters["search_dsstox"][1] == "yes":
@@ -1097,6 +1108,19 @@ class NtaRun:
         self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(
             self.mpp_ready_flagged, self.blank_headers, self.sample_headers
         )
+
+    def perform_qNTA(self):
+        """
+        Check if qNTA is selected for and inputs are present. If so, call task_functions
+        qNTA_preprocessing() to transform qNTA_Surrogate_Input_File into qNTA_Surrogate_Detection_Statistics_File
+
+        Args:
+            self
+        Returns:
+            None
+        """
+        # Store user-submitted qNTA response
+        do_qNTA = self.parameters["do_qnta"][1] == "yes"
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save=True):
         """

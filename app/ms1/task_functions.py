@@ -2065,3 +2065,7 @@ def formula_exclude(
         return 0
     # If no excluded elements found in formula return pass (1)
     return 1
+
+
+def qnta_preprocessing():
+    pass

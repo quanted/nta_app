@@ -107,6 +107,10 @@ def input_page(request, form_data=None, form_files=None):
             # If 'neg_input' file is present, the 'pos_input' file is not required
             if "neg_input" in request.FILES.keys():
                 form.fields["pos_input"].required = False
+            # if input 'test_files' is 'no' and 'do_qnta' is 'yes' then qnta input file is required
+            if request.POST["do_qnta"] == "yes":
+                # Set requirement status to True
+                form.fields["qnta_input"].required = True
 
         if form.is_valid():
             logger.info("form is valid")
@@ -191,12 +195,16 @@ def input_page(request, form_data=None, form_files=None):
                 tracer_file = os.path.join(example_data_dir, example_tracer_filename)
                 run_sequence_pos_file = os.path.join(example_data_dir, example_run_sequence_pos_filename)
                 run_sequence_neg_file = os.path.join(example_data_dir, example_run_sequence_neg_filename)
+                if parameters["do_qnta"] == "yes":
+                    qnta_file = os.path.join(example_data_dir, example_surrogate_filename)
                 # save the name of the files to the inputParameters dictionary
                 inputParameters["pos_input"][1] = pos_input
                 inputParameters["neg_input"][1] = neg_input
                 inputParameters["tracer_input"][1] = tracer_file
                 inputParameters["run_sequence_pos_file"][1] = run_sequence_pos_file
                 inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file
+                if parameters["do_qnta"] == "yes":
+                    inputParameters["qnta_input"][1] = qnta_file
                 # read the test files into pandas dataframes. Note: pos_input and neg_input are loaded later
                 # in the code
                 tracer_df = file_manager.tracer_handler(tracer_file)
@@ -241,6 +249,13 @@ def input_page(request, form_data=None, form_files=None):
                     inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file.name
                 except Exception:
                     run_sequence_neg_df = None
+                try:
+                    qnta_file = request.FILES["qnta_input"]
+                    qnta_df = file_manager.tracer_handler(qnta_file)
+                    # save the name of the file to the inputParameters dictionary
+                    inputParameters["qnta_input"][1] = qnta_file.name
+                except Exception:
+                    qnta_df = None
 
             # create a list of the input files
             inputs = [pos_input, neg_input]
@@ -282,6 +297,7 @@ def input_page(request, form_data=None, form_files=None):
                 tracer_df,
                 run_sequence_pos_df,
                 run_sequence_neg_df,
+                qnta_df,
                 job_id,
             )
             return redirect("/nta/ms1/processing/" + job_id, permanent=True)

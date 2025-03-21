@@ -224,3 +224,8 @@ class NtaInputs(forms.Form):
         ),
         initial="no",
     )
+    qnta_input = forms.FileField(
+        label="qNTA Surrogate Input file (csv)",
+        required=False,
+        validators=[FileExtensionValidator(["csv"])],
+    )
