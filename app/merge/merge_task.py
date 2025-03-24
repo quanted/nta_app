@@ -252,7 +252,7 @@ class MergeRun:
                     except AttributeError:
                         pass
 
-                if sheet == "chemical_results":
+                if sheet_num == 1:
                     # Format DTXSID column hyperlinks
                     for i in range(sheet.max_row):
                         cell = sheet.cell(row=i + 2, column=9)
