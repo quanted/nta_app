@@ -103,9 +103,6 @@ class MergeRun:
         self.step = "Started"  # tracks the current step (for fail messages)
 
         self.create_analysis_parameters_sheet()
-        # self.ms1_data_map = (
-        #     {"chemical_results": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
-        # )
 
         self.ms1_data_map["chemical_results"] = (
             self.input_ms1 if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1

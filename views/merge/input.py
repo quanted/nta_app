@@ -34,7 +34,7 @@ def input_page(request, form_data=None, form_files=None):
         "project_name": ["Project Name", None],
         "version": ["WebApp Version", current_version],
         "datetime": ["Date & Time", str(current_datetime)],
-        "csrfmiddlewaretoken": ["csrfmiddlewaretoken", None],
+        # "csrfmiddlewaretoken": ["csrfmiddlewaretoken", None],
         "ms1_inputs": ["NTA MS1 results file", []],
         "ms2_neg_inputs": ["NTA MS2 results file (negative mode)", []],
         "ms2_pos_inputs": ["NTA MS2 results file (positive mode)", []],
@@ -78,13 +78,11 @@ def input_page(request, form_data=None, form_files=None):
                 ]
                 inputParameters["ms2_neg_inputs"][1] = [file.name for file in neg_input_list if file]
 
-            # NTAW-734
             inputParameters["project_name"][1] = parameters["project_name"]
-            inputParameters["csrfmiddlewaretoken"][1] = parameters["csrfmiddlewaretoken"]
+            # inputParameters["csrfmiddlewaretoken"][1] = parameters["csrfmiddlewaretoken"]
             inputParameters["mass_accuracy_tolerance"][1] = parameters["mass_accuracy_tolerance"]
             inputParameters["rt_tolerance"][1] = parameters["rt_tolerance"]
 
-            # run_merge_dask(parameters, input_data, job_id)
             run_merge_dask(inputParameters, input_data, job_id)
             return redirect("/nta/merge/processing/" + job_id, permanent=True)
         else:
