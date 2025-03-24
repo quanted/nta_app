@@ -102,13 +102,12 @@ class MergeRun:
         self.ms1_data_map = {}
         self.step = "Started"  # tracks the current step (for fail messages)
 
-        # NTAW-734
         self.create_analysis_parameters_sheet()
         # self.ms1_data_map = (
         #     {"chemical_results": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
         # )
 
-        self.ms1_data_map["chemical_resutls"] = (
+        self.ms1_data_map["chemical_results"] = (
             self.input_ms1 if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
         )
         # self.ms1_data_map = (
@@ -173,7 +172,6 @@ class MergeRun:
             # for key in self.ms1_data_map.keys():
             #     self.mongo_save(self.ms1_data_map[key], data_name=key)
 
-            # NTAW-734
             logger.info(f"Merge Parameters: {self.parameters}")
             logger.info("Store results excel sheet to MongoDB")
             self.save_excel_to_mongo()
@@ -243,19 +241,21 @@ class MergeRun:
 
                 sheet_num = keys_list.index(df_name)
                 sheet = workbook.worksheets[sheet_num]
+
                 # Freeze the first row in the sheet
                 sheet.freeze_panes = "A2"
 
+                # Format each column width to fit the longest string contained within the column
+                for column in df:
+                    try:
+                        column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+                        col_idx = df.columns.get_loc(column) + 1
+                        col_letter = get_column_letter(col_idx)
+                        sheet.column_dimensions[col_letter].width = column_width
+                    except AttributeError:
+                        pass
+
                 if sheet == "chemical_results":
-                    # Format each column width to fit the longest string contained within the column
-                    for column in df:
-                        try:
-                            column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
-                            col_idx = df.columns.get_loc(column) + 1
-                            col_letter = get_column_letter(col_idx)
-                            sheet.column_dimensions[col_letter].width = column_width
-                        except AttributeError:
-                            pass
                     # Format DTXSID column hyperlinks
                     for i in range(sheet.max_row):
                         cell = sheet.cell(row=i + 2, column=9)
