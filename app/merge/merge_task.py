@@ -81,6 +81,7 @@ class MergeRun:
         verbose=True,
         in_docker=True,
     ):
+        self.parameters = parameters
         self.project_name = parameters["project_name"]
         logger.info(f"\n============= Job ID: {jobid}")
         logger.info(input_data)
@@ -140,7 +141,8 @@ class MergeRun:
 
             logger.info("Store results excel sheet to MongoDB")
             self.save_excel_to_mongo()
-
+        # NTAW-734
+        logger.info(f"Merge Parameters: {self.parameters}")
         self.set_status("Completed", progress=self.n_files)
         logger.info(f"[Job ID: {self.jobid}] Run Finished")
 
