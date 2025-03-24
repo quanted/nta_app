@@ -1,6 +1,7 @@
 import os
 import string, random
 import logging
+import datetime
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
@@ -22,6 +23,25 @@ def input_page(request, form_data=None, form_files=None):
     model = "Merge"
     header = "MS1 and MS2 merge workflow"
     page = "run_model"
+
+    # generate a timestamp with the current time and date
+    current_datetime = datetime.datetime.now()
+
+    # manually define current version of the WebApp
+    current_version = "0.3.6"
+
+    inputParameters = {
+        "project_name": ["Project Name", None],
+        "version": ["WebApp Version", current_version],
+        "datetime": ["Date & Time", str(current_datetime)],
+        "csrfmiddlewaretoken": ["csrfmiddlewaretoken", None],
+        "ms1_inputs": ["NTA MS1 results file", []],
+        "ms2_neg_inputs": ["NTA MS2 results file (negative mode)", []],
+        "ms2_pos_inputs": ["NTA MS2 results file (positive mode)", []],
+        "mass_accuracy_tolerance": ["Mass accuracy tolerance (ppm)", None],
+        "rt_tolerance": ["Retention time tolerance (min)", None],
+    }
+
     if request.method == "POST":
         form = MergeInputs(request.POST, request.FILES)
         if form.is_valid():
@@ -35,7 +55,11 @@ def input_page(request, form_data=None, form_files=None):
             ms1_input = request.FILES.getlist("ms1_inputs")
 
             # NTAW-734
-            logger.warning(f"Merge Parameters: {parameters}")
+            inputParameters["project_name"][1] = parameters["project_name"]
+            inputParameters["csrfmiddlewaretoken"][1] = parameters["csrfmiddlewaretoken"]
+            inputParameters["mass_accuracy_tolerance"][1] = parameters["mass_accuracy_tolerance"]
+            inputParameters["rt_tolerance"][1] = parameters["rt_tolerance"]
+            logger.warning(f"Merge inputParameters: {inputParameters}")
 
             # NTAW-158 = AC 6/10/2024: Update parser to handle xlsx files. An xlsx file will create a dictionary with all the results sheets; only grab the chemical results sheet if it is a dict
             ms1_input_temp = fileParser.run(ms1_input[0])
@@ -58,6 +82,10 @@ def input_page(request, form_data=None, form_files=None):
                     {"file_name": file.name, "file_df": fileParser.run(file)} for file in neg_input_list if file
                 ]
 
+            logger.warning(f"MS1 file list: {ms1_input}")
+            logger.warning(f"MS2 file list neg: {ms2_pos_input}")
+            logger.warning(f"MS2 file list pos: {ms2_neg_input}")
+            # run_merge_dask(inputParameters, input_data, job_id)
             run_merge_dask(parameters, input_data, job_id)
             return redirect("/nta/merge/processing/" + job_id, permanent=True)
         else:

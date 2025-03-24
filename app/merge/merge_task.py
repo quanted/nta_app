@@ -139,10 +139,11 @@ class MergeRun:
             # for key in self.ms1_data_map.keys():
             #     self.mongo_save(self.ms1_data_map[key], data_name=key)
 
+            # NTAW-734
+            logger.info(f"Merge Parameters: {self.parameters}")
             logger.info("Store results excel sheet to MongoDB")
             self.save_excel_to_mongo()
-        # NTAW-734
-        logger.info(f"Merge Parameters: {self.parameters}")
+
         self.set_status("Completed", progress=self.n_files)
         logger.info(f"[Job ID: {self.jobid}] Run Finished")
 
