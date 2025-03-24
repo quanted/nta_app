@@ -99,12 +99,17 @@ class MergeRun:
         self.mongo_address = mongo_address
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
+        self.ms1_data_map = {}
         self.step = "Started"  # tracks the current step (for fail messages)
 
         # NTAW-734
         self.create_analysis_parameters_sheet()
-        self.ms1_data_map = (
-            {"chemical_results": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
+        # self.ms1_data_map = (
+        #     {"chemical_results": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
+        # )
+
+        self.ms1_data_map["chemical_resutls"] = (
+            self.input_ms1 if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
         )
         # self.ms1_data_map = (
         #     {"dsstox_search": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
