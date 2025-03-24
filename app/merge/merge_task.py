@@ -100,7 +100,9 @@ class MergeRun:
         self.mongo = connect_to_mongoDB(self.mongo_address)
         self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
         self.step = "Started"  # tracks the current step (for fail messages)
-        # NTAW-158: Adjust sheet names pulled from MS1 results
+
+        # NTAW-734
+        self.create_analysis_parameters_sheet()
         self.ms1_data_map = (
             {"chemical_results": self.input_ms1} if isinstance(self.input_ms1, pd.DataFrame) else self.input_ms1
         )
@@ -109,6 +111,33 @@ class MergeRun:
         # )
 
         logger.info(f"\n============= Job ID: {jobid}")
+
+    def create_analysis_parameters_sheet(self):
+        """
+        Create a dataframe to store analysis parameters in, assign parameters, then save
+        as the "Analysis Parameters" sheet in the self.data_map dictionary.
+
+        Args:
+            None
+        Notes:
+            In a future version, we would like to add a "Version" key to be printed.
+        Returns:
+            None
+        """
+        # create a dataframe to store analysis parameters
+        columns = ["Parameter", "Value"]
+        df_analysis_parameters = pd.DataFrame(columns=columns)
+
+        # loop through keys in self.parameters and log them
+        for key in self.parameters:
+            label = self.parameters[key][0]
+            value = self.parameters[key][1]
+            df_analysis_parameters.loc[len(df_analysis_parameters)] = [label, value]
+
+        # add the dataframe to the data_map with the sheet name of 'Analysis Parameters'
+        self.ms1_data_map["Analysis Parameters"] = df_analysis_parameters
+
+        return
 
     def execute(self):
         self.set_status("Processing", create=True)
@@ -197,39 +226,47 @@ class MergeRun:
             column="CompTox links",
             value=self.ms1_data_map["chemical_results"]["DTXSID"].apply(lambda x: make_hyperlink(x)),
         )
+
+        # Get list of keys in the self.ms1_data_map dictionary
+        keys_list = list(self.ms1_data_map.keys())
+
         # Convert self.ms1_data_map dictionary into an excel workbook
         with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
             workbook = writer.book
             for df_name, df in self.ms1_data_map.items():
                 df.to_excel(writer, sheet_name=df_name, index=False)
-                sheet = workbook.worksheets[0]
+
+                sheet_num = keys_list.index(df_name)
+                sheet = workbook.worksheets[sheet_num]
                 # Freeze the first row in the sheet
                 sheet.freeze_panes = "A2"
-                # Format each column width to fit the longest string contained within the column
-                for column in df:
-                    try:
-                        column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
-                        col_idx = df.columns.get_loc(column) + 1
-                        col_letter = get_column_letter(col_idx)
-                        sheet.column_dimensions[col_letter].width = column_width
-                    except AttributeError:
-                        pass
-                # Format DTXSID column hyperlinks
-                for i in range(sheet.max_row):
-                    cell = sheet.cell(row=i + 2, column=9)
-                    cell.style = "Hyperlink"
-                # Format decimal columns to scientific notation
-                for cell in sheet["P"]:
-                    cell.number_format = "0.00E+00"
-                for cell in sheet["Y"]:
-                    cell.number_format = "0.00E+00"
-                # Format extra long column widths
-                sheet.column_dimensions["I"].width = 18
-                sheet.column_dimensions["G"].width = 54
-                sheet.column_dimensions["J"].width = 54
-                sheet.column_dimensions["M"].width = 54
-                sheet.column_dimensions["P"].width = 18
-                sheet.column_dimensions["Y"].width = 18
+
+                if sheet == "chemical_results":
+                    # Format each column width to fit the longest string contained within the column
+                    for column in df:
+                        try:
+                            column_width = max(df[column].astype(str).map(len).max(), len(column)) + 1
+                            col_idx = df.columns.get_loc(column) + 1
+                            col_letter = get_column_letter(col_idx)
+                            sheet.column_dimensions[col_letter].width = column_width
+                        except AttributeError:
+                            pass
+                    # Format DTXSID column hyperlinks
+                    for i in range(sheet.max_row):
+                        cell = sheet.cell(row=i + 2, column=9)
+                        cell.style = "Hyperlink"
+                    # Format decimal columns to scientific notation
+                    for cell in sheet["P"]:
+                        cell.number_format = "0.00E+00"
+                    for cell in sheet["Y"]:
+                        cell.number_format = "0.00E+00"
+                    # Format extra long column widths
+                    sheet.column_dimensions["I"].width = 18
+                    sheet.column_dimensions["G"].width = 54
+                    sheet.column_dimensions["J"].width = 54
+                    sheet.column_dimensions["M"].width = 54
+                    sheet.column_dimensions["P"].width = 18
+                    sheet.column_dimensions["Y"].width = 18
 
         excel_data = in_memory_buffer.getvalue()
         # Save project name to MongoDB using jobid

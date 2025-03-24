@@ -83,7 +83,6 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["csrfmiddlewaretoken"][1] = parameters["csrfmiddlewaretoken"]
             inputParameters["mass_accuracy_tolerance"][1] = parameters["mass_accuracy_tolerance"]
             inputParameters["rt_tolerance"][1] = parameters["rt_tolerance"]
-            logger.warning(f"Merge inputParameters: {inputParameters}")
 
             # run_merge_dask(parameters, input_data, job_id)
             run_merge_dask(inputParameters, input_data, job_id)
