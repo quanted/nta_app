@@ -60,8 +60,7 @@ def input_page(request, form_data=None, form_files=None):
                 input_data["MS1"] = ms1_input_temp["Chemical Results"]
             else:
                 input_data["MS1"] = ms1_input_temp
-            logger.warning(f"MS1 file list: {ms1_input}")
-            inputParameters["ms1_inputs"][1] = [ms1_input]
+            inputParameters["ms1_inputs"][1] = [file.name for file in ms1_input if file]
 
             if bool(request.FILES.get("ms2_pos_inputs", False)) == True:
                 ms2_pos_input = request.FILES.getlist("ms2_pos_inputs")
@@ -69,8 +68,7 @@ def input_page(request, form_data=None, form_files=None):
                 input_data["MS2_pos"] = [
                     {"file_name": file.name, "file_df": fileParser.run(file)} for file in pos_input_list if file
                 ]
-                logger.warning(f"MS2 file list pos: {ms2_pos_input}")
-                inputParameters["ms2_pos_inputs"][1] = [ms2_pos_input]
+                inputParameters["ms2_pos_inputs"][1] = [file.name for file in pos_input_list if file]
 
             if bool(request.FILES.get("ms2_neg_inputs", False)) == True:
                 ms2_neg_input = request.FILES.getlist("ms2_neg_inputs")
@@ -78,8 +76,7 @@ def input_page(request, form_data=None, form_files=None):
                 input_data["MS2_neg"] = [
                     {"file_name": file.name, "file_df": fileParser.run(file)} for file in neg_input_list if file
                 ]
-                logger.warning(f"MS2 file list neg: {ms2_neg_input}")
-                inputParameters["ms2_neg_inputs"][1] = [ms2_neg_input]
+                inputParameters["ms2_neg_inputs"][1] = [file.name for file in neg_input_list if file]
 
             # NTAW-734
             inputParameters["project_name"][1] = parameters["project_name"]
@@ -88,8 +85,8 @@ def input_page(request, form_data=None, form_files=None):
             inputParameters["rt_tolerance"][1] = parameters["rt_tolerance"]
             logger.warning(f"Merge inputParameters: {inputParameters}")
 
-            # run_merge_dask(inputParameters, input_data, job_id)
-            run_merge_dask(parameters, input_data, job_id)
+            # run_merge_dask(parameters, input_data, job_id)
+            run_merge_dask(inputParameters, input_data, job_id)
             return redirect("/nta/merge/processing/" + job_id, permanent=True)
         else:
             form_data = request.POST
