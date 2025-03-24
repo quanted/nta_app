@@ -82,7 +82,7 @@ class MergeRun:
         in_docker=True,
     ):
         self.parameters = parameters
-        self.project_name = parameters["project_name"]
+        self.project_name = parameters["project_name"][1]
         logger.info(f"\n============= Job ID: {jobid}")
         logger.info(input_data)
         self.input_ms1 = input_data["MS1"]
@@ -91,8 +91,8 @@ class MergeRun:
         self.n_files = len(self.input_ms2)
         self.results_df = [None]
         self.results_link = results_link
-        self.mass_accuracy_tolerance = float(parameters["mass_accuracy_tolerance"])
-        self.rt_tolerance = float(parameters["rt_tolerance"])
+        self.mass_accuracy_tolerance = float(parameters["mass_accuracy_tolerance"][1])
+        self.rt_tolerance = float(parameters["rt_tolerance"][1])
         self.jobid = jobid
         self.verbose = verbose
         self.in_docker = in_docker
