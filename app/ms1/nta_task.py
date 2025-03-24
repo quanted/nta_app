@@ -111,7 +111,6 @@ def run_nta(
         tracer_df,
         run_sequence_pos_df,
         run_sequence_neg_df,
-        qnta_df,
         mongo_address,
         jobid,
         verbose,
