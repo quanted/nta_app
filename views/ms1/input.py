@@ -80,6 +80,7 @@ def input_page(request, form_data=None, form_files=None):
         "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", None],
         "search_mode": ["Search dashboard by", None],
         "do_qnta": ["Perform qNTA?", None],
+        "nta_input": ["qNTA Surrogate input file", None],
         "atom_ranges": ["Atom filtering ranges", None],
     }
     logger.debug("input_page: inputParameters: {} ".format(inputParameters))
@@ -197,14 +198,17 @@ def input_page(request, form_data=None, form_files=None):
                 run_sequence_neg_file = os.path.join(example_data_dir, example_run_sequence_neg_filename)
                 if parameters["do_qnta"] == "yes":
                     qnta_file = os.path.join(example_data_dir, example_surrogate_filename)
+                    inputParameters["qnta_input"][1] = qnta_file
+                    qnta_df = file_manager.tracer_handler(qnta_file)
+                else:
+                    inputParameters["qnta_input"][1] = None
+                    qnta_df = None
                 # save the name of the files to the inputParameters dictionary
                 inputParameters["pos_input"][1] = pos_input
                 inputParameters["neg_input"][1] = neg_input
                 inputParameters["tracer_input"][1] = tracer_file
                 inputParameters["run_sequence_pos_file"][1] = run_sequence_pos_file
                 inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file
-                if parameters["do_qnta"] == "yes":
-                    inputParameters["qnta_input"][1] = qnta_file
                 # read the test files into pandas dataframes. Note: pos_input and neg_input are loaded later
                 # in the code
                 tracer_df = file_manager.tracer_handler(tracer_file)
