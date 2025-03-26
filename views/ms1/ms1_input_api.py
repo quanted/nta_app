@@ -137,6 +137,7 @@ def ms1_run_api(request):
                 "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", None],
                 "search_mode": ["Search dashboard by", None],
                 "do_qnta": ["Perform qNTA?", None],
+                "qnta_input": ["qNTA Surrogate input file", None],
                 "atom_ranges": ["Atom filtering ranges", None],
             }
 
