@@ -25,6 +25,7 @@ example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
 example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
 example_surrogate_filename = "qNTA_Surrogate_Input_File_WW2DW.csv"
 
+
 @api_key_required
 @csrf_exempt
 def ms1_run_api(request):
@@ -136,6 +137,7 @@ def ms1_run_api(request):
                 "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", None],
                 "search_mode": ["Search dashboard by", None],
                 "do_qnta": ["Perform qNTA?", None],
+                "atom_ranges": ["Atom filtering ranges", None],
             }
 
             # save the Request parameters in the inputParameters dictionary [0] is the label, [1] is the value
@@ -164,7 +166,6 @@ def ms1_run_api(request):
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
             inputParameters["do_qnta"][1] = parameters["do_qnta"]
-            
             # Update atom filtering dictionary
             # for item1 in atom_ranges:
             #     for item2 in parameters["atom_ranges"]:
@@ -172,8 +173,7 @@ def ms1_run_api(request):
             #             item1["min"] = item2["min"]
             #             item1["max"] = item2["max"]
             #             break
-            
-            # inputParameters["atom_ranges"][1] = atom_ranges
+            inputParameters["atom_ranges"][1] = parameters["atom_ranges"]
             
             # Get user-selected adducts via POST.getlist()
             # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
@@ -209,6 +209,13 @@ def ms1_run_api(request):
                 tracer_file = os.path.join(example_data_dir, example_tracer_filename)
                 run_sequence_pos_file = os.path.join(example_data_dir, example_run_sequence_pos_filename)
                 run_sequence_neg_file = os.path.join(example_data_dir, example_run_sequence_neg_filename)
+                if parameters["do_qnta"] == "yes":
+                    qnta_file = os.path.join(example_data_dir, example_surrogate_filename)
+                    inputParameters["qnta_input"][1] = qnta_file
+                    qnta_df = file_manager.tracer_handler(qnta_file)
+                else:
+                    inputParameters["qnta_input"][1] = None
+                    qnta_df = None
                 # save the name of the files to the inputParameters dictionary
                 inputParameters["pos_input"][1] = pos_input
                 inputParameters["neg_input"][1] = neg_input
@@ -268,6 +275,13 @@ def ms1_run_api(request):
                     inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file.name
                 except Exception:
                     run_sequence_neg_df = None
+                try:
+                    qnta_file = request.FILES["qnta_input"]
+                    qnta_df = file_manager.tracer_handler(qnta_file)
+                    # save the name of the file to the inputParameters dictionary
+                    inputParameters["qnta_input"][1] = qnta_file.name
+                except Exception:
+                    qnta_df = None
 
             # create a list of the input files
             inputs = [pos_input, neg_input]
@@ -308,6 +322,7 @@ def ms1_run_api(request):
                 tracer_df,
                 run_sequence_pos_df,
                 run_sequence_neg_df,
+                qnta_df,
                 job_id,
             )
             #return redirect("/nta/ms1/processing/" + job_id, permanent=True)
