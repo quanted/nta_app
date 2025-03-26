@@ -1,4 +1,4 @@
-﻿Ionization Mode,Chemical Name,Monoisotopic Mass,Retention Time,DTXSID,MB,10ppb_,100ppb_,250ppb_,500ppb_,1000ppb_
+﻿Ionization_Mode,Chemical Name,Monoisotopic_Mass,Retention_Time,DTXSID,MB,10ppb_,100ppb_,250ppb_,500ppb_,1000ppb_
 ESI+,10-hydroxy-amitriptyline,293.1780,6.70,DTXSID90873785,,10,100,250,500,1000
 ESI+,acetaminophen,151.0633,2.90,DTXSID2020006,,10,100,250,500,1000
 ESI+,albuterol,239.1521,2.90,DTXSID5021255,,10,100,250,500,1000
