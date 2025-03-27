@@ -1270,6 +1270,69 @@ class NtaRun:
                 column="CompTox links",
                 value=self.data_map["Chemical Results"]["DTXSID"].apply(lambda x: make_hyperlink(x)),
             )
+
+            # NTAW-755
+            logger.info("===========Add collapsed and normalized metadata columns===========")
+            logger.info(self.data_map["Chemical Results"].columns)
+
+            self.data_map["Chemical Results"].insert(
+                loc=19,
+                column="PATENT_COUNT_COLLAPSED",
+                value=self.data_map["Chemical Results"]
+                .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["PATENT_COUNT"]
+                .transform("sum"),
+            )
+            self.data_map["Chemical Results"].insert(
+                loc=20,
+                column="PATENT_COUNT_COLLAPSED_NORM",
+                value=self.data_map["Chemical Results"]["PATENT_COUNT_COLLAPSED"]
+                / self.data_map["Chemical Results"].groupby("Feature ID")["PATENT_COUNT_COLLAPSED"].transform("max"),
+            )
+
+            self.data_map["Chemical Results"].insert(
+                loc=22,
+                column="LITERATURE_COUNT_COLLAPSED",
+                value=self.data_map["Chemical Results"]
+                .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["LITERATURE_COUNT"]
+                .transform("sum"),
+            )
+            self.data_map["Chemical Results"].insert(
+                loc=23,
+                column="LITERATURE_COUNT_COLLAPSED_NORM",
+                value=self.data_map["Chemical Results"]["LITERATURE_COUNT_COLLAPSED"]
+                / self.data_map["Chemical Results"]
+                .groupby("Feature ID")["LITERATURE_COUNT_COLLAPSED"]
+                .transform("max"),
+            )
+
+            self.data_map["Chemical Results"].insert(
+                loc=25,
+                column="PUBMED_COUNT_COLLAPSED",
+                value=self.data_map["Chemical Results"]
+                .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["PUBMED_COUNT"]
+                .transform("sum"),
+            )
+            self.data_map["Chemical Results"].insert(
+                loc=26,
+                column="PUBMED_COUNT_COLLAPSED_NORM",
+                value=self.data_map["Chemical Results"]["PUBMED_COUNT_COLLAPSED"]
+                / self.data_map["Chemical Results"].groupby("Feature ID")["PUBMED_COUNT_COLLAPSED"].transform("max"),
+            )
+
+            self.data_map["Chemical Results"].insert(
+                loc=28,
+                column="SOURCE_COUNT_COLLAPSED",
+                value=self.data_map["Chemical Results"]
+                .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["SOURCE_COUNT"]
+                .transform("sum"),
+            )
+            self.data_map["Chemical Results"].insert(
+                loc=29,
+                column="SOURCE_COUNT_COLLAPSED_NORM",
+                value=self.data_map["Chemical Results"]["SOURCE_COUNT_COLLAPSED"]
+                / self.data_map["Chemical Results"].groupby("Feature ID")["SOURCE_COUNT_COLLAPSED"].transform("max"),
+            )
+
             # Check length of "Chemical Results"
             sheet_limit = 500000
             # If "Chemical Results" is bigger than limit, chunk into smaller sizes
