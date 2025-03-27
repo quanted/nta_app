@@ -1360,8 +1360,8 @@ class NtaRun:
             id = self.jobid + "_excel_chem"
             self.gridfs.put(task_fun.create_excel_book(self.chem_res_map, chem_res=True), _id=id)
 
-            # Save the metadata/hazard csv to MongoDB
-            self.save_csv_to_mongo()
+            # # Save the metadata/hazard csv to MongoDB
+            # self.save_csv_to_mongo()
 
             logger.info("===========Saved Chemical Results excel book to MongoDB===========")
         # Create excel book for QAQC
@@ -1372,43 +1372,43 @@ class NtaRun:
         self.gridfs.put(task_fun.create_excel_book(self.data_map, chem_res=False), _id=id)
         logger.info("===========Saved QAQC excel book to MongoDB===========")
 
-    def save_csv_to_mongo(self):
-        in_memory_buffer = io.StringIO()
+    # def save_csv_to_mongo(self):
+    #     in_memory_buffer = io.StringIO()
 
-        # get columns needed for hazard/metadata vis, and drop duplicate columns
-        cols_for_tripod_vis = [
-            "Feature ID",
-            "Mass",
-            "Retention Time",
-            "DTXCID_INDIVIDUAL_COMPONENT",
-            "PATENT_COUNT_COLLAPSED",
-            "PATENT_COUNT_COLLAPSED_NORM",
-            "LITERATURE_COUNT_COLLAPSED",
-            "LITERATURE_COUNT_COLLAPSED_NORM",
-            "PUBMED_COUNT_COLLAPSED",
-            "PUBMED_COUNT_COLLAPSED_NORM",
-            "SOURCE_COUNT_COLLAPSED",
-            "SOURCE_COUNT_COLLAPSED_NORM",
-        ]
-        newdf = self.chem_res_map["Chemical Results"][cols_for_tripod_vis].drop_duplicates(
-            subset=["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"]
-        )
+    #     # get columns needed for hazard/metadata vis, and drop duplicate columns
+    #     cols_for_tripod_vis = [
+    #         "Feature ID",
+    #         "Mass",
+    #         "Retention Time",
+    #         "DTXCID_INDIVIDUAL_COMPONENT",
+    #         "PATENT_COUNT_COLLAPSED",
+    #         "PATENT_COUNT_COLLAPSED_NORM",
+    #         "LITERATURE_COUNT_COLLAPSED",
+    #         "LITERATURE_COUNT_COLLAPSED_NORM",
+    #         "PUBMED_COUNT_COLLAPSED",
+    #         "PUBMED_COUNT_COLLAPSED_NORM",
+    #         "SOURCE_COUNT_COLLAPSED",
+    #         "SOURCE_COUNT_COLLAPSED_NORM",
+    #     ]
+    #     newdf = self.chem_res_map["Chemical Results"][cols_for_tripod_vis].drop_duplicates(
+    #         subset=["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"]
+    #     )
 
-        # Create a total norm column
-        sumcols = [col for col in newdf.columns if "NORM" in col]
-        newdf["STRUCTURE_TOTAL_NORM"] = newdf[sumcols].sum(axis=1)
+    #     # Create a total norm column
+    #     sumcols = [col for col in newdf.columns if "NORM" in col]
+    #     newdf["STRUCTURE_TOTAL_NORM"] = newdf[sumcols].sum(axis=1)
 
-        # TEMPORARY UNTIL ACTUAL HAZARD SCORES CAN BE ADDED IN
-        newdf["Hazard Score"] = 6
-        newdf["Hazard Completeness Score"] = 0.5
+    #     # TEMPORARY UNTIL ACTUAL HAZARD SCORES CAN BE ADDED IN
+    #     newdf["Hazard Score"] = 6
+    #     newdf["Hazard Completeness Score"] = 0.5
 
-        newdf.to_csv(in_memory_buffer, index=False)
+    #     newdf.to_csv(in_memory_buffer, index=False)
 
-        csv_data = in_memory_buffer.getvalue()
+    #     csv_data = in_memory_buffer.getvalue()
 
-        # Save csv file to MongoDB using id
-        id = self.jobid + "_csv_data_for_vis"
-        self.gridfs.put(csv_data, _id=id)
+    #     # Save csv file to MongoDB using id
+    #     id = self.jobid + "_csv_data_for_vis"
+    #     self.gridfs.put(csv_data, _id=id)
 
     def save_decision_tree_info_to_mongo(self):
         # This funciton is a result of NTAW-711 and is only required for the decision tree on the MS1 QED deploymet
