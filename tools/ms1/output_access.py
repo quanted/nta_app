@@ -199,10 +199,10 @@ class OutputServer:
                 filename = project_name.replace(" ", "_") + "_NTA_WebApp_chemical_results.xlsx"
                 zipf.writestr(filename, chem_data)
 
-                # csv_file = self.gridfs.get(f"{self.jobid}_csv_data_for_vis")
-                # project_name = str(self.gridfs.get(f"{self.jobid}_project_name_chemical_results").read(), "utf-8")
-                # filename = project_name.replace(" ", "_") + "_hazard_metadata.csv"
-                # zipf.writestr(filename, csv_file)
+                csv_file = self.gridfs.get(f"{self.jobid}_csv_data_for_vis").read().decode()
+                project_name = str(self.gridfs.get(f"{self.jobid}_project_name_chemical_results").read(), "utf-8")
+                filename = project_name.replace(" ", "_") + "_hazard_metadata.csv"
+                zipf.writestr(filename, csv_file)
 
             except (OperationFailure, TypeError, NoFile) as e:
                 pass
