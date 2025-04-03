@@ -1431,7 +1431,7 @@ class NtaRun:
             self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_qNTA", encoding="utf-8")
             # Save results excel file to MongoDB using id
             id = self.jobid + "_excel_qNTA"
-            self.gridfs.put(task_fun.create_excel_book(self.data_map, chem_res=False), _id=id)
+            self.gridfs.put(task_fun.create_excel_book(self.qnta_map, chem_res=False), _id=id)
             logger.info("===========Saved qNTA excel book to MongoDB===========")
 
     def save_csv_to_mongo(self):
