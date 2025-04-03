@@ -206,6 +206,15 @@ class OutputServer:
 
             except (OperationFailure, TypeError, NoFile) as e:
                 pass
+
+            try:
+                qnta_data = self.gridfs.get(f"{self.jobid}_excel_qNTA").read()
+                project_name = str(self.gridfs.get(f"{self.jobid}_project_name_qNTA").read(), "utf-8")
+                filename = project_name.replace(" ", "_") + "_NTA_WebApp_qNTA.xlsx"
+                zipf.writestr(filename, qnta_data)
+
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass
             # -----------------------------------------------------------
 
             # db_record = self.gridfs.get(self.jobid)

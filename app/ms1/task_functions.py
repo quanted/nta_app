@@ -1683,6 +1683,7 @@ def combine_doc(doc1, doc2, tracer_df=False):
         "Compound",
         "BlkStd_cutoff",
         "Tracer Chemical Match?",
+        "Surrogate Chemical Match?",
         "Duplicate Feature?",
         "Feature Removed?",
         "Possible Occurrence Count",

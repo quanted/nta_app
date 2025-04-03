@@ -1026,6 +1026,20 @@ class NtaRun:
             )
             for df, passthru in zip(self.dfs, self.pass_through)
         ]
+        # Combine Surrogate Detection Statistics from separate modes
+        # Combine items of tracer_dfs_out list
+        if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
+            dfq = pd.concat([self.qnta_dfs_out[0], self.qnta_dfs_out[1]])
+        elif self.qnta_dfs_out[0] is not None:
+            dfq = self.qnta_dfs_out[0].copy()
+        else:
+            dfq = self.qnta_dfs_out[1].copy()
+        # Add Surrogate Detection Statistics to the wnta datamap
+        self.qnta_map["Surrogate Detection Statistics"] = dfq
+        # Instatiate qNTA objects below
+        #
+        #
+        #
 
     def clean_features(self):
         """
@@ -1402,7 +1416,6 @@ class NtaRun:
 
             # Save the metadata/hazard csv to MongoDB
             self.save_csv_to_mongo()
-
             logger.info("===========Saved Chemical Results excel book to MongoDB===========")
         # Create excel book for QAQC
         # Save project name to MongoDB using jobid
@@ -1411,6 +1424,14 @@ class NtaRun:
         id = self.jobid + "_excel_qaqc"
         self.gridfs.put(task_fun.create_excel_book(self.data_map, chem_res=False), _id=id)
         logger.info("===========Saved QAQC excel book to MongoDB===========")
+        # Create excel book for qNTA if present
+        if self.parameters["do_qnta"][1] == "yes":
+            # Save project name to MongoDB using jobid
+            self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_qNTA", encoding="utf-8")
+            # Save results excel file to MongoDB using id
+            id = self.jobid + "_excel_qNTA"
+            self.gridfs.put(task_fun.create_excel_book(self.data_map, chem_res=False), _id=id)
+            logger.info("===========Saved qNTA excel book to MongoDB===========")
 
     def save_csv_to_mongo(self):
         in_memory_buffer = io.StringIO()
