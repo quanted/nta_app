@@ -222,10 +222,10 @@ class NtaRun:
             logger.info("dfs.size(): {}".format(len(self.dfs)))
             if self.dfs[0] is not None:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
-                logger.info("POS df columns: {}".format(self.dfs[0].columns))
+                # logger.info("POS df columns: {}".format(self.dfs[0].columns))
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
-                logger.info("NEG df columns: {}".format(self.dfs[1].columns))
+                # logger.info("NEG df columns: {}".format(self.dfs[1].columns))
         # 3a: statistics
         self.step = "Calculating statistics"
         self.calc_statistics()
@@ -247,10 +247,10 @@ class NtaRun:
             logger.info("dfs.size(): {}".format(len(self.dfs)))
             if self.dfs[0] is not None:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
-                logger.info("POS df columns: {}".format(self.dfs[0].columns.tolist()))
+                # logger.info("POS df columns: {}".format(self.dfs[0].columns.tolist()))
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
-                logger.info("NEG df columns: {}".format(self.dfs[1].columns.tolist()))
+                # logger.info("NEG df columns: {}".format(self.dfs[1].columns.tolist()))
         self.check_tracers()
         if self.verbose:
             logger.info("Checked tracers.")
@@ -942,8 +942,8 @@ class NtaRun:
         else:
             passthru = self.pass_through[1]
         # Update logger
-        logger.info("tracer dft= {}".format(dft.columns.tolist()))
-        logger.info("tracer passthru= {}".format(passthru.columns.tolist()))
+        # logger.info("tracer dft= {}".format(dft.columns.tolist()))
+        # logger.info("tracer passthru= {}".format(passthru.columns.tolist()))
         # Combine and sort processed tracer file and combined passthrough columns
         self.data_map["Tracer Detection Statistics"] = task_fun.column_sort_TSR(dft, passthru)
 
@@ -1015,6 +1015,7 @@ class NtaRun:
                 task_fun.qnta_preprocessing(
                     df,
                     self.qnta_df,
+                    passthru,
                     mass_accuracy_tr,
                     ret_time_accuracy,
                     ppm,
