@@ -1594,6 +1594,8 @@ def Blank_Subtract_Mean(df_in):
     Mean = df.columns[df.columns.str.contains(pat="Mean ")].tolist()
     Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
     Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
+    # Fill na in Mean_MB
+    df[Mean_MB] = df[Mean_MB].fillna(0)
     # Iterate through sample means, subtracting blank mean into new column
     for mean in Mean_Samples:
         # Create new column, do subtraction
