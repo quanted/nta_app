@@ -155,6 +155,7 @@ class NtaRun:
         self.run_sequence_neg_df = run_sequence_neg_df
         self.qnta_df = qnta_df
         self.dfs = input_dfs
+        self.qnta_dfs_out = None
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values
         self.docs = None
         self.doc_combined = None
@@ -258,6 +259,11 @@ class NtaRun:
         self.step = "Create scatterplot"
         self.store_scatterplots()
 
+        # Optional: Perform qNTA
+        if self.parameters["do_qnta"][1] == "yes":
+            self.step = "Performing qNTA"
+            self.perform_qNTA()
+
         # 5a: clean features
         self.step = "Cleaning features"
         self.clean_features()
@@ -292,10 +298,6 @@ class NtaRun:
         if self.verbose:
             logger.info("Combined modes.")
             logger.info("combined df length: {}".format(len(self.df_combined)))
-
-        # Optional: Perform qNTA
-        self.step = "Performing qNTA (if selected)"
-        self.perform_qNTA()
 
         # 7: search dashboard
         if self.parameters["search_dsstox"][1] == "yes":
@@ -974,6 +976,57 @@ class NtaRun:
             self.mongo_save(self.tracer_map[key], step=key)
         return
 
+    def perform_qNTA(self):
+        """
+        Call task_functions qNTA_preprocessing() to transform qNTA_Surrogate_Input_File
+        into qNTA_Surrogate_Detection_Statistics_File.
+
+        Args:
+            self
+        Returns:
+            None
+        """
+        # Call task_fun.qnta_preprocessing(), get dfq
+        do_qNTA = self.parameters["do_qnta"][1] == "yes"
+        # Get run parameters
+        ppm = self.parameters["mass_accuracy_units_tr"][1] == "ppm"
+        mass_accuracy_tr = float(self.parameters["mass_accuracy_tr"][1])
+        ret_time_accuracy = float(self.parameters["rt_accuracy_tr"][1])
+        # Perform check_tracers() on dfs with tracer file
+        self.qnta_dfs_out = [
+            (
+                task_fun.qnta_preprocessing(
+                    df,
+                    self.qnta_df,
+                    passthru,
+                    mass_accuracy_tr,
+                    ret_time_accuracy,
+                    ppm,
+                    self.blank_headers,
+                    self.sample_headers,
+                )[0]
+                if df is not None
+                else None
+            )
+            for df, passthru in zip(self.dfs, self.pass_through)
+        ]
+        self.dfs = [
+            (
+                task_fun.qnta_preprocessing(
+                    df,
+                    self.qnta_df,
+                    mass_accuracy_tr,
+                    ret_time_accuracy,
+                    ppm,
+                    self.blank_headers,
+                    self.sample_headers,
+                )[1]
+                if df is not None
+                else None
+            )
+            for df, passthru in zip(self.dfs, self.pass_through)
+        ]
+
     def clean_features(self):
         """
         Accesses self.dfs and the user-input parameters for min replicate hits, max CV,
@@ -1109,19 +1162,6 @@ class NtaRun:
         self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(
             self.mpp_ready_flagged, self.blank_headers, self.sample_headers
         )
-
-    def perform_qNTA(self):
-        """
-        Check if qNTA is selected for and inputs are present. If so, call task_functions
-        qNTA_preprocessing() to transform qNTA_Surrogate_Input_File into qNTA_Surrogate_Detection_Statistics_File
-
-        Args:
-            self
-        Returns:
-            None
-        """
-        # Store user-submitted qNTA response
-        do_qNTA = self.parameters["do_qnta"][1] == "yes"
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save=True):
         """
