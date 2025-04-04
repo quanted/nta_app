@@ -2224,7 +2224,7 @@ def column_sort_SDS(df_in, passthru):
     back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
     # Organize front matter (Feat_ID is located in pt_info)
     ordering = [
-        "Chemical Name",
+        "Chemical_Name",
         "DTXSID",
         "Ionization_Mode",
         "Monoisotopic_Mass",
@@ -2260,7 +2260,7 @@ def column_sort_SDS(df_in, passthru):
     df_reorg.rename(
         columns={
             "Monoisotopic_Mass": "Mass",
-            # "Chemical Name": "Chemical Name",
+            "Chemical_Name": "Chemical Name",
             "Ionization_Mode": "Ionization Mode",
             "Retention_Time": "Retention Time",
         },
