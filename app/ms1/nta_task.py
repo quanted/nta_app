@@ -429,6 +429,8 @@ class NtaRun:
                     columns={
                         "Retention_time": "Retention_Time",
                         "RETENTION_TIME": "Retention_Time",
+                        "Retention time": "Retention_Time",
+                        "Retention Time": "Retention_Time",
                     },
                     inplace=True,
                 )
