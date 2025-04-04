@@ -864,8 +864,8 @@ class NtaRun:
         # Create plot
         if self.tracer_dfs_out[0] is not None:
             # Troubleshooting NTAW-460
-            # logger.info("self.tracer_dfs_out[1] shape= {}".format(self.tracer_dfs_out[0].shape))
-            # logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[0].columns.values))
+            logger.info("self.tracer_dfs_out[1] shape= {}".format(self.tracer_dfs_out[0].shape))
+            logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[0].columns.values))
 
             # Check that run sequence file is present. Raise IndexError if no run sequence file is found.
             if self.run_sequence_pos_df is None:
@@ -901,8 +901,8 @@ class NtaRun:
 
         # Create plot
         if self.tracer_dfs_out[1] is not None:
-            # logger.info("self.tracer_dfs_out[1] shape= {}".format(self.tracer_dfs_out[1].shape))
-            # logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[1].columns.values))
+            logger.info("self.tracer_dfs_out[1] shape= {}".format(self.tracer_dfs_out[1].shape))
+            logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[1].columns.values))
 
             # Check that run sequence file is present. Raise IndexError if no run sequence file is found.
             if self.run_sequence_neg_df is None:
