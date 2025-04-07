@@ -1302,12 +1302,8 @@ class NtaRun:
         score_mapped_cols = [f"{col}_mapped" for col in score_cols]
 
         # Apply mappings and store in mapped columns
-        df.loc[:, authority_mapped_cols] = df[authority_cols].applymap(lambda x: authority_mapping.get(x, x))
-        df.loc[:, score_mapped_cols] = df[score_cols].applymap(lambda x: score_mapping.get(x, x))
-
-        # Apply mapping to authority and hazard score columns
-        # df.loc[:, authority_cols] = df[authority_cols].applymap(lambda x: authority_mapping.get(x, x))
-        # df.loc[:, score_cols] = df[score_cols].applymap(lambda x: score_mapping.get(x, x))
+        df[authority_mapped_cols] = df[authority_cols].applymap(lambda x: authority_mapping.get(x, x))
+        df[score_mapped_cols] = df[score_cols].applymap(lambda x: score_mapping.get(x, x))
 
         # Set authority mapped column to NaN where corresponding hazard mapped score column is NaN for all hazard endpoints
         for score_mapped_col in score_mapped_cols:
