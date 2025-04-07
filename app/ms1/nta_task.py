@@ -1325,9 +1325,7 @@ class NtaRun:
             max_qah = group["pre_Hazard Score"].max()
             return group.loc[group["pre_Hazard Score"] == max_qah, "pre_completeness"].max()
 
-        col_comp = (
-            df.groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"]).apply(func, include_groups=False).reset_index()
-        )
+        col_comp = df.groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"]).apply(func).reset_index()
 
         col_comp.rename(columns={0: "Hazard Completeness Score"}, inplace=True)
         df = df.merge(col_comp, on=["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"], how="left")
