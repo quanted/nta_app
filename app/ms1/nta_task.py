@@ -10,6 +10,7 @@ from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 from zipfile import ZipFile, ZIP_DEFLATED
 from openpyxl.utils import get_column_letter
+import numpy as np
 
 # connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
 from .utilities import *
@@ -1297,8 +1298,8 @@ class NtaRun:
         score_mapping = {"VH": 4, "H": 3, "M": 2, "L": 1, "I": np.nan, "ND": np.nan}
 
         # Apply mapping to authority and hazard score columns
-        df.loc[:, authority_cols] = df[authority_cols].map(lambda x: authority_mapping.get(x, x))
-        df.loc[:, score_cols] = df[score_cols].map(lambda x: score_mapping.get(x, x))
+        df.loc[:, authority_cols] = df[authority_cols].applymap(lambda x: authority_mapping.get(x, x))
+        df.loc[:, score_cols] = df[score_cols].applymap(lambda x: score_mapping.get(x, x))
 
         # Set authority column to NaN where corresponding hazard score column is NaN for all hazard endpoints
         for score_col in score_cols:
@@ -1381,64 +1382,6 @@ class NtaRun:
             # NTAW-755
             logger.info("===========Add collapsed and normalized metadata columns===========")
             logger.info(self.data_map["Chemical Results"].columns)
-
-            # self.data_map["Chemical Results"].insert(
-            #     loc=19,
-            #     column="PATENT_COUNT_COLLAPSED",
-            #     value=self.data_map["Chemical Results"]
-            #     .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["PATENT_COUNT"]
-            #     .transform("sum"),
-            # )
-            # self.data_map["Chemical Results"].insert(
-            #     loc=20,
-            #     column="PATENT_COUNT_COLLAPSED_NORM",
-            #     value=self.data_map["Chemical Results"]["PATENT_COUNT_COLLAPSED"]
-            #     / self.data_map["Chemical Results"].groupby("Feature ID")["PATENT_COUNT_COLLAPSED"].transform("max"),
-            # )
-
-            # self.data_map["Chemical Results"].insert(
-            #     loc=22,
-            #     column="LITERATURE_COUNT_COLLAPSED",
-            #     value=self.data_map["Chemical Results"]
-            #     .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["LITERATURE_COUNT"]
-            #     .transform("sum"),
-            # )
-            # self.data_map["Chemical Results"].insert(
-            #     loc=23,
-            #     column="LITERATURE_COUNT_COLLAPSED_NORM",
-            #     value=self.data_map["Chemical Results"]["LITERATURE_COUNT_COLLAPSED"]
-            #     / self.data_map["Chemical Results"]
-            #     .groupby("Feature ID")["LITERATURE_COUNT_COLLAPSED"]
-            #     .transform("max"),
-            # )
-
-            # self.data_map["Chemical Results"].insert(
-            #     loc=25,
-            #     column="PUBMED_COUNT_COLLAPSED",
-            #     value=self.data_map["Chemical Results"]
-            #     .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["PUBMED_COUNT"]
-            #     .transform("sum"),
-            # )
-            # self.data_map["Chemical Results"].insert(
-            #     loc=26,
-            #     column="PUBMED_COUNT_COLLAPSED_NORM",
-            #     value=self.data_map["Chemical Results"]["PUBMED_COUNT_COLLAPSED"]
-            #     / self.data_map["Chemical Results"].groupby("Feature ID")["PUBMED_COUNT_COLLAPSED"].transform("max"),
-            # )
-
-            # self.data_map["Chemical Results"].insert(
-            #     loc=28,
-            #     column="SOURCE_COUNT_COLLAPSED",
-            #     value=self.data_map["Chemical Results"]
-            #     .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["SOURCE_COUNT"]
-            #     .transform("sum"),
-            # )
-            # self.data_map["Chemical Results"].insert(
-            #     loc=29,
-            #     column="SOURCE_COUNT_COLLAPSED_NORM",
-            #     value=self.data_map["Chemical Results"]["SOURCE_COUNT_COLLAPSED"]
-            #     / self.data_map["Chemical Results"].groupby("Feature ID")["SOURCE_COUNT_COLLAPSED"].transform("max"),
-            # )
 
             # Add metadata columns to chemical results dataframe
             metadata_fields = ["PATENT", "LITERATURE", "PUBMED", "SOURCE"]
