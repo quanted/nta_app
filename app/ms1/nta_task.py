@@ -1287,6 +1287,54 @@ class NtaRun:
             # Update Chemical Results output
             self.data_map["Chemical Results"] = self.search_results
 
+    def add_hazard_cols(self, df):
+        # Define authority and hazard score column names
+        authority_cols = df.filter(like="authority").columns
+        score_cols = df.filter(like="score").columns
+
+        # Define mapping of authority and hazard score categorical values to numerical values
+        authority_mapping = {"Authoritative": 3, "Screening": 2, "QSAR Model": 1}
+        score_mapping = {"VH": 4, "H": 3, "M": 2, "L": 1, "I": np.nan, "ND": np.nan}
+
+        # Apply mapping to authority and hazard score columns
+        df.loc[:, authority_cols] = df[authority_cols].map(lambda x: authority_mapping.get(x, x))
+        df.loc[:, score_cols] = df[score_cols].map(lambda x: score_mapping.get(x, x))
+
+        # Set authority column to NaN where corresponding hazard score column is NaN for all hazard endpoints
+        for score_col in score_cols:
+            authority_col = score_col.replace("score", "authority")
+            df.loc[df[score_col].isna(), authority_col] = np.nan
+
+        # Calculate the Quality Adjusted Hazard Score for each substance (Mean authority score* Mean hazard score)
+        df["pre_Hazard Score"] = df[authority_cols].mean(axis=1) * df[score_cols].mean(axis=1)
+
+        # Calculate the Completeness Score for each substance. (Number of endpoints that have data / total number of endpoints)
+        endpoints = [col.split("_")[0] for col in df.columns if col.endswith("authority")]
+        num_endpoints = len(endpoints)
+        num_endpoints_with_data = df[[f"{endpoint}_score" for endpoint in endpoints]].notna().sum(axis=1)
+        df["pre_completeness"] = num_endpoints_with_data / num_endpoints
+
+        # Collapse on structure by keeping the highest QAH score of all substances associated with each DTXCID.
+        df["Hazard Score"] = df.groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["pre_Hazard Score"].transform(
+            "max"
+        )
+
+        # Keep the highest completeness score associated with each structure's QAH_COLLAPSED value
+        def func(group):
+            max_qah = group["pre_Hazard Score"].max()
+            return group.loc[group["pre_Hazard Score"] == max_qah, "pre_completeness"].max()
+
+        col_comp = (
+            df.groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"]).apply(func, include_groups=False).reset_index()
+        )
+
+        col_comp.rename(columns={0: "Hazard Completeness Score"}, inplace=True)
+        df = df.merge(col_comp, on=["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"], how="left")
+
+        df = df.drop(["pre_Hazard Score", "pre_completeness"], axis=1)
+
+        return df
+
     def mongo_save(self, file, step=""):
         """
         Take file chunk, and if it is a dataframe, arrange it via JSON to save in Mongo.
@@ -1334,63 +1382,87 @@ class NtaRun:
             logger.info("===========Add collapsed and normalized metadata columns===========")
             logger.info(self.data_map["Chemical Results"].columns)
 
-            self.data_map["Chemical Results"].insert(
-                loc=19,
-                column="PATENT_COUNT_COLLAPSED",
-                value=self.data_map["Chemical Results"]
-                .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["PATENT_COUNT"]
-                .transform("sum"),
-            )
-            self.data_map["Chemical Results"].insert(
-                loc=20,
-                column="PATENT_COUNT_COLLAPSED_NORM",
-                value=self.data_map["Chemical Results"]["PATENT_COUNT_COLLAPSED"]
-                / self.data_map["Chemical Results"].groupby("Feature ID")["PATENT_COUNT_COLLAPSED"].transform("max"),
-            )
+            # self.data_map["Chemical Results"].insert(
+            #     loc=19,
+            #     column="PATENT_COUNT_COLLAPSED",
+            #     value=self.data_map["Chemical Results"]
+            #     .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["PATENT_COUNT"]
+            #     .transform("sum"),
+            # )
+            # self.data_map["Chemical Results"].insert(
+            #     loc=20,
+            #     column="PATENT_COUNT_COLLAPSED_NORM",
+            #     value=self.data_map["Chemical Results"]["PATENT_COUNT_COLLAPSED"]
+            #     / self.data_map["Chemical Results"].groupby("Feature ID")["PATENT_COUNT_COLLAPSED"].transform("max"),
+            # )
 
-            self.data_map["Chemical Results"].insert(
-                loc=22,
-                column="LITERATURE_COUNT_COLLAPSED",
-                value=self.data_map["Chemical Results"]
-                .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["LITERATURE_COUNT"]
-                .transform("sum"),
-            )
-            self.data_map["Chemical Results"].insert(
-                loc=23,
-                column="LITERATURE_COUNT_COLLAPSED_NORM",
-                value=self.data_map["Chemical Results"]["LITERATURE_COUNT_COLLAPSED"]
-                / self.data_map["Chemical Results"]
-                .groupby("Feature ID")["LITERATURE_COUNT_COLLAPSED"]
-                .transform("max"),
-            )
+            # self.data_map["Chemical Results"].insert(
+            #     loc=22,
+            #     column="LITERATURE_COUNT_COLLAPSED",
+            #     value=self.data_map["Chemical Results"]
+            #     .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["LITERATURE_COUNT"]
+            #     .transform("sum"),
+            # )
+            # self.data_map["Chemical Results"].insert(
+            #     loc=23,
+            #     column="LITERATURE_COUNT_COLLAPSED_NORM",
+            #     value=self.data_map["Chemical Results"]["LITERATURE_COUNT_COLLAPSED"]
+            #     / self.data_map["Chemical Results"]
+            #     .groupby("Feature ID")["LITERATURE_COUNT_COLLAPSED"]
+            #     .transform("max"),
+            # )
 
-            self.data_map["Chemical Results"].insert(
-                loc=25,
-                column="PUBMED_COUNT_COLLAPSED",
-                value=self.data_map["Chemical Results"]
-                .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["PUBMED_COUNT"]
-                .transform("sum"),
-            )
-            self.data_map["Chemical Results"].insert(
-                loc=26,
-                column="PUBMED_COUNT_COLLAPSED_NORM",
-                value=self.data_map["Chemical Results"]["PUBMED_COUNT_COLLAPSED"]
-                / self.data_map["Chemical Results"].groupby("Feature ID")["PUBMED_COUNT_COLLAPSED"].transform("max"),
-            )
+            # self.data_map["Chemical Results"].insert(
+            #     loc=25,
+            #     column="PUBMED_COUNT_COLLAPSED",
+            #     value=self.data_map["Chemical Results"]
+            #     .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["PUBMED_COUNT"]
+            #     .transform("sum"),
+            # )
+            # self.data_map["Chemical Results"].insert(
+            #     loc=26,
+            #     column="PUBMED_COUNT_COLLAPSED_NORM",
+            #     value=self.data_map["Chemical Results"]["PUBMED_COUNT_COLLAPSED"]
+            #     / self.data_map["Chemical Results"].groupby("Feature ID")["PUBMED_COUNT_COLLAPSED"].transform("max"),
+            # )
 
-            self.data_map["Chemical Results"].insert(
-                loc=28,
-                column="SOURCE_COUNT_COLLAPSED",
-                value=self.data_map["Chemical Results"]
-                .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["SOURCE_COUNT"]
-                .transform("sum"),
-            )
-            self.data_map["Chemical Results"].insert(
-                loc=29,
-                column="SOURCE_COUNT_COLLAPSED_NORM",
-                value=self.data_map["Chemical Results"]["SOURCE_COUNT_COLLAPSED"]
-                / self.data_map["Chemical Results"].groupby("Feature ID")["SOURCE_COUNT_COLLAPSED"].transform("max"),
-            )
+            # self.data_map["Chemical Results"].insert(
+            #     loc=28,
+            #     column="SOURCE_COUNT_COLLAPSED",
+            #     value=self.data_map["Chemical Results"]
+            #     .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])["SOURCE_COUNT"]
+            #     .transform("sum"),
+            # )
+            # self.data_map["Chemical Results"].insert(
+            #     loc=29,
+            #     column="SOURCE_COUNT_COLLAPSED_NORM",
+            #     value=self.data_map["Chemical Results"]["SOURCE_COUNT_COLLAPSED"]
+            #     / self.data_map["Chemical Results"].groupby("Feature ID")["SOURCE_COUNT_COLLAPSED"].transform("max"),
+            # )
+
+            # Add metadata columns to chemical results dataframe
+            metadata_fields = ["PATENT", "LITERATURE", "PUBMED", "SOURCE"]
+            i = 19
+            for field in metadata_fields:
+                self.data_map["Chemical Results"].insert(
+                    i,
+                    f"{field}_COUNT_COLLAPSED",
+                    self.data_map["Chemical Results"]
+                    .groupby(["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"])[f"{field}_COUNT"]
+                    .transform("sum"),
+                )
+                self.data_map["Chemical Results"].insert(
+                    i + 1,
+                    f"{field}_COUNT_COLLAPSED_NORM",
+                    self.data_map["Chemical Results"][f"{field}_COUNT_COLLAPSED"]
+                    / self.data_map["Chemical Results"]
+                    .groupby("Feature ID")[f"{field}_COUNT_COLLAPSED"]
+                    .transform("max"),
+                )
+                i = i + 3
+            # If hazard search was performed, add the relevant hazard calculation columns to the chemical results dataframe
+            if self.parameters["search_hcd"][1] == "yes":
+                self.data_map["Chemical Results"] = self.add_hazard_cols(self.data_map["Chemical Results"])
 
             # Check length of "Chemical Results"
             sheet_limit = 500000
@@ -1456,6 +1528,11 @@ class NtaRun:
             "SOURCE_COUNT_COLLAPSED",
             "SOURCE_COUNT_COLLAPSED_NORM",
         ]
+
+        if self.parameters["search_hcd"] == 1:
+            cols_for_tripod_vis.append("Hazard Score")
+            cols_for_tripod_vis.append("Hazard Completeness Score")
+
         newdf = self.chem_res_map["Chemical Results"][cols_for_tripod_vis].drop_duplicates(
             subset=["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"]
         )
@@ -1465,8 +1542,8 @@ class NtaRun:
         newdf["STRUCTURE_TOTAL_NORM"] = newdf[sumcols].sum(axis=1)
 
         # TEMPORARY UNTIL ACTUAL HAZARD SCORES CAN BE ADDED IN
-        newdf["Hazard Score"] = 6
-        newdf["Hazard Completeness Score"] = 0.5
+        # newdf["Hazard Score"] = 6
+        # newdf["Hazard Completeness Score"] = 0.5
 
         newdf.to_csv(in_memory_buffer, index=False)
 
