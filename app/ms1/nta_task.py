@@ -1511,7 +1511,7 @@ class NtaRun:
             "Skin Sensitization_score_mapped",
             "Skin Irritation_score_mapped",
             "Eye Irritation_score_mapped",
-            "Aquatic Toxicity_score_mapped",
+            "Acute Aquatic Toxicity_score_mapped",
             "Chronic Aquatic Toxicity_score_mapped",
             "Persistence_score_mapped",
             "Bioaccumulation_score_mapped",
