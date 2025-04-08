@@ -1334,7 +1334,8 @@ class NtaRun:
         col_comp.rename(columns={0: "Hazard Completeness Score"}, inplace=True)
         df = df.merge(col_comp, on=["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"], how="left")
 
-        df = df.drop(authority_mapped_cols + score_mapped_cols + ["pre_Hazard Score", "pre_completeness"], axis=1)
+        # df = df.drop(authority_mapped_cols + score_mapped_cols + ["pre_Hazard Score", "pre_completeness"], axis=1)
+        df = df.drop(["pre_Hazard Score", "pre_completeness"], axis=1)
 
         return df
 
