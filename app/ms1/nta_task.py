@@ -1475,9 +1475,54 @@ class NtaRun:
             "SOURCE_COUNT_COLLAPSED_NORM",
         ]
 
+        hazard_cols = [
+            "Acute Mammalian Toxicity Oral_authority_mapped",
+            "Acute Mammalian Toxicity Inhalation_authority_mapped",
+            "Acute Mammalian Toxicity Dermal_authority_mapped",
+            "Carcinogenicity_authority_mapped",
+            "Genotoxicity Mutagenicity_authority_mapped",
+            "Endocrine Disruption_authority_mapped",
+            "Reproductive_authority_mapped",
+            "Developmental_authority_mapped",
+            "Neurotoxicity Repeat Exposure_authority_mapped",
+            "Neurotoxicity Single Exposure_authority_mapped",
+            "Systemic Toxicity Repeat Exposure_authority_mapped",
+            "Systemic Toxicity Single Exposure_authority_mapped",
+            "Skin Sensitization_authority_mapped",
+            "Skin Irritation_authority_mapped",
+            "Eye Irritation_authority_mapped",
+            "Acute Aquatic Toxicity_authority_mapped",
+            "Chronic Aquatic Toxicity_authority_mapped",
+            "Persistence_authority_mapped",
+            "Bioaccumulation_authority_mapped",
+            "Exposure_authority_mapped",
+            "Acute Mammalian Toxicity Oral_score_mapped",
+            "Acute Mammalian Toxicity Inhalation_score_mapped",
+            "Acute Mammalian Toxicity Dermal_score_mapped",
+            "Carcinogenicity_score_mapped",
+            "Genotoxicity Mutagenicity_score_mapped",
+            "Endocrine Disruption_score_mapped",
+            "Reproductive_score_mapped",
+            "Developmental_score_mapped",
+            "Neurotoxicity Repeat Exposure_score_mapped",
+            "Neurotoxicity Single Exposure_score_mapped",
+            "Systemic Toxicity Repeat Exposure_score_mapped",
+            "Systemic Toxicity Single Exposure_score_mapped",
+            "Skin Sensitization_score_mapped",
+            "Skin Irritation_score_mapped",
+            "Eye Irritation_score_mapped",
+            "Aquatic Toxicity_score_mapped",
+            "Chronic Aquatic Toxicity_score_mapped",
+            "Persistence_score_mapped",
+            "Bioaccumulation_score_mapped",
+            "Exposure_score_mapped",
+            "Hazard Score",
+            "Hazard Completeness Score",
+        ]
+
         if self.parameters["search_hcd"][1] == "yes":
-            cols_for_tripod_vis.append("Hazard Score")
-            cols_for_tripod_vis.append("Hazard Completeness Score")
+            for col in hazard_cols:
+                cols_for_tripod_vis.append(col)
 
         newdf = self.chem_res_map["Chemical Results"][cols_for_tripod_vis].drop_duplicates(
             subset=["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"]
