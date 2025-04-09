@@ -1487,7 +1487,10 @@ def feat_drop_df(df, docs, df_flagged):
     return df, df_flagged
 
 
-def clean_features(df_in, controls, tracer_df=False):
+def clean_features(
+    df_in,
+    controls,
+):
     """
     Function that removes (blanks out) observations at feature and occurrence level
     based on user-defined thresholds for replicate percent and CV threshold, and
@@ -1513,8 +1516,10 @@ def clean_features(df_in, controls, tracer_df=False):
     docs["Retention_Time"] = df["Retention_Time"]
     docs["Feature ID"] = df["Feature ID"]
     docs["Duplicate Feature?"] = df["Duplicate Feature?"]
-    if tracer_df:
+    if "Tracer Chemical Match?" in df.columns.tolist():
         docs["Tracer Chemical Match?"] = df["Tracer Chemical Match?"]
+    if "Surrogate Chemical Match?" in df.columns.tolist():
+        docs["Surrogate Chemical Match?"] = df["Surrogate Chemical Match?"]
     if "Compound" in df.columns.tolist():
         docs["Compound"] = df["Compound"]
     # Define lists of various column names

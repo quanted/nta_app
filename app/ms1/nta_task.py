@@ -1067,21 +1067,32 @@ class NtaRun:
             float(self.parameters["min_replicate_hits_blanks"][1]),
             float(self.parameters["mrl_std_multiplier"][1]),
         ]
-        # Check for tracer file
-        tracer_df_bool = False
-        if self.tracer_df is not None:
-            tracer_df_bool = True
         # Pass inputs to clean_features() and store docs, dfs_flagged, and finally dfs
         self.docs = [
-            task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[1] if df is not None else None
+            task_fun.clean_features(
+                df,
+                controls,
+            )[1]
+            if df is not None
+            else None
             for index, df in enumerate(self.dfs)
         ]
         self.dfs_flagged = [
-            task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[2] if df is not None else None
+            task_fun.clean_features(
+                df,
+                controls,
+            )[2]
+            if df is not None
+            else None
             for index, df in enumerate(self.dfs)
         ]
         self.dfs = [
-            task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[0] if df is not None else None
+            task_fun.clean_features(
+                df,
+                controls,
+            )[0]
+            if df is not None
+            else None
             for index, df in enumerate(self.dfs)
         ]
         # subtract blanks from means
