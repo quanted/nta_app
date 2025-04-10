@@ -11,6 +11,7 @@ import logging
 from ...app.ms1.nta_task import run_nta_dask
 from ...tools.ms1 import file_manager
 from ..views_dectorators import api_key_required
+from ...data.atom_ranges import atom_ranges
 
 # set up logging
 logger = logging.getLogger("nta_app.views.ms1")
@@ -32,7 +33,7 @@ def ms1_run_api(request):
     """
     The API to trigger an MS1 task
     """
-    if request.method == 'POST':
+    if request.method == "POST":
         logger.info("POST received")
         try:
             data = request.POST
@@ -46,45 +47,45 @@ def ms1_run_api(request):
             # Initialize parameters dictionary from the POST data (but not files). Second argument gives
             # the defualt value if the parameter is not passed in the POST request data.
             parameters = {
-                'project_name': data.get('project_name', 'Example nta'),
+                "project_name": data.get("project_name", "Example nta"),
                 "version": ["WebApp Version", current_version],
                 "datetime": ["Date & time", str(current_datetime)],
-                'test_files': data.get('test_files', 'no'),
-                'pos_adducts': data.get('pos_adducts', ["Na", "K", "NH4"]),
-                'neg_adducts': data.get('neg_adducts', ["Cl", "HCO2", "CH3CO2", "FA"]),
-                'neutral_losses': data.get('neutral_losses', ["H2O", "CO2"]),
-                'mass_accuracy_units': data.get('mass_accuracy_units', 'ppm'),
-                'mass_accuracy': data.get('mass_accuracy', 10),
-                'rt_accuracy': data.get('rt_accuracy', 0.05),
-                'mass_accuracy_units_tr': data.get('mass_accuracy_units_tr', 'ppm'),
-                'mass_accuracy_tr': data.get('mass_accuracy_tr', 5),
-                'rt_accuracy_tr': data.get('rt_accuracy_tr', 0.1),
-                'tracer_plot_yaxis_format': data.get('tracer_plot_yaxis_format', 'log'),
-                'tracer_plot_trendline': data.get('tracer_plot_trendline', 'yes'),
-                'min_replicate_hits': data.get('min_replicate_hits', 66),
-                'min_replicate_hits_blanks': data.get('min_replicate_hits_blanks', 66),
-                'max_replicate_cv': data.get('max_replicate_cv', 0.8),
-                'mrl_std_multiplier': data.get('mrl_std_multiplier', '3'),
-                'parent_ion_mass_accuracy': data.get('parent_ion_mass_accuracy', 5),
-                'minimum_rt': data.get('minimum_rt', 0.00),
-                'search_dsstox': data.get('search_dsstox', 'yes'),
-                'search_hcd': data.get('search_hcd', 'no'),
-                'search_mode': data.get('search_mode', 'mass'),
-                "do_qnta": data.get('do_qnta', 'no'),
+                "test_files": data.get("test_files", "no"),
+                "pos_adducts": data.get("pos_adducts", ["Na", "K", "NH4"]),
+                "neg_adducts": data.get("neg_adducts", ["Cl", "HCO2", "CH3CO2", "FA"]),
+                "neutral_losses": data.get("neutral_losses", ["H2O", "CO2"]),
+                "mass_accuracy_units": data.get("mass_accuracy_units", "ppm"),
+                "mass_accuracy": data.get("mass_accuracy", 10),
+                "rt_accuracy": data.get("rt_accuracy", 0.05),
+                "mass_accuracy_units_tr": data.get("mass_accuracy_units_tr", "ppm"),
+                "mass_accuracy_tr": data.get("mass_accuracy_tr", 5),
+                "rt_accuracy_tr": data.get("rt_accuracy_tr", 0.1),
+                "tracer_plot_yaxis_format": data.get("tracer_plot_yaxis_format", "log"),
+                "tracer_plot_trendline": data.get("tracer_plot_trendline", "yes"),
+                "min_replicate_hits": data.get("min_replicate_hits", 66),
+                "min_replicate_hits_blanks": data.get("min_replicate_hits_blanks", 66),
+                "max_replicate_cv": data.get("max_replicate_cv", 0.8),
+                "mrl_std_multiplier": data.get("mrl_std_multiplier", "3"),
+                "parent_ion_mass_accuracy": data.get("parent_ion_mass_accuracy", 5),
+                "minimum_rt": data.get("minimum_rt", 0.00),
+                "search_dsstox": data.get("search_dsstox", "yes"),
+                "search_hcd": data.get("search_hcd", "no"),
+                "search_mode": data.get("search_mode", "mass"),
+                "do_qnta": data.get("do_qnta", "no"),
                 "atom_ranges": data.get("atom_ranges", None),
                 "na_val": data.get("na_val", ""),
             }
 
             # Validate numerical fields here
-            MinValueValidator(0)(float(parameters['mass_accuracy']))
-            MinValueValidator(0)(float(parameters['rt_accuracy']))
-            MinValueValidator(0)(float(parameters['mass_accuracy_tr']))
-            MinValueValidator(0)(float(parameters['rt_accuracy_tr']))
-            MinValueValidator(0)(float(parameters['min_replicate_hits']))
-            MinValueValidator(0)(float(parameters['min_replicate_hits_blanks']))
-            MinValueValidator(0)(float(parameters['max_replicate_cv']))
-            MinValueValidator(0)(float(parameters['parent_ion_mass_accuracy']))
-            MinValueValidator(0)(float(parameters['minimum_rt']))
+            MinValueValidator(0)(float(parameters["mass_accuracy"]))
+            MinValueValidator(0)(float(parameters["rt_accuracy"]))
+            MinValueValidator(0)(float(parameters["mass_accuracy_tr"]))
+            MinValueValidator(0)(float(parameters["rt_accuracy_tr"]))
+            MinValueValidator(0)(float(parameters["min_replicate_hits"]))
+            MinValueValidator(0)(float(parameters["min_replicate_hits_blanks"]))
+            MinValueValidator(0)(float(parameters["max_replicate_cv"]))
+            MinValueValidator(0)(float(parameters["parent_ion_mass_accuracy"]))
+            MinValueValidator(0)(float(parameters["minimum_rt"]))
 
             # get the uploaded files from the Request object. Note that the files are in the form of a
             # MultiValueDict. The MultiValueDict is a subclass of the standard Python dictionary that
@@ -167,15 +168,18 @@ def ms1_run_api(request):
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
             inputParameters["do_qnta"][1] = parameters["do_qnta"]
-            # Update atom filtering dictionary
-            # for item1 in atom_ranges:
-            #     for item2 in parameters["atom_ranges"]:
-            #         if item1["element"] == item2["element"]:
-            #             item1["min"] = item2["min"]
-            #             item1["max"] = item2["max"]
-            #             break
-            inputParameters["atom_ranges"][1] = parameters["atom_ranges"]
-            
+            # Update atom filtering dictionary if present
+            if parameters["atom_ranges"] is not None:
+                for item1 in atom_ranges:
+                    for item2 in parameters["atom_ranges"]:
+                        if item1["element"] == item2["element"]:
+                            item1["min"] = item2["min"]
+                            item1["max"] = item2["max"]
+                            break
+                inputParameters["atom_ranges"][1] = parameters["atom_ranges"]
+            else:
+                inputParameters["atom_ranges"][1] = atom_ranges
+
             # Get user-selected adducts via POST.getlist()
             # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
             adduct_li = [
@@ -230,9 +234,9 @@ def ms1_run_api(request):
                 run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
             else:
                 # handle case 2: the user has not selected to run the test files
-                
+
                 # function to validate file extensions using Django's FileExtensionValidator
-                file_validator = FileExtensionValidator(allowed_extensions=['csv'])
+                file_validator = FileExtensionValidator(allowed_extensions=["csv"])
 
                 if "pos_input" in request.FILES.keys():
                     pos_input = request.FILES["pos_input"]
@@ -326,15 +330,14 @@ def ms1_run_api(request):
                 qnta_df,
                 job_id,
             )
-            #return redirect("/nta/ms1/processing/" + job_id, permanent=True)
+            # return redirect("/nta/ms1/processing/" + job_id, permanent=True)
             processing_url = "/nta/ms1/api/status/" + job_id
-            return JsonResponse({'status': 'success', 'job_id': job_id, 'status_url': processing_url}, status=200)
+            return JsonResponse({"status": "success", "job_id": job_id, "status_url": processing_url}, status=200)
 
         except ValidationError as e:
             logger.warning("API - MS1 Job {} is NOT valid. Parameters: {} ".format(job_id, inputParameters))
-            return JsonResponse({'status': 'Input Validation Error', 'message': str(e)}, status=400)
+            return JsonResponse({"status": "Input Validation Error", "message": str(e)}, status=400)
         except json.JSONDecodeError:
             logger.info("Invalid JSON")
-            return JsonResponse({'status': 'Error', 'message': 'Invalid JSON'}, status=400)
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
-               
+            return JsonResponse({"status": "Error", "message": "Invalid JSON"}, status=400)
+    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
