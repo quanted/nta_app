@@ -157,6 +157,7 @@ class NtaRun:
         self.qnta_df = qnta_df
         self.dfs = input_dfs
         self.qnta_dfs_out = None
+        self.qnta_occ_input = None
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values
         self.docs = None
         self.doc_combined = None
@@ -1010,6 +1011,23 @@ class NtaRun:
                     self.blank_headers,
                     self.sample_headers,
                 )[0]
+                if df is not None
+                else None
+            )
+            for df, passthru in zip(self.dfs, self.pass_through)
+        ]
+        self.qnta_occ_input = [
+            (
+                task_fun.qnta_preprocessing(
+                    df,
+                    self.qnta_df,
+                    passthru,
+                    mass_accuracy_tr,
+                    ret_time_accuracy,
+                    ppm,
+                    self.blank_headers,
+                    self.sample_headers,
+                )[2]
                 if df is not None
                 else None
             )

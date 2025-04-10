@@ -2104,7 +2104,17 @@ def qnta_preprocessing(
     sample_groups = [item[0][:-1] for item in sample_groups]
     # Get columns associated with the calibrations
     li = list(df2.columns[5:])
-    prefixes = ["Mean ", "Conc ", "BlankSub Mean ", "RF "]
+    prefixes = [
+        "Mean ",
+        "Median ",
+        "STD ",
+        "CV ",
+        "Detection Count ",
+        "Detection Percentage ",
+        "Conc ",
+        "BlankSub Mean ",
+        "RF ",
+    ]
     cals = li + [(prefix + item) for item in li for prefix in prefixes]
     # Renaming columns in df2
     for col in li:
@@ -2161,6 +2171,8 @@ def qnta_preprocessing(
     cal_cols = [col for col in dfq.columns if any(col.startswith(x) for x in cals)]
     # Ues sample_groups and cal_cols to identify columns to drop
     to_drop = [col for col in dfq.columns if (any(x in col for x in sample_groups) and col not in cal_cols)]
+    # Get columns for qNTA occurrence input file
+    occ_cols = ["Feature ID", "Retention_Time", "Mean MB"] + [col for col in to_drop if col.startswith("Mean ")]
     # Drop unnecessary columns
     dfq.drop(to_drop, axis=1, inplace=True)
     # Get 'Matches' info into main df
@@ -2185,8 +2197,15 @@ def qnta_preprocessing(
     dfq = column_sort_SDS(dfq, passthru)
     # np.where to replace nans with 0s
     dfc["Surrogate Chemical Match?"].fillna(0, inplace=True)
+    # Preserve Chemical Name if present, but don't kill run if not
+    occ_cols = [col for col in occ_cols if col in dfc.columns]
+    # Create qNTA occurrence input file
+    occ_df = dfc[occ_cols]
+    # Perform Blank Subtraction on Means
+    occ_df = Blank_Subtract_Mean(occ_df)
+    occ_df.drop([col for col in occ_df.columns if col.startswith("Mean ")], axis=1, inplace=True)
     # Returns tracers data (dft) and dataframe with 'Tracer Chemical Match?' appended (dfc)
-    return dfq, dfc
+    return dfq, dfc, occ_df
 
 
 def column_sort_SDS(df_in, passthru):
