@@ -254,7 +254,7 @@ class NtaRun:
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
                 logger.info("NEG df columns: {}".format(self.dfs[1].columns.tolist()))
-                logger.info("run_seq_neg df columns: {}".format(self.run_sequence_pos_df.columns.tolist()))
+                logger.info("run_seq_neg df columns: {}".format(self.run_sequence_neg_df.columns.tolist()))
         self.check_tracers()
         if self.verbose:
             logger.info("Checked tracers.")
@@ -1137,7 +1137,7 @@ class NtaRun:
             return
         # Grab the tracer dataframe from self.data_map
         dft = self.data_map["Tracer Detection Statistics"]
-        logger.info("dft: {}".format(dft.columns))
+        # logger.info("dft: {}".format(dft.columns))
         # create summary table
         if "DTXSID" not in dft.columns:
             dft["DTXSID"] = ""
