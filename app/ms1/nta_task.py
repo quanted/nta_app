@@ -1468,6 +1468,12 @@ class NtaRun:
 
             # Save the metadata/hazard csv to MongoDB
             self.save_csv_to_mongo()
+
+            # If hazard search was performed, remove the mapped hazard column from the dataframe, since these columns have already been passed to the results csv in save_csv_to_mongo()
+            if self.parameters["search_hcd"][1] == "yes":
+                columns_to_drop = [col for col in self.data_map["Chemical Results"].columns if col.endswith("mapped")]
+                self.data_map["Chemical Results"] = self.data_map["Chemical Results"].drop(columns=columns_to_drop)
+
             logger.info("===========Saved Chemical Results excel book to MongoDB===========")
         # Create excel book for QAQC
         # Save project name to MongoDB using jobid
