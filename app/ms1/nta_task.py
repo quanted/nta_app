@@ -1458,19 +1458,11 @@ class NtaRun:
                 self.chem_res_map["Chemical Results"] = self.data_map["Chemical Results"]
             # Remove key from 'data_map'
             del self.data_map["Chemical Results"]
-            # Create excel book from Chemical Results
-            # Save project name to MongoDB using jobid
-            self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_chemical_results", encoding="utf-8")
-            # Save results excel file to MongoDB using id
-            id = self.jobid + "_excel_chem"
-            self.gridfs.put(task_fun.create_excel_book(self.chem_res_map, chem_res=True), _id=id)
 
             # Save the metadata/hazard csv to MongoDB
             self.save_csv_to_mongo()
 
             # If hazard search was performed, remove the mapped hazard column from the dataframe, since these columns have already been passed to the results csv in save_csv_to_mongo()
-            logger.info("cols before removing mapped")
-            logger.info(self.chem_res_map["Chemical Results"].columns)
             if self.parameters["search_hcd"][1] == "yes":
                 columns_to_drop = [
                     col for col in self.chem_res_map["Chemical Results"].columns if col.endswith("mapped")
@@ -1478,8 +1470,13 @@ class NtaRun:
                 self.chem_res_map["Chemical Results"] = self.chem_res_map["Chemical Results"].drop(
                     columns=columns_to_drop
                 )
-            logger.info("cols after removing mapped")
-            logger.info(self.chem_res_map["Chemical Results"].columns)
+            # Create excel book from Chemical Results
+            # Save project name to MongoDB using jobid
+            self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_chemical_results", encoding="utf-8")
+            # Save results excel file to MongoDB using id
+            id = self.jobid + "_excel_chem"
+            self.gridfs.put(task_fun.create_excel_book(self.chem_res_map, chem_res=True), _id=id)
+
             logger.info("===========Saved Chemical Results excel book to MongoDB===========")
         # Create excel book for QAQC
         # Save project name to MongoDB using jobid
