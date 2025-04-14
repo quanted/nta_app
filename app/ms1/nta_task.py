@@ -1413,7 +1413,6 @@ class NtaRun:
 
             # NTAW-755
             logger.info("===========Add collapsed and normalized metadata columns===========")
-            logger.info(self.data_map["Chemical Results"].columns)
 
             # Add metadata columns to chemical results dataframe
             metadata_fields = ["PATENT", "LITERATURE", "PUBMED", "SOURCE"]
@@ -1470,6 +1469,8 @@ class NtaRun:
             self.save_csv_to_mongo()
 
             # If hazard search was performed, remove the mapped hazard column from the dataframe, since these columns have already been passed to the results csv in save_csv_to_mongo()
+            logger.info("cols before removing mapped")
+            logger.info(self.chem_res_map["Chemical Results"].columns)
             if self.parameters["search_hcd"][1] == "yes":
                 columns_to_drop = [
                     col for col in self.chem_res_map["Chemical Results"].columns if col.endswith("mapped")
@@ -1477,7 +1478,8 @@ class NtaRun:
                 self.chem_res_map["Chemical Results"] = self.chem_res_map["Chemical Results"].drop(
                     columns=columns_to_drop
                 )
-
+            logger.info("cols after removing mapped")
+            logger.info(self.chem_res_map["Chemical Results"].columns)
             logger.info("===========Saved Chemical Results excel book to MongoDB===========")
         # Create excel book for QAQC
         # Save project name to MongoDB using jobid
