@@ -330,11 +330,8 @@ class MS2Run:
         # convert inputParameters to a dataframe
         inputParameters_df = pd.DataFrame.from_dict(inputParameters, orient="index")
 
-        # Replace first row of inputParameters_df with 'Parameter' and "Value"
-        inputParameters_df = inputParameters_df.drop(0)
-        inputParameters_df.loc[-1] = ["Parameter", "Value"]  # adding a row
-        inputParameters_df.index = inputParameters_df.index + 1  # shifting index
-        inputParameters_df.sort_index(inplace=True)
+        # Add column headers to inputParameters_df
+        inputParameters_df.columns = ["Parameter", "Value"]
 
         # log inputParameters_df
         logger.info("save_data - inputParameters_df:")
