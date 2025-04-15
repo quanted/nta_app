@@ -96,6 +96,11 @@ class OutputServer:
                     db_record = self.gridfs.get(record_id)
                     json_string = db_record.read().decode("utf-8")
                     df = pd.read_json(json_string, orient="split")
+
+                    # format the date and time in input parameters
+                    if name == "input_parameters":
+                        df["Value"][2] = df["Value"][2].replace("T", " ")
+
                     # project_name = db_record['project_name']
                     project_name = db_record.project_name
                     if project_name:
