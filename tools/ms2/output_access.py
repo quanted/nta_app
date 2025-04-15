@@ -99,7 +99,7 @@ class OutputServer:
 
                     # format the date and time in input parameters
                     if name == "input_parameters":
-                        df["Value"][2] = df["Value"][2].replace("T", " ")
+                        df["Value"][2] = df["Value"][2].str.replace("T", " ")
 
                     # project_name = db_record['project_name']
                     project_name = db_record.project_name
