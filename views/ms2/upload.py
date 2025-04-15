@@ -40,7 +40,7 @@ def upload_page(request, form_data=None, form_files=None):
         "version": ["WebApp Version", current_version],
         # "datetime": ["Date & Time", str(current_datetime)],
         "datetime": ["Date & Time", current_datetime.isoformat()],
-        "datetime": ["Date & Time", current_datetime],
+        # "datetime": ["Date & Time", current_datetime],
         "csrfmiddlewaretoken": ["csrfmiddlewaretoken", None],
         "jobID": ["jobID", None],
         "fileUpload": ["fileUpload", []],
