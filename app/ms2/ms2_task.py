@@ -336,6 +336,7 @@ class MS2Run:
         # log inputParameters_df
         logger.info("save_data - inputParameters_df:")
         logger.info(inputParameters_df)
+        logger.info(inputParameters_df[3])
 
         # self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
         # self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
