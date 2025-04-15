@@ -98,8 +98,8 @@ class OutputServer:
                     df = pd.read_json(json_string, orient="split")
 
                     # format the date and time in input parameters
-                    if name == "input_parameters":
-                        df["Value"][2] = "testing"
+                    # if name == "input_parameters":
+                    #     df["Value"][2] = "testing"
 
                     # project_name = db_record['project_name']
                     project_name = db_record.project_name
@@ -118,7 +118,7 @@ class OutputServer:
                         df["Q-SCORE"] = df["Q-SCORE"].round(2)
                         df["PERCENTILE"] = df["PERCENTILE"].round(2)
 
-                    csv_string = df.to_csv(index=False)
+                    csv_string = df.to_csv(index=False, date_format="%Y-%m-%d %H:%M:%S")
                     zipf.writestr(filename, csv_string)
 
                 except (OperationFailure, TypeError, NoFile) as e:
