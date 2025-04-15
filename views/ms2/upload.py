@@ -38,7 +38,8 @@ def upload_page(request, form_data=None, form_files=None):
     inputParameters = {
         "project_name": ["Project Name", None],
         "version": ["WebApp Version", current_version],
-        "datetime": ["Date & Time", str(current_datetime)],
+        # "datetime": ["Date & Time", str(current_datetime)],
+        "datetime": ["Date & Time", current_datetime.isoformat()],
         "csrfmiddlewaretoken": ["csrfmiddlewaretoken", None],
         "jobID": ["jobID", None],
         "fileUpload": ["fileUpload", []],

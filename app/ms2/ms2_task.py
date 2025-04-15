@@ -327,14 +327,8 @@ class MS2Run:
         # Delete csrfmiddlewaretoken from inputParameters
         del inputParameters["csrfmiddlewaretoken"]
 
-        # convert inputParameters to a dataframe
-        inputParameters_df = pd.DataFrame.from_dict(inputParameters, orient="index")
-
-        # Re-index the dataframe so it is no longer indexed by the dictionary keys
+        # convert inputParameters to a dataframe and re-index the dataframe so it is no longer indexed by the dictionary keys
         inputParameters_df = pd.DataFrame.from_dict(inputParameters, orient="index").reset_index().drop(columns="index")
-
-        logger.info(inputParameters_df.iloc[2].iloc[1])
-        logger.info(type(inputParameters_df.iloc[2].iloc[1]))
 
         # Add column headers to inputParameters_df
         inputParameters_df.columns = ["Parameter", "Value"]
@@ -342,8 +336,6 @@ class MS2Run:
         # log inputParameters_df
         logger.info("save_data - inputParameters_df:")
         logger.info(inputParameters_df)
-
-        logger.info(inputParameters_df[2])
 
         # self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
         # self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
