@@ -200,6 +200,14 @@ class NtaInputs(forms.Form):
         ),
         initial="yes",
     )
+    do_atom_filtering = forms.ChoiceField(
+        label="Perform atom filtering?",
+        choices=(
+            ("yes", "yes"),
+            ("no", "no"),
+        ),
+        initial="no",
+    )
     search_hcd = forms.ChoiceField(
         label="Search Cheminformatics Hazard Module for toxicity data",
         choices=(
