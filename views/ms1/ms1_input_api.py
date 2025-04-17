@@ -176,6 +176,7 @@ def ms1_run_api(request):
                 inputParameters["atom_ranges"][1] = atom_ranges
             else:
                 inputParameters["atom_ranges"][1] = None
+<<<<<<< HEAD
             #     # Update atom filtering dictionary if present
             #     if parameters["atom_ranges"] is not None:
             #         for item1 in atom_ranges:
@@ -191,6 +192,23 @@ def ms1_run_api(request):
             # # else set atom_ranges to None
             # else:
             #     inputParameters["atom_ranges"][1] = None
+=======
+            #    # Update atom filtering dictionary if present
+            #    if parameters["atom_ranges"] is not None:
+            #        for item1 in atom_ranges:
+            #            for item2 in parameters["atom_ranges"]:
+            #                if item1["element"] == item2["element"]:
+            #                    item1["min"] = item2["min"]
+            #                    item1["max"] = item2["max"]
+            #                    break
+            #        inputParameters["atom_ranges"][1] = parameters["atom_ranges"]
+            #    # Else, use default dictionary of atom_ranges
+            #    else:
+            #        inputParameters["atom_ranges"][1] = atom_ranges
+            ## else set atom_ranges to None
+            #else:
+            #    inputParameters["atom_ranges"][1] = None
+>>>>>>> 320a02a4f97552ff3672ead6e1fcb407bc036779
 
             # Get user-selected adducts via POST.getlist()
             # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
