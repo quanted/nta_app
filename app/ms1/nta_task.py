@@ -20,6 +20,7 @@ from .cv_scatterplot import *
 
 from . import task_functions as task_fun
 from .WebApp_plotter import WebApp_plotter
+from .qNTA_class import qNTAClass
 import io
 
 logger = logging.getLogger("nta_app.ms1")
@@ -154,8 +155,8 @@ class NtaRun:
         self.tracer_dfs_out = None
         self.run_sequence_pos_df = run_sequence_pos_df
         self.run_sequence_neg_df = run_sequence_neg_df
-        self.qnta_df = qnta_df
         self.dfs = input_dfs
+        self.qnta_df = qnta_df
         self.qnta_dfs_out = None
         self.qnta_occ_input = None
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values
@@ -187,6 +188,7 @@ class NtaRun:
         # os.mkdir(self.data_dir)
         # os.mkdir(self.new_download_dir)
         self.tracer_plots_out = []
+        self.cc_plots_out = None
         self.occurrence_heatmaps_out = []
         self.cv_scatterplots_out = []
 
@@ -992,7 +994,7 @@ class NtaRun:
         Returns:
             None
         """
-        # Call task_fun.qnta_preprocessing(), get dfq
+        # Call task_fun.qnta_preprocessing(), get sds
         do_qNTA = self.parameters["do_qnta"][1] == "yes"
         # Get run parameters
         ppm = self.parameters["mass_accuracy_units_tr"][1] == "ppm"
@@ -1053,16 +1055,49 @@ class NtaRun:
         # Combine Surrogate Detection Statistics from separate modes
         # Combine items of tracer_dfs_out list
         if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
-            dfq = pd.concat([self.qnta_dfs_out[0], self.qnta_dfs_out[1]])
+            sds = pd.concat([self.qnta_dfs_out[0], self.qnta_dfs_out[1]])
         elif self.qnta_dfs_out[0] is not None:
-            dfq = self.qnta_dfs_out[0].copy()
+            sds = self.qnta_dfs_out[0].copy()
         else:
-            dfq = self.qnta_dfs_out[1].copy()
-        # Add Surrogate Detection Statistics to the wnta datamap
-        self.qnta_map["Surrogate Detection Statistics"] = dfq
+            sds = self.qnta_dfs_out[1].copy()
+        # Add Surrogate Detection Statistics to the qnta datamap
+        self.qnta_map["Surrogate Detection Statistics"] = sds
         # Instatiate qNTA objects below
-        #
-        #
+        # If both modes, instantiate both objects and execute both objects
+        if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
+            qnta_pos = qNTAClass(self.qnta_dfs_out[0], validation_input=None, occurrence_input=self.qnta_occ_input[0])
+            qnta_pos.execute()
+            qnta_neg = qNTAClass(self.qnta_dfs_out[1], validation_input=None, occurrence_input=self.qnta_occ_input[1])
+            qnta_neg.execute()
+            # Combine cc_metrics outputs, store in qnta datamap
+            self.qnta_map["Calibration Curve Metrics"] = pd.concat([qnta_pos.cc_metrics, qnta_neg.cc_metrics])
+            # # Get calibration plots
+            # self.cc_plots_out = qnta_pos.all_cal_plots + qnta_neg.all_cal_plots
+            # # Store calibration plots in qnta datamap
+            # for tup in self.cc_plots_out:
+            #     self.qnta_map["calibration_curve_"+tup[1]] = tup[0]
+        # If only positive mode, instatiate positive mode and execute object
+        elif self.qnta_dfs_out[0] is not None:
+            qnta_pos = qNTAClass(self.qnta_dfs_out[0], validation_input=None, occurrence_input=self.qnta_occ_input[0])
+            qnta_pos.execute()
+            # Get cc_metrics output, store in qnta datamap
+            self.qnta_map["Calibration Curve Metrics"] = qnta_pos.cc_metrics
+            # # Get calibration plots
+            # self.cc_plots_out = qnta_pos.all_cal_plots
+            # # Store calibration plots in qnta datamap
+            # for tup in self.cc_plots_out:
+            #     self.qnta_map["calibration_curve_"+tup[1]] = tup[0]
+        # If only negative mode, instantiate negative mode and execute object
+        else:
+            qnta_neg = qNTAClass(self.qnta_dfs_out[1], validation_input=None, occurrence_input=self.qnta_occ_input[1])
+            qnta_neg.execute()
+            # Get cc_metrics output, store in qnta datamap
+            self.qnta_map["Calibration Curve Metrics"] = qnta_neg.cc_metrics
+            # # Get calibration plots
+            # self.cc_plots_out = qnta_neg.all_cal_plots
+            # # Store calibration plots in qnta datamap
+            # for tup in self.cc_plots_out:
+            #     self.qnta_map["calibration_curve_"+tup[1]] = tup[0]
         #
 
     def clean_features(self):
