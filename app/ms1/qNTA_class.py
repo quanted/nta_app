@@ -194,9 +194,9 @@ class qNTAClass:
 
         """
         # Copy input
-        val = self.validation_data.copy()
+        val = self.validation_data
         surr = self.surrogate_cal_data.copy()
-        occ = self.occurrence_data.copy()
+        occ = self.occurrence_data
         # Check if val has been submitted
         if val is not None and occ is not None:
             # Make sure val columns match occ columns
