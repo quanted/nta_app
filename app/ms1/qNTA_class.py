@@ -62,6 +62,15 @@ class qNTAClass:
         Stores unique surrogate chemicals in surrogate_cal_data_long_nonzero as
             surrogate_cal_data_long_nonzero_chems
         """
+        self.parameters = {
+            "seed": 1,
+            "reps": 10000,
+            "alpha": 0.05,
+            "rep_range": True,
+            "long_form": True,
+            "LOO": True,
+            "internal": False,
+        }
         # Required uploaded files
         # Replace NA values with 0 to avoid issues with mathematical operations on DataFrame
         self.surrogate_cal_data = surrogate_cal_data.fillna(0)
@@ -72,6 +81,7 @@ class qNTAClass:
         self.surrogate_cal_data_long_nonzero_chems = None
         self.occurrences_data_nonzero = None
         self.RF_estimate_out = None
+        self.percentiles = np.multiply([self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100)
         self.RF_percs = None
         # Plot holders
         self.all_cal_models = None
@@ -86,14 +96,16 @@ class qNTAClass:
         self.check_validation_data()
         """Perform Calibration Curve Methods"""
         self.cal_curve_all()
-        # """Perform Bootstrap Methods"""
-        # self.RF_percs = self.RF_bootstrap(self.surrogate_cal_data_long_nonzero)
-        # self.RF_estimate_out = self.RF_boot_estimate(
-        #     self.surrogate_cal_data_long_nonzero,
-        #     self.occurrence_data,
-        # )
-
-        # self.RF_boot_validation()
+        """Perform Bootstrap Methods"""
+        self.RF_percs = pd.DataFrame(
+            self.RF_bootstrap(self.surrogate_cal_data_long_nonzero),
+            index=pd.Index(self.percentiles, name="Response Factor Percentile Estimate"),
+            columns=["Minimum", "Median", "Maximum"],
+        ).reset_index()
+        self.RF_estimate_out = self.RF_boot_estimate(
+            self.surrogate_cal_data_long_nonzero,
+            self.occurrence_data,
+        )
 
     """DATA MANIPULATION FUNCTIONS"""
 
@@ -120,26 +132,21 @@ class qNTAClass:
         occ = self.occurrence_data
         val = self.validation_data
         if occ is not None:
-            logger.info("occ is not None")
             # Get cols (only take columns also in val; e.g., no Pool)
             front = [col for col in occ.columns if any(x in col for x in ["Feature", "Chemical", "Retention"])]
             if val is not None:
-                logger.info("val is not None")
                 back = [
                     col for col in occ.columns if col.startswith("BlankSub Mean") and any(x in col for x in val.columns)
                 ]
             else:
-                logger.info("val is None")
                 back = [col for col in occ.columns if col.startswith("BlankSub Mean")]
             # Pare occ down to front + back
             self.occurrence_data = occ[front + back]
-            logger.info("occurrence_data columns= {}".format(self.occurrence_data.columns.values))
             # Identify rows with any zero
             rows_with_zero = (occ[back] == 0).any(axis=1)
             # Create subset limited to chemicals with ONLY non-zero occurrences, store
             self.occurrences_data_nonzero = occ[~rows_with_zero]
         else:
-            logger.info("occ is None")
             # Copy input
             surr = self.surrogate_cal_data.copy()
             # Get cols
@@ -148,7 +155,6 @@ class qNTAClass:
             cols = front + back
             # Subset columns from self.surrogate_cal_data, store
             occ = surr[cols]
-            logger.info("occurrence_data columns= {}".format(self.occurrence_data.columns.values))
             self.occurrence_data = occ
             # Identify rows with any zero
             rows_with_zero = (occ[back] == 0).any(axis=1)
@@ -184,7 +190,6 @@ class qNTAClass:
         long_nz = long.query("`BlankSub Mean` > 0")
         # Add log-10 transformed columns for BlankSub Mean Abundance and Concentration
         long_nz = long_nz.assign(LogAbun=np.log10(long_nz["BlankSub Mean"]), LogConc=np.log10(long_nz["Conc"]))
-        logger.info("long_nz columns= {}".format(long_nz.columns.values))
         # Store unique chemical names in class variable
         self.surrogate_cal_data_long_nonzero_chems = np.unique(long_nz["Chemical Name"])
         # Store df in class variable
@@ -212,7 +217,6 @@ class qNTAClass:
         occ = self.occurrence_data
         # Check if val has been submitted
         if val is not None:
-            logger.info("val is not None")
             # Make sure val columns match occ columns
             # Get occ cols without 'BlankSub Mean ' header
             occ_cols = [col[14:] for col in occ.columns if col.startswith("BlankSub")]
@@ -233,13 +237,10 @@ class qNTAClass:
                 self.validation_data = val.copy()
         # If val has not been submitted
         else:
-            logger.info("val is None")
             # Define blanks, they may still be in column if no val
-            logger.info("surr columns= {}".format(surr.columns.values))
             blanks = ["Blank", "blank", "BLANK", "MB", "Mb", "mb", "mB"]
             # Get Conc col root names
             cols = [col[5:] for col in surr.columns if "Conc " in col if not any(x in col for x in blanks)]
-            logger.info("list comp columns= {}".format(cols))
             # Define regex pattern, use to extract vals from Conc col names
             re_pattern = "(\d+)"
             concs = [int(re.search(re_pattern, col).group()) for col in cols]
@@ -383,3 +384,184 @@ class qNTAClass:
             # If no, call plot_cal_curve() on all items in all_call_models
             for i in self.all_cal_models:
                 self.plot_cal_curve(i, storefig, savefig)
+
+    """RESPONSE FACTOR BOOTSTRAP METHODS"""
+
+    @staticmethod
+    def RF_bootstrap(
+        RF_data,
+        seed=1,
+        reps=10000,
+        alpha=0.05,
+        rep_range=True,
+    ):
+        """
+        Performs hierarchical response factor bootstrap (choosing one chemical, then one of its RFs)
+
+        Parameters
+        ----------
+        RF_data : pandas DataFrame
+            DataFrame containing "Chemical Name" and "RF" columns
+        seed : int, optional
+            Seed used for the random bootstrap sampling (np.random.choice()). The default is 1.
+        reps : int, optional
+            Number of bootstrap repetitions. The default is 10000.
+        alpha : float, optional
+            Alpha value for confidence level, determines percentiles used. The default is 0.05.
+        rep_range : Boolean, optional
+            Output minimum and maximum across bootstrap repetitions for each percentile. The default is True.
+
+        Returns
+        -------
+        If rep_range, numpy array with median, minimum, and maximum of percentiles across bootstrap repetitions
+        Else, numpy array with median of percentiles across bootstrap replicates
+
+        """
+        # Get self.surrogate_cal_data_long_nonzero
+        df = RF_data.copy()
+        # Get unique chems from RF_data
+        chems = pd.unique(df["Chemical Name"])
+        # Set sample size of bootstrap resampling to number of unique chemicals in surrogate data (allow user to customize? Should always default to len(chems))
+        sample_size = len(chems)
+        # Store in a list each surrogate chemical's RFs in a separate list
+        chem_RFs_list = [df[df["Chemical Name"] == i]["RF"].tolist() for i in chems]
+        # Add lists of RFs to dictionary
+        chem_RFs_list_dict = {}
+        for chem, vals in zip(chems, chem_RFs_list):
+            chem_RFs_list_dict[chem] = vals
+        # Store number of RFs for each chemical for easy random sampling
+        dict_len = [len(value) for key, value in chem_RFs_list_dict.items()]
+        # Set seed for bootstrap random resampling
+        np.random.seed(seed)
+        # Sample a chemical's index from list
+        chem_num_sampled = np.random.choice(range(len(chems)), size=sample_size * reps, replace=True)
+        chems_sampled = [chems[i] for i in chem_num_sampled]
+        # Resample random index from within range of each chemical's RFs
+        RF_indices_sampled = [np.random.choice(range(dict_len[i])) for i in chem_num_sampled]
+        # Get RF from the randomly sampled indices from chem_num_sampled
+        RFs_sampled_by_index = [chem_RFs_list_dict.get(i)[j] for i, j in zip(chems_sampled, RF_indices_sampled)]
+        RFs_sampled_by_index = np.split(np.array(RFs_sampled_by_index), reps)
+        # Percentiles for RF bootstrap
+        percentiles = np.multiply([alpha / 2, 0.5, 1 - (alpha / 2)], 100)
+        # Calculate quantiles per sample
+        quantile_per_sample = [np.percentile(i, percentiles) for i in RFs_sampled_by_index]
+        # Transpose to change from list to np.array, with columns as resamples and rows as percentiles, to facilitate calculations
+        quantiles_overall = np.transpose(quantile_per_sample)
+        # Get the medians for each quantile across resamples
+        RF_quantiles = [
+            np.median(quantiles_overall[0]),
+            np.median(quantiles_overall[1]),
+            np.median(quantiles_overall[2]),
+        ]
+        # Save minimum and maximum across bootstrap replicates in addition to median
+        if rep_range:
+            RF_rep_min = [np.min(quantiles_overall[0]), np.min(quantiles_overall[1]), np.min(quantiles_overall[2])]
+            RF_rep_max = [np.max(quantiles_overall[0]), np.max(quantiles_overall[1]), np.max(quantiles_overall[2])]
+            return np.array([RF_rep_min, RF_quantiles, RF_rep_max])
+        else:
+            return np.array(RF_quantiles)
+
+    def RF_boot_estimate(
+        self,
+        long_nz,
+        occ,
+        seed=1,
+        reps=10000,
+        alpha=0.05,
+        rep_range=True,
+        long_form=True,
+    ):
+        """
+        Performs qNTA concentration estimation on occurrence_data using RF bootstrap percentiles
+
+        Parameters
+        ----------
+        RF_data : pandas DataFrame
+            DataFrame containing "Chemical_Name" and "RF" columns for qNTA surrogates
+        occurrence_data : pandas DataFrame
+            DataFrame containing "Chemincal Name" column and columns with BlankSub Mean abundances (named using "BlankSub Mean {Sample}")
+        seed : int, optional
+            Seed used for the random bootstrap sampling (np.random.choice()). The default is 1.
+        reps : int, optional
+            Number of bootstrap repetitions. The default is 10000.
+        alpha : float, optional
+            Alpha for the confidence level, determines the RF percentiles used. The default is 0.05.
+        rep_range : Boolean, optional
+            Provide minimum and maximum for each RF percentile across bootstrap repetitions, in addition to median. The default is True.
+        long_form : Boolean, optional
+            Return long form DataFrame (columns for "ConcLCL","ConcEst","ConcUCL", rows are unique chemical-sample combinations)
+
+        Returns
+        -------
+        RF_estimate_out : pandas DataFrame
+            If long_form, contains "Chemical_Name", "Sample", "ConcLCL", "ConcEst", "ConcEst" columns
+            Else, contains "Chemical_Name" column and "{Sample}_ConcLCL","{Sample}_ConcEst", "{Sample}_UCL" for all samples
+
+        """
+        # Get required attributes
+        RF_estimate_out = occ.copy()
+        RF_data = long_nz.copy()
+        # Get bootstrap percentile estimates
+        RF_percs = self.RF_bootstrap(RF_data, seed, reps, alpha, rep_range)
+        if long_form:
+            # Change data to long form
+            RF_estimate_out = pd.melt(
+                RF_estimate_out,
+                id_vars=["Feature ID"],
+                value_vars=RF_estimate_out.columns[RF_estimate_out.columns.str.startswith("BlankSub Mean ")].tolist(),
+                var_name="Sample",
+                value_name="BlankSub Mean",
+            )
+            # Remove "BlankSub Mean " from sample names
+            RF_estimate_out["Sample"] = [i[14:] for i in RF_estimate_out["Sample"]]
+            # Divide BlankSub Mean abundance by RF percentiles to get concentration estimates
+            # Account for data shape of RF_estimate_out (if minimum and maximum of percentiles estimates across repetitions are present)
+            if rep_range:
+                RF_estimate_out["ConcLCL"] = RF_estimate_out["BlankSub Mean"] / RF_percs[1][2]
+                RF_estimate_out["ConcEst"] = RF_estimate_out["BlankSub Mean"] / RF_percs[1][1]
+                RF_estimate_out["ConcUCL"] = RF_estimate_out["BlankSub Mean"] / RF_percs[1][0]
+            else:
+                RF_estimate_out["ConcLCL"] = RF_estimate_out["BlankSub Mean"] / RF_percs[2]
+                RF_estimate_out["ConcEst"] = RF_estimate_out["BlankSub Mean"] / RF_percs[1]
+                RF_estimate_out["ConcUCL"] = RF_estimate_out["BlankSub Mean"] / RF_percs[0]
+        else:
+            abun_cols = RF_estimate_out.columns[RF_estimate_out.columns.str.startswith("BlankSub Mean ")].tolist()
+            # Remove "BlankSub Mean" from sample names used for making concentration column names
+            conc_col_names = [i[14:] for i in abun_cols]
+            # Divide BlankSub Mean abundance by RF percentiles to get concentration estimates
+            # Account for data shape of RF_estimate_out (if minimum and maximum of percentiles estimates across repetitions are present)
+            if rep_range:
+                RF_estimate_out[[f"{i}_ConcLCL" for i in conc_col_names]] = (
+                    RF_estimate_out.loc[:, abun_cols] / RF_percs[1][2]
+                )
+                RF_estimate_out[[f"{i}_ConcEst" for i in conc_col_names]] = (
+                    RF_estimate_out.loc[:, abun_cols] / RF_percs[1][1]
+                )
+                RF_estimate_out[[f"{i}_ConcUCL" for i in conc_col_names]] = (
+                    RF_estimate_out.loc[:, abun_cols] / RF_percs[1][0]
+                )
+            else:
+                RF_estimate_out[[f"{i}_ConcLCL" for i in conc_col_names]] = (
+                    RF_estimate_out.loc[:, abun_cols] / RF_percs[2]
+                )
+                RF_estimate_out[[f"{i}_ConcEst" for i in conc_col_names]] = (
+                    RF_estimate_out.loc[:, abun_cols] / RF_percs[0]
+                )
+                RF_estimate_out[[f"{i}_ConcUCL" for i in conc_col_names]] = (
+                    RF_estimate_out.loc[:, abun_cols] / RF_percs[1]
+                )
+        # Account for data shape of RF_estimate_out in adding median RF percentiles as columns
+        if rep_range:
+            RF_estimate_out[["RF0.025", "RF0.5", "RF0.975"]] = [RF_percs[1][0], RF_percs[1][1], RF_percs[1][2]]
+        else:
+            RF_estimate_out[["RF0.025", "RF0.5", "RF0.975"]] = [RF_percs[0], RF_percs[1], RF_percs[2]]
+        if long_form:
+            RF_estimate_out = RF_estimate_out.loc[
+                :, ["Feature ID", "Sample", "RF0.025", "RF0.5", "RF0.975", "ConcLCL", "ConcEst", "ConcUCL"]
+            ]
+            return RF_estimate_out
+        else:
+            # Reorder columns so that samples are grouped together
+            column_order = [i + j for i in conc_col_names for j in ["_ConcLCL", "_ConcEst", "_ConcUCL"]]
+            RF_estimate_out = RF_estimate_out.loc[:, ["Feature ID"] + ["RF0.025", "RF0.5", "RF0.975"] + column_order]
+            return RF_estimate_out
