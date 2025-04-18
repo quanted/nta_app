@@ -116,12 +116,15 @@ class qNTAClass:
         # Copy input
         occ = self.occurrence_data
         val = self.validation_data
-        if occ is not None and val is not None:
+        if occ is not None:
             # Get cols (only take columns also in val; e.g., no Pool)
             front = [col for col in occ.columns if any(x in col for x in ["Feature", "Chemical", "Retention"])]
-            back = [
-                col for col in occ.columns if col.startswith("BlankSub Mean") and any(x in col for x in val.columns)
-            ]
+            if val is not None:
+                back = [
+                    col for col in occ.columns if col.startswith("BlankSub Mean") and any(x in col for x in val.columns)
+                ]
+            else:
+                back = [col for col in occ.columns if col.startswith("BlankSub Mean")]
             # Pare occ down to front + back
             self.occurrence_data = occ[front + back]
             # Identify rows with any zero
@@ -198,7 +201,7 @@ class qNTAClass:
         surr = self.surrogate_cal_data.copy()
         occ = self.occurrence_data
         # Check if val has been submitted
-        if val is not None and occ is not None:
+        if val is not None:
             # Make sure val columns match occ columns
             # Get occ cols without 'BlankSub Mean ' header
             occ_cols = [col[14:] for col in occ.columns if col.startswith("BlankSub")]
