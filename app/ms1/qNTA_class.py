@@ -234,9 +234,11 @@ class qNTAClass:
         # If val has not been submitted
         else:
             logger.info("val is None")
-            # Get Conc col root names
+            # Define blanks, they may still be in column if no val
             logger.info("surr columns= {}".format(surr.columns.values))
-            cols = [col[5:] for col in surr.columns if "Conc " in col]
+            blanks = ["Blank", "blank", "BLANK", "MB", "Mb", "mb", "mB"]
+            # Get Conc col root names
+            cols = [col[5:] for col in surr.columns if "Conc " in col if not any(x in col for x in blanks)]
             logger.info("list comp columns= {}".format(cols))
             # Define regex pattern, use to extract vals from Conc col names
             re_pattern = "(\d+)"
