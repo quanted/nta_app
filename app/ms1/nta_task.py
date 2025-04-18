@@ -1065,8 +1065,12 @@ class NtaRun:
         # Instatiate qNTA objects below
         # If both modes, instantiate both objects and execute both objects
         if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
+            logger.info("qnta_dfs_out[0] columns= {}".format(self.qnta_dfs_out[0].columns.values))
+            logger.info("qnta_occ_input[0] columns= {}".format(self.qnta_occ_input[0].columns.values))
             qnta_pos = qNTAClass(self.qnta_dfs_out[0], validation_input=None, occurrence_input=self.qnta_occ_input[0])
             qnta_pos.execute()
+            logger.info("qnta_dfs_out[1] columns= {}".format(self.qnta_dfs_out[1].columns.values))
+            logger.info("qnta_occ_input[1] columns= {}".format(self.qnta_occ_input[1].columns.values))
             qnta_neg = qNTAClass(self.qnta_dfs_out[1], validation_input=None, occurrence_input=self.qnta_occ_input[1])
             qnta_neg.execute()
             # Combine cc_metrics outputs, store in qnta datamap

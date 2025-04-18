@@ -1,10 +1,13 @@
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
+import logging
 
 from matplotlib import pyplot as plt
 import seaborn as sns
 import re
+
+logger = logging.getLogger("nta_app.ms1")
 
 
 class qNTAClass:
@@ -117,21 +120,26 @@ class qNTAClass:
         occ = self.occurrence_data
         val = self.validation_data
         if occ is not None:
+            logger.info("occ is not None")
             # Get cols (only take columns also in val; e.g., no Pool)
             front = [col for col in occ.columns if any(x in col for x in ["Feature", "Chemical", "Retention"])]
             if val is not None:
+                logger.info("val is not None")
                 back = [
                     col for col in occ.columns if col.startswith("BlankSub Mean") and any(x in col for x in val.columns)
                 ]
             else:
+                logger.info("val is None")
                 back = [col for col in occ.columns if col.startswith("BlankSub Mean")]
             # Pare occ down to front + back
             self.occurrence_data = occ[front + back]
+            logger.info("occurrence_data columns= {}".format(self.occurrence_data.columns.values))
             # Identify rows with any zero
             rows_with_zero = (occ[back] == 0).any(axis=1)
             # Create subset limited to chemicals with ONLY non-zero occurrences, store
             self.occurrences_data_nonzero = occ[~rows_with_zero]
         else:
+            logger.info("occ is None")
             # Copy input
             surr = self.surrogate_cal_data.copy()
             # Get cols
@@ -140,6 +148,7 @@ class qNTAClass:
             cols = front + back
             # Subset columns from self.surrogate_cal_data, store
             occ = surr[cols]
+            logger.info("occurrence_data columns= {}".format(self.occurrence_data.columns.values))
             self.occurrence_data = occ
             # Identify rows with any zero
             rows_with_zero = (occ[back] == 0).any(axis=1)
@@ -175,6 +184,7 @@ class qNTAClass:
         long_nz = long.query("`BlankSub Mean` > 0")
         # Add log-10 transformed columns for BlankSub Mean Abundance and Concentration
         long_nz = long_nz.assign(LogAbun=np.log10(long_nz["BlankSub Mean"]), LogConc=np.log10(long_nz["Conc"]))
+        logger.info("long_nz columns= {}".format(long_nz.columns.values))
         # Store unique chemical names in class variable
         self.surrogate_cal_data_long_nonzero_chems = np.unique(long_nz["Chemical Name"])
         # Store df in class variable
@@ -202,6 +212,7 @@ class qNTAClass:
         occ = self.occurrence_data
         # Check if val has been submitted
         if val is not None:
+            logger.info("val is not None")
             # Make sure val columns match occ columns
             # Get occ cols without 'BlankSub Mean ' header
             occ_cols = [col[14:] for col in occ.columns if col.startswith("BlankSub")]
@@ -222,8 +233,11 @@ class qNTAClass:
                 self.validation_data = val.copy()
         # If val has not been submitted
         else:
+            logger.info("val is None")
             # Get Conc col root names
+            logger.info("surr columns= {}".format(surr.columns.values))
             cols = [col[5:] for col in surr.columns if "Conc " in col]
+            logger.info("list comp columns= {}".format(cols))
             # Define regex pattern, use to extract vals from Conc col names
             re_pattern = "(\d+)"
             concs = [int(re.search(re_pattern, col).group()) for col in cols]
