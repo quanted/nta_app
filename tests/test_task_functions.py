@@ -2,8 +2,8 @@ import pandas as pd
 import os
 from nta_app.app.ms1.task_functions import assign_feature_id, differences as count_string_differences, parse_headers, get_sample_and_blank_headers, passthrucol, window_size
 
-my_pos_df = pd.read_csv("nta_app/input/ms1/1a_MZmine3_pos.csv")
-my_neg_df = pd.read_csv("nta_app/input/ms1/1b_MZmine3_neg.csv")
+my_pos_df = pd.read_csv("input/ms1/1a_MZmine3_pos.csv")
+my_neg_df = pd.read_csv("input/ms1/1b_MZmine3_neg.csv")
 
 def test__added_feature_id__new_column_for_feature_id():
     data = {
@@ -16,7 +16,6 @@ def test__added_feature_id__new_column_for_feature_id():
     new_df = assign_feature_id(df_in=old_df, start=1)
 
     assert "Feature ID" in new_df.columns
-
 
 def test__count_string_differences__for_basic_strings():
     assert count_string_differences(s1="ones", s2="one") == 2
