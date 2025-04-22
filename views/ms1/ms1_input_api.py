@@ -37,7 +37,7 @@ def ms1_run_api(request):
         logger.info("POST received")
         try:
             data = request.POST
-            logger.debug("POST: {}".format(request.POST))
+            logger.info("POST: {}".format(request.POST))
             # generate a timestamp with the current time and date
             current_datetime = datetime.datetime.now()
 
