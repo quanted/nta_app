@@ -175,13 +175,17 @@ def ms1_run_api(request):
             if inputParameters["do_atom_filtering"][1] == "yes":
                 # Update atom filtering dictionary if present
                 if parameters["atom_ranges"] is not None:
-                    for item1 in atom_ranges:
+                    # Store in temporary variable for updates
+                    atom_dict_li = atom_ranges.copy()
+                    # Iterate through list items and update matches
+                    for item1 in atom_dict_li:
                         for item2 in parameters["atom_ranges"]:
                             if item1["element"] == item2["element"]:
                                 item1["min"] = item2["min"]
                                 item1["max"] = item2["max"]
                                 break
-                    inputParameters["atom_ranges"][1] = atom_ranges
+                    # Store updated dictionary list
+                    inputParameters["atom_ranges"][1] = atom_dict_li
                 # Else, use default dictionary of atom_ranges
                 else:
                     inputParameters["atom_ranges"][1] = atom_ranges
