@@ -76,7 +76,8 @@ def ms1_run_api(request):
                 "atom_ranges": data.get("atom_ranges", None),
                 "na_val": data.get("na_val", ""),
             }
-
+            # Log POST.request
+            logger.info("POST inputs: {} ".format(parameters))
             # Validate numerical fields here
             MinValueValidator(0)(float(parameters["mass_accuracy"]))
             MinValueValidator(0)(float(parameters["rt_accuracy"]))
@@ -175,6 +176,9 @@ def ms1_run_api(request):
             if inputParameters["do_atom_filtering"][1] == "yes":
                 # Update atom filtering dictionary if present
                 if parameters["atom_ranges"] is not None:
+                    # Log POST.request
+                    logger.info("Atom filtering is yes, and user submitted atom_ranges")
+                    logger.info("parameters atom_ranges: {} ".format(parameters["atom_ranges"]))
                     # Store in temporary variable for updates
                     atom_dict_li = atom_ranges.copy()
                     # Iterate through list items and update matches
@@ -184,6 +188,8 @@ def ms1_run_api(request):
                                 item1["min"] = item2["min"]
                                 item1["max"] = item2["max"]
                                 break
+
+                    logger.info("updated atom_ranges: {} ".format(atom_dict_li))
                     # Store updated dictionary list
                     inputParameters["atom_ranges"][1] = atom_dict_li
                 # Else, use default dictionary of atom_ranges
