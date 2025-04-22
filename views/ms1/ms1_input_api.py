@@ -176,7 +176,7 @@ def ms1_run_api(request):
             # Check if 'do_atom_filtering'
             if inputParameters["do_atom_filtering"][1] == "yes":
                 # Get user-submitted atom dict li
-                us_atom_dict_li = request.POST.getlist("atom_ranges[]")
+                us_atom_dict_li = request.POST.getlist("atom_ranges")
                 logger.info("parameters atom_ranges: {} ".format(us_atom_dict_li))
                 # Update atom filtering dictionary if present
                 if us_atom_dict_li is not None:
@@ -201,23 +201,6 @@ def ms1_run_api(request):
             # else set atom_ranges to None
             else:
                 inputParameters["atom_ranges"][1] = None
-
-            # # Get user-selected adducts via POST.getlist()
-            # # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
-            # adduct_li = [
-            #     ("pos_adducts", "pos_adducts[]"),
-            #     ("neg_adducts", "neg_adducts[]"),
-            #     ("neutral_losses", "neutral_losses[]"),
-            # ]
-            # for item in adduct_li:
-            #     qed = request.POST.getlist(item[0])
-            #     amos = request.POST.getlist(ilogger.debug("POST: {}".format(request.POST))tem[1])
-            #     if len(amos) > len(qed):
-            #         logger.info("AMOS")
-            #         inputParameters[item[0]][1] = amos
-            #     else:
-            #         logger.info("QED")
-            #         inputParameters[item[0]][1] = qed
 
             # Print selected adducts to logger
             logger.info("pos adducts list: {}".format(inputParameters["pos_adducts"][1]))
