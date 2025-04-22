@@ -37,7 +37,7 @@ def ms1_run_api(request):
         logger.info("POST received")
         try:
             data = request.POST
-
+            logger.debug("POST: {}".format(request.POST))
             # generate a timestamp with the current time and date
             current_datetime = datetime.datetime.now()
 
@@ -211,7 +211,7 @@ def ms1_run_api(request):
             # ]
             # for item in adduct_li:
             #     qed = request.POST.getlist(item[0])
-            #     amos = request.POST.getlist(item[1])
+            #     amos = request.POST.getlist(ilogger.debug("POST: {}".format(request.POST))tem[1])
             #     if len(amos) > len(qed):
             #         logger.info("AMOS")
             #         inputParameters[item[0]][1] = amos
