@@ -51,9 +51,9 @@ def ms1_run_api(request):
                 "version": ["WebApp Version", current_version],
                 "datetime": ["Date & time", str(current_datetime)],
                 "test_files": data.get("test_files", "no"),
-                "pos_adducts": data.get("pos_adducts", ["Na", "K", "NH4"]),
-                "neg_adducts": data.get("neg_adducts", ["Cl", "HCO2", "CH3CO2", "FA"]),
-                "neutral_losses": data.get("neutral_losses", ["H2O", "CO2"]),
+                "pos_adducts": data.getlist("pos_adducts[]", ["Na", "K", "NH4"]),
+                "neg_adducts": data.getlist("neg_adducts[]", ["Cl", "HCO2", "CH3CO2", "FA"]),
+                "neutral_losses": data.getlist("neutral_losses[]", ["H2O", "CO2"]),
                 "mass_accuracy_units": data.get("mass_accuracy_units", "ppm"),
                 "mass_accuracy": data.get("mass_accuracy", 10),
                 "rt_accuracy": data.get("rt_accuracy", 0.05),
@@ -151,6 +151,9 @@ def ms1_run_api(request):
             # run_sequence_neg_file, and tracer_input, which are handled separately
             inputParameters["project_name"][1] = parameters["project_name"]
             inputParameters["test_files"][1] = parameters["test_files"]
+            inputParameters["pos_adducts"][1] = parameters["pos_adducts"]
+            inputParameters["neg_adducts"][1] = parameters["neg_adducts"]
+            inputParameters["neutral_losses"][1] = parameters["neutral_losses"]
             inputParameters["mass_accuracy_units"][1] = parameters["mass_accuracy_units"]
             inputParameters["mass_accuracy"][1] = parameters["mass_accuracy"]
             inputParameters["rt_accuracy"][1] = parameters["rt_accuracy"]
@@ -173,7 +176,7 @@ def ms1_run_api(request):
             # Check if 'do_atom_filtering'
             if inputParameters["do_atom_filtering"][1] == "yes":
                 # Get user-submitted atom dict li
-                us_atom_dict_li = request.POST.getlist("atom_ranges")
+                us_atom_dict_li = request.POST.getlist("atom_ranges[]")
                 logger.info("parameters atom_ranges: {} ".format(us_atom_dict_li))
                 # Update atom filtering dictionary if present
                 if us_atom_dict_li is not None:
@@ -199,22 +202,22 @@ def ms1_run_api(request):
             else:
                 inputParameters["atom_ranges"][1] = None
 
-            # Get user-selected adducts via POST.getlist()
-            # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
-            adduct_li = [
-                ("pos_adducts", "pos_adducts[]"),
-                ("neg_adducts", "neg_adducts[]"),
-                ("neutral_losses", "neutral_losses[]"),
-            ]
-            for item in adduct_li:
-                qed = request.POST.getlist(item[0])
-                amos = request.POST.getlist(item[1])
-                if len(amos) > len(qed):
-                    logger.info("AMOS")
-                    inputParameters[item[0]][1] = amos
-                else:
-                    logger.info("QED")
-                    inputParameters[item[0]][1] = qed
+            # # Get user-selected adducts via POST.getlist()
+            # # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters
+            # adduct_li = [
+            #     ("pos_adducts", "pos_adducts[]"),
+            #     ("neg_adducts", "neg_adducts[]"),
+            #     ("neutral_losses", "neutral_losses[]"),
+            # ]
+            # for item in adduct_li:
+            #     qed = request.POST.getlist(item[0])
+            #     amos = request.POST.getlist(item[1])
+            #     if len(amos) > len(qed):
+            #         logger.info("AMOS")
+            #         inputParameters[item[0]][1] = amos
+            #     else:
+            #         logger.info("QED")
+            #         inputParameters[item[0]][1] = qed
 
             # Print selected adducts to logger
             logger.info("pos adducts list: {}".format(inputParameters["pos_adducts"][1]))
