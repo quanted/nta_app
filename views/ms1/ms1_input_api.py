@@ -173,24 +173,21 @@ def ms1_run_api(request):
             inputParameters["do_atom_filtering"][1] = parameters["do_atom_filtering"]
             # Check if 'do_atom_filtering'
             if inputParameters["do_atom_filtering"][1] == "yes":
-                inputParameters["atom_ranges"][1] = atom_ranges
+                # Update atom filtering dictionary if present
+                if parameters["atom_ranges"] is not None:
+                    for item1 in atom_ranges:
+                        for item2 in parameters["atom_ranges"]:
+                            if item1["element"] == item2["element"]:
+                                item1["min"] = item2["min"]
+                                item1["max"] = item2["max"]
+                                break
+                    inputParameters["atom_ranges"][1] = atom_ranges
+                # Else, use default dictionary of atom_ranges
+                else:
+                    inputParameters["atom_ranges"][1] = atom_ranges
+            # else set atom_ranges to None
             else:
                 inputParameters["atom_ranges"][1] = None
-            #    # Update atom filtering dictionary if present
-            #    if parameters["atom_ranges"] is not None:
-            #        for item1 in atom_ranges:
-            #            for item2 in parameters["atom_ranges"]:
-            #                if item1["element"] == item2["element"]:
-            #                    item1["min"] = item2["min"]
-            #                    item1["max"] = item2["max"]
-            #                    break
-            #        inputParameters["atom_ranges"][1] = parameters["atom_ranges"]
-            #    # Else, use default dictionary of atom_ranges
-            #    else:
-            #        inputParameters["atom_ranges"][1] = atom_ranges
-            ## else set atom_ranges to None
-            # else:
-            #    inputParameters["atom_ranges"][1] = None
 
             # Get user-selected adducts via POST.getlist()
             # Iterate through tuples to sort out whether job is from qed or amos, and store values in inputParameters

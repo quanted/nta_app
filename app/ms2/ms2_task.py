@@ -163,6 +163,9 @@ class MS2Run:
         self.log_memory_usage("Calculating Similarity Scores")
         self.log_dask_memory("Calculating Similarity Scores")
 
+        self.set_status("Retrieving Substances from DSSTox Database")
+        
+
         self.set_status("Saving Data")
         self.save_data()
         self.log_memory_usage("Saving Data")
