@@ -76,8 +76,6 @@ def ms1_run_api(request):
                 "atom_ranges": data.get("atom_ranges", None),
                 "na_val": data.get("na_val", ""),
             }
-            # Log POST.request
-            logger.info("POST inputs: {} ".format(parameters))
             # Validate numerical fields here
             MinValueValidator(0)(float(parameters["mass_accuracy"]))
             MinValueValidator(0)(float(parameters["rt_accuracy"]))
@@ -174,16 +172,18 @@ def ms1_run_api(request):
             inputParameters["do_atom_filtering"][1] = parameters["do_atom_filtering"]
             # Check if 'do_atom_filtering'
             if inputParameters["do_atom_filtering"][1] == "yes":
+                # Get user-submitted atom dict li
+                us_atom_dict_li = request.POST.getlist("atom_ranges")
+                logger.info("parameters atom_ranges: {} ".format(us_atom_dict_li))
                 # Update atom filtering dictionary if present
-                if parameters["atom_ranges"] is not None:
+                if us_atom_dict_li is not None:
                     # Log POST.request
                     logger.info("Atom filtering is yes, and user submitted atom_ranges")
-                    logger.info("parameters atom_ranges: {} ".format(parameters["atom_ranges"]))
                     # Store in temporary variable for updates
                     atom_dict_li = atom_ranges.copy()
                     # Iterate through list items and update matches
                     for item1 in atom_dict_li:
-                        for item2 in parameters["atom_ranges"]:
+                        for item2 in us_atom_dict_li:
                             if item1["element"] == item2["element"]:
                                 item1["min"] = item2["min"]
                                 item1["max"] = item2["max"]
@@ -210,8 +210,10 @@ def ms1_run_api(request):
                 qed = request.POST.getlist(item[0])
                 amos = request.POST.getlist(item[1])
                 if len(amos) > len(qed):
+                    logger.info("AMOS")
                     inputParameters[item[0]][1] = amos
                 else:
+                    logger.info("QED")
                     inputParameters[item[0]][1] = qed
 
             # Print selected adducts to logger
