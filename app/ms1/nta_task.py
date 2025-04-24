@@ -1548,8 +1548,7 @@ class NtaRun:
         # TODO check for presence of neg and pos mode detection statistics in the datamap
         if "All Detection Statistics (Pos)" in self.data_map and "All Detection Statistics (Neg)" in self.data_map:
             newdf = pd.concat(
-                self.data_map["All Detection Statistics (Pos)"],
-                self.data_map["All Detection Statistics (Neg)"],
+                [self.data_map["All Detection Statistics (Pos)"], self.data_map["All Detection Statistics (Neg)"]],
                 ignore_index=True,
             )
         elif "All Detection Statistics (Pos)" in self.data_map:
