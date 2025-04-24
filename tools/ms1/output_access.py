@@ -194,10 +194,10 @@ class OutputServer:
             zipf.writestr(filename, qaqc_data)
 
             QAQC_csv_file = self.gridfs.get(f"{self.jobid}_csv_for_QAQC_visuals").read().decode()
-                project_name = str(self.gridfs.get(f"{self.jobid}_project_name_QAQC").read(), "utf-8")
-                filename = project_name.replace(" ", "_") + "_for_QAQC_visuals.csv"
-                zipf.writestr(filename, QAQC_csv_file)
-                
+            project_name = str(self.gridfs.get(f"{self.jobid}_project_name_QAQC").read(), "utf-8")
+            filename = project_name.replace(" ", "_") + "_for_QAQC_visuals.csv"
+            zipf.writestr(filename, QAQC_csv_file)
+
             try:
                 chem_data = self.gridfs.get(f"{self.jobid}_excel_chem").read()
                 project_name = str(self.gridfs.get(f"{self.jobid}_project_name_chemical_results").read(), "utf-8")
