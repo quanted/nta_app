@@ -193,16 +193,21 @@ class OutputServer:
             filename = project_name.replace(" ", "_") + "_NTA_WebApp_QAQC.xlsx"
             zipf.writestr(filename, qaqc_data)
 
+            QAQC_csv_file = self.gridfs.get(f"{self.jobid}_csv_for_QAQC_visuals").read().decode()
+                project_name = str(self.gridfs.get(f"{self.jobid}_project_name_QAQC").read(), "utf-8")
+                filename = project_name.replace(" ", "_") + "_for_QAQC_visuals.csv"
+                zipf.writestr(filename, QAQC_csv_file)
+                
             try:
                 chem_data = self.gridfs.get(f"{self.jobid}_excel_chem").read()
                 project_name = str(self.gridfs.get(f"{self.jobid}_project_name_chemical_results").read(), "utf-8")
                 filename = project_name.replace(" ", "_") + "_NTA_WebApp_chemical_results.xlsx"
                 zipf.writestr(filename, chem_data)
 
-                csv_file = self.gridfs.get(f"{self.jobid}_csv_data_for_vis").read().decode()
+                tripod_csv_file = self.gridfs.get(f"{self.jobid}_csv_data_for_tripod_vis").read().decode()
                 project_name = str(self.gridfs.get(f"{self.jobid}_project_name_chemical_results").read(), "utf-8")
                 filename = project_name.replace(" ", "_") + "_hazard_metadata.csv"
-                zipf.writestr(filename, csv_file)
+                zipf.writestr(filename, tripod_csv_file)
 
             except (OperationFailure, TypeError, NoFile) as e:
                 pass

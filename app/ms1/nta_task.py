@@ -1441,6 +1441,10 @@ class NtaRun:
         project_name = self.parameters["project_name"][1]
         # Obtain a list of all keys in the data map (These will become the excel workbook sheet names)
         keys_list = list(self.data_map.keys())
+        
+        # save the csv for QAQC visuals to mongo
+        self.save_QAQC_csv_to_mongo()
+        
         # Check for 'Chemical Results' in keys list
         if "Chemical Results" in keys_list:
             # Replaces the static DTXSIDs in the DTXSID column with the corresponding hyperlinks.
@@ -1504,9 +1508,9 @@ class NtaRun:
             del self.data_map["Chemical Results"]
 
             # Save the metadata/hazard csv to MongoDB
-            self.save_csv_to_mongo()
+            self.save_tripod_csv_to_mongo()
 
-            # If hazard search was performed, remove the mapped hazard column from the dataframe, since these columns have already been passed to the results csv in save_csv_to_mongo()
+            # If hazard search was performed, remove the mapped hazard column from the dataframe, since these columns have already been passed to the results csv in save_tripod_csv_to_mongo()
             if self.parameters["search_hcd"][1] == "yes":
                 columns_to_drop = [
                     col for col in self.chem_res_map["Chemical Results"].columns if col.endswith("mapped")
@@ -1538,7 +1542,27 @@ class NtaRun:
             self.gridfs.put(task_fun.create_excel_book(self.qnta_map, chem_res=False), _id=id)
             logger.info("===========Saved qNTA excel book to MongoDB===========")
 
-    def save_csv_to_mongo(self):
+        def save_QAQC_csv_to_mongo(self):
+        in_memory_buffer = io.StringIO()
+
+        # TODO check for presence of neg and pos mode detection statistics in the datamap
+        if "All Detection Statistics (Pos)" in self.data_map and "All Detection Statistics (Neg)" in self.data_map:
+            newdf = pd.concat(self.data_map["All Detection Statistics (Pos)"], self.data_map["All Detection Statistics (Neg)"], ignore_index = True)
+        elif "All Detection Statistics (Pos)" in self.data_map:
+            newdf = self.data_map["All Detection Statistics (Pos)"]
+        elif "All Detection Statistics (Neg)" in self.data_map:
+            newdf = self.data_map["All Detection Statistics (Neg)"]  
+        
+        # TODO convert the contatenated dataframe into a csv 
+        newdf.to_csv(in_memory_buffer, index=False)
+
+        csv_data = in_memory_buffer.getvalue()
+
+        # Save csv file to MongoDB using id
+        id = self.jobid + "_csv_for_QAQC_visuals"
+        self.gridfs.put(csv_data.encode(), _id=id)
+    
+    def save_tripod_csv_to_mongo(self):
         in_memory_buffer = io.StringIO()
 
         # get columns needed for hazard/metadata vis, and drop duplicate columns
@@ -1619,7 +1643,7 @@ class NtaRun:
         csv_data = in_memory_buffer.getvalue()
 
         # Save csv file to MongoDB using id
-        id = self.jobid + "_csv_data_for_vis"
+        id = self.jobid + "_csv_data_for_tripod_vis"
         self.gridfs.put(csv_data.encode(), _id=id)
 
     def save_decision_tree_info_to_mongo(self):
