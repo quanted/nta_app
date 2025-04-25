@@ -73,7 +73,7 @@ def ms1_run_api(request):
                 "search_mode": data.get("search_mode", "mass"),
                 "do_qnta": data.get("do_qnta", "no"),
                 "do_atom_filtering": data.get("do_atom_filtering", "no"),
-                "atom_ranges": json.loads(data.get("atom_ranges", None)),
+                "atom_ranges": data.get("atom_ranges", None),
                 "na_val": data.get("na_val", ""),
             }
             # Validate numerical fields here
@@ -176,7 +176,7 @@ def ms1_run_api(request):
             # Check if 'do_atom_filtering'
             if inputParameters["do_atom_filtering"][1] == "yes":
                 # Get user-submitted atom dict li
-                us_atom_dict_li = parameters["atom_ranges"]
+                us_atom_dict_li = data.POST.getlist("atom_ranges")
                 logger.info("parameters atom_ranges: {} ".format(us_atom_dict_li))
                 # Update atom filtering dictionary if present
                 if us_atom_dict_li is not None:
