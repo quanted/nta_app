@@ -164,7 +164,6 @@ class MS2Run:
         self.log_dask_memory("Calculating Similarity Scores")
 
         self.set_status("Retrieving Substances from DSSTox Database")
-        
 
         self.set_status("Saving Data")
         self.save_data()
@@ -204,6 +203,8 @@ class MS2Run:
                 tmp_feature_list.update_feature_list(data_block, POSMODE=mode == "pos")
                 self.update_progress()
             self.features[mode] = tmp_feature_list
+
+            logger.info(f"first two features for {mode}: {self.features[mode][:2]}")
 
     def get_CFMID_spectra(self):
         """
