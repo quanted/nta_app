@@ -247,7 +247,20 @@ class MS2Run:
         logger.info(f"self.cfmid_responses, number of items in list: {len(self.cfmid_responses)}")
 
         if len(self.cfmid_responses) <= 3:  # TEMP Only reached if using the stripped neg.mgf test dataset
-            logger.info(f"self.cfmid_responses: {self.cfmid_responses}")
+            # filter out entries with no spectra data, and remove mass and mode information
+            responses = [item["data"] for item in self.cfmid_responses if item.get("data") is not None]
+
+            new_list = []
+            for dict in responses:
+                new_dict = {k[0]: v for k, v, in dict.items()}
+                new_list.append(new_dict)
+
+            # Merge all DTXCIDs into one dictionary
+            DTXCID_to_spectra = {}
+            for d in new_list:
+                DTXCID_to_spectra.update(d)
+
+            logger.info(f"DTXCID_to_spectra: {DTXCID_to_spectra}")
 
     def calc_CFMID_similarity(self):
         """
