@@ -1,3 +1,4 @@
+from typing import Literal
 import pandas as pd
 import numpy as np
 from operator import itemgetter
@@ -8,6 +9,7 @@ import re
 import logging
 from openpyxl.utils import get_column_letter
 import io
+from ..constants import *
 
 
 logger = logging.getLogger("nta_app.ms1")
@@ -39,7 +41,7 @@ def assign_feature_id(df_in, start=1):
     # Adjust list based on start
     to_assign = [x + start for x in row_nums]
     # Insert column at the front of df
-    df.insert(0, "Feature ID", to_assign.copy())
+    df.insert(0, FEATURE_ID_COL, to_assign.copy())
     # Return df
     return df
 
@@ -54,7 +56,7 @@ def differences(s1, s2):
     Outputs:
         count (int, # of characters different between s1 and s2)
     """
-    # Replace special characters in s1 and s1 (not underscores or dashes)
+    # Replace special characters in s1 and s2 (not underscores or dashes)
     s1 = re.sub(re.compile(r"\([^)]*\)"), "", s1)
     s2 = re.sub(re.compile(r"\([^)]*\)"), "", s2)
     # Count up different characters between s1 and s2, plus difference in string length
@@ -62,7 +64,7 @@ def differences(s1, s2):
     # count = sum(1 for a, b in zip(s1, s2) if a != b) + abs(len(s1) - len(s2))
     mytup = tuple(zip(s1, s2))
     count = abs(len(s1) - len(s2))
-    diff_index = None  # This value is only important if the final count ==1
+    diff_index = None  # This value is only important if the final count == 1
     for i in range(len(mytup)):
         if mytup[i][0] != mytup[i][1]:
             count += 1
@@ -79,7 +81,7 @@ def differences(s1, s2):
         return count
 
 
-def formulas(df):
+def formulas(df: pd.DataFrame):
     """
     Return list of formulas tagged 'For_Dashboard_Search'
 
@@ -89,16 +91,16 @@ def formulas(df):
         formulas_list (list)
     """
     # Remmove Formula duplicates, keeping the first
-    df.drop_duplicates(subset="Formula", keep="first", inplace=True)
+    df.drop_duplicates(subset=FORMULA_COL, keep="first", inplace=True)
     # Subset df by items selected for Dashboard search
-    formulas = df.loc[df["For_Dashboard_Search"] == "1", "Formula"].values
+    formulas = df.loc[df[DASHBOARD_SEARCH_COL] == "1", FORMULA_COL].values
     # Get formulas in list
     formulas_list = [str(i) for i in formulas]
     # Return list
     return formulas_list
 
 
-def masses(df):
+def masses(df: pd.DataFrame):
     """
     Return list of masses tagged 'For_Dashboard_Search'
 
@@ -108,7 +110,7 @@ def masses(df):
         masses_list (list)
     """
     # Subset df by items selected for Dashboard search
-    masses = df.loc[df["For_Dashboard_Search"] == "1", "Mass"].values
+    masses = df.loc[df[DASHBOARD_SEARCH_COL] == "1", MASS_COL].values
     # Update logger
     logger.info("# of masses for dashboard search: {} out of {}".format(len(masses), len(df)))
     # Get masses in list
@@ -117,7 +119,7 @@ def masses(df):
     return masses_list
 
 
-def parse_headers(df_in):
+def parse_headers(df_in: pd.DataFrame):
     """
     A function to group the dataframe's column headers into sets of similar names which represent replicates
 
@@ -138,7 +140,7 @@ def parse_headers(df_in):
     # Iterate through list of columns, calling differences() function
     # When differences() return is greater than some value, increase countD (group assigner)
     for s in range(0, len(headers) - 1):
-        if differences(str(headers[s]), str(headers[s + 1])) < 2:  # 2 is more common
+        if differences(str(headers[s]), str(headers[s + 1])) < 2:  # 2 is more common TODO: This might be a vulnerability with differences()
             countS += 1
         if differences(str(headers[s]), str(headers[s + 1])) >= 2:
             countD += 1
@@ -152,7 +154,7 @@ def parse_headers(df_in):
     # Group lists of columns by group assigner (countD)
     groups = groupby(new_headers, itemgetter(1))
     # Extract column names from group tuples
-    new_headers_list = [[item[0] for item in data] for (key, data) in groups]
+    new_headers_list: list[list[str]] = [[item[0] for item in data] for (key, data) in groups]
     # Check that replicate samples are present. Raise IndexError if no replicate samples are found.
     max_group_size = 0
     for item in new_headers_list:
@@ -167,17 +169,15 @@ def parse_headers(df_in):
 
 
 # NTAW-594
-def get_sample_and_blank_headers(dfs):
+def get_sample_and_blank_headers(dfs: tuple[pd.DataFrame | None, pd.DataFrame | None]):
     if dfs[0] is not None:
         all_headers = parse_headers(dfs[0])
     else:
         all_headers = parse_headers(dfs[1])
     # get all header groups
     header_groups = [item for item in all_headers if (len(item) > 1)]
-    # get blank headers
-    allowed_blank_formats = ["Blank", "blank", "BLANK", "MB", "Mb", "mb", "mB"]
     # Should be more than one blank in group, so blank_headers uses header_groups
-    blank_headers = [item for item in header_groups if any(x in head for head in item for x in allowed_blank_formats)]
+    blank_headers = [item for item in header_groups if any(x in head for head in item for x in ALLOWED_BLANK_FORMATS_LIST)]
     # get sample headers
     sample_headers = [item for item in header_groups if not any(item == x for x in blank_headers)]
 
@@ -187,7 +187,7 @@ def get_sample_and_blank_headers(dfs):
 """PASS-THROUGH COLUMNS FUNCTION"""
 
 
-def passthrucol(df_in, all_headers):
+def passthrucol(df_in: pd.DataFrame, all_headers: list[list[str]]):
     """
     Find all columns in dfs that aren't necessary (i.e., not Mass and RT) and store
     these columns to be later appended to the output -- TMF 11/20/23
@@ -200,21 +200,14 @@ def passthrucol(df_in, all_headers):
     """
     # Make a copy of the input df
     df = df_in.copy()
-    # Define active_cols: Keep 'Feature ID' in pt_headers to merge later
-    active_cols = [
-        "Retention_Time",
-        "Mass",
-        "Ionization_Mode",
-        "Compound",
-    ]
     # Create list of pass through headers that are not in the active columns
-    pt_headers = ["Feature ID"] + [
+    pt_headers = [FEATURE_ID_COL] + [
         item
         for sublist in all_headers
         for item in sublist
-        if len(sublist) == 1 and not any(x in sublist for x in active_cols)
+        if len(sublist) == 1 and not any(x in sublist for x in ACTIVE_COLUMNS_LIST)
     ]
-    headers = ["Feature ID"] + [
+    headers = [FEATURE_ID_COL] + [
         item for sublist in all_headers for item in sublist if not any(x in item for x in pt_headers)
     ]
     # Save pass through columns in df
@@ -227,7 +220,7 @@ def passthrucol(df_in, all_headers):
 """ADDUCT IDENTIFICATION FUNCTIONS"""
 
 
-def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm):
+def adduct_matrix(df: pd.DataFrame, a_name: str, delta: float, Mass_Difference: float, Retention_Difference: float, ppm: int):
     """
     Modified version of Jeff's 'adduct_identifier' function. This function executes
     the matrix portion of the old function -- TMF 10/27/23
@@ -243,9 +236,9 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
         df (dataframe, with adduct information added to columns)
     """
     # 'Mass' to matrix, 'Retention Time' to matrix, 'Feature ID' to matrix
-    mass = df["Mass"].to_numpy()
-    rts = df["Retention_Time"].to_numpy()
-    ids = df["Feature ID"].to_numpy()
+    mass = df[MASS_COL].to_numpy()
+    rts = df[RETENTION_COL].to_numpy()
+    ids = df[FEATURE_ID_COL].to_numpy()
     # Reshape 'masses', 'rts', and 'ids'
     masses_vector = np.reshape(mass, (len(mass), 1))
     rts_vector = np.reshape(rts, (len(rts), 1))
@@ -320,7 +313,7 @@ def adduct_matrix(df, a_name, delta, Mass_Difference, Retention_Difference, ppm)
     return df
 
 
-def collapse_adduct_id_array(the_array, delta_name):
+def collapse_adduct_id_array(the_array: np.ndarray, delta_name: str):
     """
     Helper function that collapses each row of the adduct ID matrix into a string containing all matches
 
@@ -342,7 +335,7 @@ def collapse_adduct_id_array(the_array, delta_name):
     return adduct_info_str
 
 
-def window_size(df_in, mass_diff_mass=112.985586):
+def window_size(df_in: pd.DataFrame, mass_diff_mass=112.985586):
     """
     # Estimate a sliding window size from the input data by finding
     the maximum distance between indices differing by 'mass_diff_mass' -- TMF 10/27/23
@@ -374,7 +367,7 @@ def window_size(df_in, mass_diff_mass=112.985586):
     return val
 
 
-def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm):
+def chunk_adducts(df_in: pd.DataFrame, n: int, step: int, a_name: str, delta: float, Mass_Difference: float, Retention_Difference: float, ppm: int):
     """
     Function that takes the input data, chunks it based on window size, then loops through chunks
     and sends them to 'adduct_matrix' for calculation -- TMF 10/27/23
@@ -397,7 +390,7 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
     to_test_list = [df[i : i + n] for i in range(0, df.shape[0], step)]
     to_test_list = [i for i in to_test_list if (i.shape[0] > n / 2)]
     # Create list, iterate through df chunks and append results to list
-    li = []
+    li: list[pd.DataFrame] = []
     for x in to_test_list:
         dum = adduct_matrix(x, a_name, delta, Mass_Difference, Retention_Difference, ppm)
         li.append(dum)
@@ -407,11 +400,13 @@ def chunk_adducts(df_in, n, step, a_name, delta, Mass_Difference, Retention_Diff
     return output
 
 
-def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Difference, ppm, ionization):
+def adduct_identifier(df_in: pd.DataFrame, adduct_selections: list[tuple[str, float]], Mass_Difference: float, Retention_Difference: float, ppm: int, ionization: str):
     """
     Function that does the front-end of the old 'adduct_identifier'; we trim the input data by identifying
     features that are near to adduct distance from another feature. This shortened dataframe is used to
     calculate a window size, then loop through possible adducts, passing to 'chunk_adducts' -- TMF 10/27/23
+
+    TODO: Add Ionization to list of inputs.
 
     Inputs:
         df_in (dataframe)
@@ -429,50 +424,17 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
     df["Rounded RT"] = df["Retention_Time"].round(1)
     # Create tuple of 'Rounded RT' and 'Rounded Mass'
     df["Rounded_RT_Mass_Pair"] = list(zip(df["Rounded RT"], df["Rounded Mass"]))
-    # Define pos/neg/neutral adduct lists
-    # Proton subtracted - we observe Mass+(H+) and Mass+(Adduct)
-    pos_adduct_li = [
-        ("Na", 21.981942),
-        ("K", 37.955882),
-        ("NH4", 17.026547),
-    ]
-    # Proton added - we observe Mass-(H+) and Mass+(Adduct)
-    neg_adduct_li = [
-        ("Cl", 35.976678),
-        ("Br", 79.926161),
-        ("HCO2", 46.005477),
-        ("CH3CO2", 60.021127),
-        ("CF3CO2", 113.992862),
-    ]
-    # no change to neutral losses
-    neutral_losses_li = [
-        ("H2O", -18.010565),
-        ("2H2O", -36.02113),
-        ("3H2O", -54.031695),
-        ("4H2O", -72.04226),
-        ("5H2O", -90.052825),
-        ("NH3", -17.0265),
-        ("O", -15.99490),
-        ("CO", -29.00220),
-        ("CO2", -43.989829),
-        ("C2H4", -28.03130),
-        ("CH2O2", 46.00550),  # note here and below - not losses? but still neutral?
-        ("CH3COOH", 60.02110),
-        ("CH3OH", 32.02620),
-        ("CH3CN", 41.02650),
-        ("(CH3)2CHOH", 60.05810),
-    ]
     # Determine possible adduct dictionary according to ionization
     if ionization == "positive":
-        possible_adduct_deltas = [item for item in pos_adduct_li if item[0] in adduct_selections[0]]
+        possible_adduct_deltas = [item for item in POS_ADDUCT_LI if item[0] in adduct_selections[0]]
         possible_adduct_deltas = possible_adduct_deltas + [
-            item for item in neutral_losses_li if item[0] in adduct_selections[2]
+            item for item in NEUTRAL_LOSSES_LI if item[0] in adduct_selections[2]
         ]
         possible_adduct_deltas = dict(possible_adduct_deltas)
     else:
-        possible_adduct_deltas = [item for item in neg_adduct_li if item[0] in adduct_selections[1]]
+        possible_adduct_deltas = [item for item in NEG_ADDUCT_LI if item[0] in adduct_selections[1]]
         possible_adduct_deltas = possible_adduct_deltas + [
-            item for item in neutral_losses_li if item[0] in adduct_selections[2]
+            item for item in NEUTRAL_LOSSES_LI if item[0] in adduct_selections[2]
         ]
         possible_adduct_deltas = dict(possible_adduct_deltas)
     # Create empty list to hold mass shift/RT tuples
@@ -500,18 +462,16 @@ def adduct_identifier(df_in, adduct_selections, Mass_Difference, Retention_Diffe
         to_test["Has Adduct or Loss?"] = 0
         to_test["Is Adduct or Loss?"] = 0
         to_test["Adduct or Loss Info"] = ""
-        # Set 'n' to tested memory capacity of WebApp for number of features in 'adduct_matrix'
-        n = 12000
-        # If 'to_test' is less than n, send it straight to 'adduct_matrix'
-        if to_test.shape[0] <= n:
+        # If 'to_test' is less than MAX_NUM_ADDUCT_FEATURES, send it straight to 'adduct_matrix'
+        if to_test.shape[0] <= MAX_NUM_ADDUCT_FEATURES:
             for a_name, delta in possible_adduct_deltas.items():
                 to_test = adduct_matrix(to_test, a_name, delta, Mass_Difference, Retention_Difference, ppm)
         # Else, calculate the moving window size and send 'to_test' to 'chunk_adducts'
         else:
-            step = n - window_size(to_test)
+            step = MAX_NUM_ADDUCT_FEATURES - window_size(to_test)
             # Loop through possible adducts, perform 'adduct_matrix'
             for a_name, delta in possible_adduct_deltas.items():
-                to_test = chunk_adducts(to_test, n, step, a_name, delta, Mass_Difference, Retention_Difference, ppm)
+                to_test = chunk_adducts(to_test, MAX_NUM_ADDUCT_FEATURES, step, a_name, delta, Mass_Difference, Retention_Difference, ppm)
         # Concatenate 'Has Adduct or Loss?', 'Is Adduct or Loss?', 'Adduct or Loss Info' to df
         df_in = pd.merge(
             df_in,
@@ -667,7 +627,7 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, blank_headers, sample_headers
 """CALCULATE STATISTICS FUNCTIONS"""
 
 
-def statistics(df_in, blank_headers, sample_headers):
+def statistics(df_in: pd.DataFrame, blank_headers, sample_headers):
     """
     Calculates statistics (mean, median, std, CV, N_Abun, & Percent Abun) on
     the dataframe. Includes logic statement for determining if the dataframe is
@@ -1582,7 +1542,7 @@ def clean_features(
     return df, docs, df_flagged
 
 
-def Blank_Subtract_Mean(df_in):
+def Blank_Subtract_Mean(df_in: pd.DataFrame):
     """
     Calculate the mean blank intensity for each feature and subtract that value from
     each sample's mean value for that feature.
@@ -1614,7 +1574,7 @@ def Blank_Subtract_Mean(df_in):
 """FUNCTIONS FOR COMBINING DATAFRAMES / FILE PREPARATION"""
 
 
-def combine(df1, df2):
+def combine(df1: pd.DataFrame | None, df2: pd.DataFrame | None):
     """
     Function to combine positive and negative mode dataframes into df_combined
 
@@ -1635,7 +1595,7 @@ def combine(df1, df2):
     # Get column names
     columns = dfc.columns.values.tolist()
     # Drop duplicates (should not be any)
-    dfc = dfc.drop_duplicates(subset=["Mass", "Retention_Time"])
+    dfc = dfc.drop_duplicates(subset=[MASS_COL, RETENTION_COL])
     # Get sample Means
     Mean_list = dfc.columns[
         (dfc.columns.str.contains(pat="Mean ") == True)
@@ -1645,12 +1605,12 @@ def combine(df1, df2):
     dfc["N_Abun_Samples"] = dfc[Mean_list].count(axis=1, numeric_only=True)
     dfc["Mean_Abun_Samples"] = dfc[Mean_list].median(axis=1, skipna=True).round(0)
     # Sort by 'Mass' and 'Retention_Time'
-    dfc = dfc[columns].sort_values(["Mass", "Retention_Time"], ascending=[True, True])
+    dfc: pd.DataFrame = dfc[columns].sort_values([MASS_COL, RETENTION_COL], ascending=[True, True])
     # Return combined dataframe
     return dfc
 
-
-def combine_doc(doc1, doc2, tracer_df=False):
+# TODO: Is tracer_df necessary if it is unaccessed?
+def combine_doc(doc1: pd.DataFrame | None, doc2: pd.DataFrame | None, tracer_df=False):
     """
     Function to combine positive and negative mode docs for filter_documentation sheet
 
@@ -1661,27 +1621,25 @@ def combine_doc(doc1, doc2, tracer_df=False):
     Outputs:
         dfc (dataframe, doc1 and doc2 combined)
     """
-    # Define blank sub-strings
-    blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
     # Recombine doc and dupe
     if doc1 is not None and doc2 is not None:
         # Get Mean columns for blanks and samples
         Mean = doc1.columns[doc1.columns.str.contains(pat="Mean ")].tolist()
-        Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
-        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
+        Mean_Samples = [md for md in Mean if not any(x in md for x in ALLOWED_BLANK_FORMATS_LIST)]
+        Mean_MB = [md for md in Mean if any(x in md for x in ALLOWED_BLANK_FORMATS_LIST)]
         dfc = pd.concat([doc1, doc2], sort=True)  # fixing pandas FutureWarning
         dfc = dfc.reindex(columns=doc1.columns)
     elif doc1 is not None:
         # Get Mean columns for blanks and samples
         Mean = doc1.columns[doc1.columns.str.contains(pat="Mean ")].tolist()
-        Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
-        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
+        Mean_Samples = [md for md in Mean if not any(x in md for x in ALLOWED_BLANK_FORMATS_LIST)]
+        Mean_MB = [md for md in Mean if any(x in md for x in ALLOWED_BLANK_FORMATS_LIST)]
         dfc = doc1.copy()
     else:
         # Get Mean columns for blanks and samples
         Mean = doc2.columns[doc2.columns.str.contains(pat="Mean ")].tolist()
-        Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
-        Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
+        Mean_Samples = [md for md in Mean if not any(x in md for x in ALLOWED_BLANK_FORMATS_LIST)]
+        Mean_MB = [md for md in Mean if any(x in md for x in ALLOWED_BLANK_FORMATS_LIST)]
         dfc = doc2.copy()
     # Select columns for keeping, with tracer conditional
 
@@ -1707,12 +1665,12 @@ def combine_doc(doc1, doc2, tracer_df=False):
     dfc = dfc[cols]
     dfc.rename({"BlkStd_cutoff": "Selected MRL"}, axis=1, inplace=True)
     # Sort by 'Mass' and 'Retention_Time'
-    dfc = dfc.sort_values(["Feature ID"], ascending=[True])
+    dfc = dfc.sort_values([FEATURE_ID_COL], ascending=[True])
     # Return filter_documentation dataframe with removed duplicates appended
     return dfc
 
 
-def MPP_Ready(dfc, pts, blank_headers, sample_headers):
+def MPP_Ready(dfc: pd.DataFrame, pts: list[pd.DataFrame | None], blank_headers: list[list[str]], sample_headers: list[list[str]]):
     """
     Function that re-combines the pass-through columns with the processed dataframe
     plus some final column sorting.
@@ -1727,13 +1685,13 @@ def MPP_Ready(dfc, pts, blank_headers, sample_headers):
     # Assign pass through columns to pt_cols for re_org
     if pts[0] is not None and pts[1] is not None:
         pt_com = pd.concat([pts[0], pts[1]], axis=0)
-        dfc = pd.merge(dfc, pt_com, how="left", on=["Feature ID"])
+        dfc = pd.merge(dfc, pt_com, how="left", on=[FEATURE_ID_COL])
         pt_cols = pts[0].columns.tolist()
     elif pts[0] is not None:
-        dfc = pd.merge(dfc, pts[0], how="left", on=["Feature ID"])
+        dfc = pd.merge(dfc, pts[0], how="left", on=[FEATURE_ID_COL])
         pt_cols = pts[0].columns.tolist()
     else:
-        dfc = pd.merge(dfc, pts[1], how="left", on=["Feature ID"])
+        dfc = pd.merge(dfc, pts[1], how="left", on=[FEATURE_ID_COL])
         pt_cols = pts[1].columns.tolist()
 
     # Get raw sample headers
@@ -1741,35 +1699,19 @@ def MPP_Ready(dfc, pts, blank_headers, sample_headers):
     raw_samples = [item for sublist in sample_groups for item in sublist] + ["MRL (3x)", "MRL (5x)", "MRL (10x)"]
     # Get blank subtracted means
     blank_subtracted_means = dfc.columns[dfc.columns.str.contains(pat="BlankSub")].tolist()
-    # Establish ordering of all possible front matter (tracer/no tracer, flags/no flags, etc.)
-    ordering = [
-        "Ionization_Mode",
-        "Mass",
-        "Retention_Time",
-        "Compound",
-        "Tracer Chemical Match?",
-        "Duplicate Feature?",
-        "Is Adduct or Loss?",
-        "Has Adduct or Loss?",
-        "Adduct or Loss Info",
-        "Final Occurrence Count",
-        "Final Occurrence Percentage",
-        "Final Occurrence Count (with flags)",
-        "Final Occurrence Percentage (with flags)",
-    ]
     # Get dft columns in list
     all_cols = dfc.columns.tolist()
     # Front matter list comp
-    front_matter = [item for item in ordering if item in all_cols]
+    front_matter = [item for item in FRONT_MATTER_ORDERING if item in all_cols]
     # Generate full column list
     cols = pt_cols + front_matter + raw_samples + blank_subtracted_means
-    # Subset dft with correct columns / ordering
+    # Subset dft with correct columns / FRONT_MATTER_ORDERING
     dfc = dfc[cols]
     # Rename columns
-    dfc["Ionization_Mode"] = dfc["Ionization_Mode"].replace("Esi+", "ESI+")
-    dfc["Ionization_Mode"] = dfc["Ionization_Mode"].replace("Esi-", "ESI-")
+    dfc[IONIZATION_COL] = dfc[IONIZATION_COL].replace("Esi+", "ESI+")
+    dfc[IONIZATION_COL] = dfc[IONIZATION_COL].replace("Esi-", "ESI-")
     dfc.rename(
-        {"Ionization_Mode": "Ionization Mode", "Retention_Time": "Retention Time"},
+        {IONIZATION_COL: "Ionization Mode", RETENTION_COL: "Retention Time"},
         axis=1,
         inplace=True,
     )
@@ -1777,7 +1719,7 @@ def MPP_Ready(dfc, pts, blank_headers, sample_headers):
     return dfc
 
 
-def calc_toxcast_percent_active(df):
+def calc_toxcast_percent_active(df: pd.DataFrame):
     """
     Function that calculates toxcast percent active values.
 
@@ -1809,7 +1751,7 @@ def calc_toxcast_percent_active(df):
     return dft
 
 
-def determine_string_width(input_string):
+def determine_string_width(input_string: str):
     """
     The following function calculates a "width" of a string based on the characters within, as some
     characters are large, medium or skinnyThese widths are used to determine the spacing of the group
@@ -1893,6 +1835,7 @@ def determine_string_width(input_string):
     for j in range(len(input_string)):
         if input_string[j] in big_letters:
             temp_increment = temp_increment + big_increment
+            # TODO: are these print statements still necessary?
             print("big")
         elif input_string[j] in medium_letters:
             temp_increment = temp_increment + medium_increment
@@ -1904,7 +1847,7 @@ def determine_string_width(input_string):
     return temp_increment
 
 
-def chunk_dataframe(df, chunk_size):
+def chunk_dataframe(df: pd.DataFrame, chunk_size: int):
     """
     Function for splitting a dataframe into chunks for printing into separate
     sheets of an excel workbook.
@@ -1922,7 +1865,7 @@ def chunk_dataframe(df, chunk_size):
         yield df[i * chunk_size : (i + 1) * chunk_size]
 
 
-def create_excel_book(d, chem_res=False):
+def create_excel_book(d: dict[str, pd.DataFrame], chem_res=False):
     """
     Function for creating excel book from python dictionary, where dict keys
     are sheet names and dict items (dfs) are sheet contents.
@@ -1969,7 +1912,7 @@ def create_excel_book(d, chem_res=False):
     return excel_data
 
 
-def DSSTox_atom_filtering(df_in, atom_ranges):
+def DSSTox_atom_filtering(df_in: pd.DataFrame, atom_ranges: list[dict]):
     """
     Function that takes a dataframe of returned candidates from searching DSSTox
     and user submitted ranges for atoms (CHONPS, Halogens, and other potential elements).
@@ -1985,7 +1928,7 @@ def DSSTox_atom_filtering(df_in, atom_ranges):
     # Copy input dataframe
     df = df_in.copy()
     # Drop candidates with no formula information
-    df = df.loc[~df["MOLECULAR_FORMULA"].isna(), :]
+    df = df.loc[~df[MOLECULAR_FORMULA_COL].isna(), :]
     # Create separate 'atom_ranges' into 'to_search' and 'to_exclude'
     to_search = [item for item in atom_ranges if (item["max"] - item["min"]) > 0]
     to_exclude = [item["element"] for item in atom_ranges if (item["max"] - item["min"]) <= 0]
@@ -1994,11 +1937,11 @@ def DSSTox_atom_filtering(df_in, atom_ranges):
     # is stored in a new "{element} filter check" column (1 - pass, 0 - fail)
     for item in to_search:
         col = item["element"] + " filter check"
-        df[col] = df["MOLECULAR_FORMULA"].apply(
+        df[col] = df[MOLECULAR_FORMULA_COL].apply(
             lambda x: formula_atom_count(x, item["element"], item["min"], item["max"])
         )
     # Flag candidates with elements from 'to_exclude'
-    df["Pass excluded elements filter?"] = df["MOLECULAR_FORMULA"].apply(lambda x: formula_exclude(x, to_exclude))
+    df["Pass excluded elements filter?"] = df[MOLECULAR_FORMULA_COL].apply(lambda x: formula_exclude(x, to_exclude))
     # Get '{element} filter check' columns in list
     cols = [col for col in df.columns if " filter check" in col] + ["Pass excluded elements filter?"]
     # Keep rows that pass for all '{element} filter check' columns and excluded elements
@@ -2010,11 +1953,11 @@ def DSSTox_atom_filtering(df_in, atom_ranges):
 
 
 def formula_atom_count(
-    formula,
-    element,
-    minimum,
-    maximum,
-):
+    formula: str,
+    element: str,
+    minimum: int,
+    maximum: int,
+) -> Literal[0, 1]:
     """
     Function that takes in a chemical formula string, an element string, a
     minimum integer, and a maximum integer. The function finds the element string
@@ -2054,9 +1997,9 @@ def formula_atom_count(
 
 
 def formula_exclude(
-    formula,
-    element_li,
-):
+    formula: str,
+    element_li: list[str],
+) -> Literal[0, 1]:
     """
     Function that takes in a chemical formula string and an element string.
     The function searches for the element string in the chemical formula string,

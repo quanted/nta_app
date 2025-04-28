@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from Feature import Feature_MS2 as ms2
+from feature import Feature_MS2 as ms2
 from test_data import parsedMGF as mgfData
 
 #Note about test mgfData

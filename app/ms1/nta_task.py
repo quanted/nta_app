@@ -37,13 +37,13 @@ NO_DASK = False
 
 def run_nta_dask(
     parameters,
-    input_dfs,
-    tracer_df=None,
-    run_sequence_pos_df=None,
-    run_sequence_neg_df=None,
-    qnta_df=None,
-    jobid="00000000",
-    verbose=True,
+    input_dfs: list[pd.DataFrame | None],
+    tracer_df: pd.DataFrame | None = None,
+    run_sequence_pos_df: pd.DataFrame | None = None,
+    run_sequence_neg_df: pd.DataFrame | None = None,
+    qnta_df: pd.DataFrame | None = None,
+    jobid = "00000000",
+    verbose = True,
 ):
     in_docker = os.environ.get("IN_DOCKER") != "False"
     mongo_address = os.environ.get("MONGO_SERVER")
@@ -98,14 +98,14 @@ def run_nta_dask(
 
 def run_nta(
     parameters,
-    input_dfs,
-    tracer_df=None,
-    run_sequence_pos_df=None,
-    run_sequence_neg_df=None,
-    qnta_df=None,
-    mongo_address=None,
-    jobid="00000000",
-    verbose=True,
+    input_dfs: list[pd.DataFrame | None],
+    tracer_df: pd.DataFrame | None = None,
+    run_sequence_pos_df: pd.DataFrame | None = None,
+    run_sequence_neg_df: pd.DataFrame | None = None,
+    qnta_df: pd.DataFrame | None = None,
+    jobid = "00000000",
+    verbose = True,
+    mongo_address: str | None = None,
     in_docker=True,
 ):
     nta_run = NtaRun(
@@ -142,7 +142,7 @@ class NtaRun:
         run_sequence_pos_df=None,
         run_sequence_neg_df=None,
         qnta_df=None,
-        mongo_address=None,
+        mongo_address: str | None = None,
         jobid="00000000",
         verbose=True,
         in_docker=True,
@@ -412,7 +412,7 @@ class NtaRun:
 
         return
 
-    def check_retention_time_column(self, input_dfs):
+    def check_retention_time_column(self, input_dfs: list[pd.DataFrame | None]):
         """
         Check for the existence of alternate spellings of 'Retention_Time' column in input dataframes and rename to "Retention_Time".
 
@@ -620,7 +620,7 @@ class NtaRun:
         self.dfs = [task_fun.passthrucol(df, self.all_headers)[1] if df is not None else None for df in self.dfs]
         return
 
-    def filter_void_volume(self, min_rt):
+    def filter_void_volume(self, min_rt: float):
         """
         Accesses self.dfs (list of dataframes) and self.parameters["minimum_rt"][1]
         then removes all rows with a value below "minimum_rt" in the "Retention_Time"
