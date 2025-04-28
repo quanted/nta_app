@@ -204,8 +204,6 @@ class MS2Run:
                 self.update_progress()
             self.features[mode] = tmp_feature_list
 
-            logger.info(f"first two features for {mode}: {self.features[mode][:2]}")
-
     def get_CFMID_spectra(self):
         """
         Instantiate pos_list and neg_list with tuples of unique masses in the FeatureList and corrsponding mode. Iterate through list
@@ -238,6 +236,7 @@ class MS2Run:
                 asyncio.run(ms2_api_search(batch_results, chunk, self.precursor_mass_accuracy, self.jobid))
                 self.cfmid_responses.extend(batch_results)
             logger.info(f"API search time: {time.perf_counter() - start} for {len(all_masses)} structures")
+            logger.info(f"first two entries of self.cfmid_response: {self.cfmid_responses[:2]}")
         else:
             logger.warning("No masses to process.")
 
