@@ -158,6 +158,9 @@ class MS2Run:
         self.log_memory_usage("Retrieving Reference Spectra")
         self.log_dask_memory("Retrieving Reference Spectra")
 
+        # NTAW-795
+        self.save_spectral_info()
+
         self.set_status("Calculating Similarity Scores")
         self.calc_CFMID_similarity()
         self.log_memory_usage("Calculating Similarity Scores")
@@ -236,10 +239,15 @@ class MS2Run:
                 asyncio.run(ms2_api_search(batch_results, chunk, self.precursor_mass_accuracy, self.jobid))
                 self.cfmid_responses.extend(batch_results)
             logger.info(f"API search time: {time.perf_counter() - start} for {len(all_masses)} structures")
-            logger.info(f"self.cfmid_responses, number of items in list: {len(self.cfmid_responses)}")
-            logger.info(f"self.cfmid_responses: {self.cfmid_responses}")
         else:
             logger.warning("No masses to process.")
+
+    # NTAW-795 Add spectral information into MS2 workflow results
+    def save_spectral_info(self):
+        logger.info(f"self.cfmid_responses, number of items in list: {len(self.cfmid_responses)}")
+
+        if len(self.cfmid_responses) <= 3:  # TEMP Only reached if using the stripped neg.mgf test dataset
+            logger.info(f"self.cfmid_responses: {self.cfmid_responses}")
 
     def calc_CFMID_similarity(self):
         """
