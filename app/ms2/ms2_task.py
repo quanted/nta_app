@@ -236,7 +236,8 @@ class MS2Run:
                 asyncio.run(ms2_api_search(batch_results, chunk, self.precursor_mass_accuracy, self.jobid))
                 self.cfmid_responses.extend(batch_results)
             logger.info(f"API search time: {time.perf_counter() - start} for {len(all_masses)} structures")
-            logger.info(f"first two entries of self.cfmid_response: {self.cfmid_responses[:2]}")
+            logger.info(f"self.cfmid_responses, number of items in list: {len(self.cfmid_responses)}")
+            logger.info(f"self.cfmid_responses: {self.cfmid_responses}")
         else:
             logger.warning("No masses to process.")
 
