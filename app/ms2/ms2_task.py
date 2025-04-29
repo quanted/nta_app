@@ -263,7 +263,8 @@ class MS2Run:
             for key, inner_dict in spectra_dict.items():
                 for item_key, df in inner_dict.items():
                     # Replace df with df.spectrum_df ?
-                    inner_dict[item_key] = df.spectrum_df[
+                    temp_df = df.spectrum_df
+                    inner_dict[item_key] = temp_df[
                         ["FRAGMENT_MASS", "INTENSITY"]
                     ].values.tolist()  # Try this to access the spectrum pd dataframe
             # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
