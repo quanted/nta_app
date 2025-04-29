@@ -1090,6 +1090,10 @@ def check_run_seq(df_in, run_seq_in, blank_headers, sample_headers):
     # Get sample names from run sequence file
     sequence = list(run_seq[run_seq.columns[0]])
     # Check samples and sequence are same length
+
+    logger.info(f"Samples: {samples}")
+    logger.info(f"Sequence: {sequence}")
+
     if len(samples) > len(sequence):
         misspells = [x for x in samples if x not in sequence]
         raise ValueError(
