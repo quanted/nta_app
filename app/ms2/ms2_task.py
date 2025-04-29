@@ -263,7 +263,7 @@ class MS2Run:
             for key, inner_dict in spectra_dict.items():
                 for item_key, df in inner_dict.items():
                     # Replace df with df.spectrum_df ?
-                    temp_df = df.spectrum_df
+                    temp_df = df.spectrum_df.copy()
                     inner_dict[item_key] = temp_df[
                         ["FRAGMENT_MASS", "INTENSITY"]
                     ].values.tolist()  # Try this to access the spectrum pd dataframe
