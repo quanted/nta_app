@@ -313,7 +313,9 @@ class NtaRun:
 
         # 8: Store excel data to MongoDB
         self.step = "Storing data"
+        logger.info("Storing data into Mongo.")
         self.save_excel_to_mongo()
+        logger.info("Storing decision tree info into Mongo.")
         self.save_decision_tree_info_to_mongo()
 
         # 9: set status to completed
