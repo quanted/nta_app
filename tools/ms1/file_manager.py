@@ -54,6 +54,14 @@ def tracer_handler(file):
     return pd.read_csv(file, comment="#", na_values=1 | 0)
 
 
+def sequence_handler(file):
+    df = pd.read_csv(file, comment="#", na_values=1 | 0)
+    df[df.columns[0]] = df[df.columns[0]].str.replace(" ", "_")
+    df[df.columns[0]] = df[df.columns[0]].str.replace("#", "_")
+    df[df.columns[0]] = df[df.columns[0]].str.replace("\([^)]*\)", "")
+    return df
+
+
 ######## file reader utilities ##########
 
 

@@ -237,8 +237,8 @@ def ms1_run_api(request):
                 # read the test files into pandas dataframes. Note: pos_input and neg_input are loaded later
                 # in the code
                 tracer_df = file_manager.tracer_handler(tracer_file)
-                run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
-                run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
+                run_sequence_pos_df = file_manager.sequence_handler(run_sequence_pos_file)
+                run_sequence_neg_df = file_manager.sequence_handler(run_sequence_neg_file)
             else:
                 # handle case 2: the user has not selected to run the test files
 
@@ -273,7 +273,7 @@ def ms1_run_api(request):
                 try:
                     run_sequence_pos_file = request.FILES["run_sequence_pos_file"]
                     file_validator(run_sequence_pos_file)
-                    run_sequence_pos_df = file_manager.tracer_handler(run_sequence_pos_file)
+                    run_sequence_pos_df = file_manager.sequence_handler(run_sequence_pos_file)
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["run_sequence_pos_file"][1] = run_sequence_pos_file.name
                 except Exception:
@@ -282,7 +282,7 @@ def ms1_run_api(request):
                 try:
                     run_sequence_neg_file = request.FILES["run_sequence_neg_file"]
                     file_validator(run_sequence_neg_file)
-                    run_sequence_neg_df = file_manager.tracer_handler(run_sequence_neg_file)
+                    run_sequence_neg_df = file_manager.sequence_handler(run_sequence_neg_file)
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["run_sequence_neg_file"][1] = run_sequence_neg_file.name
                 except Exception:
