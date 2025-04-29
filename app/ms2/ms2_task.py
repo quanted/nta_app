@@ -159,7 +159,7 @@ class MS2Run:
         self.log_dask_memory("Retrieving Reference Spectra")
 
         # NTAW-795
-        # self.save_spectral_info()
+        self.save_spectral_info()
 
         self.set_status("Calculating Similarity Scores")
         self.calc_CFMID_similarity()
@@ -244,8 +244,6 @@ class MS2Run:
 
     # NTAW-795 Add spectral information into MS2 workflow results
     def save_spectral_info(self):
-        logger.info(f"self.cfmid_responses, number of items in list: {len(self.cfmid_responses)}")
-
         if len(self.cfmid_responses) <= 3:  # TEMP Only reached if using the stripped neg.mgf test dataset
             # filter out entries with no spectra data, and remove mass and mode information
             responses = [item["data"] for item in self.cfmid_responses if item.get("data") is not None]
@@ -259,23 +257,23 @@ class MS2Run:
             for d in new_list:
                 spectra_dict.update(d)
 
-            # Convert the spectra dataframes into arrays of two-item arrays
-            for key, inner_dict in spectra_dict.items():
-                for item_key, df in inner_dict.items():
-                    # Replace df with df.spectrum_df ?
-                    temp_df = df.spectrum_df.copy()
-                    inner_dict[item_key] = temp_df[
-                        ["FRAGMENT_MASS", "INTENSITY"]
-                    ].values.tolist()  # Try this to access the spectrum pd dataframe
+            # # Convert the spectra dataframes into arrays of two-item arrays
+            # for key, inner_dict in spectra_dict.items():
+            #     for item_key, df in inner_dict.items():
+            #         # Replace df with df.spectrum_df ?
+            #         temp_df = df.spectrum_df.copy()
+            #         inner_dict[item_key] = temp_df[
+            #             ["FRAGMENT_MASS", "INTENSITY"]
+            #         ].values.tolist()  # Try this to access the spectrum pd dataframe
 
-                    # confirm that df is not copied in place
-                    logger.info(f"original df: {df.spectrum_df}")
-                    logger.info(f"copied df: {temp_df}")
+            #         # confirm that df is not copied in place
+            #         logger.info(f"original df: {df.spectrum_df}")
+            #         logger.info(f"copied df: {temp_df}")
 
-            # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
-            spectra_df = pd.DataFrame.from_dict(spectra_dict, orient="index")
+            # # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
+            # spectra_df = pd.DataFrame.from_dict(spectra_dict, orient="index")
 
-            logger.info(f"spectra_df: {spectra_df}")
+            # logger.info(f"spectra_df: {spectra_df}")
 
     def calc_CFMID_similarity(self):
         """
