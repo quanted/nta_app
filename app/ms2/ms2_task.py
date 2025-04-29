@@ -260,9 +260,11 @@ class MS2Run:
                 spectra_dict.update(d)
 
             # Convert the spectra dataframes into arrays of two-item arrays
-            # for key, inner_dict in spectra_dict.items():
-            #     for item_key, df in inner_dict.items():
-            #         inner_dict[item_key] = df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist() # error in this line, the value is an MS2 spectra object, not a df
+            for key, inner_dict in spectra_dict.items():
+                for item_key, df in inner_dict.items():
+                    # inner_dict[item_key] = df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist() # error in this line, the 'df' is an MS2 spectra object, not a df
+                    logger.info(f"MS2_Spectra object type: {type(df)}")
+                    logger.info(f"MS2_Spectra object: {df}")
 
             # # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
             # spectra_df = pd.DataFrame.from_dict(spectra_dict, orient="index")
