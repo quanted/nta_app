@@ -257,23 +257,24 @@ class MS2Run:
             for d in new_list:
                 spectra_dict.update(d)
 
-            # # Convert the spectra dataframes into arrays of two-item arrays
-            # for key, inner_dict in spectra_dict.items():
-            #     for item_key, df in inner_dict.items():
-            #         # Replace df with df.spectrum_df ?
-            #         temp_df = df.spectrum_df.copy()
-            #         inner_dict[item_key] = temp_df[
-            #             ["FRAGMENT_MASS", "INTENSITY"]
-            #         ].values.tolist()  # Try this to access the spectrum pd dataframe
+            # ----------------code above this line does not break workflow--------------
+            processed_spectra_dict = {}
+            # Convert the spectra dataframes into arrays of two-item arrays
+            for key, inner_dict in spectra_dict.items():
+                processed_inner = {}
+                for item_key, df in inner_dict.items():
+                    # Replace df with df.spectrum_df copy
+                    temp_df = df.spectrum_df.copy()
 
-            #         # confirm that df is not copied in place
-            #         logger.info(f"original df: {df.spectrum_df}")
-            #         logger.info(f"copied df: {temp_df}")
+                    processed_inner[item_key] = temp_df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist()
+                    # inner_dict[item_key] = temp_df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist()
 
-            # # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
-            # spectra_df = pd.DataFrame.from_dict(spectra_dict, orient="index")
+                processed_spectra_dict[key] = processed_inner
 
-            # logger.info(f"spectra_df: {spectra_df}")
+            # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
+            spectra_df = pd.DataFrame.from_dict(processed_spectra_dict, orient="index")
+
+            logger.info(f"spectra_df: {spectra_df}")
 
     def calc_CFMID_similarity(self):
         """
