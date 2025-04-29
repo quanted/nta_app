@@ -262,20 +262,13 @@ class MS2Run:
             # Convert the spectra dataframes into arrays of two-item arrays
             for key, inner_dict in spectra_dict.items():
                 for item_key, df in inner_dict.items():
-                    # Convert the string repr of the df into an actual pandas df
-                    # df = pd.read_csv(io.StringIO(df), delim_whitespace=True)
-
                     # Replace df with df.spectrum_df ?
-                    # inner_dict[item_key] = df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist() # error in this line, the 'df' is an MS2 spectra object, not a df
-
-                    logger.info(f"MS2_Spectra get df: {df.spectrum_df}")  # Try this to access the spectrum pd dataframe
-                    logger.info(f"MS2_Spectra object type: {type(df.spectrum_df)}")
-                    # logger.info(f"MS2_Spectra df: {df}")
-
-            # # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
-            # spectra_df = pd.DataFrame.from_dict(spectra_dict, orient="index")
-
-            # logger.info(f"spectra_df: {spectra_df}")
+                    inner_dict[item_key] = df.spectrum_df[
+                        ["FRAGMENT_MASS", "INTENSITY"]
+                    ].values.tolist()  # Try this to access the spectrum pd dataframe
+            # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
+            spectra_df = pd.DataFrame.from_dict(spectra_dict, orient="index")
+            logger.info(f"spectra_df: {spectra_df}")
 
     def calc_CFMID_similarity(self):
         """
