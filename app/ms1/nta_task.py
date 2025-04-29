@@ -1567,6 +1567,10 @@ class NtaRun:
         id = self.jobid + "_csv_for_QAQC_visuals"
         self.gridfs.put(csv_data.encode(), _id=id)
 
+        # Delete the temporary dataframe/csv to free memory
+        del newdf
+        del csv_data
+
     def save_tripod_csv_to_mongo(self):
         in_memory_buffer = io.StringIO()
 
@@ -1650,6 +1654,10 @@ class NtaRun:
         # Save csv file to MongoDB using id
         id = self.jobid + "_csv_data_for_tripod_vis"
         self.gridfs.put(csv_data.encode(), _id=id)
+
+        # Delete the temporary dataframe/csv to free memory
+        del newdf
+        del csv_data
 
     def save_decision_tree_info_to_mongo(self):
         # This funciton is a result of NTAW-711 and is only required for the decision tree on the MS1 QED deploymet

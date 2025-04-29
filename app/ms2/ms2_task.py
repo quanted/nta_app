@@ -89,7 +89,7 @@ def run_ms2(parameters, mongo_address=None, jobid="00000000", results_link="", v
     return True
 
 
-FILENAMES = {"final_output": ["CFMID_results_pos", "CFMID_results_neg", "input_parameters"]}
+FILENAMES = {"final_output": ["CFMID_results_pos", "CFMID_results_neg", "input_parameters", "spectra"]}
 
 
 class MS2Run:
@@ -244,37 +244,28 @@ class MS2Run:
 
     # NTAW-795 Add spectral information into MS2 workflow results
     def save_spectral_info(self):
-        if len(self.cfmid_responses) <= 3:  # TEMP Only reached if using the stripped neg.mgf test dataset
-            # filter out entries with no spectra data, and remove mass and mode information
-            responses = [item["data"] for item in self.cfmid_responses if item.get("data") is not None]
+        # filter out entries with no spectra data, and remove mass and mode information
+        responses = [item["data"] for item in self.cfmid_responses if item.get("data") is not None]
+        # Merge the list of DTXCID-spectra dictionaries into a single dictionary
+        new_list = []
+        for dict in responses:
+            new_dict = {k[0]: v for k, v, in dict.items()}
+            new_list.append(new_dict)
+        spectra_dict = {}
+        for d in new_list:
+            spectra_dict.update(d)
 
-            # Merge the list of DTXCID-spectra dictionaries into a single dictionary
-            new_list = []
-            for dict in responses:
-                new_dict = {k[0]: v for k, v, in dict.items()}
-                new_list.append(new_dict)
-            spectra_dict = {}
-            for d in new_list:
-                spectra_dict.update(d)
-
-            # ----------------code above this line does not break workflow--------------
-            processed_spectra_dict = {}
-            # Convert the spectra dataframes into arrays of two-item arrays
-            for key, inner_dict in spectra_dict.items():
-                processed_inner = {}
-                for item_key, df in inner_dict.items():
-                    # Replace df with df.spectrum_df copy
-                    temp_df = df.spectrum_df.copy()
-
-                    processed_inner[item_key] = temp_df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist()
-                    # inner_dict[item_key] = temp_df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist()
-
-                processed_spectra_dict[key] = processed_inner
-
-            # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
-            spectra_df = pd.DataFrame.from_dict(processed_spectra_dict, orient="index")
-
-            logger.info(f"spectra_df: {spectra_df}")
+        # Convert the spectra dataframes into arrays of two-item arrays
+        processed_spectra_dict = {}
+        for key, inner_dict in spectra_dict.items():
+            processed_inner = {}
+            for item_key, df in inner_dict.items():
+                # Replace df with df.spectrum_df copy
+                temp_df = df.spectrum_df.copy()
+                processed_inner[item_key] = temp_df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist()
+            processed_spectra_dict[key] = processed_inner
+        # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
+        self.spectra_df = pd.DataFrame.from_dict(processed_spectra_dict, orient="index")
 
     def calc_CFMID_similarity(self):
         """
@@ -389,6 +380,8 @@ class MS2Run:
             step=FILENAMES["final_output"][0],
         )
         self.mongo_save(inputParameters_df, step=FILENAMES["final_output"][2])
+
+        self.mongo_save(self.spectra_df, step=FILENAMES["final_output"][3])
 
     def send_email(self):
         try:
