@@ -1102,6 +1102,7 @@ def check_run_seq(df_in, run_seq_in, blank_headers, sample_headers):
         )
     # Instantiate misspells
     misspells = [x for x in samples if x not in sequence]
+    logger.info(f"Misspells: {misspells}")
     if len(misspells) > 0:
         raise ValueError(
             "There is at least one sample identified in your data matrix that isn't in the run sequence file. Please check the spelling of sample names in both files."
