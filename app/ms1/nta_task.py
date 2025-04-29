@@ -11,6 +11,7 @@ from dask.distributed import Client, LocalCluster, fire_and_forget
 from zipfile import ZipFile, ZIP_DEFLATED
 from openpyxl.utils import get_column_letter
 import numpy as np
+import gc
 
 # connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
 from .utilities import *
@@ -1567,9 +1568,13 @@ class NtaRun:
         id = self.jobid + "_csv_for_QAQC_visuals"
         self.gridfs.put(csv_data.encode(), _id=id)
 
+        # Clear the buffer to free memory
+        in_memory_buffer.close()
         # Delete the temporary dataframe/csv to free memory
         del newdf
         del csv_data
+        # Prompt garbage collection
+        gc.collect()
 
     def save_tripod_csv_to_mongo(self):
         in_memory_buffer = io.StringIO()
@@ -1655,9 +1660,13 @@ class NtaRun:
         id = self.jobid + "_csv_data_for_tripod_vis"
         self.gridfs.put(csv_data.encode(), _id=id)
 
+        # Clear the buffer to free memory
+        in_memory_buffer.close()
         # Delete the temporary dataframe/csv to free memory
         del newdf
         del csv_data
+        # Prompt garbage collection
+        gc.collect()
 
     def save_decision_tree_info_to_mongo(self):
         # This funciton is a result of NTAW-711 and is only required for the decision tree on the MS1 QED deploymet
