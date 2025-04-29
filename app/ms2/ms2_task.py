@@ -159,7 +159,7 @@ class MS2Run:
         self.log_dask_memory("Retrieving Reference Spectra")
 
         # NTAW-795
-        self.save_spectral_info()
+        # self.save_spectral_info()
 
         self.set_status("Calculating Similarity Scores")
         self.calc_CFMID_similarity()
@@ -267,8 +267,14 @@ class MS2Run:
                     inner_dict[item_key] = temp_df[
                         ["FRAGMENT_MASS", "INTENSITY"]
                     ].values.tolist()  # Try this to access the spectrum pd dataframe
+
+                    # confirm that df is not copied in place
+                    logger.info(f"original df: {df.spectrum_df}")
+                    logger.info(f"copied df: {temp_df}")
+
             # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
             spectra_df = pd.DataFrame.from_dict(spectra_dict, orient="index")
+
             logger.info(f"spectra_df: {spectra_df}")
 
     def calc_CFMID_similarity(self):
