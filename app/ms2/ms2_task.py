@@ -265,7 +265,9 @@ class MS2Run:
                 processed_inner[item_key] = temp_df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist()
             processed_spectra_dict[key] = processed_inner
         # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
-        self.spectra_df = pd.DataFrame.from_dict(processed_spectra_dict, orient="index")
+        spectra_df = pd.DataFrame.from_dict(processed_spectra_dict, orient="index").reset_index()
+        spectra_df.columns = ["DTXCID", "energy0", "energy1", "energy2"]
+        self.spectra_df = spectra_df
 
     def calc_CFMID_similarity(self):
         """
