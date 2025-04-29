@@ -250,17 +250,24 @@ class MS2Run:
             # filter out entries with no spectra data, and remove mass and mode information
             responses = [item["data"] for item in self.cfmid_responses if item.get("data") is not None]
 
+            # Merge the list of DTXCID-spectra dictionaries into a single dictionary
             new_list = []
             for dict in responses:
                 new_dict = {k[0]: v for k, v, in dict.items()}
                 new_list.append(new_dict)
-
-            # Merge all DTXCIDs into one dictionary
-            DTXCID_to_spectra = {}
+            spectra_dict = {}
             for d in new_list:
-                DTXCID_to_spectra.update(d)
+                spectra_dict.update(d)
 
-            logger.info(f"DTXCID_to_spectra: {DTXCID_to_spectra}")
+            # Convert the spectra dataframes into arrays of two-item arrays
+            for key, inner_dict in spectra_dict.items():
+                for item_key, df in inner_dict.items():
+                    inner_dict[item_key] = df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist()
+
+            # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
+            spectra_df = pd.DataFrame.from_dict(spectra_dict, orient="index")
+
+            logger.info(f"spectra_df: {spectra_df}")
 
     def calc_CFMID_similarity(self):
         """
