@@ -1442,6 +1442,7 @@ class NtaRun:
             if self.parameters["search_hcd"][1] == "yes":
                 columns_to_drop = [col for col in self.data_map["Chemical Results"].columns if col.endswith("mapped")]
                 self.data_map["Chemical Results"] = self.data_map["Chemical Results"].drop(columns=columns_to_drop)
+                self.log_memory_usage("dropping mapped columns from Chemical Results df")
 
             # Check length of "Chemical Results"
             sheet_limit = 500000
@@ -1463,6 +1464,7 @@ class NtaRun:
                 self.chem_res_map["Chemical Results"] = self.data_map["Chemical Results"]
             # Remove key from 'data_map'
             del self.data_map["Chemical Results"]
+            self.log_memory_usage("deleting Chemical Results df from data_map")
 
             # Create excel book from Chemical Results
             # Save project name to MongoDB using jobid
@@ -1470,6 +1472,7 @@ class NtaRun:
             # Save results excel file to MongoDB using id
             id = self.jobid + "_excel_chem"
             self.gridfs.put(task_fun.create_excel_book(self.chem_res_map, chem_res=True), _id=id)
+            self.log_memory_usage("create_excel_book from chem_res_map")
 
             logger.info("===========Saved Chemical Results excel book to MongoDB===========")
         # Create excel book for QAQC
@@ -1478,6 +1481,7 @@ class NtaRun:
         # Save results excel file to MongoDB using id
         id = self.jobid + "_excel_qaqc"
         self.gridfs.put(task_fun.create_excel_book(self.data_map, chem_res=False), _id=id)
+        self.log_memory_usage("create_excel_book from data_map")
         logger.info("===========Saved QAQC excel book to MongoDB===========")
         # Create excel book for qNTA if present
         if self.parameters["do_qnta"][1] == "yes":
@@ -1486,6 +1490,7 @@ class NtaRun:
             # Save results excel file to MongoDB using id
             id = self.jobid + "_excel_qNTA"
             self.gridfs.put(task_fun.create_excel_book(self.qnta_map, chem_res=False), _id=id)
+            self.log_memory_usage("create_excel_book from qnta_map")
             logger.info("===========Saved qNTA excel book to MongoDB===========")
 
     def save_QAQC_csv_to_mongo(self):
