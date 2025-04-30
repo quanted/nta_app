@@ -1489,6 +1489,15 @@ class NtaRun:
             if self.parameters["search_hcd"][1] == "yes":
                 self.data_map["Chemical Results"] = self.add_hazard_cols(self.data_map["Chemical Results"])
 
+            # Save the metadata/hazard csv to MongoDB
+            self.save_tripod_csv_to_mongo()
+
+            # If hazard search was performed, remove the mapped hazard column from the dataframe,
+            # since these columns have already been passed to the results csv in save_tripod_csv_to_mongo()
+            if self.parameters["search_hcd"][1] == "yes":
+                columns_to_drop = [col for col in self.data_map["Chemical Results"].columns if col.endswith("mapped")]
+                self.data_map["Chemical Results"] = self.data_map["Chemical Results"].drop(columns=columns_to_drop)
+
             # Check length of "Chemical Results"
             sheet_limit = 500000
             # If "Chemical Results" is bigger than limit, chunk into smaller sizes
@@ -1510,17 +1519,6 @@ class NtaRun:
             # Remove key from 'data_map'
             del self.data_map["Chemical Results"]
 
-            # Save the metadata/hazard csv to MongoDB
-            self.save_tripod_csv_to_mongo()
-
-            # If hazard search was performed, remove the mapped hazard column from the dataframe, since these columns have already been passed to the results csv in save_tripod_csv_to_mongo()
-            if self.parameters["search_hcd"][1] == "yes":
-                columns_to_drop = [
-                    col for col in self.chem_res_map["Chemical Results"].columns if col.endswith("mapped")
-                ]
-                self.chem_res_map["Chemical Results"] = self.chem_res_map["Chemical Results"].drop(
-                    columns=columns_to_drop
-                )
             # Create excel book from Chemical Results
             # Save project name to MongoDB using jobid
             self.gridfs.put(project_name, _id=f"{self.jobid}_project_name_chemical_results", encoding="utf-8")
@@ -1644,7 +1642,7 @@ class NtaRun:
             for col in hazard_cols:
                 cols_for_tripod_vis.append(col)
 
-        newdf = self.chem_res_map["Chemical Results"][cols_for_tripod_vis].drop_duplicates(
+        newdf = self.data_map["Chemical Results"][cols_for_tripod_vis].drop_duplicates(
             subset=["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"]
         )
 
