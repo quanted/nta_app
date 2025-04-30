@@ -620,10 +620,6 @@ class NtaRun:
         self.pass_through, self.dfs = zip(
             *[task_fun.passthrucol(df, self.all_headers) if df is not None else (None, None) for df in self.dfs]
         )
-        # self.pass_through = [
-        #     task_fun.passthrucol(df, self.all_headers)[0] if df is not None else None for df in self.dfs
-        # ]
-        # self.dfs = [task_fun.passthrucol(df, self.all_headers)[1] if df is not None else None for df in self.dfs]
         return
 
     def filter_void_volume(self, min_rt):
@@ -840,38 +836,6 @@ class NtaRun:
                 for df in self.dfs
             ]
         )
-        # self.tracer_dfs_out = [
-        #     (
-        #         task_fun.check_feature_tracers(
-        #             df,
-        #             self.tracer_df,
-        #             mass_accuracy_tr,
-        #             float(self.parameters["rt_accuracy_tr"][1]),
-        #             ppm,
-        #             self.blank_headers,
-        #             self.sample_headers,
-        #         )[0]
-        #         if df is not None
-        #         else None
-        #     )
-        #     for df in self.dfs
-        # ]
-        # self.dfs = [
-        #     (
-        #         task_fun.check_feature_tracers(
-        #             df,
-        #             self.tracer_df,
-        #             mass_accuracy_tr,
-        #             float(self.parameters["rt_accuracy_tr"][1]),
-        #             ppm,
-        #             self.blank_headers,
-        #             self.sample_headers,
-        #         )[1]
-        #         if df is not None
-        #         else None
-        #     )
-        #     for df in self.dfs
-        # ]
         # Call format_tracer_file imported from utilities.py
         self.tracer_dfs_out = [
             task_fun.format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out
@@ -974,7 +938,8 @@ class NtaRun:
             for i in range(len(self.tracer_plots_out[0])):
                 self.tracer_map["tracer_plot_pos_" + str(i + 1)] = self.tracer_plots_out[0][i]
 
-        # Add an if statement below to account for: if only negative mode data is entered, and only a negative tracer file is submitted, tracer_plots_out will only have one entry at [0]
+        # Add an if statement below to account for: if only negative mode data is entered, and
+        # only a negative tracer file is submitted, tracer_plots_out will only have one entry at [0]
         if len(self.tracer_plots_out) > 1:
             if self.tracer_plots_out[1] is not None:
                 for i in range(len(self.tracer_plots_out[1])):
@@ -1033,57 +998,6 @@ class NtaRun:
                 for df, passthru in zip(self.dfs, self.pass_through)
             ]
         )
-        # self.qnta_dfs_out = [
-        #     (
-        #         task_fun.qnta_preprocessing(
-        #             df,
-        #             self.qnta_df,
-        #             passthru,
-        #             mass_accuracy_tr,
-        #             rt_accuracy_tr,
-        #             ppm,
-        #             self.blank_headers,
-        #             self.sample_headers,
-        #         )[0]
-        #         if df is not None
-        #         else None
-        #     )
-        #     for df, passthru in zip(self.dfs, self.pass_through)
-        # ]
-        # self.qnta_occ_input = [
-        #     (
-        #         task_fun.qnta_preprocessing(
-        #             df,
-        #             self.qnta_df,
-        #             passthru,
-        #             mass_accuracy_tr,
-        #             ret_time_accuracy,
-        #             ppm,
-        #             self.blank_headers,
-        #             self.sample_headers,
-        #         )[2]
-        #         if df is not None
-        #         else None
-        #     )
-        #     for df, passthru in zip(self.dfs, self.pass_through)
-        # ]
-        # self.dfs = [
-        #     (
-        #         task_fun.qnta_preprocessing(
-        #             df,
-        #             self.qnta_df,
-        #             passthru,
-        #             mass_accuracy_tr,
-        #             ret_time_accuracy,
-        #             ppm,
-        #             self.blank_headers,
-        #             self.sample_headers,
-        #         )[1]
-        #         if df is not None
-        #         else None
-        #     )
-        #     for df, passthru in zip(self.dfs, self.pass_through)
-        # ]
         # Combine Surrogate Detection Statistics from separate modes
         # Combine items of tracer_dfs_out list
         if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
@@ -1167,33 +1081,6 @@ class NtaRun:
         self.dfs, self.docs, self.dfs_flagged = zip(
             *[task_fun.clean_features(df, controls) if df is not None else (None, None, None) for df in self.dfs]
         )
-        # self.docs = [
-        #     task_fun.clean_features(
-        #         df,
-        #         controls,
-        #     )[1]
-        #     if df is not None
-        #     else None
-        #     for index, df in enumerate(self.dfs)
-        # ]
-        # self.dfs_flagged = [
-        #     task_fun.clean_features(
-        #         df,
-        #         controls,
-        #     )[2]
-        #     if df is not None
-        #     else None
-        #     for index, df in enumerate(self.dfs)
-        # ]
-        # self.dfs = [
-        #     task_fun.clean_features(
-        #         df,
-        #         controls,
-        #     )[0]
-        #     if df is not None
-        #     else None
-        #     for index, df in enumerate(self.dfs)
-        # ]
         # subtract blanks from means
         self.dfs = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for df in self.dfs]
         # subtract blanks from means
