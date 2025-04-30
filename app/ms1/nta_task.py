@@ -1487,9 +1487,11 @@ class NtaRun:
                 i = i + 3
             # If hazard search was performed, add the relevant hazard calculation columns to the chemical results dataframe
             if self.parameters["search_hcd"][1] == "yes":
+                logger.info("===========Add hazard columns===========")
                 self.data_map["Chemical Results"] = self.add_hazard_cols(self.data_map["Chemical Results"])
 
             # Save the metadata/hazard csv to MongoDB
+            logger.info("===========Saving tripod CSV to mongo===========")
             self.save_tripod_csv_to_mongo()
 
             # If hazard search was performed, remove the mapped hazard column from the dataframe,
