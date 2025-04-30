@@ -1429,17 +1429,17 @@ def occ_drop_df(df, docs, df_flagged, Mean_Samples):
     df["Any Occurrences Removed?"] = docs["Any Occurrences Removed?"]
     df_flagged["Any Occurrences Removed?"] = docs["Any Occurrences Removed?"]
     # Create mask of occurrences dropped for replicate flag
-    rep_fails = pd.concat([docs[mean].str.contains("R") for mean in Mean_Samples], axis=1).fillna(False)
+    rep_fails = pd.concat([docs[mean].astype(str).str.contains("R") for mean in Mean_Samples], axis=1).fillna(False)
     # Mask df and df_flagged
     df[Mean_Samples] = df[Mean_Samples].mask(rep_fails)
     df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(rep_fails)
     # Create mask of occurrences dropped for replicate flag
-    non_detects = pd.concat([docs[mean].str.contains("MRL") for mean in Mean_Samples], axis=1).fillna(False)
+    non_detects = pd.concat([docs[mean].astype(str).str.contains("MRL") for mean in Mean_Samples], axis=1).fillna(False)
     # Mask df and df_flagged
     df[Mean_Samples] = df[Mean_Samples].mask(non_detects)
     df_flagged[Mean_Samples] = df_flagged[Mean_Samples].mask(non_detects)
     # Create mask of occurrences dropped for replicate flag
-    cv_fails = pd.concat([docs[mean].str.contains("CV") for mean in Mean_Samples], axis=1).fillna(False)
+    cv_fails = pd.concat([docs[mean].astype(str).str.contains("CV") for mean in Mean_Samples], axis=1).fillna(False)
     # Mask df
     df[Mean_Samples] = df[Mean_Samples].mask(cv_fails)
     # Add columns from docs to df / df_flagged
@@ -1487,8 +1487,12 @@ def feat_drop_df(df, docs, df_flagged):
     df = df.loc[df["Feature Removed?"] == "", :]
     df_flagged = df_flagged.loc[(df_flagged["Feature Removed?"] == "") | (docs["# is CV flag"] > 0), :]
     # Drop 'Feature Removed?' from df and df_flagged
-    df.drop(columns=["Feature Removed?"], inplace=True)
-    df_flagged.drop(columns=["Feature Removed?"], inplace=True)
+    df = df.drop(
+        columns=["Feature Removed?"],
+    )
+    df_flagged = df_flagged.drop(
+        columns=["Feature Removed?"],
+    )
     # Return df (data), df_flagged (data + flagged data)
     return df, df_flagged
 
