@@ -12,6 +12,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from openpyxl.utils import get_column_letter
 import numpy as np
 import gc
+import psutil
 
 # connect_to_mongoDB, connect_to_mongo_gridfs, reduced_file, api_search_masses, api_search_formulas,
 from .utilities import *
