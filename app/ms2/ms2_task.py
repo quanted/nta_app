@@ -159,7 +159,10 @@ class MS2Run:
         self.log_dask_memory("Retrieving Reference Spectra")
 
         # NTAW-795
+        self.set_status("Saving Spectral Info")
         self.save_spectral_info()
+        self.log_memory_usage("Saving Spectral Info")
+        self.log_dask_memory("Saving Spectral Info")
 
         self.set_status("Calculating Similarity Scores")
         self.calc_CFMID_similarity()

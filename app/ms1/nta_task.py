@@ -193,7 +193,16 @@ class NtaRun:
         self.occurrence_heatmaps_out = []
         self.cv_scatterplots_out = []
 
+    def log_memory_usage(self, step_name):
+        """Logs the current memory usage."""
+        process = psutil.Process()
+        mem_info = process.memory_info().rss / (1024 * 1024)  # Convert bytes to MB
+        logger.info("[Job ID: %s] Memory usage after %s: %.2f MB", self.jobid, step_name, mem_info)
+
     def execute(self):
+        # Log the memory usage before executing MS1 run
+        self.log_memory_usage("Start")
+
         # 0: create a run status in MongoDB
         self.set_status("Processing", create=True)
         # 0.9: Normalize all column names
