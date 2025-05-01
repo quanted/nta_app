@@ -1951,7 +1951,6 @@ def create_excel_book(d, chem_res=False):
     Returns:
         excel_data (pd.ExcelWriter output)
     """
-    log_memory_usage("Start create_excel_book")
 
     # Create an excel sheet from the datamap and save it to MongoDB
     in_memory_buffer = io.BytesIO()
@@ -1959,15 +1958,18 @@ def create_excel_book(d, chem_res=False):
     keys_list = list(d.keys())
     # Convert self.data_map dictionary into an excel workbook
 
+    log_memory_usage("Start create_excel_book")
     with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
         workbook = writer.book
         for df_name, df in d.items():
             df.to_excel(writer, sheet_name=df_name, index=False)
+            log_memory_usage("df.to_excel")
             # Format column widths to fit the largest string contained within the column
             sheet_num = keys_list.index(df_name)
             sheet = workbook.worksheets[sheet_num]
             # Freezes the top row of every sheet in the excel file.
             sheet.freeze_panes = "A2"
+            log_memory_usage("freeze_panes")
             # Format each column width to fit the longest string contained within the column
             for column in df:
                 try:
@@ -1978,10 +1980,9 @@ def create_excel_book(d, chem_res=False):
                 # NTAW-704: handle error where df[column] is recognised as a DataFrame, not a series
                 except AttributeError:
                     pass
-        log_memory_usage("df.to_excel and column formatting")
+        log_memory_usage("column formatting")
         # Format DTXSID column hyperlinks an column width in the Chemical Results sheet
         if chem_res:
-            log_memory_usage("BEFORE chem_res Hyperlink formatting")
             workbook = writer.book
             for sheet in workbook.worksheets:
                 for i in range(sheet.max_row):
