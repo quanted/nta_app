@@ -2013,7 +2013,6 @@ def create_excel_book(d, chem_res=False):
     log_memory_usage("Start create_excel_book")
     with pd.ExcelWriter(in_memory_buffer, engine="xlsxwriter") as writer:
         workbook = writer.book
-        hyperlink_format = workbook.add_format({"font_color": "blue", "underline": 1})
 
         for df_name, df in d.items():
             df.to_excel(writer, sheet_name=df_name, index=False)
@@ -2035,7 +2034,7 @@ def create_excel_book(d, chem_res=False):
 
             # Format DTXSID column hyperlinks
             if chem_res:
-                blue_format = workbook.add_format({"font_color": "blue"})
+                blue_format = workbook.add_format({"font_color": "blue", "underline": 1})
                 col_idx = df.columns.get_loc("CompTox links")
                 for row_num in range(len(df)):
                     cell_value = df.iloc[row_num, col_idx]
