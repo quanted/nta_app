@@ -64,8 +64,8 @@ def make_hyperlink(value, url="https://comptox.epa.gov/dashboard/chemical/detail
     Returns:
         The Excel hyperlink command.
     """
-    return '=HYPERLINK("%s", "%s")' % (url.format(value), value)
-    # return url.format(value)
+    # return '=HYPERLINK("%s", "%s")' % (url.format(value), value)
+    return url.format(value)
 
 
 # # function to remove columns from a given dataframe, df_in. The columns to be removed are determined by the
