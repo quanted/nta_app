@@ -2032,12 +2032,20 @@ def create_excel_book(d, chem_res=False):
                 # NTAW-704: handle error where df[column] is recognised as a DataFrame, not a series
                 except AttributeError:
                     pass
-        # Format DTXSID column hyperlinks
-        if chem_res:
-            for row_num, url in enumerate(df.iloc[:, 8], start=1):
-                display = url.split("/")[-1]
-                worksheet.write_url(row_num, 8, url, hyperlink_format, string=display)
-            log_memory_usage("chem_res Hyperlink formatting")
+
+            # Format DTXSID column hyperlinks
+            if chem_res:
+                blue_format = workbook.add_format({"font_color": "blue"})
+                col_idx = df.columns.get_loc("CompTox links")
+                for row_num in range(len(df)):
+                    cell_value = df.iloc[row_num, col_idx]
+                    worksheet.write(row_num + 1, col_idx, cell_value, blue_format)
+                log_memory_usage("chem_res Hyperlink formatting")
+
+        # if chem_res:
+        #     for row_num, url in enumerate(df.iloc[:, 8], start=1):
+        #         display = url.split("/")[-1]
+        #         worksheet.write_url(row_num, 8, url, hyperlink_format, string=display)
 
     return in_memory_buffer.getvalue()
 
