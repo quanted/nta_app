@@ -244,7 +244,6 @@ class NtaRun:
         # 3a: statistics
         self.step = "Calculating statistics"
         self.calc_statistics()
-        self.log_memory_usage("Calculating Statistics")
         if self.verbose:
             logger.info("Calculated statistics.")
             if self.dfs[0] is not None:
@@ -255,7 +254,6 @@ class NtaRun:
         # 3b: Occurrence heatmap
         self.step = "Create heatmap"
         self.store_heatmap()
-        self.log_memory_usage("Create heatmap")
 
         # 4a: check tracers (optional)
         self.step = "Checking tracers"
@@ -275,18 +273,15 @@ class NtaRun:
         # 4b: CV Scatterplot
         self.step = "Create scatterplot"
         self.store_scatterplots()
-        self.log_memory_usage("Create scatterplot")
 
         # Optional: Perform qNTA
         if self.parameters["do_qnta"][1] == "yes":
             self.step = "Performing qNTA"
             self.perform_qNTA()
-            self.log_memory_usage("Performing qNTA")
 
         # 5a: clean features
         self.step = "Cleaning features"
         self.clean_features()
-        self.log_memory_usage("Cleaning features")
 
         if self.verbose:
             logger.info("Cleaned features.")
@@ -298,7 +293,6 @@ class NtaRun:
         # 5b: Merge detection count columns onto tracers for export
         self.step = "Merge detection counts onto tracers"
         self.merge_columns_onto_tracers()
-        self.log_memory_usage("Merge detection counts onto tracers")
 
         if self.verbose:
             logger.info("Created flags.")
@@ -316,7 +310,6 @@ class NtaRun:
         # 6: combine modes
         self.step = "Combining modes"
         self.combine_modes()
-        self.log_memory_usage("Combining modes")
         if self.verbose:
             logger.info("Combined modes.")
             logger.info("combined df length: {}".format(len(self.df_combined)))
@@ -325,20 +318,16 @@ class NtaRun:
         if self.parameters["search_dsstox"][1] == "yes":
             self.step = "Searching dsstox database"
             self.perform_dashboard_search()
-            self.log_memory_usage("Performing dashboard search")
             if self.parameters["search_hcd"][1] == "yes":
                 self.step = "Searching Cheminformatics Hazard Module database"
                 self.perform_hcd_search()
-                self.log_memory_usage("Performing hcd search")
 
         # 8: Store excel data to MongoDB
         self.step = "Storing data"
         logger.info("Storing data into Mongo.")
         self.save_excel_to_mongo()
-        self.log_memory_usage("save_excel_to_mongo")
         logger.info("Storing decision tree info into Mongo.")
         self.save_decision_tree_info_to_mongo()
-        self.log_memory_usage("save_decision_tree_info_to_mongo")
 
         # 9: set status to completed
         self.step = "Displaying results"
@@ -1388,7 +1377,6 @@ class NtaRun:
 
         # save the csv for QAQC visuals to mongo
         self.save_QAQC_csv_to_mongo()
-        self.log_memory_usage("save_QAQC_csv_to_mongo")
 
         # Check for 'Chemical Results' in keys list
         if "Chemical Results" in keys_list:
@@ -1435,14 +1423,12 @@ class NtaRun:
             # Save the metadata/hazard csv to MongoDB
             logger.info("===========Saving tripod CSV to mongo===========")
             self.save_tripod_csv_to_mongo()
-            self.log_memory_usage("save_tripod_csv_to_mongo")
 
             # If hazard search was performed, remove the mapped hazard column from the dataframe,
             # since these columns have already been passed to the results csv in save_tripod_csv_to_mongo()
             if self.parameters["search_hcd"][1] == "yes":
                 columns_to_drop = [col for col in self.data_map["Chemical Results"].columns if col.endswith("mapped")]
                 self.data_map["Chemical Results"] = self.data_map["Chemical Results"].drop(columns=columns_to_drop)
-                self.log_memory_usage("dropping mapped columns from Chemical Results df")
 
             # Check length of "Chemical Results"
             sheet_limit = 500000
@@ -1464,7 +1450,6 @@ class NtaRun:
                 self.chem_res_map["Chemical Results"] = self.data_map["Chemical Results"]
             # Remove key from 'data_map'
             del self.data_map["Chemical Results"]
-            self.log_memory_usage("deleting Chemical Results df from data_map")
 
             # Create excel book from Chemical Results
             # Save project name to MongoDB using jobid

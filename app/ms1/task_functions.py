@@ -7,6 +7,7 @@ import os
 import re
 import logging
 from openpyxl.utils import get_column_letter
+import psutil
 import io
 
 
@@ -20,6 +21,13 @@ that are called in the execution of the NtaRun class object defined in nta_task.
 
 
 """UTILITY FUNCTIONS (many from Functions_Universal_v3)"""
+
+
+def log_memory_usage(step_name):
+    """Logs the current memory usage."""
+    process = psutil.Process()
+    mem_info = process.memory_info().rss / (1024 * 1024)  # Convert bytes to MB
+    logger.info("Memory usage after %s: %.2f MB", step_name, mem_info)
 
 
 def assign_feature_id(df_in, start=1):
@@ -1943,11 +1951,14 @@ def create_excel_book(d, chem_res=False):
     Returns:
         excel_data (pd.ExcelWriter output)
     """
+    log_memory_usage("Start create_excel_book")
+
     # Create an excel sheet from the datamap and save it to MongoDB
     in_memory_buffer = io.BytesIO()
     # Get list of keys in the dictionary
     keys_list = list(d.keys())
     # Convert self.data_map dictionary into an excel workbook
+
     with pd.ExcelWriter(in_memory_buffer, engine="openpyxl") as writer:
         workbook = writer.book
         for df_name, df in d.items():
@@ -1967,14 +1978,17 @@ def create_excel_book(d, chem_res=False):
                 # NTAW-704: handle error where df[column] is recognised as a DataFrame, not a series
                 except AttributeError:
                     pass
+        log_memory_usage("df.to_excel and column formatting")
         # Format DTXSID column hyperlinks an column width in the Chemical Results sheet
         if chem_res:
+            log_memory_usage("BEFORE chem_res Hyperlink formatting")
             workbook = writer.book
             for sheet in workbook.worksheets:
                 for i in range(sheet.max_row):
                     cell = sheet.cell(row=i + 2, column=9)
                     cell.style = "Hyperlink"
                 sheet.column_dimensions["I"].width = 18
+            log_memory_usage("chem_res Hyperlink formatting")
     excel_data = in_memory_buffer.getvalue()
     return excel_data
 
