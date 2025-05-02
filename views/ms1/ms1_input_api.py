@@ -69,6 +69,7 @@ def ms1_run_api(request):
                 "parent_ion_mass_accuracy": data.get("parent_ion_mass_accuracy", 5),
                 "minimum_rt": data.get("minimum_rt", 0.00),
                 "search_dsstox": data.get("search_dsstox", "yes"),
+                "return_nods": data.get("return_nods", "yes"),
                 "search_hcd": data.get("search_hcd", "no"),
                 "search_mode": data.get("search_mode", "mass"),
                 "do_qnta": data.get("do_qnta", "no"),
@@ -135,6 +136,7 @@ def ms1_run_api(request):
                 "parent_ion_mass_accuracy": ["Parent ion mass accuracy (ppm)", None],
                 "minimum_rt": ["Discard features below this retention time (mins)", None],
                 "search_dsstox": ["Search DSSTox for possible structures", None],
+                "return_nods": ["Return chemical candidates with no data sources?", None],
                 "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", None],
                 "search_mode": ["Search dashboard by", None],
                 "do_qnta": ["Perform qNTA?", None],
@@ -169,6 +171,7 @@ def ms1_run_api(request):
             inputParameters["parent_ion_mass_accuracy"][1] = parameters["parent_ion_mass_accuracy"]
             inputParameters["minimum_rt"][1] = parameters["minimum_rt"]
             inputParameters["search_dsstox"][1] = parameters["search_dsstox"]
+            inputParameters["return_nods"][1] = parameters["return_nods"]
             inputParameters["search_hcd"][1] = parameters["search_hcd"]
             inputParameters["search_mode"][1] = parameters["search_mode"]
             inputParameters["do_qnta"][1] = parameters["do_qnta"]
