@@ -1093,7 +1093,7 @@ class NtaRun:
             *[task_fun.clean_features(df, controls) if df is not None else (None, None, None) for df in self.dfs]
         )
         # Check if CVs are filtered or flagged, manipulate corresponding dfs
-        if self.parameters["filter_cv"] == "yes":
+        if self.parameters["filter_cv"][1] == "yes":
             # subtract blanks from means
             self.dfs = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for df in self.dfs]
         else:
@@ -1158,7 +1158,7 @@ class NtaRun:
         if self.tracer_df is not None:
             tracer_df_bool = True
         # Check if CVs are filtered or flagged, manipulate corresponding dfs
-        if self.parameters["filter_cv"] == "yes":
+        if self.parameters["filter_cv"][1] == "yes":
             # combine dfs from both modes
             self.df_combined = task_fun.combine(self.dfs[0], self.dfs[1])
         else:
@@ -1176,7 +1176,7 @@ class NtaRun:
         # Map to Decision Documentation output
         self.data_map["Decision Documentation"] = self.doc_combined
         # Check if CVs are filtered or flagged, manipulate corresponding dfs
-        if self.parameters["filter_cv"] == "yes":
+        if self.parameters["filter_cv"][1] == "yes":
             # Prep combined df for output by combining with passthrough cols and formatting
             self.mpp_ready = task_fun.MPP_Ready(
                 self.df_combined,
@@ -1219,7 +1219,7 @@ class NtaRun:
             None
         """
         # Check if CVs are filtered or flagged, manipulate corresponding dfs
-        if self.parameters["filter_cv"] == "yes":
+        if self.parameters["filter_cv"][1] == "yes":
             # Get subset of features to search from df_flagged_combined
             to_search = self.df_combined.loc[self.df_combined["For_Dashboard_Search"] == "1", :].copy()
         else:
