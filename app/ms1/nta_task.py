@@ -1261,7 +1261,11 @@ class NtaRun:
         # Perform atom filtering on the DSSTox results
         if self.parameters["atom_ranges"][1]:
             dsstox_search_df = task_fun.DSSTox_atom_filtering(dsstox_search_df, self.parameters["atom_ranges"][1])
-        logger.info("===========Atom filtering completed===========")
+            logger.info("===========Atom filtering completed===========")
+        # Perform data source filtering on the DSSTox results
+        if self.parameters["return_nods"][1] == "no":
+            dsstox_search_df = dsstox_search_df.loc[dsstox_search_df["SOURCE_COUNT"] > 0, :]
+            logger.info("===========Source Count filtering completed===========")
         # Map dataframe to Chemical Results output
         self.data_map["Chemical Results"] = dsstox_search_df
         logger.info("===========API Results mapped to self.data_map===========")
