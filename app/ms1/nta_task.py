@@ -1092,10 +1092,13 @@ class NtaRun:
         self.dfs, self.docs, self.dfs_flagged = zip(
             *[task_fun.clean_features(df, controls) if df is not None else (None, None, None) for df in self.dfs]
         )
-        # subtract blanks from means
-        self.dfs = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for df in self.dfs]
-        # subtract blanks from means
-        self.dfs_flagged = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for df in self.dfs_flagged]
+        # Check if CVs are filtered or flagged, manipulate corresponding dfs
+        if self.parameters["filter_cv"] == "yes":
+            # subtract blanks from means
+            self.dfs = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for df in self.dfs]
+        else:
+            # subtract blanks from means
+            self.dfs_flagged = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for df in self.dfs_flagged]
         return
 
     def merge_columns_onto_tracers(self):
@@ -1154,10 +1157,13 @@ class NtaRun:
         tracer_df_bool = False
         if self.tracer_df is not None:
             tracer_df_bool = True
-        # combine dfs from both modes
-        self.df_combined = task_fun.combine(self.dfs[0], self.dfs[1])
-        # combine df_flaggeds from both modes
-        self.df_flagged_combined = task_fun.combine(self.dfs_flagged[0], self.dfs_flagged[1])
+        # Check if CVs are filtered or flagged, manipulate corresponding dfs
+        if self.parameters["filter_cv"] == "yes":
+            # combine dfs from both modes
+            self.df_combined = task_fun.combine(self.dfs[0], self.dfs[1])
+        else:
+            # combine df_flaggeds from both modes
+            self.df_flagged_combined = task_fun.combine(self.dfs_flagged[0], self.dfs_flagged[1])
         # combine docs from both modes
         self.doc_combined = task_fun.combine_doc(self.docs[0], self.docs[1], tracer_df=tracer_df_bool)
         # Replace zero values of "Selected MRL" column with blank cells prior to exporting to data_map
@@ -1169,25 +1175,31 @@ class NtaRun:
         self.doc_combined[Mean_MB] = self.doc_combined[Mean_MB].replace(0, "")
         # Map to Decision Documentation output
         self.data_map["Decision Documentation"] = self.doc_combined
-        # Prep combined df for output by combining with passthrough cols and formatting
-        self.mpp_ready = task_fun.MPP_Ready(
-            self.df_combined,
-            self.pass_through,
-            self.blank_headers,
-            self.sample_headers,
-        )
-        # Prep combined df_flagged for output by combining with passthrough cols and formatting
-        self.mpp_ready_flagged = task_fun.MPP_Ready(
-            self.df_flagged_combined,
-            self.pass_through,
-            self.blank_headers,
-            self.sample_headers,
-        )
-        # Map df and df_flagged outputs to Final Occurrence Matrices sheets
-        self.data_map["Final Occurrence Matrix"] = reduced_file(self.mpp_ready, self.blank_headers, self.sample_headers)
-        self.data_map["Final Occurrence Matrix (flags)"] = reduced_file(
-            self.mpp_ready_flagged, self.blank_headers, self.sample_headers
-        )
+        # Check if CVs are filtered or flagged, manipulate corresponding dfs
+        if self.parameters["filter_cv"] == "yes":
+            # Prep combined df for output by combining with passthrough cols and formatting
+            self.mpp_ready = task_fun.MPP_Ready(
+                self.df_combined,
+                self.pass_through,
+                self.blank_headers,
+                self.sample_headers,
+            )
+            # Map df outputs to Final Occurrence Matrices sheets
+            self.data_map["Final Occurrence Matrix"] = reduced_file(
+                self.mpp_ready, self.blank_headers, self.sample_headers
+            )
+        else:
+            # Prep combined df_flagged for output by combining with passthrough cols and formatting
+            self.mpp_ready_flagged = task_fun.MPP_Ready(
+                self.df_flagged_combined,
+                self.pass_through,
+                self.blank_headers,
+                self.sample_headers,
+            )
+            # Map df_flagged outputs to Final Occurrence Matrices sheets
+            self.data_map["Final Occurrence Matrix"] = reduced_file(
+                self.mpp_ready_flagged, self.blank_headers, self.sample_headers
+            )
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save=True):
         """
@@ -1206,20 +1218,24 @@ class NtaRun:
         Returns:
             None
         """
-        # Update logger
-        logger.info(
-            "Rows flagged for dashboard search: {} out of {}".format(
-                len(self.df_flagged_combined.loc[self.df_flagged_combined["For_Dashboard_Search"] == "1", :]),
-                len(self.df_flagged_combined),
-            )
-        )
-        # Get subset of features to search from df_flagged_combined
-        to_search = self.df_flagged_combined.loc[self.df_flagged_combined["For_Dashboard_Search"] == "1", :].copy()
+        # Check if CVs are filtered or flagged, manipulate corresponding dfs
+        if self.parameters["filter_cv"] == "yes":
+            # Get subset of features to search from df_flagged_combined
+            to_search = self.df_combined.loc[self.df_combined["For_Dashboard_Search"] == "1", :].copy()
+        else:
+            # Get subset of features to search from df_flagged_combined
+            to_search = self.df_flagged_combined.loc[self.df_flagged_combined["For_Dashboard_Search"] == "1", :].copy()
         # Check if searching by mass or formula, drop duplicates
         if self.parameters["search_mode"][1] == "mass":
-            to_search.drop_duplicates(subset="Mass", keep="first", inplace=True)
+            to_search = to_search.drop_duplicates(
+                subset="Mass",
+                keep="first",
+            )
         else:
-            to_search.drop_duplicates(subset="Formula", keep="first", inplace=True)
+            to_search = to_search.drop_duplicates(
+                subset="Formula",
+                keep="first",
+            )
         # Calculate number of fragments to search
         n_search = len(to_search)
         # Update logger

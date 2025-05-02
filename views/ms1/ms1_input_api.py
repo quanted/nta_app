@@ -65,6 +65,7 @@ def ms1_run_api(request):
                 "min_replicate_hits": data.get("min_replicate_hits", 66),
                 "min_replicate_hits_blanks": data.get("min_replicate_hits_blanks", 66),
                 "max_replicate_cv": data.get("max_replicate_cv", 0.8),
+                "filter_cv": data.get("filter_cv", "yes"),
                 "mrl_std_multiplier": data.get("mrl_std_multiplier", "3"),
                 "parent_ion_mass_accuracy": data.get("parent_ion_mass_accuracy", 5),
                 "minimum_rt": data.get("minimum_rt", 0.00),
@@ -132,6 +133,7 @@ def ms1_run_api(request):
                 "min_replicate_hits": ["Min replicate hits (%)", None],
                 "min_replicate_hits_blanks": ["Min replicate hits in blanks (%)", None],
                 "max_replicate_cv": ["Max replicate CV", None],
+                "filter_cv": ["Filter on CV values?", None],
                 "mrl_std_multiplier": ["MRL standard deviation multiplier", None],
                 "parent_ion_mass_accuracy": ["Parent ion mass accuracy (ppm)", None],
                 "minimum_rt": ["Discard features below this retention time (mins)", None],
@@ -167,6 +169,7 @@ def ms1_run_api(request):
             inputParameters["min_replicate_hits"][1] = parameters["min_replicate_hits"]
             inputParameters["min_replicate_hits_blanks"][1] = parameters["min_replicate_hits_blanks"]
             inputParameters["max_replicate_cv"][1] = parameters["max_replicate_cv"]
+            inputParameters["filter_cv"][1] = parameters["filter_cv"]
             inputParameters["mrl_std_multiplier"][1] = parameters["mrl_std_multiplier"]
             inputParameters["parent_ion_mass_accuracy"][1] = parameters["parent_ion_mass_accuracy"]
             inputParameters["minimum_rt"][1] = parameters["minimum_rt"]
