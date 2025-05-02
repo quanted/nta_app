@@ -1266,10 +1266,17 @@ class NtaRun:
                 orient="split",
                 dtype={"TOXCAST_NUMBER_OF_ASSAYS/TOTAL": "object"},
             )
-        # Merge API search results with mpp_ready_flagged dataframe ID, mass, and RT
-        dsstox_search_df = self.mpp_ready_flagged[["Feature ID", "Mass", "Retention Time"]].merge(
-            dsstox_search_df, how="right", left_on="Mass", right_on="INPUT"
-        )
+        # Check if CVs are filtered or flagged, manipulate corresponding dfs
+        if self.parameters["filter_cv"][1] == "yes":
+            # Merge API search results with mpp_ready_flagged dataframe ID, mass, and RT
+            dsstox_search_df = self.mpp_ready[["Feature ID", "Mass", "Retention Time"]].merge(
+                dsstox_search_df, how="right", left_on="Mass", right_on="INPUT"
+            )
+        else:
+            # Merge API search results with mpp_ready_flagged dataframe ID, mass, and RT
+            dsstox_search_df = self.mpp_ready_flagged[["Feature ID", "Mass", "Retention Time"]].merge(
+                dsstox_search_df, how="right", left_on="Mass", right_on="INPUT"
+            )
         logger.info("===========API results merged with mpp_ready dataframe===========")
         # Calculate toxcast_percent_active values
         dsstox_search_df = task_fun.calc_toxcast_percent_active(dsstox_search_df)
