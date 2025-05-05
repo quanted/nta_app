@@ -312,7 +312,10 @@ class NtaRun:
         self.combine_modes()
         if self.verbose:
             logger.info("Combined modes.")
-            logger.info("combined df length: {}".format(len(self.df_combined)))
+            if self.df_combined is not None:
+                logger.info("combined df length: {}".format(len(self.df_combined)))
+            else:
+                logger.info("combined df_flagged length: {}".format(len(self.df_flagged_combined)))
 
         # 7: search dashboard
         if self.parameters["search_dsstox"][1] == "yes":
