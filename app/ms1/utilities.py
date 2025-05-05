@@ -263,8 +263,14 @@ def batch_search_hcd(dtxsid_list, batchsize=200):
         logger.info(f"HCD Query: {i//batchsize} of {len(dtxsid_list)//batchsize} batches")
         # Call api_search_hcd() for current chunk
         response = api_search_hcd(dtxsid_list[i : i + batchsize])
-        # Convert JSON response to dictionary
-        chem_data_list = json.loads(response.content)["hazardChemicals"]
+
+        try:
+            # Convert JSON response to dictionary
+            chem_data_list = json.loads(response.content)["hazardChemicals"]
+        except KeyError:
+            logger.info(f"KeyError - response.content: {response.content}")
+            pass
+
         # Iterate through dictionary, format results
         for chemical in chem_data_list:
             chemical_id = chemical["chemicalId"].split("|")[0]
