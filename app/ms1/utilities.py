@@ -268,25 +268,40 @@ def batch_search_hcd(dtxsid_list, batchsize=200):
         # chem_data_list = json.loads(response.content)["hazardChemicals"]
 
         # NTAW-800
-        if i == 0:
-            logger.info(f"first DTXSID list batch: {dtxsid_list[i : i + batchsize]}")
         try:
             # Convert JSON response to dictionary
             chem_data_list = json.loads(response.content)["hazardChemicals"]
-        except KeyError as e:
-            logger.info(repr(e))
-            logger.info(f"KeyError - response.content: {response.content}")
-            logger.info(f"DTXSID list batch failing search: {dtxsid_list[i : i + batchsize]}")
-            pass
+            # Iterate through dictionary, format results
+            for chemical in chem_data_list:
+                chemical_id = chemical["chemicalId"].split("|")[0]
+                result_dict[chemical_id] = {}
+                for data in chemical["scores"]:
+                    result_dict[chemical_id][f'{data["hazardName"]}_score'] = data["finalScore"]
+                    result_dict[chemical_id][f'{data["hazardName"]}_authority'] = (
+                        data["finalAuthority"] if "finalAuthority" in data.keys() else ""
+                    )
 
-        # Iterate through dictionary, format results
-        for chemical in chem_data_list:
-            chemical_id = chemical["chemicalId"].split("|")[0]
-            result_dict[chemical_id] = {}
-            for data in chemical["scores"]:
-                result_dict[chemical_id][f'{data["hazardName"]}_score'] = data["finalScore"]
-                result_dict[chemical_id][f'{data["hazardName"]}_authority'] = (
-                    data["finalAuthority"] if "finalAuthority" in data.keys() else ""
-                )
+        except KeyError as e:
+            for id in dtxsid_list[i : i + batchsize]:
+                response = api_search_hcd([id])
+                try:
+                    # Convert JSON response to dictionary
+                    chem_data_list = json.loads(response.content)["hazardChemicals"]
+                    # Iterate through dictionary, format results
+                    for chemical in chem_data_list:
+                        chemical_id = chemical["chemicalId"].split("|")[0]
+                        result_dict[chemical_id] = {}
+                        for data in chemical["scores"]:
+                            result_dict[chemical_id][f'{data["hazardName"]}_score'] = data["finalScore"]
+                            result_dict[chemical_id][f'{data["hazardName"]}_authority'] = (
+                                data["finalAuthority"] if "finalAuthority" in data.keys() else ""
+                            )
+
+                except KeyError as e:
+                    logger.info(f"hcd search failed for {id}")
+                    logger.info(repr(e))
+                    logger.info(f"KeyError - response.content: {response.content}")
+                    pass
+
     # Return dataframe of dictionary data
     return pd.DataFrame(result_dict).transpose().reset_index().rename(columns={"index": "DTXSID"})
