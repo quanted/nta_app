@@ -255,34 +255,23 @@ def batch_search_hcd(dtxsid_list, batchsize=200):
     """
     # Define dictionary for results
     result_dict = {}
+    failed_hcd_search = []
     # Update logger
     logger.info(f"Search {len(dtxsid_list)} DTXSIDs in HCD")
     # Interate through dtxsid_list by batchsize
     for i in range(0, len(dtxsid_list), batchsize):
-        # Update logger
+        batch = dtxsid_list[i : i + batchsize]
         logger.info(f"HCD Query: {i//batchsize} of {len(dtxsid_list)//batchsize} batches")
         # Call api_search_hcd() for current chunk
-        response = api_search_hcd(dtxsid_list[i : i + batchsize])
+        response = api_search_hcd(batch)
 
         # # Convert JSON response to dictionary
         # chem_data_list = json.loads(response.content)["hazardChemicals"]
 
         # NTAW-800
-        try:
-            # Convert JSON response to dictionary
-            chem_data_list = json.loads(response.content)["hazardChemicals"]
-            # Iterate through dictionary, format results
-            for chemical in chem_data_list:
-                chemical_id = chemical["chemicalId"].split("|")[0]
-                result_dict[chemical_id] = {}
-                for data in chemical["scores"]:
-                    result_dict[chemical_id][f'{data["hazardName"]}_score'] = data["finalScore"]
-                    result_dict[chemical_id][f'{data["hazardName"]}_authority'] = (
-                        data["finalAuthority"] if "finalAuthority" in data.keys() else ""
-                    )
-
-        except KeyError as e:
-            for id in dtxsid_list[i : i + batchsize]:
+        if response.status_code != 200:
+            logger.warning(f"Batch failed with status {response.status_code}. Trying individual search fallback")
+            for id in batch:
                 response = api_search_hcd([id])
                 try:
                     # Convert JSON response to dictionary
@@ -299,9 +288,24 @@ def batch_search_hcd(dtxsid_list, batchsize=200):
 
                 except KeyError as e:
                     logger.info(f"hcd search failed for {id}")
-                    logger.info(repr(e))
-                    logger.info(f"KeyError - response.content: {response.content}")
+                    failed_hcd_search.append([id, response.content])
                     pass
+
+        else:
+            # Process the successful batch
+            # Convert JSON response to dictionary
+            chem_data_list = json.loads(response.content)["hazardChemicals"]
+            # Iterate through dictionary, format results
+            for chemical in chem_data_list:
+                chemical_id = chemical["chemicalId"].split("|")[0]
+                result_dict[chemical_id] = {}
+                for data in chemical["scores"]:
+                    result_dict[chemical_id][f'{data["hazardName"]}_score'] = data["finalScore"]
+                    result_dict[chemical_id][f'{data["hazardName"]}_authority'] = (
+                        data["finalAuthority"] if "finalAuthority" in data.keys() else ""
+                    )
+
+    logger.info(f"Failed HCD searches: {failed_hcd_search}")
 
     # Return dataframe of dictionary data
     return pd.DataFrame(result_dict).transpose().reset_index().rename(columns={"index": "DTXSID"})
