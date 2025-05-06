@@ -270,7 +270,6 @@ def batch_search_hcd(dtxsid_list, batchsize=200):
         # NTAW-800
         if i == 0:
             logger.info(f"first DTXSID list batch: {dtxsid_list[i : i + batchsize]}")
-            logger.info(f"first response: {response.content}")
         try:
             # Convert JSON response to dictionary
             chem_data_list = json.loads(response.content)["hazardChemicals"]
