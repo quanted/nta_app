@@ -274,6 +274,7 @@ def batch_search_hcd(dtxsid_list, batchsize=200):
         except KeyError as e:
             logger.info(repr(e))
             logger.info(f"KeyError - response.content: {response.content}")
+            logger.info(f"DTXSID list batch failing search: {dtxsid_list[i : i + batchsize]}")
             pass
 
         # Iterate through dictionary, format results
