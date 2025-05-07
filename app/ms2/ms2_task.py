@@ -373,16 +373,27 @@ class MS2Run:
         logger.info("save_data - inputParameters_df:")
         logger.info(inputParameters_df)
 
+        # Merge spectrum data onto CFMID results data frames
+        neg_df = (
+            self.features["neg"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True)
+        )
+        neg_df = pd.merge(neg_df, self.spectra_df, on="DTXCID", how="left")
+
+        pos_df = (
+            self.features["pos"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True)
+        )
+        pos_df = pd.merge(pos_df, self.spectra_df, on="DTXCID", how="left")
+
         # self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
         # self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
         # 2/23/2023 Reverse the filenames index, currently pointing to the wrong file
         self.mongo_save(
-            self.features["neg"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True),
+            neg_df,
             step=FILENAMES["final_output"][1],
         )
         # self.mongo_save(self.features["pos"].to_df(), step=FILENAMES["final_output"][0])
         self.mongo_save(
-            self.features["pos"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True),
+            pos_df,
             step=FILENAMES["final_output"][0],
         )
         self.mongo_save(inputParameters_df, step=FILENAMES["final_output"][2])
