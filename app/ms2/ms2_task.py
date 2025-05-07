@@ -265,7 +265,9 @@ class MS2Run:
             for item_key, df in inner_dict.items():
                 # Replace df with df.spectrum_df copy
                 temp_df = df.spectrum_df.copy()
-                processed_inner[item_key] = temp_df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist()
+                processed_inner[item_key] = sorted(
+                    temp_df[["FRAGMENT_MASS", "INTENSITY"]].values.tolist(), key=lambda x: x[0]
+                )
             processed_spectra_dict[key] = processed_inner
         # Convert the spectra_dict into a dataframe holding the energy0, energy1, and energy2 spectral data for each unique DTXCID
         spectra_df = pd.DataFrame.from_dict(processed_spectra_dict, orient="index").reset_index()
