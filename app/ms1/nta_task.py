@@ -1096,7 +1096,8 @@ class NtaRun:
             *[task_fun.clean_features(df, controls) if df is not None else (None, None, None) for df in self.dfs]
         )
         # Check if CVs are filtered or flagged, manipulate corresponding dfs
-        if self.parameters["filter_cv"][1] == "yes":
+        # if self.parameters["filter_cv"][1] == "yes":
+        if "filter_cv" not in self.parameters or self.parameters["filter_cv"][1] == "yes":
             # subtract blanks from means
             self.dfs = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for df in self.dfs]
         else:
