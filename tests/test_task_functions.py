@@ -30,7 +30,7 @@ def test__parse_headers__returns_list_of_list_of_string(df=my_pos_df):
 def test__parse_headers__lists_contain_expected_items(df=my_pos_df):
     result = parse_headers(df)
     assert result[0][0] == "MB1"
-    assert result[22][0] == "Ionization_Mode"
+    assert result[22][0] == "Ionization Mode"
 
 def test__get_sample_and_blank_headers__returns_all_headers(pos_df=my_pos_df, neg_df=my_neg_df):
     assert len(get_sample_and_blank_headers((pos_df, neg_df))) == 3
@@ -41,7 +41,7 @@ def test__get_sample_and_blank_headers__returns_correct_content(pos_df=my_pos_df
     for sample_types in sample_headers:
         for sample in sample_types:
             assert not sample.startswith("MB")
-    assert all_headers[-1][0] == "Ionization_Mode"
+    assert all_headers[-1][0] == "Ionization Mode"
 
 def test__passthrucol__returns_passthrough_and_trimmed_df(pos_df=my_pos_df, neg_df=my_neg_df):
     pos_df = assign_feature_id(pos_df)

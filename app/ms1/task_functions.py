@@ -7,6 +7,7 @@ from itertools import groupby
 import os
 import re
 import logging
+from typing import Union
 from openpyxl.utils import get_column_letter
 import io
 from ..constants import *
@@ -169,7 +170,7 @@ def parse_headers(df_in: pd.DataFrame):
 
 
 # NTAW-594
-def get_sample_and_blank_headers(dfs: tuple[pd.DataFrame | None, pd.DataFrame | None]):
+def get_sample_and_blank_headers(dfs: tuple[Union[pd.DataFrame, None], Union[pd.DataFrame, None]]):
     if dfs[0] is not None:
         all_headers = parse_headers(dfs[0])
     else:
@@ -1567,7 +1568,7 @@ def Blank_Subtract_Mean(df_in: pd.DataFrame):
 """FUNCTIONS FOR COMBINING DATAFRAMES / FILE PREPARATION"""
 
 
-def combine(df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+def combine(df1: Union[pd.DataFrame, None], df2: Union[pd.DataFrame, None]):
     """
     Function to combine positive and negative mode dataframes into df_combined
 
@@ -1603,7 +1604,7 @@ def combine(df1: pd.DataFrame | None, df2: pd.DataFrame | None):
     return dfc
 
 # TODO: Is tracer_df necessary if it is unaccessed?
-def combine_doc(doc1: pd.DataFrame | None, doc2: pd.DataFrame | None, tracer_df=False):
+def combine_doc(doc1: Union[pd.DataFrame, None], doc2: Union[pd.DataFrame, None], tracer_df=False):
     """
     Function to combine positive and negative mode docs for filter_documentation sheet
 
@@ -1662,7 +1663,7 @@ def combine_doc(doc1: pd.DataFrame | None, doc2: pd.DataFrame | None, tracer_df=
     return dfc
 
 
-def MPP_Ready(dfc: pd.DataFrame, pts: list[pd.DataFrame | None], blank_headers: list[list[str]], sample_headers: list[list[str]]):
+def MPP_Ready(dfc: pd.DataFrame, pts: list[Union[pd.DataFrame, None]], blank_headers: list[list[str]], sample_headers: list[list[str]]):
     """
     Function that re-combines the pass-through columns with the processed dataframe
     plus some final column sorting.

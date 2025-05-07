@@ -6,6 +6,7 @@ import logging
 import traceback
 import shutil
 import json
+from typing import Union
 from datetime import datetime
 from dask.distributed import Client, LocalCluster, fire_and_forget
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -35,11 +36,11 @@ NO_DASK = False
 
 def run_nta_dask(
     parameters,
-    input_dfs: list[pd.DataFrame | None],
-    tracer_df: pd.DataFrame | None = None,
-    run_sequence_pos_df: pd.DataFrame | None = None,
-    run_sequence_neg_df: pd.DataFrame | None = None,
-    qnta_df: pd.DataFrame | None = None,
+    input_dfs: list[Union[pd.DataFrame, None]],
+    tracer_df: Union[pd.DataFrame, None] = None,
+    run_sequence_pos_df: Union[pd.DataFrame, None] = None,
+    run_sequence_neg_df: Union[pd.DataFrame, None] = None,
+    qnta_df: Union[pd.DataFrame, None] = None,
     jobid = "00000000",
     verbose = True,
 ):
@@ -96,14 +97,14 @@ def run_nta_dask(
 
 def run_nta(
     parameters,
-    input_dfs: list[pd.DataFrame | None],
-    tracer_df: pd.DataFrame | None = None,
-    run_sequence_pos_df: pd.DataFrame | None = None,
-    run_sequence_neg_df: pd.DataFrame | None = None,
-    qnta_df: pd.DataFrame | None = None,
+    input_dfs: list[Union[pd.DataFrame, None]],
+    tracer_df: Union[pd.DataFrame, None] = None,
+    run_sequence_pos_df: Union[pd.DataFrame, None] = None,
+    run_sequence_neg_df: Union[pd.DataFrame, None] = None,
+    qnta_df: Union[pd.DataFrame, None] = None,
     jobid = "00000000",
     verbose = True,
-    mongo_address: str | None = None,
+    mongo_address: Union[str, None] = None,
     in_docker=True,
 ):
     nta_run = NtaRun(
@@ -140,7 +141,7 @@ class NtaRun:
         run_sequence_pos_df=None,
         run_sequence_neg_df=None,
         qnta_df=None,
-        mongo_address: str | None = None,
+        mongo_address: Union[str, None] = None,
         jobid="00000000",
         verbose=True,
         in_docker=True,
@@ -406,7 +407,7 @@ class NtaRun:
 
         return
 
-    def check_retention_time_column(self, input_dfs: list[pd.DataFrame | None]):
+    def check_retention_time_column(self, input_dfs: list[Union[pd.DataFrame, None]]):
         """
         Check for the existence of alternate spellings of 'Retention_Time' column in input dataframes and rename to "Retention_Time".
 
