@@ -1,3 +1,11 @@
+# Test file names
+EXAMPLE_POS_FILENAME = "1a_MZmine3_pos.csv"
+EXAMPLE_NEG_FILENAME = "1b_MZmine3_neg.csv"
+EXAMPLE_TRACER_FILENAME = "WW2DW_Tracers_Amenable.csv"
+EXAMPLE_RUN_SEQUENCE_POS_FILENAME = "WW2DW_sequence_cal.csv"
+EXAMPLE_RUN_SEQUENCE_NEG_FILENAME = "WW2DW_sequence_cal.csv"
+EXAMPLE_SURROGATE_FILENAME = "qNTA_Surrogate_Input_File_WW2DW.csv"
+
 # Define pos/neg/neutral adduct lists
 # Proton added - we observe Mass-(H+) and Mass+(Adduct)
 NEG_ADDUCT_LI = [

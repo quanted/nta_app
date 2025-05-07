@@ -579,7 +579,7 @@ def dup_matrix_flag(df_in, mass_cutoff, rt_cutoff, ppm):
     return output
 
 
-def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, blank_headers, sample_headers):
+def duplicates(df_in: pd.DataFrame, mass_cutoff: float, rt_cutoff: float, ppm: bool, blank_headers: list[list[str]], sample_headers: list[list[str]]):
     """
     Drop duplicates from input dataframe, based on mass_cutoff and rt_cutoff.
     Includes logic statement for determining if the dataframe is too large to
@@ -593,7 +593,7 @@ def duplicates(df_in, mass_cutoff, rt_cutoff, ppm, blank_headers, sample_headers
         df_in (dataframe)
         mass_cutoff (float, value for determing if masses are close enough)
         rt_cutoff (float, value for determing if rts are close enough)
-        ppm (int, binary yes/no for using ppm as units)
+        ppm (bool, binary yes/no for using ppm as units)
     Outputs:
         output (dataframe, dataframe with duplicate flag column added)
     """
@@ -1447,7 +1447,8 @@ def feat_drop_df(df, docs, df_flagged):
     # Return df (data), df_flagged (data + flagged data)
     return df, df_flagged
 
-
+# TODO: tracer_df as defined in nta_task should be a Dataframe or None. If we want this to be a boolean, we should phrase the parameter name as
+# a yes-no question, i.e. has_tracer_df, which would be False if tracer_df was None.
 def clean_features(df_in, controls, tracer_df=False):
     """
     Function that removes (blanks out) observations at feature and occurrence level

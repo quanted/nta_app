@@ -8,6 +8,7 @@ import os
 import string, random
 import datetime
 import logging
+from nta_app.app.constants import EXAMPLE_NEG_FILENAME, EXAMPLE_POS_FILENAME, EXAMPLE_RUN_SEQUENCE_NEG_FILENAME, EXAMPLE_RUN_SEQUENCE_POS_FILENAME, EXAMPLE_SURROGATE_FILENAME, EXAMPLE_TRACER_FILENAME
 from ...app.ms1.nta_task import run_nta_dask
 from ...tools.ms1 import file_manager
 from ..views_dectorators import api_key_required
@@ -16,15 +17,6 @@ from ..views_dectorators import api_key_required
 logger = logging.getLogger("nta_app.views.ms1")
 if os.getenv("DEPLOY_ENV", "kube-dev") == "kube-prod":
     logger.setLevel(logging.WARNING)
-
-# hard-coded example file names for testing found in nta_app/input/ms1/
-example_pos_filename = "1a_MZmine3_pos.csv"
-example_neg_filename = "1b_MZmine3_neg.csv"
-example_tracer_filename = "WW2DW_Tracers_Amenable.csv"
-example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
-example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
-example_surrogate_filename = "qNTA_Surrogate_Input_File_WW2DW.csv"
-
 
 @api_key_required
 @csrf_exempt
@@ -205,13 +197,13 @@ def ms1_run_api(request):
                 # handle case 1: the user has selected to run the test files
                 # get the path and filename of the test files
                 example_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "input/ms1")
-                pos_input = os.path.join(example_data_dir, example_pos_filename)
-                neg_input = os.path.join(example_data_dir, example_neg_filename)
-                tracer_file = os.path.join(example_data_dir, example_tracer_filename)
-                run_sequence_pos_file = os.path.join(example_data_dir, example_run_sequence_pos_filename)
-                run_sequence_neg_file = os.path.join(example_data_dir, example_run_sequence_neg_filename)
+                pos_input = os.path.join(example_data_dir, EXAMPLE_POS_FILENAME)
+                neg_input = os.path.join(example_data_dir, EXAMPLE_NEG_FILENAME)
+                tracer_file = os.path.join(example_data_dir, EXAMPLE_TRACER_FILENAME)
+                run_sequence_pos_file = os.path.join(example_data_dir, EXAMPLE_RUN_SEQUENCE_POS_FILENAME)
+                run_sequence_neg_file = os.path.join(example_data_dir, EXAMPLE_RUN_SEQUENCE_NEG_FILENAME)
                 if parameters["do_qnta"] == "yes":
-                    qnta_file = os.path.join(example_data_dir, example_surrogate_filename)
+                    qnta_file = os.path.join(example_data_dir, EXAMPLE_SURROGATE_FILENAME)
                     inputParameters["qnta_input"][1] = qnta_file
                     qnta_df = file_manager.tracer_handler(qnta_file)
                 else:

@@ -1,0 +1,42 @@
+import datetime
+from nta_app.app.constants import EXAMPLE_POS_FILENAME, EXAMPLE_NEG_FILENAME, EXAMPLE_RUN_SEQUENCE_NEG_FILENAME, EXAMPLE_RUN_SEQUENCE_POS_FILENAME, EXAMPLE_SURROGATE_FILENAME, EXAMPLE_TRACER_FILENAME
+
+inputParameters = {
+  "project_name": ["Project name", "Example nta"],
+  "datetime": ["Date & time", str(datetime.datetime.now())],
+  "test_files": ["Run test files only (debugging)", "yes"],
+  "pos_input": ["Positive mode file", EXAMPLE_POS_FILENAME],
+  "neg_input": ["Negative mode file", EXAMPLE_NEG_FILENAME],
+  "pos_adducts": ["Positive mode adducts", ["Na", "K", "NH4"]],
+  "neg_adducts": ["Negative mode adducts", ["Cl", "HCO2", "CH3CO2", "FA"]],
+  "neutral_losses": ["Neutral losses (both modes)", ["H2O", "CO2"]],
+  "mass_accuracy_units": ["Adduct / duplicate mass accuracy units", "ppm"],
+  "mass_accuracy": ["Adduct / duplicate mass accuracy", 10],
+  "rt_accuracy": ["Adduct / duplicate retention time accuracy (mins)", 0.05],
+  "run_sequence_pos_file": [
+      "Run sequence positive mode file",
+      EXAMPLE_RUN_SEQUENCE_POS_FILENAME,
+  ],
+  "run_sequence_neg_file": [
+      "Run sequence negative mode file",
+      EXAMPLE_RUN_SEQUENCE_NEG_FILENAME,
+  ],
+  "tracer_input": ["Tracer file", EXAMPLE_TRACER_FILENAME],
+  "mass_accuracy_units_tr": ["Tracer mass accuracy units", "ppm"],
+  "mass_accuracy_tr": ["Tracer mass accuracy", 5],
+  "rt_accuracy_tr": ["Tracer retention time accuracy (mins)", 0.1],
+  "tracer_plot_yaxis_format": ["Tracer plot y-axis scaling", "log"],
+  "tracer_plot_trendline": ["Tracer plot trendlines shown", "yes"],
+  "min_replicate_hits": ["Min replicate hits (%)", 66],
+  "min_replicate_hits_blanks": ["Min replicate hits in blanks (%)", 66],
+  "max_replicate_cv": ["Max replicate CV", 0.8],
+  "mrl_std_multiplier": ["MRL standard deviation multiplier", "3"],
+  "parent_ion_mass_accuracy": ["Parent ion mass accuracy (ppm)", 5],
+  "minimum_rt": ["Discard features below this retention time (mins)", 0.00],
+  "search_dsstox": ["Search DSSTox for possible structures", "no"],
+  "search_hcd": ["Search Cheminformatics Hazard Module for toxicity data", "no"],
+  "search_mode": ["Search dashboard by", "mass"],
+  "do_qnta": ["Perform qNTA?", "no"],
+  "qnta_input": ["qNTA Surrogate input file", EXAMPLE_SURROGATE_FILENAME],
+  "atom_ranges": ["Atom filtering ranges", None],
+}

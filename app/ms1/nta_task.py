@@ -610,7 +610,7 @@ class NtaRun:
         self.pass_through = [
             task_fun.passthrucol(df, self.all_headers)[0] if df is not None else None for df in self.dfs
         ]
-        self.dfs = [task_fun.passthrucol(df, self.all_headers)[1] if df is not None else None for df in self.dfs]
+        self.dfs: list[Union[pd.DataFrame, None]] = [task_fun.passthrucol(df, self.all_headers)[1] if df is not None else None for df in self.dfs]
         return
 
     def filter_void_volume(self, min_rt: float):
@@ -625,7 +625,7 @@ class NtaRun:
             None
         """
         # Iterate through dfs, removing rows where "Retention_Time" is below min_rt threshold
-        self.dfs = [df.loc[df["Retention_Time"] > min_rt].copy() if df is not None else None for df in self.dfs]
+        self.dfs: list[Union[pd.DataFrame, None]] = [df.loc[df["Retention_Time"] > min_rt].copy() if df is not None else None for df in self.dfs]
         return
 
     def filter_duplicates(self):
@@ -642,11 +642,11 @@ class NtaRun:
             None
         """
         # Get ppm, mass_accuracy, and rt_accuracy parameters
-        ppm = self.parameters["mass_accuracy_units"][1] == "ppm"
+        ppm: bool = self.parameters["mass_accuracy_units"][1] == "ppm"
         mass_accuracy = float(self.parameters["mass_accuracy"][1])
         rt_accuracy = float(self.parameters["rt_accuracy"][1])
         # Perform duplicate flagging functions
-        self.dfs = [
+        self.dfs: list[Union[pd.DataFrame, None]] = [
             task_fun.duplicates(df, mass_accuracy, rt_accuracy, ppm, self.blank_headers, self.sample_headers)
             if df is not None
             else None
@@ -678,7 +678,7 @@ class NtaRun:
         # Iterate through dfs, calling chunk_stats() function
         # NTAW-49: Raises custom ValueError if blank columns are improperly named in the input dataframes
         try:
-            self.dfs = [
+            self.dfs: list[Union[pd.DataFrame, None]] = [
                 task_fun.chunk_stats(
                     df,
                     min_blank_detection_percentage,
@@ -832,7 +832,7 @@ class NtaRun:
             )
             for df in self.dfs
         ]
-        self.dfs = [
+        self.dfs: list[Union[pd.DataFrame, None]] = [
             (
                 task_fun.check_feature_tracers(
                     df,
@@ -1008,12 +1008,12 @@ class NtaRun:
             task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[2] if df is not None else None
             for index, df in enumerate(self.dfs)
         ]
-        self.dfs = [
+        self.dfs: list[Union[pd.DataFrame, None]] = [
             task_fun.clean_features(df, controls, tracer_df=tracer_df_bool)[0] if df is not None else None
             for index, df in enumerate(self.dfs)
         ]
         # subtract blanks from means
-        self.dfs = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs)]
+        self.dfs: list[Union[pd.DataFrame, None]] = [task_fun.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs)]
         # subtract blanks from means
         self.dfs_flagged = [
             task_fun.Blank_Subtract_Mean(df) if df is not None else None for index, df in enumerate(self.dfs_flagged)

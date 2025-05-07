@@ -1,9 +1,13 @@
 import pandas as pd
 import os
-from nta_app.app.ms1.task_functions import assign_feature_id, differences as count_string_differences, parse_headers, get_sample_and_blank_headers, passthrucol, window_size
+import pytest
+from nta_app.tests.app_ms1_test_helpers import inputParameters
+from nta_app.app.constants import EXAMPLE_NEG_FILENAME, EXAMPLE_POS_FILENAME
+from nta_app.app.ms1.task_functions import duplicates, assign_feature_id, differences as count_string_differences, parse_headers, get_sample_and_blank_headers, passthrucol, window_size
 
-my_pos_df = pd.read_csv("input/ms1/1a_MZmine3_pos.csv")
-my_neg_df = pd.read_csv("input/ms1/1b_MZmine3_neg.csv")
+data_dir = "input/ms1"
+my_pos_df = pd.read_csv(os.path.join(data_dir, EXAMPLE_POS_FILENAME))
+my_neg_df = pd.read_csv(os.path.join(data_dir, EXAMPLE_NEG_FILENAME))
 
 def test__added_feature_id__new_column_for_feature_id():
     data = {
@@ -34,6 +38,10 @@ def test__parse_headers__lists_contain_expected_items(df=my_pos_df):
 
 def test__get_sample_and_blank_headers__returns_all_headers(pos_df=my_pos_df, neg_df=my_neg_df):
     assert len(get_sample_and_blank_headers((pos_df, neg_df))) == 3
+
+def test__get_sample_and_blank_headers__fails_when_both_dfs_are_none(pos_df=my_pos_df, neg_df=my_neg_df):
+    with pytest.raises(AttributeError):
+        get_sample_and_blank_headers((None, None))
 
 def test__get_sample_and_blank_headers__returns_correct_content(pos_df=my_pos_df, neg_df=my_neg_df):
     all_headers, blank_headers, sample_headers = get_sample_and_blank_headers((pos_df, neg_df))
