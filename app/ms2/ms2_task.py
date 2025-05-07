@@ -89,7 +89,7 @@ def run_ms2(parameters, mongo_address=None, jobid="00000000", results_link="", v
     return True
 
 
-FILENAMES = {"final_output": ["CFMID_results_pos", "CFMID_results_neg", "input_parameters", "spectra"]}
+FILENAMES = {"final_output": ["CFMID_results_pos", "CFMID_results_neg", "input_parameters"]}
 
 
 class MS2Run:
@@ -397,8 +397,6 @@ class MS2Run:
             step=FILENAMES["final_output"][0],
         )
         self.mongo_save(inputParameters_df, step=FILENAMES["final_output"][2])
-
-        self.mongo_save(self.spectra_df, step=FILENAMES["final_output"][3])
 
     def send_email(self):
         try:
