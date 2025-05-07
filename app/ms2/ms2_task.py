@@ -210,8 +210,8 @@ class MS2Run:
                 self.update_progress()
             self.features[mode] = tmp_feature_list
 
-        logger.info(f"self.features['pos'] : {self.features['pos']}")
-        logger.info(f"self.features['neg'] : {self.features['neg']}")
+        logger.info(f"self.input_dfs['pos'] : {self.input_dfs['pos']}")
+        logger.info(f"self.input_dfs['neg'] : {self.input_dfs['neg']}")
 
     def get_CFMID_spectra(self):
         """
