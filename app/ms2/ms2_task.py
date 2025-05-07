@@ -210,6 +210,9 @@ class MS2Run:
                 self.update_progress()
             self.features[mode] = tmp_feature_list
 
+        logger.info(f"self.features['pos'] : {self.features['pos']}")
+        logger.info(f"self.features['neg'] : {self.features['neg']}")
+
     def get_CFMID_spectra(self):
         """
         Instantiate pos_list and neg_list with tuples of unique masses in the FeatureList and corrsponding mode. Iterate through list
