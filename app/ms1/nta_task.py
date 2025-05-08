@@ -1039,8 +1039,8 @@ class NtaRun:
             # Combine cc_metrics outputs, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = pd.concat([qnta_pos.cc_metrics, qnta_neg.cc_metrics])
             # Get RF percentiles, store in qnta datamap
-            self.qnta_map["Positive Mode RF Percentile Estimates"] = qnta_pos.RF_percs
-            self.qnta_map["Negative Mode RF Percentile Estimates"] = qnta_neg.RF_percs
+            self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
+            self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
             # # Get calibration plots
             # self.cc_plots_out = qnta_pos.all_cal_plots + qnta_neg.all_cal_plots
             # # Store calibration plots in qnta datamap
@@ -1053,7 +1053,7 @@ class NtaRun:
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_pos.cc_metrics
             # Get RF percentiles, store in qnta datamap
-            self.qnta_map["Positive Mode RF Percentile Estimates"] = qnta_pos.RF_percs
+            self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
             # # Get calibration plots
             # self.cc_plots_out = qnta_pos.all_cal_plots
             # # Store calibration plots in qnta datamap
@@ -1066,7 +1066,7 @@ class NtaRun:
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_neg.cc_metrics
             # Get RF percentiles, store in qnta datamap
-            self.qnta_map["Negative Mode RF Percentile Estimates"] = qnta_neg.RF_percs
+            self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
             # # Get calibration plots
             # self.cc_plots_out = qnta_neg.all_cal_plots
             # # Store calibration plots in qnta datamap
