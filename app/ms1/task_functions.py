@@ -2358,17 +2358,16 @@ def column_sort_SDS(df_in, passthru):
     # Subset df with specified column order
     df_reorg = df[new_col_org]
     # Replace ionization mode values with all caps version, if present
-    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
-    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
+    df_reorg.loc[:, "Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
+    df_reorg.loc[:, "Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
     # Rename columns for better output aesthetics
-    df_reorg.rename(
+    df_reorg = df_reorg.rename(
         columns={
             "Monoisotopic_Mass": "Mass",
             "Chemical_Name": "Chemical Name",
             "Ionization_Mode": "Ionization Mode",
             "Retention_Time": "Retention Time",
         },
-        inplace=True,
     )
     # Return re-organized dataframe
     return df_reorg
