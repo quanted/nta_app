@@ -873,11 +873,10 @@ def column_sort_DFS(df_in, passthru, all_headers):
     df = pd.merge(df, pt, how="left", on=["Feature ID"])
     # Subset data with new column list
     df_reorg = df[new_col_org]
-    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
-    df_reorg["Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
-    df_reorg.rename(
+    df_reorg.loc[:, "Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
+    df_reorg.loc[:, "Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
+    df_reorg = df_reorg.rename(
         columns={"Ionization_Mode": "Ionization Mode", "Retention_Time": "Retention Time"},
-        inplace=True,
     )
     # Return re-organized dataframe
     return df_reorg

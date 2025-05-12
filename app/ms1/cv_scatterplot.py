@@ -74,8 +74,8 @@ def cv_scatterplot(parameters, data_map, blank_headers, sample_headers):
     mean_cols = ["Mean " + col for col in sample_groups]
     mean_df = dfCombined[mean_cols]
     # Carry over Mass and Retention_Time
-    cv_df["Mass"] = dfCombined["Mass"]
-    cv_df["Retention Time"] = dfCombined["Retention Time"]
+    cv_df.loc[:, "Mass"] = dfCombined["Mass"]
+    cv_df.loc[:, "Retention Time"] = dfCombined["Retention Time"]
     # Create list, define blank strings
     li = []
     blanks = ["mb", "mB", "Mb", "MB", "blank", "Blank", "BLANK"]
