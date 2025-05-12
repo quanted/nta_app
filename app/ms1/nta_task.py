@@ -1560,6 +1560,8 @@ class NtaRun:
             "PUBMED_COUNT_COLLAPSED_NORM",
             "SOURCE_COUNT_COLLAPSED",
             "SOURCE_COUNT_COLLAPSED_NORM",
+            "POSITIVE_MODE_AMENABILITY_PREDICTION",
+            "NEGATIVE_MODE_AMENABILITY_PREDICTION",
         ]
 
         hazard_cols = [
