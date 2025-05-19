@@ -44,6 +44,7 @@ def run_nta_dask(
     run_sequence_pos_df=None,
     run_sequence_neg_df=None,
     qnta_df=None,
+    val_df=None,
     jobid="00000000",
     verbose=True,
 ):
@@ -59,6 +60,7 @@ def run_nta_dask(
             run_sequence_pos_df,
             run_sequence_neg_df,
             qnta_df,
+            val_df,
             mongo_address,
             jobid,
             verbose,
@@ -90,6 +92,7 @@ def run_nta_dask(
         run_sequence_pos_df,
         run_sequence_neg_df,
         qnta_df,
+        val_df,
         mongo_address,
         jobid,
         verbose,
@@ -105,6 +108,7 @@ def run_nta(
     run_sequence_pos_df=None,
     run_sequence_neg_df=None,
     qnta_df=None,
+    val_df=None,
     mongo_address=None,
     jobid="00000000",
     verbose=True,
@@ -117,6 +121,7 @@ def run_nta(
         run_sequence_pos_df,
         run_sequence_neg_df,
         qnta_df,
+        val_df,
         mongo_address,
         jobid,
         verbose,
@@ -144,6 +149,7 @@ class NtaRun:
         run_sequence_pos_df=None,
         run_sequence_neg_df=None,
         qnta_df=None,
+        val_df=None,
         mongo_address=None,
         jobid="00000000",
         verbose=True,
@@ -159,6 +165,7 @@ class NtaRun:
         self.run_sequence_neg_df = run_sequence_neg_df
         self.dfs = input_dfs
         self.qnta_df = qnta_df
+        self.val_df = val_df
         self.qnta_dfs_out = None
         self.qnta_occ_input = None
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values

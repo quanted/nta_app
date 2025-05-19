@@ -25,6 +25,7 @@ example_tracer_filename = "WW2DW_Tracers_Amenable.csv"
 example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
 example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
 example_surrogate_filename = "qNTA_Surrogate_Input_File_WW2DW.csv"
+example_validation_filename = "WW2DW_qNTA_validation.csv"
 
 
 @api_key_required
@@ -143,6 +144,7 @@ def ms1_run_api(request):
                 "search_mode": ["Search dashboard by", None],
                 "do_qnta": ["Perform qNTA?", None],
                 "qnta_input": ["qNTA Surrogate input file", None],
+                "val_input": ["qNTA Validation input file", None],
                 "do_atom_filtering": ["Do atom filtering?", None],
                 "atom_ranges": ["Atom filtering ranges", None],
             }
@@ -231,9 +233,14 @@ def ms1_run_api(request):
                     qnta_file = os.path.join(example_data_dir, example_surrogate_filename)
                     inputParameters["qnta_input"][1] = qnta_file
                     qnta_df = file_manager.tracer_handler(qnta_file)
+                    val_file = os.path.join(example_data_dir, example_validation_filename)
+                    inputParameters["val_input"][1] = val_file
+                    val_df = file_manager.tracer_handler(val_file)
                 else:
                     inputParameters["qnta_input"][1] = None
                     qnta_df = None
+                    inputParameters["val_input"][1] = None
+                    val_df = None
                 # save the name of the files to the inputParameters dictionary
                 inputParameters["pos_input"][1] = pos_input
                 inputParameters["neg_input"][1] = neg_input
@@ -296,10 +303,12 @@ def ms1_run_api(request):
                 try:
                     qnta_file = request.FILES["qnta_input"]
                     qnta_df = file_manager.tracer_handler(qnta_file)
+                    val_df = None
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["qnta_input"][1] = qnta_file.name
                 except Exception:
                     qnta_df = None
+                    val_df = None
 
             # create a list of the input files
             inputs = [pos_input, neg_input]
@@ -341,6 +350,7 @@ def ms1_run_api(request):
                 run_sequence_pos_df,
                 run_sequence_neg_df,
                 qnta_df,
+                val_df,
                 job_id,
             )
             # return redirect("/nta/ms1/processing/" + job_id, permanent=True)
