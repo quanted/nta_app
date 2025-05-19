@@ -1037,14 +1037,16 @@ class NtaRun:
         if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
             logger.info("qnta_dfs_out[0] columns= {}".format(self.qnta_dfs_out[0].columns.values))
             logger.info("qnta_occ_input[0] columns= {}".format(self.qnta_occ_input[0].columns.values))
+            val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
             qnta_pos = qNTAClass(
-                self.qnta_dfs_out[0], validation_input=None, occurrence_input=self.qnta_occ_input[0], parameters=None
+                self.qnta_dfs_out[0], validation_input=val_pos, occurrence_input=self.qnta_occ_input[0], parameters=None
             )
             qnta_pos.execute()
             logger.info("qnta_dfs_out[1] columns= {}".format(self.qnta_dfs_out[1].columns.values))
             logger.info("qnta_occ_input[1] columns= {}".format(self.qnta_occ_input[1].columns.values))
+            val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
             qnta_neg = qNTAClass(
-                self.qnta_dfs_out[1], validation_input=None, occurrence_input=self.qnta_occ_input[1], parameters=None
+                self.qnta_dfs_out[1], validation_input=val_neg, occurrence_input=self.qnta_occ_input[1], parameters=None
             )
             qnta_neg.execute()
             # Combine cc_metrics outputs, store in qnta datamap
@@ -1052,42 +1054,28 @@ class NtaRun:
             # Get RF percentiles, store in qnta datamap
             self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
             self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
-            # # Get calibration plots
-            # self.cc_plots_out = qnta_pos.all_cal_plots + qnta_neg.all_cal_plots
-            # # Store calibration plots in qnta datamap
-            # for tup in self.cc_plots_out:
-            #     self.qnta_map["calibration_curve_"+tup[1]] = tup[0]
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
+            val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
             qnta_pos = qNTAClass(
-                self.qnta_dfs_out[0], validation_input=None, occurrence_input=self.qnta_occ_input[0], parameters=None
+                self.qnta_dfs_out[0], validation_input=val_pos, occurrence_input=self.qnta_occ_input[0], parameters=None
             )
             qnta_pos.execute()
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_pos.cc_metrics
             # Get RF percentiles, store in qnta datamap
             self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
-            # # Get calibration plots
-            # self.cc_plots_out = qnta_pos.all_cal_plots
-            # # Store calibration plots in qnta datamap
-            # for tup in self.cc_plots_out:
-            #     self.qnta_map["calibration_curve_"+tup[1]] = tup[0]
         # If only negative mode, instantiate negative mode and execute object
         else:
+            val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
             qnta_neg = qNTAClass(
-                self.qnta_dfs_out[1], validation_input=None, occurrence_input=self.qnta_occ_input[1], parameters=None
+                self.qnta_dfs_out[1], validation_input=val_neg, occurrence_input=self.qnta_occ_input[1], parameters=None
             )
             qnta_neg.execute()
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_neg.cc_metrics
             # Get RF percentiles, store in qnta datamap
             self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
-            # # Get calibration plots
-            # self.cc_plots_out = qnta_neg.all_cal_plots
-            # # Store calibration plots in qnta datamap
-            # for tup in self.cc_plots_out:
-            #     self.qnta_map["calibration_curve_"+tup[1]] = tup[0]
-        #
 
     def clean_features(self):
         """
