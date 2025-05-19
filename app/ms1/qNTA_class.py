@@ -49,12 +49,7 @@ class qNTAClass:
     # input file and qNTA surrogate input file
     # Pass in Ionization Mode as a str argument or determine it from the Ionization Mode column?
     # (Currently separating the input data beforehand)
-    def __init__(
-        self,
-        surrogate_cal_data,
-        validation_input=None,
-        occurrence_input=None,
-    ):
+    def __init__(self, surrogate_cal_data, validation_input=None, occurrence_input=None, parameters=None):
         """
         Pivots surrogate_cal_data DataFrame from wide to long format, keeping only
             blank-subtracted means > 0
@@ -62,17 +57,9 @@ class qNTAClass:
         Stores unique surrogate chemicals in surrogate_cal_data_long_nonzero as
             surrogate_cal_data_long_nonzero_chems
         """
-        self.parameters = {
-            "seed": 1,
-            "reps": 10000,
-            "alpha": 0.05,
-            "rep_range": True,
-            "long_form": True,
-            "LOO": True,
-            "internal": False,
-        }
         # Required uploaded files
         # Replace NA values with 0 to avoid issues with mathematical operations on DataFrame
+        self.parameters = parameters
         self.surrogate_cal_data = surrogate_cal_data.fillna(0)
         self.validation_data = validation_input
         self.occurrence_data = occurrence_input
@@ -83,6 +70,7 @@ class qNTAClass:
         self.RF_estimate_out = None
         self.percentiles = np.multiply([self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100)
         self.RF_percs = None
+        self.validation_out = None
         # Plot holders
         self.all_cal_models = None
         self.all_cal_plots = None
@@ -91,23 +79,61 @@ class qNTAClass:
 
     def execute(self):
         """Perform data manipulation functions"""
+        self.check_parameters()
         self.check_occurrences()
         self.check_RF_input()
         self.check_validation_data()
         """Perform Calibration Curve Methods"""
-        self.cal_curve_all()
+        self.cal_curve_all_metrics()
         """Perform Bootstrap Methods"""
+        # Calculate Response factor percentiles
         self.RF_percs = pd.DataFrame(
-            self.RF_bootstrap(self.surrogate_cal_data_long_nonzero),
+            self.RF_bootstrap(
+                self.surrogate_cal_data_long_nonzero,
+                seed=self.parameters["seed"],
+                reps=self.parameters["reps"],
+                alpha=self.parameters["alpha"],
+                rep_range=self.parameters["rep_range"],
+            ),
             index=pd.Index(self.percentiles, name="Response Factor Percentile Estimate"),
             columns=["Minimum", "Median", "Maximum"],
         ).reset_index()
+        # Calculate RF estimates for each chemical
         self.RF_estimate_out = self.RF_boot_estimate(
             self.surrogate_cal_data_long_nonzero,
             self.occurrence_data,
+            seed=self.parameters["seed"],
+            reps=self.parameters["reps"],
+            alpha=self.parameters["alpha"],
+            rep_range=self.parameters["rep_range"],
+            long_form=self.parameters["long_form"],
+        )
+        # Perform bootstrap validation
+        self.validation_out = self.RF_boot_validation(
+            seed=self.parameters["seed"],
+            reps=self.parameters["reps"],
+            alpha=self.parameters["alpha"],
+            rep_range=self.parameters["rep_range"],
+            long_form=self.parameters["long_form"],
+            LOO=self.parameters["LOO"],
+            internal=self.parameters["internal"],
         )
 
     """DATA MANIPULATION FUNCTIONS"""
+
+    def check_parameters(self):
+        if self.parameters is not None:
+            pass
+        else:
+            self.parameters = {
+                "seed": 1,
+                "reps": 10000,
+                "alpha": 0.05,
+                "rep_range": True,
+                "long_form": True,
+                "LOO": True,
+                "internal": False,
+            }
 
     def check_occurrences(self):
         """
@@ -237,7 +263,6 @@ class qNTAClass:
                 self.validation_data = val.copy()
         # If val has not been submitted
         else:
-            # Define blanks, they may still be in column if no val
             blanks = ["Blank", "blank", "BLANK", "MB", "Mb", "mb", "mB"]
             # Get Conc col root names
             cols = [col[5:] for col in surr.columns if "Conc " in col if not any(x in col for x in blanks)]
@@ -245,7 +270,7 @@ class qNTAClass:
             re_pattern = "(\d+)"
             concs = [int(re.search(re_pattern, col).group()) for col in cols]
             # Set Chemical Name as ID column for future joins
-            val = surr.loc[:, ["Chemical Name"]]
+            val = surr.loc[:, ["Chemical Name", "Feature ID"]]
             # Make test validation file using qNTA_cal_data_pos
             val[cols] = concs
             # Use copy to avoid overwriting original data
@@ -292,12 +317,13 @@ class qNTAClass:
             return (cal_model, chem)
 
     @staticmethod
-    def plot_cal_curve(cal_model_named, storefig=False, savefig=True):
+    def plot_cal_curve(cal_model_named, storefig=False, savefig=False):
         """
         Parameters
         ----------
         cal_model_named : tuples
-            Tuple with ordinary least squares linear model of log10-transformed BlankSub Mean abundance (LogAbun) and log10-transformed concentration (LogConc) and the str of the qNTA surrogate name
+            Tuple with ordinary least squares linear model of log10-transformed BlankSub Mean abundance (LogAbun)
+            and log10-transformed concentration (LogConc) and the str of the qNTA surrogate name
         storefig : Boolean, optional
             Store matplotlib figure and qNTA surrogate name as tuple. The default is False.
         savefig : Boolean, optional
@@ -338,10 +364,39 @@ class qNTAClass:
         if storefig:
             # Return fig/chem tuple, and cc_metrics tuple
             return (fig, chem), cc_metrics
-        if savefig:
+        elif savefig:
             # Plot fig, return cc_metrics tuple
             plt.savefig(chem + "_Cal_Curve.png")
             return cc_metrics
+        else:
+            return cc_metrics
+
+    def cal_curve_all_metrics(
+        self,
+    ):
+        """
+        Calculate calibration curve metrics from plots for all qNTA surrogate chemicals
+        in the qNTA surrogate statistics DataFrame
+
+        Parameters
+        ----------
+        storefig : Boolean, optional
+            Store figures as attribute all_cal_plots, a list of tuples containing
+                the matplotlib figure and the chemical name. The default is False.
+        savefig : Boolean, optional
+            Save the figure as a .png file. The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
+        # Call fit_cal_curve_model() on all unique chems in surrogate_cal_data_long_nonzero_chems
+        self.all_cal_models = [self.fit_cal_curve_model(i) for i in self.surrogate_cal_data_long_nonzero_chems]
+        # Create list of tuples from plot_cal_curve() on all items in all_call_models
+        cc_tuples = [self.plot_cal_curve(i) for i in self.all_cal_models if "Fewer than 3 calibration points" not in i]
+        # Generate and save dataframe
+        self.cc_metrics = pd.DataFrame(cc_tuples, columns=["Chemical Name", "Slope", "R-squared"])
 
     def cal_curve_all(
         self,
@@ -565,3 +620,147 @@ class qNTAClass:
             column_order = [i + j for i in conc_col_names for j in ["_ConcLCL", "_ConcEst", "_ConcUCL"]]
             RF_estimate_out = RF_estimate_out.loc[:, ["Feature ID"] + ["RF0.025", "RF0.5", "RF0.975"] + column_order]
             return RF_estimate_out
+
+    # Remove LOO argument? (If always including LOO columns). Consider also other forms of cross validation (k-fold)
+    def RF_boot_validation(
+        self,
+        seed=1,
+        reps=10000,
+        alpha=0.05,
+        rep_range=True,
+        long_form=False,
+        LOO=True,
+        internal=False,
+    ):
+        """
+        Method to make qNTA concentration estimates with confidence intervals and calculate performance metrics for accuracy (AQ, AAQ) and uncertainty (CLFR)
+
+        Parameters
+        ----------
+        seed : int, optional
+            Seed used for the random bootstrap sampling (np.random.choice()). The default is 1.
+        reps : int, optional
+            Number of bootstrap repetitions. The default is 10000.
+        alpha : float, optional
+            Alpha for the confidence level, determines the RF percentiles used. The default is 0.05.
+        rep_range : Boolean, optional
+            Provides minimum and maximum for each RF percentile across bootstrap repetitions, in addition to median. The default is True.
+        long_form : Boolean, optional
+            Return long form DataFrame (columns for "ConcLCL","ConcEst","ConcUCL", rows are unique chemical-sample combinations)
+        LOO : Boolean, optional
+            Include estimates made from leave-one-out (LOO) bootstrap percentiles, where the feature is excluded from its surrogate set. The default is True.
+        internal : Boolean, optional
+            Use internal qNTA surrogate calibration data to perform validation in a leave-one-out (LOO) manner. The default is False.
+
+        Returns
+        -------
+        validation_out : pandas DataFrame
+            DataFrame containing qNTA concentration estimates with calculated performance metrics (AQ, AAQ, CLFR) based on the validation data (internal or external)
+        """
+        # Get required attributes
+        val = self.validation_data
+        long_nz = self.surrogate_cal_data_long_nonzero.reset_index()
+        chems = self.surrogate_cal_data_long_nonzero_chems
+        occ = self.occurrence_data
+        # Columns containing the targeted concentrations for validation
+        prefixes = [
+            "Feature",
+            "Retention",
+            "Ionization",
+            "Mass",
+            "m/z",
+        ]
+        # Get concentration columns
+        conc_cols = [col for col in val.select_dtypes(include=np.number).columns if not any(x in col for x in prefixes)]
+        # Calculate global bootstrap RF percentiles and use to make concentration estimates
+        # NOTE: For internal, occurrence_data must contain columns with names that correspond to conc_cols
+        global_out = self.RF_estimate_out
+        # List of chemicals that overlap between qNTA surrogate set and validation data
+        LOO_IDs = pd.Series(val["Feature ID"].values, index=val["Chemical Name"]).to_dict()
+        # LOO_chems = {value: key for key, value in LOO_IDs.items()}
+        LOO_IDs = [int(ID) for chem, ID in LOO_IDs.items() if not pd.isna(ID) and any(x in chem for x in chems)]
+        # If chemicals overlap between qNTA surrogates and validation data and LOO is True
+        if len(LOO_IDs) > 0 and LOO:
+            # Get LOO RF bootstrap percentiles and concentration estimates
+            LOO_out = pd.concat(
+                [
+                    self.RF_boot_estimate(
+                        long_nz[long_nz["Feature ID"] != i],
+                        occ[occ["Feature ID"] == i],
+                        seed,
+                        reps,
+                        alpha,
+                        rep_range,
+                        long_form,
+                    )
+                    for i in LOO_IDs
+                ]
+            )
+            if long_form:
+                # Change validation_data to long form
+                # This is in order of sample and not chemical
+                val = pd.melt(
+                    val, id_vars="Feature ID", value_vars=conc_cols, var_name="Sample", value_name="ConcTargeted"
+                )
+                # Add _LOO suffix to column names (to distinguish LOO columns when
+                # adding to global estimates DataFrame)
+                LOO_out = LOO_out.rename(
+                    columns={
+                        c: c + "_LOO"
+                        for c in LOO_out.columns
+                        if not any(x in c for x in ["Feature", "Chemical", "Sample"])
+                    }
+                )
+                # Remove "Conc" from sample names coming from internal calibration data,
+                # needed so that Sample columns match when merging
+                if internal:
+                    val["Sample"] = [s[5:] for s in val["Sample"]]
+                # Ensure that correct ConcTargeted and ConcLCL, Est, UCL are compared
+                LOO_out = pd.merge(LOO_out, val, on=["Feature ID", "Sample"], how="left")
+                # Calculate qNTA performance metrics for accuracy and uncertainty
+                LOO_out["AQ_LOO"] = LOO_out["ConcEst_LOO"] / LOO_out["ConcTargeted"]
+                LOO_out["AAQ_LOO"] = 10 ** np.abs(np.log10(LOO_out["AQ_LOO"]))
+                LOO_out["CLFR_LOO"] = LOO_out["ConcUCL_LOO"] / LOO_out["ConcLCL_LOO"]
+                LOO_out = LOO_out.drop(columns=["ConcTargeted"])  # ConcTargeted will be merged again later
+                # Left outer join keeps a row for all chemicals in validation data, with np.NaN (pd.NA?) for qNTA columns if not in global_out
+                validation_out = pd.merge(global_out, val, on=["Feature ID", "Sample"], how="left")
+                validation_out["AQ"] = validation_out["ConcEst"] / validation_out["ConcTargeted"]
+                validation_out["AAQ"] = 10 ** np.abs(np.log10(validation_out["AQ"]))
+                validation_out["CLFR"] = validation_out["ConcUCL"] / validation_out["ConcLCL"]
+                # Merge on LOO_out
+                validation_out = pd.merge(validation_out, LOO_out, on=["Feature ID", "Sample"], how="left")
+                # Remove NaN rows
+                validation_out = validation_out.loc[~validation_out["ConcEst"].isna(), :]
+                # Return validation_out
+                return validation_out
+            else:
+                # Get validation out by merging global_out and val
+                validation_out = pd.merge(global_out, val, on="Feature ID", how="inner")
+                # Add _LOO suffix to column names (to distinguish LOO columns when adding to global estimates DataFrame)
+                LOO_out = LOO_out.rename(
+                    columns={
+                        c: c + "_LOO"
+                        for c in LOO_out.columns
+                        if not any(x in c for x in ["Feature", "Chemical", "Sample"])
+                    }
+                )
+                # Rename columns prior to merge so that columns match
+                if internal:
+                    conc_cols = [c[5:] for c in conc_cols]
+                # Add val data back on to LOO_out
+                cols = ["Feature ID"] + conc_cols
+                LOO_out = pd.merge(LOO_out, val[cols], on="Feature ID", how="left")
+                # Iterate through conc_cols, calculate AQ, AAQ, and CLFR
+                for i in conc_cols:
+                    LOO_out[f"{i}_AQ_LOO"] = LOO_out.loc[:, f"{i}_ConcEst_LOO"] / LOO_out.loc[:, i]
+                    LOO_out[f"{i}_AAQ_LOO"] = 10 ** np.abs(np.log10(LOO_out.loc[:, f"{i}_AQ_LOO"]))
+                    LOO_out[f"{i}_CLFR_LOO"] = LOO_out.loc[:, f"{i}_ConcUCL_LOO"] / LOO_out.loc[:, f"{i}_ConcLCL_LOO"]
+                # Replace Inf AAQ and NaN CLFR values?
+                # Drop these columns, they are added when merging to global_out
+                LOO_out = LOO_out.drop(columns=conc_cols)
+                # Merge on LOO_out
+                validation_out = pd.merge(validation_out, LOO_out, on="Feature ID", how="left")
+                # Return validation_out
+                return validation_out
+        else:
+            return None

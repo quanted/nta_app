@@ -1030,11 +1030,15 @@ class NtaRun:
         if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
             logger.info("qnta_dfs_out[0] columns= {}".format(self.qnta_dfs_out[0].columns.values))
             logger.info("qnta_occ_input[0] columns= {}".format(self.qnta_occ_input[0].columns.values))
-            qnta_pos = qNTAClass(self.qnta_dfs_out[0], validation_input=None, occurrence_input=self.qnta_occ_input[0])
+            qnta_pos = qNTAClass(
+                self.qnta_dfs_out[0], validation_input=None, occurrence_input=self.qnta_occ_input[0], parameters=None
+            )
             qnta_pos.execute()
             logger.info("qnta_dfs_out[1] columns= {}".format(self.qnta_dfs_out[1].columns.values))
             logger.info("qnta_occ_input[1] columns= {}".format(self.qnta_occ_input[1].columns.values))
-            qnta_neg = qNTAClass(self.qnta_dfs_out[1], validation_input=None, occurrence_input=self.qnta_occ_input[1])
+            qnta_neg = qNTAClass(
+                self.qnta_dfs_out[1], validation_input=None, occurrence_input=self.qnta_occ_input[1], parameters=None
+            )
             qnta_neg.execute()
             # Combine cc_metrics outputs, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = pd.concat([qnta_pos.cc_metrics, qnta_neg.cc_metrics])
@@ -1048,7 +1052,9 @@ class NtaRun:
             #     self.qnta_map["calibration_curve_"+tup[1]] = tup[0]
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
-            qnta_pos = qNTAClass(self.qnta_dfs_out[0], validation_input=None, occurrence_input=self.qnta_occ_input[0])
+            qnta_pos = qNTAClass(
+                self.qnta_dfs_out[0], validation_input=None, occurrence_input=self.qnta_occ_input[0], parameters=None
+            )
             qnta_pos.execute()
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_pos.cc_metrics
@@ -1061,7 +1067,9 @@ class NtaRun:
             #     self.qnta_map["calibration_curve_"+tup[1]] = tup[0]
         # If only negative mode, instantiate negative mode and execute object
         else:
-            qnta_neg = qNTAClass(self.qnta_dfs_out[1], validation_input=None, occurrence_input=self.qnta_occ_input[1])
+            qnta_neg = qNTAClass(
+                self.qnta_dfs_out[1], validation_input=None, occurrence_input=self.qnta_occ_input[1], parameters=None
+            )
             qnta_neg.execute()
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_neg.cc_metrics
