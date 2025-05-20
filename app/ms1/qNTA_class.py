@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import statsmodels.api as sm
+from scipy import stats
 import logging
 
 from matplotlib import pyplot as plt
@@ -122,12 +122,9 @@ class qNTAClass:
     """DATA MANIPULATION FUNCTIONS"""
 
     def check_parameters(self):
-        # Check if parameters are selected by user
         if self.parameters is not None:
-            # Calculate percentiles from alpha parameter
             self.percentiles = np.multiply([self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100)
         else:
-            # Set parameters to default
             self.parameters = {
                 "seed": 1,
                 "reps": 10000,
@@ -137,7 +134,6 @@ class qNTAClass:
                 "LOO": True,
                 "internal": False,
             }
-            # Calculate percentiles from alpha parameter
             self.percentiles = np.multiply([self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100)
 
     def check_occurrences(self):
@@ -283,7 +279,7 @@ class qNTAClass:
 
     """CALIBRATION CURVE METHODS"""
 
-    def fit_cal_curve_model(
+    def cal_curve_metrics(
         self,
         chem,
     ):
@@ -291,8 +287,7 @@ class qNTAClass:
         Subsets qNTA surrogate calibration data (long form) to data from the chemical
         provided as input ('chem').
         Uses the atrribute 'surrogate_cal_data_long_nonzero'.
-        Stores and returns a statsmodels object sm.OLS (ordinary least squares linear
-        regression model) calibration curve (LogAbun vs LogConc).
+        Calculates and returns calibration curve (LogAbun vs LogConc) metrics.
 
         Parameters
         ----------
@@ -303,8 +298,7 @@ class qNTAClass:
         -------
         If the subset qNTA surrogate calibration data has fewer than three points,
         returns string with error message
-        Else, return tuple with calibration curve model (statsmodels object) and
-        qNTA surrogate chemical name
+        Else, return tuple with chemical name, slope, and R^2 value
 
         """
         # Copy df
@@ -316,134 +310,39 @@ class qNTAClass:
             # If no, return string
             return "Fewer than 3 calibration points"
         else:
-            # If yes, generate calibration model object
-            cal_model = sm.OLS(cal_data["LogAbun"], sm.add_constant(cal_data["LogConc"]))
+            # Calculate slope, intercept, r_value, p_value, and std_err from df, given x_col and y_col
+            slope, intercept, r_value, p_value, std_err = stats.linregress(cal_data["LogConc"], cal_data["LogAbun"])
+            # Calculate r_squared value
+            r_squared = r_value**2
             # Return tuple
-            return (cal_model, chem)
-
-    @staticmethod
-    def plot_cal_curve(cal_model_named, storefig=False, savefig=False):
-        """
-        Parameters
-        ----------
-        cal_model_named : tuples
-            Tuple with ordinary least squares linear model of log10-transformed BlankSub Mean abundance (LogAbun)
-            and log10-transformed concentration (LogConc) and the str of the qNTA surrogate name
-        storefig : Boolean, optional
-            Store matplotlib figure and qNTA surrogate name as tuple. The default is False.
-        savefig : Boolean, optional
-            Save fig as .png file. The default is True.
-
-        Returns
-        -------
-        If storefig, then return tuple with matplotlib figure and qNTA surrogate chemical name
-        Else, None
-        """
-        # Separate out cal_model_named to the statsmodel OLS object and the qNTA surrogate chemical name
-        cal_model = cal_model_named[0]
-        chem = cal_model_named[1]
-        # Use the calibration curve model to get fitted LogAbun values
-        cal_model_results = cal_model.fit()
-        cal_model_preds = cal_model_results.get_prediction()
-        # Get lower and upper confidence limits for calibration curve
-        cal_model_CI_lower = cal_model_preds.summary_frame()["obs_ci_lower"]
-        cal_model_CI_upper = cal_model_preds.summary_frame()["obs_ci_upper"]
-        # Create matplotlib pyplot of calibration curve with data points, fitted regression line, and  confidence intervals
-        fig, ax = plt.subplots(figsize=(8, 8))
-        ax.plot(cal_model.exog[:, 1], cal_model.endog, "o", label="Data")
-        ax.plot(cal_model.exog[:, 1], cal_model_results.fittedvalues, "b-", label="Fit")
-        ax.plot(cal_model.exog[:, 1], cal_model_CI_lower, "r--")
-        ax.plot(cal_model.exog[:, 1], cal_model_CI_upper, "r--")
-        ax.legend(loc="best")
-        # Extract model parameters (slope and R-squared) to add to calibration curve figure as subtitle
-        cal_model_params = cal_model_results.params.round(3)
-        cal_model_equation = "LogAbun = " + str(cal_model_params["LogConc"]) + "LogConc"
-        if "const" in cal_model_params.index:
-            cal_model_equation = (
-                "LogAbun = " + str(cal_model_params["const"]) + " + " + str(cal_model_params["LogConc"]) + "LogConc"
+            return (
+                chem,
+                slope.round(3),
+                r_squared.round(3),
             )
-        # Add qNTA surrogate chemical name as title and model equation and R-squared below title
-        fig.suptitle(chem + " \n " + cal_model_equation + ", R-squared: " + str(cal_model_results.rsquared.round(3)))
-        # Store chem, slope, and R2 in tuple
-        cc_metrics = (chem, cal_model_params["LogConc"], cal_model_results.rsquared.round(3))
-        if storefig:
-            # Return fig/chem tuple, and cc_metrics tuple
-            return (fig, chem), cc_metrics
-        elif savefig:
-            # Plot fig, return cc_metrics tuple
-            plt.savefig(chem + "_Cal_Curve.png")
-            return cc_metrics
-        else:
-            return cc_metrics
 
     def cal_curve_all_metrics(
         self,
     ):
         """
-        Calculate calibration curve metrics from plots for all qNTA surrogate chemicals
-        in the qNTA surrogate statistics DataFrame
+        Calculate chemical-wise calibration curve metrics for all qNTA surrogate
+        chemicals in the qNTA surrogate statistics DataFrame. Store calibration
+        curve metrics (slope and R^2 values) to self.cc_metrics
 
         Parameters
         ----------
-        storefig : Boolean, optional
-            Store figures as attribute all_cal_plots, a list of tuples containing
-                the matplotlib figure and the chemical name. The default is False.
-        savefig : Boolean, optional
-            Save the figure as a .png file. The default is True.
+        None.
 
         Returns
         -------
         None.
 
         """
-        # Call fit_cal_curve_model() on all unique chems in surrogate_cal_data_long_nonzero_chems
-        self.all_cal_models = [self.fit_cal_curve_model(i) for i in self.surrogate_cal_data_long_nonzero_chems]
         # Create list of tuples from plot_cal_curve() on all items in all_call_models
-        cc_tuples = [self.plot_cal_curve(i) for i in self.all_cal_models if "Fewer than 3 calibration points" not in i]
+        cc_tuples = [self.cal_curve_metrics(i) for i in self.surrogate_cal_data_long_nonzero_chems]
+        cc_tuples = [i for i in cc_tuples if "Fewer than 3 calibration points" not in i]
         # Generate and save dataframe
         self.cc_metrics = pd.DataFrame(cc_tuples, columns=["Chemical Name", "Slope", "R-squared"])
-
-    def cal_curve_all(
-        self,
-        storefig=True,
-        savefig=False,
-    ):
-        """
-        Create calibration curve models and plots for all qNTA surrogate chemicals
-        in the qNTA surrogate statistics DataFrame
-
-        Parameters
-        ----------
-        storefig : Boolean, optional
-            Store figures as attribute all_cal_plots, a list of tuples containing
-                the matplotlib figure and the chemical name. The default is False.
-        savefig : Boolean, optional
-            Save the figure as a .png file. The default is True.
-
-        Returns
-        -------
-        None.
-
-        """
-        # Call fit_cal_curve_model() on all unique chems in surrogate_cal_data_long_nonzero_chems
-        self.all_cal_models = [self.fit_cal_curve_model(i) for i in self.surrogate_cal_data_long_nonzero_chems]
-        # Check if storefig
-        if storefig:
-            # If yes, create list of tuples from plot_cal_curve() on all items in all_call_models
-            cc_tuples = [
-                self.plot_cal_curve(i, storefig, savefig)
-                for i in self.all_cal_models
-                if "Fewer than 3 calibration points" not in i
-            ]
-            # Get plots tuple from tuple
-            self.all_cal_plots = [tup[0] for tup in cc_tuples]
-            # Get metrics tuple from tuple
-            cc_metrics = [tup[1] for tup in cc_tuples]
-            self.cc_metrics = pd.DataFrame(cc_metrics, columns=["Chemical Name", "Slope", "R-squared"])
-        else:
-            # If no, call plot_cal_curve() on all items in all_call_models
-            for i in self.all_cal_models:
-                self.plot_cal_curve(i, storefig, savefig)
 
     """RESPONSE FACTOR BOOTSTRAP METHODS"""
 
