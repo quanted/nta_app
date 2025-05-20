@@ -68,7 +68,7 @@ class qNTAClass:
         self.surrogate_cal_data_long_nonzero_chems = None
         self.occurrences_data_nonzero = None
         self.RF_estimate_out = None
-        self.percentiles = np.multiply([self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100)
+        self.percentiles = None
         self.RF_percs = None
         self.validation_out = None
         # Plot holders
@@ -122,9 +122,12 @@ class qNTAClass:
     """DATA MANIPULATION FUNCTIONS"""
 
     def check_parameters(self):
+        # Check if parameters are selected by user
         if self.parameters is not None:
-            pass
+            # Calculate percentiles from alpha parameter
+            self.percentiles = np.multiply([self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100)
         else:
+            # Set parameters to default
             self.parameters = {
                 "seed": 1,
                 "reps": 10000,
@@ -134,6 +137,8 @@ class qNTAClass:
                 "LOO": True,
                 "internal": False,
             }
+            # Calculate percentiles from alpha parameter
+            self.percentiles = np.multiply([self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100)
 
     def check_occurrences(self):
         """
