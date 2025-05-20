@@ -1037,17 +1037,24 @@ class NtaRun:
         if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
             logger.info("qnta_dfs_out[0] columns= {}".format(self.qnta_dfs_out[0].columns.values))
             logger.info("qnta_occ_input[0] columns= {}".format(self.qnta_occ_input[0].columns.values))
-            val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
+            # Check if self.val_df is not None
+            if self.val_df is not None:
+                # Separate into mode data
+                val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
+                val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
+            # Create qNTAClass object for pos mode data
             qnta_pos = qNTAClass(
                 self.qnta_dfs_out[0], validation_input=val_pos, occurrence_input=self.qnta_occ_input[0], parameters=None
             )
+            # Execute class functions
             qnta_pos.execute()
             logger.info("qnta_dfs_out[1] columns= {}".format(self.qnta_dfs_out[1].columns.values))
             logger.info("qnta_occ_input[1] columns= {}".format(self.qnta_occ_input[1].columns.values))
-            val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
+            # Create qNTAClass object for neg mode data
             qnta_neg = qNTAClass(
                 self.qnta_dfs_out[1], validation_input=val_neg, occurrence_input=self.qnta_occ_input[1], parameters=None
             )
+            # Execute class functions
             qnta_neg.execute()
             # Combine cc_metrics outputs, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = pd.concat([qnta_pos.cc_metrics, qnta_neg.cc_metrics])
@@ -1056,10 +1063,15 @@ class NtaRun:
             self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
-            val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
+            # Check if self.val_df is not None
+            if self.val_df is not None:
+                # Separate into mode data
+                val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
+            # Create qNTAClass object for pos mode data
             qnta_pos = qNTAClass(
                 self.qnta_dfs_out[0], validation_input=val_pos, occurrence_input=self.qnta_occ_input[0], parameters=None
             )
+            # Execute class functions
             qnta_pos.execute()
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_pos.cc_metrics
@@ -1067,10 +1079,15 @@ class NtaRun:
             self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
         # If only negative mode, instantiate negative mode and execute object
         else:
-            val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
+            # Check if self.val_df is not None
+            if self.val_df is not None:
+                # Separate into mode data
+                val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
+            # Create qNTAClass object for neg mode data
             qnta_neg = qNTAClass(
                 self.qnta_dfs_out[1], validation_input=val_neg, occurrence_input=self.qnta_occ_input[1], parameters=None
             )
+            # Execute class functions
             qnta_neg.execute()
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_neg.cc_metrics
