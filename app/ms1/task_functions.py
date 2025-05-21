@@ -221,7 +221,7 @@ def passthrucol(df_in, all_headers):
         item
         for sublist in all_headers
         for item in sublist
-        if len(sublist) == 1 and not any(x in sublist for x in active_cols)
+        if len(sublist) == 1 and not any(x in item for x in active_cols)
     ]
     headers = ["Feature ID"] + [
         item for sublist in all_headers for item in sublist if not any(x in item for x in pt_headers)
