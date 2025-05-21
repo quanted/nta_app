@@ -1042,6 +1042,10 @@ class NtaRun:
                 # Separate into mode data
                 val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
                 val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
+            else:
+                # Assign Nones
+                val_pos = None
+                val_neg = None
             # Create qNTAClass object for pos mode data
             qnta_pos = qNTAClass(
                 self.qnta_dfs_out[0], validation_input=val_pos, occurrence_input=self.qnta_occ_input[0], parameters=None
@@ -1067,6 +1071,9 @@ class NtaRun:
             if self.val_df is not None:
                 # Separate into mode data
                 val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
+            else:
+                # Assign None
+                val_pos = None
             # Create qNTAClass object for pos mode data
             qnta_pos = qNTAClass(
                 self.qnta_dfs_out[0], validation_input=val_pos, occurrence_input=self.qnta_occ_input[0], parameters=None
@@ -1083,6 +1090,9 @@ class NtaRun:
             if self.val_df is not None:
                 # Separate into mode data
                 val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
+            else:
+                # Assign None
+                val_neg = None
             # Create qNTAClass object for neg mode data
             qnta_neg = qNTAClass(
                 self.qnta_dfs_out[1], validation_input=val_neg, occurrence_input=self.qnta_occ_input[1], parameters=None
