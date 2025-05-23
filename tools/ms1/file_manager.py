@@ -51,7 +51,7 @@ def test_file_input_handler(file, index, na_value):
 
 
 def tracer_handler(file):
-    return pd.read_csv(file, comment="#", na_values=1 | 0)
+    return pd.read_csv(file, comment="#", na_values=0)
 
 
 def sequence_handler(file):
