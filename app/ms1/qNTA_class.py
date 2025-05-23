@@ -318,6 +318,7 @@ class qNTAClass:
             return (
                 chem,
                 slope.round(3),
+                intercept.round(3),
                 r_squared.round(3),
             )
 
@@ -342,7 +343,7 @@ class qNTAClass:
         cc_tuples = [self.cal_curve_metrics(i) for i in self.surrogate_cal_data_long_nonzero_chems]
         cc_tuples = [i for i in cc_tuples if "Fewer than 3 calibration points" not in i]
         # Generate and save dataframe
-        self.cc_metrics = pd.DataFrame(cc_tuples, columns=["Chemical Name", "Slope", "R-squared"])
+        self.cc_metrics = pd.DataFrame(cc_tuples, columns=["Chemical Name", "Slope", "Intercept", "R-squared"])
 
     """RESPONSE FACTOR BOOTSTRAP METHODS"""
 
