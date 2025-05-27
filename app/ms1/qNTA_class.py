@@ -6,6 +6,7 @@ import logging
 from matplotlib import pyplot as plt
 import seaborn as sns
 import re
+from numba import jit
 
 logger = logging.getLogger("nta_app.ms1")
 
@@ -88,12 +89,11 @@ class qNTAClass:
         """Perform Bootstrap Methods"""
         # Calculate Response factor percentiles
         self.RF_percs = pd.DataFrame(
-            self.RF_bootstrap(
-                self.surrogate_cal_data_long_nonzero,
+            self.RF_bootstrap_numba_full(
+                self.RF_array,
                 seed=self.parameters["seed"],
                 reps=self.parameters["reps"],
                 alpha=self.parameters["alpha"],
-                rep_range=self.parameters["rep_range"],
             ),
             index=pd.Index(self.percentiles, name="Response Factor Percentile Estimate"),
             columns=["Minimum", "Median", "Maximum"],
@@ -348,78 +348,94 @@ class qNTAClass:
     """RESPONSE FACTOR BOOTSTRAP METHODS"""
 
     @staticmethod
-    def RF_bootstrap(
-        RF_data,
-        seed=1,
-        reps=10000,
-        alpha=0.05,
-        rep_range=True,
-    ):
+    def make_RF_array(RF_data):
         """
-        Performs hierarchical response factor bootstrap (choosing one chemical, then one of its RFs)
+        Prepares numpy array that is input to RF_bootstrap_numba_full
 
         Parameters
         ----------
         RF_data : pandas DataFrame
-            DataFrame containing "Chemical Name" and "RF" columns
+            DataFrame containing "Chemical_Name" and "RF" columns
+
+        Returns
+        -------
+        numpy array where [0] is a numeric chemical identifier and [1] is an RF value from a surrogate chemical
+
+        """
+        RF_data_row_num = pd.merge(
+            RF_data.copy(),
+            pd.DataFrame(
+                {
+                    "Chemical Name": pd.unique(RF_data["Chemical Name"]),
+                    "row_number": np.arange(0, len(pd.unique(RF_data["Chemical Name"]))),
+                }
+            ),
+        )
+        RF_array = np.array([RF_data_row_num["row_number"], RF_data_row_num["RF"]])
+        return RF_array
+
+    @staticmethod
+    @jit(nopython=True)
+    def RF_bootstrap_numba_full(
+        RF_array, seed=1, reps=10000, alpha=0.05
+    ):  # Function is compiled to machine code when called the first time
+        """ "
+        Performs hierarchical response factor bootstrap (choosing one chemical, then one of its RFs)
+
+        Parameters
+        ----------
+        RF_array : numpy array
+            2D array, where [0] contains the chemical index and [1] contains the qNTA surrogate RF
         seed : int, optional
             Seed used for the random bootstrap sampling (np.random.choice()). The default is 1.
         reps : int, optional
             Number of bootstrap repetitions. The default is 10000.
-        alpha : float, optional
-            Alpha value for confidence level, determines percentiles used. The default is 0.05.
-        rep_range : Boolean, optional
-            Output minimum and maximum across bootstrap repetitions for each percentile. The default is True.
+        alpha: float, optional
+            Used to determine the RF percentiles. The default is 0.05.
 
         Returns
         -------
-        If rep_range, numpy array with median, minimum, and maximum of percentiles across bootstrap repetitions
-        Else, numpy array with median of percentiles across bootstrap replicates
+        numpy array with median, minimum, and maximum of percentiles across bootstrap repetitions
 
         """
-        # Get self.surrogate_cal_data_long_nonzero
-        df = RF_data.copy()
-        # Get unique chems from RF_data
-        chems = pd.unique(df["Chemical Name"])
-        # Set sample size of bootstrap resampling to number of unique chemicals in surrogate data (allow user to customize? Should always default to len(chems))
-        sample_size = len(chems)
-        # Store in a list each surrogate chemical's RFs in a separate list
-        chem_RFs_list = [df[df["Chemical Name"] == i]["RF"].tolist() for i in chems]
-        # Add lists of RFs to dictionary
-        chem_RFs_list_dict = {}
-        for chem, vals in zip(chems, chem_RFs_list):
-            chem_RFs_list_dict[chem] = vals
-        # Store number of RFs for each chemical for easy random sampling
-        dict_len = [len(value) for key, value in chem_RFs_list_dict.items()]
+        # Use number of unique chemicals as sample size
+        sample_size = len(np.unique(RF_array[0]))
         # Set seed for bootstrap random resampling
         np.random.seed(seed)
-        # Sample a chemical's index from list
-        chem_num_sampled = np.random.choice(range(len(chems)), size=sample_size * reps, replace=True)
-        chems_sampled = [chems[i] for i in chem_num_sampled]
-        # Resample random index from within range of each chemical's RFs
-        RF_indices_sampled = [np.random.choice(range(dict_len[i])) for i in chem_num_sampled]
-        # Get RF from the randomly sampled indices from chem_num_sampled
-        RFs_sampled_by_index = [chem_RFs_list_dict.get(i)[j] for i, j in zip(chems_sampled, RF_indices_sampled)]
-        RFs_sampled_by_index = np.split(np.array(RFs_sampled_by_index), reps)
-        # Percentiles for RF bootstrap
-        percentiles = np.multiply([alpha / 2, 0.5, 1 - (alpha / 2)], 100)
-        # Calculate quantiles per sample
-        quantile_per_sample = [np.percentile(i, percentiles) for i in RFs_sampled_by_index]
-        # Transpose to change from list to np.array, with columns as resamples and rows as percentiles, to facilitate calculations
-        quantiles_overall = np.transpose(quantile_per_sample)
+        chem_num_sampled = np.empty(sample_size * reps, dtype=np.uint64)
+        RFs_sampled = np.empty(sample_size * reps, dtype=np.float64)
+        for idx in np.ndindex(sample_size * reps):
+            chem_num_sampled[idx] = np.random.randint(sample_size)
+            RFs_to_sample = RF_array[1][RF_array[0] == chem_num_sampled[idx]]
+            curr_RFs_sampled = np.random.choice(RFs_to_sample)
+            RFs_sampled[idx] = curr_RFs_sampled
+        RFs_sampled_split = np.split(RFs_sampled, reps)
+        alpha_perc = alpha * 100
+        percentiles = np.array([np.float64(alpha_perc / 2), np.float64(50), np.float64(100 - (alpha_perc / 2))])
+        quant_lower_per_sample = np.empty(reps, dtype=np.float64)
+        quant_median_per_sample = np.empty(reps, dtype=np.float64)
+        quant_upper_per_sample = np.empty(reps, dtype=np.float64)
+        k = 0
+        for i in RFs_sampled_split:
+            quant_lower_per_sample[k] = np.percentile(i, percentiles[0])
+            quant_median_per_sample[k] = np.percentile(i, percentiles[1])
+            quant_upper_per_sample[k] = np.percentile(i, percentiles[2])
+            k = k + 1
+        quantile_per_sample = np.concatenate(
+            (quant_lower_per_sample, quant_median_per_sample, quant_upper_per_sample)
+        ).reshape((3, reps))
         # Get the medians for each quantile across resamples
-        RF_quantiles = [
-            np.median(quantiles_overall[0]),
-            np.median(quantiles_overall[1]),
-            np.median(quantiles_overall[2]),
-        ]
+        RF_quantiles = np.array(
+            [np.median(quantile_per_sample[0]), np.median(quantile_per_sample[1]), np.median(quantile_per_sample[2])]
+        )
         # Save minimum and maximum across bootstrap replicates in addition to median
-        if rep_range:
-            RF_rep_min = [np.min(quantiles_overall[0]), np.min(quantiles_overall[1]), np.min(quantiles_overall[2])]
-            RF_rep_max = [np.max(quantiles_overall[0]), np.max(quantiles_overall[1]), np.max(quantiles_overall[2])]
-            return np.array([RF_rep_min, RF_quantiles, RF_rep_max])
-        else:
-            return np.array(RF_quantiles)
+        RF_rep_min = np.array(
+            [np.min(quantile_per_sample[0]), np.min(quantile_per_sample[1]), np.min(quantile_per_sample[2])]
+        )
+        RF_rep_max = np.array(
+            [np.max(quantile_per_sample[0]), np.max(quantile_per_sample[1]), np.max(quantile_per_sample[2])]
+        )
+        return np.concatenate((RF_rep_min, RF_quantiles, RF_rep_max)).reshape((3, 3))
 
     def RF_boot_estimate(
         self,
@@ -462,7 +478,8 @@ class qNTAClass:
         RF_estimate_out = occ.copy()
         RF_data = long_nz.copy()
         # Get bootstrap percentile estimates
-        RF_percs = self.RF_bootstrap(RF_data, seed, reps, alpha, rep_range)
+        RF_array = self.make_RF_array(RF_data)
+        RF_percs = self.RF_bootstrap_numba_full(RF_array, seed, reps, alpha)
         if long_form:
             # Change data to long form
             RF_estimate_out = pd.melt(
