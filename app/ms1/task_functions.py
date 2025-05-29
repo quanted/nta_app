@@ -2178,9 +2178,20 @@ def qnta_preprocessing(
         "mb",
         "mB",
         "Mb",
+        "blank",
+        "Blank",
+        "BLANK",
+    ]
+    controls = [
+        "Control",
+        "control",
+        "CONTROL",
     ]
     sample_groups = blank_headers + sample_headers
     sample_groups = [item[0][:-1] for item in sample_groups]
+
+    """GET STD, CV, Det counts, etc into final surrogate outputs"""
+
     # Get columns associated with the calibrations
     li = list(df2.columns[5:])
     prefixes = [
@@ -2193,6 +2204,7 @@ def qnta_preprocessing(
         "Conc ",
         "BlankSub Mean ",
         "RF ",
+        "ControlSub BlankSub Mean ",
     ]
     cals = li + [(prefix + item) for item in li for prefix in prefixes]
     # Renaming columns in df2
@@ -2240,8 +2252,23 @@ def qnta_preprocessing(
     dfq = dfq[dfq["Matches"] == 1]
     # Perform Blank Subtraction on Means
     dfq = Blank_Subtract_Mean(dfq)
+    # Check for matrix/control column, if present, subtract from cals
+    if any(col for col in li if any(x in col for x in controls)):
+        control = ["BlankSub Mean " + col for col in li if any(x in col for x in controls)]
+        cal_concs = ["BlankSub Mean " + col for col in li if not any(col in x for x in control)]
+        dfq[control[0]] = dfq[control[0]].fillna(0)
+        for conc in cal_concs:
+            # Do subtraction, clip values at 0, replace 0s with NaN
+            dfq[conc] = dfq[conc].sub(dfq[control[0]], axis=0).clip(lower=0)
+            # Rename column (preserves order)
+            new_col = "ControlSub " + conc
+            dfq = dfq.rename(columns={conc: new_col})
     # calculate response factor columns
-    bsmeans = [col for col in cals if (col.startswith("BlankSub Mean ") and not any(x in col for x in blanks))]
+    bsmeans = [
+        col
+        for col in cals
+        if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(col == x for x in dfq.columns))
+    ]
     concs = [col for col in cals if (col.startswith("Conc ") and not any(x in col for x in blanks))]
     rfs = [col for col in cals if (col.startswith("RF ") and not any(x in col for x in blanks))]
     for bsmean, conc, rf in zip(bsmeans, concs, rfs):
@@ -2251,7 +2278,12 @@ def qnta_preprocessing(
     # Ues sample_groups and cal_cols to identify columns to drop
     to_drop = [col for col in dfq.columns if (any(x in col for x in sample_groups) and col not in cal_cols)]
     # Get columns for qNTA occurrence input file
-    occ_cols = ["Feature ID", "Retention_Time", "Mean MB"] + [col for col in to_drop if col.startswith("Mean ")]
+    occ_drop = [col for col in cals if not any(x in col for x in blanks)]
+    occ_cols = [
+        "Feature ID",
+        "Chemical Name",
+        "Retention_Time",
+    ] + [col for col in dfq.columns if (col.startswith("Mean ") and not any(col == x for x in occ_drop))]
     # Drop unnecessary columns
     dfq.drop(to_drop, axis=1, inplace=True)
     # Get 'Matches' info into main df
