@@ -71,6 +71,7 @@ class qNTAClass:
         self.RF_estimate_out = None
         self.percentiles = None
         self.RF_percs = None
+        self.RF_array = None
         self.validation_out = None
         # Plot holders
         self.all_cal_models = None
@@ -88,6 +89,9 @@ class qNTAClass:
         self.cal_curve_all_metrics()
         """Perform Bootstrap Methods"""
         # Calculate Response factor percentiles
+        self.RF_array = self.make_RF_array(
+            self.surrogate_cal_data_long_nonzero,
+        )
         self.RF_percs = pd.DataFrame(
             self.RF_bootstrap_numba_full(
                 self.RF_array,
