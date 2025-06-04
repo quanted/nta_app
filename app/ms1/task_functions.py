@@ -1794,6 +1794,9 @@ def MPP_Ready(dfc, pts, blank_headers, sample_headers):
     return dfc
 
 
+"""Metadata Retrieval Functions"""
+
+
 def calc_toxcast_percent_active(df):
     """
     Function that calculates toxcast percent active values.
@@ -2154,6 +2157,9 @@ def formula_exclude(
     return 1
 
 
+"""qNTA Functions"""
+
+
 def qnta_preprocessing(
     df_in,
     qnta_df,
@@ -2402,3 +2408,45 @@ def column_sort_SDS(df_in, passthru):
     )
     # Return re-organized dataframe
     return df_reorg
+
+
+def validation_col_rename(
+    df_in,
+):
+    """
+    Function that renames a bunch of columns in preparation for printing the qNTA
+    validation sheet(s).
+
+    Inputs:
+        df_in (dataframe)
+    Outputs:
+        df_out (dataframe)
+    """
+    # Copy input dataframe
+    df = df_in.copy()
+    # Rename columns
+    df_out = df.rename(
+        columns={
+            "RF0.025": "Median RF (2.5th)",
+            "RF0.5": "Median RF (50th)",
+            "RF0.975": "Median RF (97.5th)",
+            "ConcLCL": "qNTA lower bound",
+            "ConcEst": "qNTA estimate",
+            "ConcUCL": "qNTA upper bound",
+            "ConcTargeted": "Targeted Concentration",
+            "AQ": "Accuracy Quotient (AQ)",
+            "AAQ": "Absolute Accuracy Quotient (AAQ)",
+            "CLFR": "Confidence Limit Fold Range (CLFR)",
+            "RF0.025_LOO": "Median RF (2.5th) LOO",
+            "RF0.5_LOO": "Median RF (50th) LOO",
+            "RF0.975_LOO": "Median RF (97.5th) LOO",
+            "ConcLCL_LOO": "qNTA lower bound LOO",
+            "ConcEst_LOO": "qNTA estimate LOO",
+            "ConcUCL_LOO": "qNTA upper bound LOO",
+            "AQ_LOO": "Accuracy Quotient (AQ) LOO",
+            "AAQ_LOO": "Absolute Accuracy Quotient (AAQ) LOO",
+            "CLFR_LOO": "Confidence Limit Fold Range (CLFR) LOO",
+        }
+    )
+    # Return df_out
+    return df_out

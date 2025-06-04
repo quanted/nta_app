@@ -73,6 +73,7 @@ class qNTAClass:
         self.RF_percs = None
         self.RF_array = None
         self.validation_out = None
+        self.summary_out = None
         # Plot holders
         self.all_cal_models = None
         self.all_cal_plots = None
@@ -121,6 +122,12 @@ class qNTAClass:
             long_form=self.parameters["long_form"],
             LOO=self.parameters["LOO"],
             internal=self.parameters["internal"],
+        )
+        # Create validation summary
+        self.summary_out = self.validation_summary(
+            self.validation_out,
+            long_form=self.parameters["long_form"],
+            LOO=self.parameters["LOO"],
         )
 
     """DATA MANIPULATION FUNCTIONS"""
@@ -554,7 +561,7 @@ class qNTAClass:
         reps=10000,
         alpha=0.05,
         rep_range=True,
-        long_form=False,
+        long_form=True,
         LOO=True,
         internal=False,
     ):
@@ -690,3 +697,144 @@ class qNTAClass:
                 return validation_out
         else:
             return None
+
+    @staticmethod
+    def validation_summary(
+        validation_out,
+        long_form=True,
+        LOO=True,
+    ):
+        """
+        Method to provide summary metrics (median) for qNTA performance metrics
+        (AQ, AAQ, CLFR) and calculate reliability (ORP).
+
+        Parameters
+        ----------
+        validation_out : pandas DataFrame
+            DataFrame produced by method RF_boot_validation, containing columns for
+            qNTA concentration estimates and qNTA performance metrics
+        long_form : Boolean, optional
+            DESCRIPTION. Specifies whether validation_out is long form (one column
+            per performance metric) or wide form (one column per sample, per performance metric).
+            The default is False.
+        LOO : Boolean, optional
+            DESCRIPTION. Specifies whether validation_out contains LOO columns
+            (produced from leave-one-out qNTA bootstrap estimation). The default is True.
+
+        Returns
+        -------
+        summary_out : pandas DataFrame
+            DataFrame containing minimum, median, and maximum of qNTA performance
+            metrics AQ, AAQ, CLFR and calculated reliability (ORP) for validation_out.
+
+        """
+        # Output summary statistics (minimum, median, and maximum for AQ, AAQ, and CLFR, and overall ORP (and per-chemical, per-sample ORP?))
+        if long_form:
+            # Limit to non-zero ConcEst to ensure AAQ is not Inf and CLFR is not NaN
+            validation_out = validation_out[validation_out["ConcEst"] > 0]
+            if LOO:
+                summary_out = validation_out.loc[:, ["AQ", "AAQ", "CLFR", "AQ_LOO", "AAQ_LOO", "CLFR_LOO"]].agg(
+                    ["min", "median", "max"]
+                )
+                summary_out["ORP"] = (
+                    validation_out.loc[
+                        (validation_out["ConcTargeted"] <= validation_out["ConcUCL"])
+                        & (validation_out["ConcTargeted"] >= validation_out["ConcLCL"])
+                    ].shape[0]
+                    / validation_out.shape[0]
+                )
+                summary_out["ORP_LOO"] = (
+                    validation_out.loc[
+                        (validation_out["ConcTargeted"] <= validation_out["ConcUCL_LOO"])
+                        & (validation_out["ConcTargeted"] >= validation_out["ConcLCL_LOO"])
+                    ].shape[0]
+                    / validation_out.shape[0]
+                )
+                return summary_out
+            else:
+                summary_out = validation_out.loc[:, ["AQ", "AAQ", "CLFR"]].agg(["min", "median", "max"])
+                summary_out["ORP"] = (
+                    validation_out.loc[
+                        (validation_out["ConcTargeted"] <= validation_out["ConcUCL"])
+                        & (validation_out["ConcTargeted"] >= validation_out["ConcLCL"])
+                    ].shape[0]
+                    / validation_out.shape[0]
+                )
+                return summary_out
+        else:
+            # Change from wide to long form (for performance metric columns)
+            validation_long = pd.melt(
+                validation_out,
+                id_vars="Chemical Name",
+                value_vars=validation_out.columns[validation_out.columns.str.contains("AQ|CLFR")].tolist(),
+                var_name="SampleMetric",
+                value_name="Metric",
+            )
+            validation_long[["Sample", "MetricName"]] = validation_long["SampleMetric"].str.split("__", expand=True)
+            validation_long = validation_long.drop(columns="SampleMetric").pivot(
+                index=["Chemical Name", "Sample"], columns="MetricName"
+            )
+            # Drop 'Metric' from column MultiIndex
+            validation_long.columns = validation_long.columns.droplevel(0)
+
+            """NEED TO ADD ANOTHER LOO LAYER OF LOGIC"""
+
+            # Remove non-finite AAQ (also ensures that CLFR is not NaN)
+            validation_long = validation_long[np.isfinite(validation_long["AAQ"])]
+            # Change from wide to long (for concentration estimate columns)
+            conc_long = pd.melt(
+                validation_out,
+                id_vars="Chemical Name",
+                value_vars=validation_out.columns[validation_out.columns.str.contains("Conc")].tolist(),
+                var_name="SampleConc",
+                value_name="Conc",
+            )
+            conc_long[["Sample", "ConcName"]] = conc_long["SampleConc"].str.split("__", expand=True)
+            conc_long = conc_long.drop(columns="SampleConc").pivot(
+                index=["Chemical Name", "Sample"], columns="ConcName"
+            )
+            # Drop 'Conc' from column MultiIndex
+            conc_long.columns = conc_long.columns.droplevel(0)
+            # Join with validation_out to ensure that rows match between validation_long and conc_long when comparing
+            sample_names = validation_out.columns[validation_out.columns.str.endswith("_")].tolist()
+            conc_long["ConcTargeted"] = (
+                pd.melt(
+                    validation_out,
+                    id_vars="Chemical Name",
+                    value_vars=sample_names,
+                    var_name="Sample",
+                    value_name="ConcTargeted",
+                )
+                .replace(to_replace=r"_", value="", regex=True)
+                .set_index(["Chemical Name", "Sample"])
+            )
+            # Remove ConcEst == 0 to ensure AAQ is not Inf and CLFR is not NaN
+            conc_long = conc_long[conc_long["ConcEst"] > 0]
+            if LOO:
+                summary_out = validation_long.loc[:, ["AQ", "AAQ", "CLFR", "AQ_LOO", "AAQ_LOO", "CLFR_LOO"]].agg(
+                    ["min", "median", "max"]
+                )
+                summary_out["ORP"] = (
+                    conc_long.loc[
+                        (conc_long["ConcTargeted"] <= conc_long["ConcUCL"])
+                        & (conc_long["ConcTargeted"] >= conc_long["ConcLCL"])
+                    ].shape[0]
+                    / conc_long.shape[0]
+                )
+                summary_out["ORP_LOO"] = (
+                    conc_long.loc[
+                        (conc_long["ConcTargeted"] <= conc_long["ConcUCL_LOO"])
+                        & (conc_long["ConcTargeted"] >= conc_long["ConcLCL_LOO"])
+                    ].shape[0]
+                    / conc_long.shape[0]
+                )
+            else:
+                summary_out = validation_long.loc[:, ["AQ", "AAQ", "CLFR"]].agg(["min", "median", "max"])
+                summary_out["ORP"] = (
+                    conc_long.loc[
+                        (conc_long["ConcTargeted"] <= conc_long["ConcUCL"])
+                        & (conc_long["ConcTargeted"] >= conc_long["ConcLCL"])
+                    ].shape[0]
+                    / conc_long.shape[0]
+                )
+            return summary_out  # Note: order of columns is different here (AAQ, AQ instead of AQ, AAQ)
