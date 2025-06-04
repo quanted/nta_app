@@ -1046,6 +1046,8 @@ class NtaRun:
                 # Assign Nones
                 val_pos = None
                 val_neg = None
+            logger.info("val_pos columns= {}".format(val_pos))
+            logger.info("val_neg columns= {}".format(val_neg))
             # Create qNTAClass object for pos mode data
             qnta_pos = qNTAClass(
                 self.qnta_dfs_out[0], validation_input=val_pos, occurrence_input=self.qnta_occ_input[0], parameters=None
