@@ -118,6 +118,7 @@ class qNTAClass:
             rep_range=self.parameters["rep_range"],
             long_form=self.parameters["long_form"],
         )
+        logger.info("val_out data type = {}".format(type(self.validation_out)))
         # Perform bootstrap validation
         self.validation_out = self.RF_boot_validation(
             seed=self.parameters["seed"],
@@ -128,6 +129,7 @@ class qNTAClass:
             LOO=self.parameters["LOO"],
             internal=self.parameters["internal"],
         )
+        logger.info("val_out data type = {}".format(type(self.validation_out)))
         # Create validation summary
         self.summary_out = self.validation_summary(
             self.validation_out,
@@ -615,6 +617,7 @@ class qNTAClass:
         global_out = self.RF_estimate_out
         # List of chemicals that overlap between qNTA surrogate set and validation data
         LOO_IDs = pd.Series(val["Feature ID"].values, index=val["Chemical Name"]).to_dict()
+        logger.info("length LOO_IDs = {}".format(len(LOO_IDs)))
         # LOO_chems = {value: key for key, value in LOO_IDs.items()}
         LOO_IDs = [int(ID) for chem, ID in LOO_IDs.items() if not pd.isna(ID) and any(x in chem for x in chems)]
         # If chemicals overlap between qNTA surrogates and validation data and LOO is True

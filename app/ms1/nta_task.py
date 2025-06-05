@@ -1036,12 +1036,16 @@ class NtaRun:
         # If both modes, instantiate both objects and execute both objects
         if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
             logger.info("qnta_dfs_out[0] columns= {}".format(self.qnta_dfs_out[0].columns.values))
+            logger.info("qnta_dfs_out[0] shape= {}".format(self.qnta_dfs_out[0].shape))
             logger.info("qnta_occ_input[0] columns= {}".format(self.qnta_occ_input[0].columns.values))
+            logger.info("qnta_occ_input[0] shape= {}".format(self.qnta_occ_input[0].shape))
             # Check if self.val_df is not None
             if self.val_df is not None:
                 # Separate into mode data
                 val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
                 val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
+                logger.info("val_pos shape = {}".format(type(val_pos.shape)))
+                logger.info("val_neg shape = {}".format(type(val_pos.shape)))
             else:
                 # Assign Nones
                 val_pos = None
@@ -1055,7 +1059,9 @@ class NtaRun:
             # Execute class functions
             qnta_pos.execute()
             logger.info("qnta_dfs_out[1] columns= {}".format(self.qnta_dfs_out[1].columns.values))
+            logger.info("qnta_dfs_out[0] shape= {}".format(self.qnta_dfs_out[1].shape))
             logger.info("qnta_occ_input[1] columns= {}".format(self.qnta_occ_input[1].columns.values))
+            logger.info("qnta_occ_input[0] shape= {}".format(self.qnta_occ_input[1].shape))
             # Create qNTAClass object for neg mode data
             qnta_neg = qNTAClass(
                 self.qnta_dfs_out[1], validation_input=val_neg, occurrence_input=self.qnta_occ_input[1], parameters=None
