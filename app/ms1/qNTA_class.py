@@ -130,12 +130,14 @@ class qNTAClass:
             internal=self.parameters["internal"],
         )
         logger.info("val_out data type = {}".format(type(self.validation_out)))
-        # Create validation summary
-        self.summary_out = self.validation_summary(
-            self.validation_out,
-            long_form=self.parameters["long_form"],
-            LOO=self.parameters["LOO"],
-        )
+        # Check status of self.validation_out
+        if self.validation_out is not None:
+            # Create validation summary
+            self.summary_out = self.validation_summary(
+                self.validation_out,
+                long_form=self.parameters["long_form"],
+                LOO=self.parameters["LOO"],
+            )
 
     """DATA MANIPULATION FUNCTIONS"""
 
@@ -294,6 +296,8 @@ class qNTAClass:
             val[cols] = concs
             # Use copy to avoid overwriting original data
             self.validation_data = val.copy()
+            # Set parameters 'internal' to True
+            self.parameters["internal"] = True
 
     """CALIBRATION CURVE METHODS"""
 
@@ -671,7 +675,7 @@ class qNTAClass:
                 # Merge on LOO_out
                 validation_out = pd.merge(validation_out, LOO_out, on=["Feature ID", "Sample"], how="left")
                 # Remove NaN rows
-                validation_out = validation_out.loc[~validation_out["ConcEst"].isna(), :]
+                validation_out = validation_out.loc[~validation_out["ConcTargeted"].isna(), :]
                 # Return validation_out
                 return validation_out
             else:

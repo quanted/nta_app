@@ -1073,9 +1073,14 @@ class NtaRun:
             # Get RF percentiles, store in qnta datamap
             self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
             self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
-            # Get validation outputs, store in qnta datamap
-            self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
-            self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
+            # Check status of validation_out
+            if qnta_pos.validation_out is not None:
+                # Get validation outputs, store in qnta datamap
+                self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
+            # Check status of validation_out
+            if qnta_neg.validation_out is not None:
+                # Get validation outputs, store in qnta datamap
+                self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
             # Check if self.val_df is not None
@@ -1095,8 +1100,10 @@ class NtaRun:
             self.qnta_map["Calibration Curve Metrics"] = qnta_pos.cc_metrics
             # Get RF percentiles, store in qnta datamap
             self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
-            # Get validation outputs, store in qnta datamap
-            self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
+            # Check status of validation_out
+            if qnta_pos.validation_out is not None:
+                # Get validation outputs, store in qnta datamap
+                self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
         # If only negative mode, instantiate negative mode and execute object
         else:
             # Check if self.val_df is not None
@@ -1116,8 +1123,10 @@ class NtaRun:
             self.qnta_map["Calibration Curve Metrics"] = qnta_neg.cc_metrics
             # Get RF percentiles, store in qnta datamap
             self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
-            # Get validation outputs, store in qnta datamap
-            self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
+            # Check status of validation_out
+            if qnta_neg.validation_out is not None:
+                # Get validation outputs, store in qnta datamap
+                self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
 
     def clean_features(self):
         """
