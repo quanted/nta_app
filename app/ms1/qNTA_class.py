@@ -131,7 +131,7 @@ class qNTAClass:
         )
         logger.info("val_out data type = {}".format(type(self.validation_out)))
         # Check status of self.validation_out
-        if self.validation_out is not None and len(self.validation_data) > 0:
+        if self.validation_out is not None and len(self.validation_out) > 0:
             # Create validation summary
             self.summary_out = self.validation_summary(
                 self.validation_out,
