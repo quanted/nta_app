@@ -82,10 +82,15 @@ class qNTAClass:
 
     def execute(self):
         """Perform data manipulation functions"""
+        logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_parameters()
+        logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_occurrences()
+        logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_RF_input()
+        logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_validation_data()
+        logger.info("val data type = {}".format(type(self.validation_data)))
         """Perform Calibration Curve Methods"""
         self.cal_curve_all_metrics()
         """Perform Bootstrap Methods"""
