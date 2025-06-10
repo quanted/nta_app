@@ -105,8 +105,8 @@ class qNTAClass:
                 reps=self.parameters["reps"],
                 alpha=self.parameters["alpha"],
             ),
-            index=pd.Index(self.percentiles, name="Response Factor Percentile Estimate"),
-            columns=["Minimum", "Median", "Maximum"],
+            index=pd.Index(["Minimum", "Median", "Maximum"], name="Response Factor Percentile Estimate"),
+            columns=[str(x) + "th" for x in self.percentiles],
         ).reset_index()
         # Calculate RF estimates for each chemical
         self.RF_estimate_out = self.RF_boot_estimate(
