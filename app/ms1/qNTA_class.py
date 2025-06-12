@@ -292,15 +292,14 @@ class qNTAClass:
         # If val has not been submitted
         else:
             blanks = ["Blank", "blank", "BLANK", "MB", "Mb", "mb", "mB"]
-            # Get Conc col root names
-            cols = [col[5:] for col in surr.columns if "Conc " in col if not any(x in col for x in blanks)]
-            # Define regex pattern, use to extract vals from Conc col names
-            re_pattern = "(\d+)"
-            concs = [int(re.search(re_pattern, col).group()) for col in cols]
+            controls = ["control", "Control", "CONTROL"]
+            li = blanks + controls
+            # Get Conc col root names, avoiding any blanks or controls
+            cols = [col for col in surr.columns if "Conc " in col if not any(x in col for x in li)]
             # Set Chemical Name as ID column for future joins
-            val = surr.loc[:, ["Chemical Name", "Feature ID"]]
-            # Make test validation file using qNTA_cal_data_pos
-            val[cols] = concs
+            val = surr.loc[:, ["Chemical Name", "Feature ID"] + cols]
+            # Rename to remove "Conc "
+            val = val.rename(columns={col: col[5:] for col in val.columns if "Conc " in col})
             # Use copy to avoid overwriting original data
             self.validation_data = val.copy()
             # Set parameters 'internal' to True
