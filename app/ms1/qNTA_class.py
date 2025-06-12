@@ -223,8 +223,15 @@ class qNTAClass:
         """
         # Copy input
         surr = self.surrogate_cal_data.copy()
+        # Define controls
+        controls = ["control", "Control", "CONTROL"]
+        # Check for Control - if present we want ControlSub, else we want BlankSub
+        if any(item for item in surr.columns if any(x in item for x in controls)):
+            col = "ControlSub BlankSub Mean"
+        else:
+            col = "BlankSub Mean"
         # Get cols
-        prefixes = ["Mean", "STD", "CV", "Detection Count", "Detection Percentage", "BlankSub Mean", "Conc", "RF"]
+        prefixes = ["Mean", "STD", "CV", "Detection Count", "Detection Percentage", "Conc", "RF"] + [col]
         cols = ["Feature ID", "Chemical Name", "Retention Time"] + [
             col for col in surr.columns if any(col.startswith(x) for x in prefixes)
         ]
@@ -234,7 +241,7 @@ class qNTAClass:
         long["Conc"] = pd.to_numeric(long["Conc"])
         # Keep only BlankSub Mean abundances > 0 to avoid problems with log-10 transform
         # we also don't want to have RFs of 0 in the surrogate set
-        long_nz = long.query("`BlankSub Mean` > 0")
+        long_nz = long.loc[long[col] > 0, :]
         # Add log-10 transformed columns for BlankSub Mean Abundance and Concentration
         long_nz = long_nz.assign(LogAbun=np.log10(long_nz["BlankSub Mean"]), LogConc=np.log10(long_nz["Conc"]))
         # Store unique chemical names in class variable
