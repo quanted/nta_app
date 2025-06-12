@@ -189,10 +189,6 @@ class qNTAClass:
                 back = [col for col in occ.columns if col.startswith("BlankSub Mean")]
             # Pare occ down to front + back
             self.occurrence_data = occ[front + back]
-            # Identify rows with any zero
-            rows_with_zero = (occ[back] == 0).any(axis=1)
-            # Create subset limited to chemicals with ONLY non-zero occurrences, store
-            self.occurrences_data_nonzero = occ[~rows_with_zero]
         else:
             # Copy input
             surr = self.surrogate_cal_data.copy()
@@ -203,10 +199,6 @@ class qNTAClass:
             # Subset columns from self.surrogate_cal_data, store
             occ = surr[cols]
             self.occurrence_data = occ
-            # Identify rows with any zero
-            rows_with_zero = (occ[back] == 0).any(axis=1)
-            # Create subset limited to chemicals with ONLY non-zero occurrences, store
-            self.occurrences_data_nonzero = occ[~rows_with_zero]
 
     def check_RF_input(self):
         """
