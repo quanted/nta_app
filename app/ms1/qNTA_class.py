@@ -224,7 +224,7 @@ class qNTAClass:
             col = "BlankSub Mean"
         # Get cols
         prefixes = ["Mean", "STD", "CV", "Detection Count", "Detection Percentage", "Conc", "RF"] + [col]
-        cols = ["Feature ID", "Chemical Name", "Retention Time"] + [
+        cols = ["Feature ID", "Chemical Name", "Retention Time", "Ionization Mode"] + [
             col for col in surr.columns if any(col.startswith(x) for x in prefixes)
         ]
         # Pivot surrogate_cal_data wide to long
@@ -325,6 +325,8 @@ class qNTAClass:
         surr = self.surrogate_cal_data_long_nonzero.copy()
         # Subset by chem
         cal_data = surr.loc[surr["Chemical Name"] == chem]
+        # Get Ionization Mode value
+        im = cal_data["Ionization Mode"].values[0]
         # Check if there are more than 3 points
         if len(cal_data) < 3:
             # If no, return string
@@ -337,6 +339,7 @@ class qNTAClass:
             # Return tuple
             return (
                 chem,
+                im,
                 slope.round(3),
                 intercept.round(3),
                 r_squared.round(3),
@@ -363,7 +366,9 @@ class qNTAClass:
         cc_tuples = [self.cal_curve_metrics(i) for i in self.surrogate_cal_data_long_nonzero_chems]
         cc_tuples = [i for i in cc_tuples if "Fewer than 3 calibration points" not in i]
         # Generate and save dataframe
-        self.cc_metrics = pd.DataFrame(cc_tuples, columns=["Chemical Name", "Slope", "Intercept", "R-squared"])
+        self.cc_metrics = pd.DataFrame(
+            cc_tuples, columns=["Chemical Name", "Ionization Mode", "Slope", "Intercept", "R-squared"]
+        )
 
     """RESPONSE FACTOR BOOTSTRAP METHODS"""
 
