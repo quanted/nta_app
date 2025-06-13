@@ -1083,6 +1083,10 @@ class NtaRun:
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
+            logger.info("qnta_dfs_out[0] columns= {}".format(self.qnta_dfs_out[0].columns.values))
+            logger.info("qnta_dfs_out[0] shape= {}".format(self.qnta_dfs_out[0].shape))
+            logger.info("qnta_occ_input[0] columns= {}".format(self.qnta_occ_input[0].columns.values))
+            logger.info("qnta_occ_input[0] shape= {}".format(self.qnta_occ_input[0].shape))
             # Check if self.val_df is not None
             if self.val_df is not None:
                 # Separate into mode data
