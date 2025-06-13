@@ -235,7 +235,7 @@ class qNTAClass:
         # we also don't want to have RFs of 0 in the surrogate set
         long_nz = long.loc[long[col] > 0, :]
         # Add log-10 transformed columns for BlankSub Mean Abundance and Concentration
-        long_nz = long_nz.assign(LogAbun=np.log10(long_nz["BlankSub Mean"]), LogConc=np.log10(long_nz["Conc"]))
+        long_nz = long_nz.assign(LogAbun=np.log10(long_nz[col]), LogConc=np.log10(long_nz["Conc"]))
         # Store unique chemical names in class variable
         self.surrogate_cal_data_long_nonzero_chems = np.unique(long_nz["Chemical Name"])
         # Store df in class variable
