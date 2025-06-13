@@ -2265,7 +2265,7 @@ def qnta_preprocessing(
         dfq[control[0]] = dfq[control[0]].fillna(0)
         for conc in cal_concs:
             # Do subtraction, clip values at 0, replace 0s with NaN
-            dfq[conc] = dfq[conc].sub(dfq[control[0]], axis=0).clip(lower=0)
+            dfq[conc] = dfq[conc].sub(dfq[control[0]], axis=0).clip(lower=0).replace({0: np.nan})
             # Rename column (preserves order)
             new_col = "ControlSub " + conc
             dfq = dfq.rename(columns={conc: new_col})
