@@ -673,8 +673,10 @@ class qNTAClass:
                 validation_out["CLFR"] = validation_out["ConcUCL"] / validation_out["ConcLCL"]
                 # Merge on LOO_out
                 validation_out = pd.merge(validation_out, LOO_out, on=["Feature ID", "Sample"], how="left")
-                # Remove NaN rows
-                validation_out = validation_out.loc[~validation_out["ConcTargeted"].isna(), :]
+                # Remove NaN rows from the ConcTargeted (the validation file) and ConcEst (occurrence file)
+                validation_out = validation_out.loc[
+                    ((validation_out["ConcTargeted"] > 0) & (validation_out["ConcEst"] > 0)), :
+                ]
                 # Return validation_out
                 return validation_out
             else:
