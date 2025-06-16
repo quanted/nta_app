@@ -659,10 +659,6 @@ class qNTAClass:
                         if not any(x in c for x in ["Feature", "Chemical", "Sample"])
                     }
                 )
-                # Remove "Conc" from sample names coming from internal calibration data,
-                # needed so that Sample columns match when merging
-                if internal:
-                    val["Sample"] = [s[5:] for s in val["Sample"]]
                 # Ensure that correct ConcTargeted and ConcLCL, Est, UCL are compared
                 LOO_out = pd.merge(LOO_out, val, on=["Feature ID", "Sample"], how="left")
                 # Calculate qNTA performance metrics for accuracy and uncertainty
