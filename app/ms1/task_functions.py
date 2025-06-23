@@ -2312,6 +2312,19 @@ def qnta_preprocessing(
     dfq.drop(["Rounded_Mass", "Matches"], axis=1, inplace=True)
     # Sort dfq columns for Surrugate Detection Statistics file
     dfq = column_sort_SDS(dfq, passthru)
+    # Check for duplicates in the Feature ID column
+    counts = dfq["Feature ID"].value_counts()
+    if any(x > 1 for x in counts):
+        # Get offending Feature IDs
+        ids = counts[counts > 1].index
+        mrt = [dfq.loc[dfq["Feature ID"] == x, ["Observed Mass", "Observed Retention Time"]] for x in ids]
+        mrt = [(x.iloc[0, 0], x.iloc[0, 1]) for x in mrt]
+        chems = [tuple(dfq.loc[dfq["Feature ID"] == x, "Chemical Name"]) for x in ids]
+        pairs = [(x, y) for x, y in zip(mrt, chems)]
+        # If present, raise Exception
+        raise ValueError(
+            f"Warning: The following chemical feature(s) in the input data (mass, RT) matched the multiple listed qNTA surrogates: {', '.join(str(x) for x in pairs)} This ambiguity results in downstream errors in the qNTA workflow and must be resolved to generate results. Please check your mass/retention time accuracy parameters and/or review your peak integration and try again."
+        )
     # np.where to replace nans with 0s
     dfc["Surrogate Chemical Match?"].fillna(0, inplace=True)
     # Preserve Chemical Name if present, but don't kill run if not
