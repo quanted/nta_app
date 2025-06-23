@@ -1077,12 +1077,18 @@ class NtaRun:
             if qnta_pos.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
-                self.qnta_map["Pos Validation Summary"] = qnta_pos.summary_out
+                # Check status of summary_out
+                if qnta_pos.summary_out is not None:
+                    # Get validation outputs, store in qnta datamap
+                    self.qnta_map["Pos Validation Summary"] = qnta_pos.summary_out
             # Check status of validation_out
             if qnta_neg.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
-                self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
+                # Check status of summary_out
+                if qnta_neg.summary_out is not None:
+                    # Get validation outputs, store in qnta datamap
+                    self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
             logger.info("qnta_dfs_out[0] columns= {}".format(self.qnta_dfs_out[0].columns.values))
@@ -1110,7 +1116,10 @@ class NtaRun:
             if qnta_pos.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
-                self.qnta_map["Pos Validation Summary"] = qnta_pos.summary_out
+                # Check status of summary_out
+                if qnta_pos.summary_out is not None:
+                    # Get validation outputs, store in qnta datamap
+                    self.qnta_map["Pos Validation Summary"] = qnta_pos.summary_out
         # If only negative mode, instantiate negative mode and execute object
         else:
             # Check if self.val_df is not None
@@ -1134,7 +1143,10 @@ class NtaRun:
             if qnta_neg.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
-                self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
+                # Check status of summary_out
+                if qnta_neg.summary_out is not None:
+                    # Get validation outputs, store in qnta datamap
+                    self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
 
     def clean_features(self):
         """
