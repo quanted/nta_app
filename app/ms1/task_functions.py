@@ -2376,7 +2376,7 @@ def SDS_duplicate_error_check(df_in):
         error_suffix = "This ambiguity results in downstream errors in the qNTA workflow and must be resolved to generate results. Please check your mass/retention time accuracy parameters and/or review your peak integration and try again."
         # Add error strings together
         error_message = feat_error + chem_error + error_suffix
-        raise ValueError(error_message)
+        raise Exception(error_message)
     return
 
 
