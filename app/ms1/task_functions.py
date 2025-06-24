@@ -2356,6 +2356,8 @@ def SDS_duplicate_error_check(df_in):
     # Check for duplicates in the Chemical Name column
     chem_counts = df["Chemical Name"].value_counts()
     if any(x > 1 for x in chem_counts):
+        # Up error count
+        error_count += 1
         # Get offending surrogate chemical names
         chems = chem_counts[chem_counts > 1].index
         # Get associated masses and retention times
@@ -2375,6 +2377,7 @@ def SDS_duplicate_error_check(df_in):
         # Add error strings together
         error_message = feat_error + chem_error + error_suffix
         raise ValueError(error_message)
+    return
 
 
 def column_sort_SDS(df_in, passthru):
