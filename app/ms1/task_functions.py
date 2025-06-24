@@ -2312,19 +2312,8 @@ def qnta_preprocessing(
     dfq.drop(["Rounded_Mass", "Matches"], axis=1, inplace=True)
     # Sort dfq columns for Surrugate Detection Statistics file
     dfq = column_sort_SDS(dfq, passthru)
-    # Check for duplicates in the Feature ID column
-    counts = dfq["Feature ID"].value_counts()
-    if any(x > 1 for x in counts):
-        # Get offending Feature IDs
-        ids = counts[counts > 1].index
-        mrt = [dfq.loc[dfq["Feature ID"] == x, ["Observed Mass", "Observed Retention Time"]] for x in ids]
-        mrt = [(x.iloc[0, 0], x.iloc[0, 1]) for x in mrt]
-        chems = [tuple(dfq.loc[dfq["Feature ID"] == x, "Chemical Name"]) for x in ids]
-        pairs = [(x, y) for x, y in zip(mrt, chems)]
-        # If present, raise Exception
-        raise ValueError(
-            f"Warning: The following chemical feature(s) in the input data (mass, RT) matched the multiple listed qNTA surrogates: {', '.join(str(x) for x in pairs)} This ambiguity results in downstream errors in the qNTA workflow and must be resolved to generate results. Please check your mass/retention time accuracy parameters and/or review your peak integration and try again."
-        )
+    # Check dfq for matching errors
+    SDS_duplicate_error_check(dfq)
     # np.where to replace nans with 0s
     dfc["Surrogate Chemical Match?"].fillna(0, inplace=True)
     # Preserve Chemical Name if present, but don't kill run if not
@@ -2336,6 +2325,56 @@ def qnta_preprocessing(
     occ_df.drop([col for col in occ_df.columns if col.startswith("Mean ")], axis=1, inplace=True)
     # Returns tracers data (dft) and dataframe with 'Tracer Chemical Match?' appended (dfc)
     return dfq, dfc, occ_df
+
+
+def SDS_duplicate_error_check(df_in):
+    # Copy input
+    df = df_in.copy()
+    # Define variables to start
+    error_count = 0
+    feat_error = ""
+    chem_error = ""
+    # Check for duplicates in the Feature ID column
+    feat_counts = df["Feature ID"].value_counts()
+    if any(x > 1 for x in feat_counts):
+        # Up error count
+        error_count += 1
+        # Get offending Feature IDs
+        ids = feat_counts[feat_counts > 1].index
+        # Get assosciated masses and retention times
+        mrt = [df.loc[df["Feature ID"] == x, ["Observed Mass", "Observed Retention Time"]] for x in ids]
+        # Extract values from data frames
+        mrt = [(x.iloc[0, 0], x.iloc[0, 1]) for x in mrt]
+        # Get associated surrogate chemicals
+        chems = [tuple(df.loc[df["Feature ID"] == x, "Chemical Name"]) for x in ids]
+        # Combine, masses, RTs, and surrogate chemicals
+        pairs = [(x, y) for x, y in zip(mrt, chems)]
+        # Join pairs into strings
+        feat_strings = "\n".join(str(x) for x in pairs)
+        # Assemble error message
+        feat_error = f"Warning: The following chemical feature(s) in the input data (mass, RT) matched multiple listed qNTA surrogates:\n{feat_strings}\n"
+    # Check for duplicates in the Chemical Name column
+    chem_counts = df["Chemical Name"].value_counts()
+    if any(x > 1 for x in chem_counts):
+        # Get offending surrogate chemical names
+        chems = chem_counts[chem_counts > 1].index
+        # Get associated masses and retention times
+        mrt = [df.loc[df["Chemical Name"] == x, ["Observed Mass", "Observed Retention Time"]] for x in chems]
+        # Extract values into tuple of tuples
+        mrt = [tuple(tuple(x.iloc[i]) for i in range(len(x))) for x in mrt]
+        # Combine chemical names, masses, and RTs
+        pairs = [(x, y) for x, y in zip(chems, mrt)]
+        # Join pairs into strings
+        error = "\n".join(str(x) for x in pairs)
+        # Assemble error message
+        chem_error = f"Warning: The following qNTA surrogate(s) matched multiple chemical features in the input data (mass, RT):\n{error}\n"
+    # Check error count, raise message if > 0
+    if error_count > 0:
+        # Define error suffix
+        error_suffix = "This ambiguity results in downstream errors in the qNTA workflow and must be resolved to generate results. Please check your mass/retention time accuracy parameters and/or review your peak integration and try again."
+        # Add error strings together
+        error_message = feat_error + chem_error + error_suffix
+        raise ValueError(error_message)
 
 
 def column_sort_SDS(df_in, passthru):
