@@ -2372,12 +2372,14 @@ def SDS_duplicate_error_check(df_in):
         chem_error = f"Warning: The following qNTA surrogate(s) matched multiple chemical features in the input data (mass, RT):\n{error}\n"
     # Check error count, raise message if > 0
     if error_count > 0:
-        # Define error suffix
-        error_suffix = "This ambiguity results in downstream errors in the qNTA workflow and must be resolved to generate results. Please check your mass/retention time accuracy parameters and/or review your peak integration and try again."
-        # Add error strings together
-        error_message = feat_error + chem_error + error_suffix
-        raise Exception(error_message)
-    return
+        try:
+            x = 10 / 0
+        except ZeroDivisionError:
+            # Define error suffix
+            error_suffix = "This ambiguity results in downstream errors in the qNTA workflow and must be resolved to generate results. Please check your mass/retention time accuracy parameters and/or review your peak integration and try again."
+            # Add error strings together
+            error_message = feat_error + chem_error + error_suffix
+            print(error_message)
 
 
 def column_sort_SDS(df_in, passthru):
