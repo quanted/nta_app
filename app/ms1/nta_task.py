@@ -268,14 +268,14 @@ class NtaRun:
         # 4a: check tracers (optional)
         self.step = "Checking tracers"
         if self.verbose:
-            logger.info("Checking tracers: DF check for debugging.")
-            logger.info("dfs.size(): {}".format(len(self.dfs)))
+            # logger.info("Checking tracers: DF check for debugging.")
+            # logger.info("dfs.size(): {}".format(len(self.dfs)))
             if self.dfs[0] is not None:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
-                logger.info("POS df columns: {}".format(self.dfs[0].columns.tolist()))
+                # logger.info("POS df columns: {}".format(self.dfs[0].columns.tolist()))
             if self.dfs[1] is not None:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
-                logger.info("NEG df columns: {}".format(self.dfs[1].columns.tolist()))
+                # logger.info("NEG df columns: {}".format(self.dfs[1].columns.tolist()))
         self.check_tracers()
         if self.verbose:
             logger.info("Checked tracers.")
@@ -872,7 +872,7 @@ class NtaRun:
         if self.tracer_dfs_out[0] is not None:
             # Troubleshooting NTAW-460
             logger.info("self.tracer_dfs_out[1] shape= {}".format(self.tracer_dfs_out[0].shape))
-            logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[0].columns.values))
+            # logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[0].columns.values))
 
             # Check that run sequence file is present. Raise IndexError if no run sequence file is found.
             if self.run_sequence_pos_df is None:
@@ -909,7 +909,7 @@ class NtaRun:
         # Create plot
         if self.tracer_dfs_out[1] is not None:
             logger.info("self.tracer_dfs_out[1] shape= {}".format(self.tracer_dfs_out[1].shape))
-            logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[1].columns.values))
+            # logger.info("self.tracer_dfs_out[1] columns= {}".format(self.tracer_dfs_out[1].columns.values))
 
             # Check that run sequence file is present. Raise IndexError if no run sequence file is found.
             if self.run_sequence_neg_df is None:
@@ -938,7 +938,7 @@ class NtaRun:
 
             self.tracer_plots_out.append(listOfPNGs)
             logger.info("df_debug shape= {}".format(df_debug.shape))
-            logger.info("df_debug columns= {}".format(df_debug.columns.values))
+            # logger.info("df_debug columns= {}".format(df_debug.columns.values))
 
         else:
             self.tracer_plots_out.append(None)

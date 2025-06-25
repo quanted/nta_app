@@ -693,12 +693,12 @@ def statistics(df_in, blank_headers, sample_headers):
     logger.info(df.shape)
     # get sample header groups
     sam_headers = blank_headers + sample_headers
-    logger.info("Sample headers:")
-    logger.info(sam_headers)
+    # logger.info("Sample headers:")
+    # logger.info(sam_headers)
     # Create column names for each statistics from sam_headers
     mean_cols = ["Mean " + i[0][:-1] for i in sam_headers]
-    logger.info("mean_cols:")
-    logger.info(mean_cols)
+    # logger.info("mean_cols:")
+    # logger.info(mean_cols)
     med_cols = ["Median " + i[0][:-1] for i in sam_headers]
     std_cols = ["STD " + i[0][:-1] for i in sam_headers]
     cv_cols = ["CV " + i[0][:-1] for i in sam_headers]
@@ -1098,8 +1098,8 @@ def check_run_seq(df_in, run_seq_in, blank_headers, sample_headers):
     sequence = list(run_seq[run_seq.columns[0]])
     # Check samples and sequence are same length
 
-    logger.info(f"Samples: {samples}")
-    logger.info(f"Sequence: {sequence}")
+    # logger.info(f"Samples: {samples}")
+    # logger.info(f"Sequence: {sequence}")
 
     if len(samples) > len(sequence):
         misspells = [x for x in samples if x not in sequence]
