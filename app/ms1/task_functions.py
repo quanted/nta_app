@@ -2449,7 +2449,7 @@ def column_sort_SDS(df_in, passthru):
     df_reorg.rename(
         columns={
             "Monoisotopic_Mass": "Mass",
-            "Chemical Name": "Chemical Name",
+            "Chemical_Name": "Chemical Name",
             "Ionization_Mode": "Ionization Mode",
             "Retention_Time": "Retention Time",
         },
