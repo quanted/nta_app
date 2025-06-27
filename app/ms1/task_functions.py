@@ -2271,7 +2271,7 @@ def qnta_preprocessing(
     occ_drop = [col for col in cals if not any(x in col for x in blanks)]
     occ_cols = [
         "Feature ID",
-        "Chemical Name",
+        "Chemical_Name",
         "Retention_Time",
     ] + [col for col in dfq.columns if (col.startswith("Mean ") and not any(col == x for x in occ_drop))]
     # Drop unnecessary columns
@@ -2416,7 +2416,7 @@ def column_sort_SDS(df_in, passthru):
     back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
     # Organize front matter (Feat_ID is located in pt_info)
     ordering = [
-        "Chemical Name",
+        "Chemical_Name",
         "DTXSID",
         "Ionization_Mode",
         "Monoisotopic_Mass",
