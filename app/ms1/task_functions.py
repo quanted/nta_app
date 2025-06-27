@@ -2167,12 +2167,31 @@ def qnta_preprocessing(
     Mass_Difference,
     Retention_Difference,
     ppm,
+    controls,
     blank_headers,
     sample_headers,
 ):
     """
     Function meant to go from dfs and qnta_df to the surrogate detection statistics output.
-    This will eventually be printed into a separate
+    This will eventually be printed into a separate dataframe.
+
+    Inputs:
+        df_in: Pandas dataframe (MS1 workflow output up to this point)
+        qnta_df: Pandas dataframe (User submitted surrogate/calibration information)
+        passthru: Pandas dataframe (passthru dfs from MS1 workflow)
+        Mass_Difference: float
+        Retention_Difference: float
+        ppm: Boolean
+        controls: list of ints
+        blank_headers: list of strings
+        sample_headers: List of strings
+
+    Outputs:
+        dfq: Pandas dataframe (Surrogate Detection Statistics sheet of tabular outputs;
+                               current input to qNTA Class object)
+        dfc: Pandas dataframe (MS1 workflow dataframe, with 'Surrogate Chemical Match?' column appended)
+        occ_df: Pandas dataframe (occurrence data of surrogates from qnta_df identified
+                                  in df_in; BlankSub or ControlSub BlankSub Means)
     """
     # Copy input dataframe
     df1 = df_in.copy()
@@ -2188,7 +2207,7 @@ def qnta_preprocessing(
         "Blank",
         "BLANK",
     ]
-    controls = [
+    conts = [
         "Control",
         "control",
         "CONTROL",
@@ -2199,7 +2218,7 @@ def qnta_preprocessing(
     """GET STD, CV, Det counts, etc into final surrogate outputs"""
 
     # Get columns associated with the calibrations
-    li = list(df2.columns[5:])
+    li = list(df2.columns[6:])
     prefixes = [
         "Mean ",
         "Median ",
@@ -2217,59 +2236,23 @@ def qnta_preprocessing(
     for col in li:
         new_col = "Conc " + col
         df2.rename(columns={col: new_col}, inplace=True)
-    # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI+", "Esi+")
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi+", "Esi+")
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI-", "Esi-")
-    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi-", "Esi-")
-    # Create 'Rounded_Mass' variable to merge on
-    df2["Rounded_Mass"] = df2["Monoisotopic_Mass"].round(0)
-    df1.rename(
-        columns={
-            "Mass": "Observed Mass",
-            "Retention_Time": "Observed Retention Time",
-            "Retention Time": "Observed Retention Time",
-        },
-        inplace=True,
-    )
-    df1["Rounded_Mass"] = df1["Observed Mass"].round(0)
-    # Merge df and tracers
-    dfq = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization_Mode"])
-    # Calculate Rention Time Difference
-    dfq["Retention Time Difference"] = abs(dfq["Retention_Time"] - dfq["Observed Retention Time"])
-    # Calculate Mass Error (if ppm or else), then apply thresholds to find 'Matches'
-    if ppm:
-        dfq["Mass Error (PPM)"] = (
-            abs((dfq["Monoisotopic_Mass"] - dfq["Observed Mass"]) / dfq["Monoisotopic_Mass"]) * 1000000
-        )
-        # np.where to find 'Matches'
-        dfq["Matches"] = np.where(
-            (dfq["Mass Error (PPM)"] <= Mass_Difference) & (dfq["Retention Time Difference"] <= Retention_Difference),
-            1,
-            0,
-        )
-    else:
-        dfq["Mass Error"] = abs(dfq["Monoisotopic_Mass"] - dfq["Observed Mass"])
-        # np.where to find 'Matches'
-        dfq["Matches"] = np.where(
-            (dfq["Mass Error"] <= Mass_Difference) & (dfq["Retention Time Difference"] <= Retention_Difference), 1, 0
-        )
-    # Isolate surrogate matches
-    dfq = dfq[dfq["Matches"] == 1]
+    # Perform surrogate-occurrence matching
+    dfq = surrogate_occ_match(df1, df2, Mass_Difference, Retention_Difference, ppm)
     # Perform Blank Subtraction on Means
     dfq = Blank_Subtract_Mean(dfq)
     # Check for matrix/control column, if present, subtract from cals
-    if any(col for col in li if any(x in col for x in controls)):
-        control = ["BlankSub Mean " + col for col in li if any(x in col for x in controls)]
-        cal_concs = ["BlankSub Mean " + col for col in li if not any(col in x for x in control)]
-        dfq[control[0]] = dfq[control[0]].fillna(0)
+    if any(col for col in li if any(x in col for x in conts)):
+        prefix = "ControlSub BlankSub Mean "
+        cont_col = ["BlankSub Mean " + col for col in li if any(x in col for x in conts)]
+        cal_concs = ["BlankSub Mean " + col for col in li if not any(col in x for x in conts)]
+        dfq[cont_col[0]] = dfq[cont_col[0]].fillna(0)
         for conc in cal_concs:
             # Do subtraction, clip values at 0, replace 0s with NaN
-            dfq[conc] = dfq[conc].sub(dfq[control[0]], axis=0).clip(lower=0).replace({0: np.nan})
+            dfq[conc] = dfq[conc].sub(dfq[cont_col[0]], axis=0).clip(lower=0)
             # Rename column (preserves order)
             new_col = "ControlSub " + conc
             dfq = dfq.rename(columns={conc: new_col})
-    # calculate response factor columns
+    # Iterate through columns in cals and dfq to locate BS/CSBS Means, Concs, and RFs
     bsmeans = [
         col
         for col in cals
@@ -2277,6 +2260,7 @@ def qnta_preprocessing(
     ]
     concs = [col for col in cals if (col.startswith("Conc ") and not any(x in col for x in blanks))]
     rfs = [col for col in cals if (col.startswith("RF ") and not any(x in col for x in blanks))]
+    # Loop through ID'ed columns to calculate response factors
     for bsmean, conc, rf in zip(bsmeans, concs, rfs):
         dfq[rf] = dfq[bsmean] / dfq[conc]
     # Find calibrant columns needed in the surrogate output
@@ -2314,8 +2298,12 @@ def qnta_preprocessing(
     dfq = column_sort_SDS(dfq, passthru)
     # Check dfq for matching errors
     SDS_duplicate_error_check(dfq)
+    # Check for surrogate groups
+    if any(x > 1 for x in dfq["Surrogate_Group"].value_counts()):
+        # If present, perform aggregations
+        dfq = surrogate_grouping(dfq, prefix, controls, sample_headers)
     # np.where to replace nans with 0s
-    dfc["Surrogate Chemical Match?"].fillna(0, inplace=True)
+    dfc["Surrogate Chemical Match?"] = dfc["Surrogate Chemical Match?"].fillna(0)
     # Preserve Chemical Name if present, but don't kill run if not
     occ_cols = [col for col in occ_cols if col in dfc.columns]
     # Create qNTA occurrence input file
@@ -2323,8 +2311,152 @@ def qnta_preprocessing(
     # Perform Blank Subtraction on Means
     occ_df = Blank_Subtract_Mean(occ_df)
     occ_df.drop([col for col in occ_df.columns if col.startswith("Mean ")], axis=1, inplace=True)
-    # Returns tracers data (dft) and dataframe with 'Tracer Chemical Match?' appended (dfc)
+    # Returns 1) surrogate data (dfq), 2) combined dataframe with 'Surrogate Chemical Match?' appended (dfc),
+    # and 3) occurrence dataframe of BlankSub Means (occ_df)
     return dfq, dfc, occ_df
+
+
+def surrogate_occ_match(
+    df1,
+    df2,
+    Mass_Difference,
+    Retention_Difference,
+    ppm,
+):
+    """
+    Function that rounds the Mass and RT columns of the MS1 workflow occurrence dataframe
+    and user-submitted qNTA surrogate dataframe, joins the dataframes on rounded mass/RT,
+    then uses the user-submitted Mass_Difference, Retention_Difference, and ppm parameters
+    to determine actual matches within set tolerances.
+
+    Input:
+        df_in: Pandas dataframe (MS1 workflow output up to this point)
+        qnta_df: Pandas dataframe (User submitted surrogate/calibration information)
+        Mass_Difference: float
+        Retention_Difference: float
+        ppm: Boolean
+    Output:
+        dfq: Pandas dataframe (dataframe of matched MS1 chemical features and qNTA surrogates)
+    """
+    # Create 'Rounded_Mass' variable to merge on
+    df2["Rounded_Mass"] = df2["Monoisotopic_Mass"].round(0)
+    df1.rename(
+        columns={
+            "Mass": "Observed Mass",
+            "Retention_Time": "Observed Retention Time",
+            "Retention Time": "Observed Retention Time",
+        },
+        inplace=True,
+    )
+    df1["Rounded_Mass"] = df1["Observed Mass"].round(0)
+    # Merge df and tracers
+    dfq = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization_Mode"])
+    # Calculate Rention Time Difference
+    dfq["Retention Time Difference"] = abs(dfq["Retention_Time"] - dfq["Observed Retention Time"])
+    # Calculate Mass Error (if ppm or else), then apply thresholds to find 'Matches'
+    if ppm:
+        dfq["Mass Error (PPM)"] = (
+            abs((dfq["Monoisotopic_Mass"] - dfq["Observed Mass"]) / dfq["Monoisotopic_Mass"]) * 1000000
+        )
+        # np.where to find 'Matches'
+        dfq["Matches"] = np.where(
+            (dfq["Mass Error (PPM)"] <= Mass_Difference) & (dfq["Retention Time Difference"] <= Retention_Difference),
+            1,
+            0,
+        )
+    else:
+        dfq["Mass Error"] = abs(dfq["Monoisotopic_Mass"] - dfq["Observed Mass"])
+        # np.where to find 'Matches'
+        dfq["Matches"] = np.where(
+            (dfq["Mass Error"] <= Mass_Difference) & (dfq["Retention Time Difference"] <= Retention_Difference), 1, 0
+        )
+    # Isolate surrogate matches
+    dfq = dfq[dfq["Matches"] == 1]
+    # Return dataframe of matched surrogates
+    return dfq
+
+
+def column_sort_SDS(df_in, passthru):
+    """
+    Function that sorts columns for the tracer_sample_results outputs -- TMF 11/21/23
+
+    Inputs:
+        df_in (dataframe)
+        passthru (dataframe, passed columns from passthrucol())
+    Outputs:
+        df_reorg (dataframe, combined dataframe with reorganized columns for excel output)
+    """
+    # Copy input dataframes
+    df = df_in.copy()
+    pt = passthru.copy()
+    # Get column names as lists
+    all_cols = df.columns.tolist()
+    pt_info = pt.columns.tolist()
+    # Combine df and passthrough on Feature_ID
+    df = pd.merge(df, pt, how="left", on=["Feature ID"])
+    # Add "DTXSID" column if it doesn't already exist
+    if "DTXSID" not in df.columns:
+        df["DTXSID"] = ""
+    # Create list of prefixes to remove non-samples from back matter
+    prefixes = [
+        "Feature ID",
+        "Mass",
+        "Retention",
+        "Ionization",
+        "MRL",
+        "Adduct",
+        "Duplicate",
+        "Total",
+        "Max CV",
+        "Chemical",
+        "Formula",
+        "DTXSID",
+    ]
+    # Isolate sample_groups from prefixes columns
+    back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
+    # Organize front matter (Feat_ID is located in pt_info)
+    ordering = [
+        "Chemical Name",
+        "DTXSID",
+        "Ionization_Mode",
+        "Monoisotopic_Mass",
+        "Observed Mass",
+        "Mass Error (PPM)",
+        "Retention_Time",
+        "Observed Retention Time",
+        "Retention Time Difference",
+        "Selected MRL",
+        "MRL (3x)",
+        "MRL (5x)",
+        "MRL (10x)",
+        "Duplicate Feature?",
+        "Is Adduct or Loss?",
+        "Has Adduct or Loss?",
+        "Adduct or Loss Info",
+        "Total Detection Count",
+        "Total Detection Percentage",
+        "Max CV Across Samples",
+    ]
+    # Cross reference ordering against cols
+    front_matter = [item for item in ordering if item in all_cols]
+    # Add to pass_through for front matter
+    front_matter = pt_info + front_matter
+    # Combine into new column list
+    new_col_org = front_matter + back_matter
+    # Subset df with specified column order
+    df_reorg = df[new_col_org]
+    # Rename columns for better output aesthetics
+    df_reorg.rename(
+        columns={
+            "Monoisotopic_Mass": "Mass",
+            "Chemical Name": "Chemical Name",
+            "Ionization_Mode": "Ionization Mode",
+            "Retention_Time": "Retention Time",
+        },
+        inplace=True,
+    )
+    # Return re-organized dataframe
+    return df_reorg
 
 
 def SDS_duplicate_error_check(df_in):
@@ -2378,90 +2510,133 @@ def SDS_duplicate_error_check(df_in):
         error_message = feat_error + chem_error + error_suffix
         raise ValueError(error_message)
 
+    try:
+        error_count == 0
+    except Exception as e:
+        # Define error suffix
+        error_suffix = "This ambiguity results in downstream errors in the qNTA workflow and must be resolved to generate results. Please check your mass/retention time accuracy parameters and/or review your peak integration and try again."
+        # Add error strings together
+        error_message = feat_error + chem_error + error_suffix
+        print(error_message)
+        print(e)
 
-def column_sort_SDS(df_in, passthru):
-    """
-    Function that sorts columns for the tracer_sample_results outputs -- TMF 11/21/23
 
-    Inputs:
-        df_in (dataframe)
-        passthru (dataframe, passed columns from passthrucol())
-    Outputs:
-        df_reorg (dataframe, combined dataframe with reorganized columns for excel output)
+def surrogate_grouping(
+    df_in,
+    col,
+    controls,
+    sample_headers,
+):
     """
-    # Copy input dataframes
+    Aggregate Feature IDs, Retention Times, Chemical Names (string additions),
+    Concs (averages), and ControlSub/BlankSub Means (sums). Recalculate RFs.
+
+    Input: df_in : pandas Dataframe
+        Contains columns - Feature ID, Cal Level, Chemical Name, Ionization Mode,
+        Isomer Groups, Retention Time, Conc, RF, Control Sub/Blank Sub Mean. Data
+        is grouped by Isomer Groups and Cal Level.
+        col : string
+            "ControlSub BlankSub Mean" or "BlankSub Mean"
+        controls : list of ints
+    Returns
+        df : pandas Dataframe
+    """
+    # Copy input
     df = df_in.copy()
-    pt = passthru.copy()
-    # Get column names as lists
-    all_cols = df.columns.tolist()
-    pt_info = pt.columns.tolist()
-    # Combine df and passthrough on Feature_ID
-    df = pd.merge(df, pt, how="left", on=["Feature ID"])
-    # Add "DTXSID" column if it doesn't already exist
-    if "DTXSID" not in df.columns:
-        df["DTXSID"] = ""
-    # Create list of prefixes to remove non-samples from back matter
-    prefixes = [
-        "Feature ID",
-        "Mass",
-        "Retention",
-        "Ionization",
-        "MRL",
-        "Adduct",
-        "Duplicate",
-        "Total",
-        "Max CV",
-        "Chemical",
-        "Formula",
-        "DTXSID",
+    # Define lists
+    bacs = [
+        "MB",
+        "mb",
+        "mB",
+        "Mb",
+        "blank",
+        "Blank",
+        "BLANK",
+    ] + [
+        "Control",
+        "control",
+        "CONTROL",
     ]
-    # Isolate sample_groups from prefixes columns
-    back_matter = [item for item in all_cols if not any(x in item for x in prefixes)]
-    # Organize front matter (Feat_ID is located in pt_info)
-    ordering = [
-        "Chemical_Name",
-        "DTXSID",
-        "Ionization_Mode",
-        "Monoisotopic_Mass",
-        "Observed Mass",
-        "Mass Error (PPM)",
-        "Retention_Time",
-        "Observed Retention Time",
-        "Retention Time Difference",
-        "Selected MRL",
-        "MRL (3x)",
-        "MRL (5x)",
-        "MRL (10x)",
-        "Duplicate Feature?",
-        "Is Adduct or Loss?",
-        "Has Adduct or Loss?",
-        "Adduct or Loss Info",
-        "Total Detection Count",
-        "Total Detection Percentage",
-        "Max CV Across Samples",
-    ]
-    # Cross reference ordering against cols
-    front_matter = [item for item in ordering if item in all_cols]
-    # Add to pass_through for front matter
-    front_matter = pt_info + front_matter
-    # Combine into new column list
-    new_col_org = front_matter + back_matter
-    # Subset df with specified column order
-    df_reorg = df[new_col_org]
-    # Replace ionization mode values with all caps version, if present
-    df_reorg.loc[:, "Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi+", "ESI+")
-    df_reorg.loc[:, "Ionization_Mode"] = df_reorg["Ionization_Mode"].replace("Esi-", "ESI-")
-    # Rename columns for better output aesthetics
-    df_reorg = df_reorg.rename(
-        columns={
-            "Monoisotopic_Mass": "Mass",
-            "Chemical_Name": "Chemical Name",
-            "Ionization_Mode": "Ionization Mode",
-            "Retention_Time": "Retention Time",
-        },
-    )
-    # Return re-organized dataframe
-    return df_reorg
+    means = [x for x in df.columns if x.startswith("Mean ") and not any(item in x for item in bacs)]
+    rps = [x for x in df.columns if x.startswith("Detection Percentage ") and not any(item in x for item in bacs)]
+    cvs = [x for x in df.columns if x.startswith("CV ") and not any(item in x for item in bacs)]
+    csbsms = [x for x in df.columns if x.startswith(col)]
+    concs = [x for x in df.columns if x.startswith("Conc ") and not any(item in x for item in bacs)]
+    rfs = [x for x in df.columns if x.startswith("RF ") and not any(item in x for item in bacs)]
+    subs = [x for x in df.columns if x.startswith(col)]
+    samples = [x for item in sample_headers for x in item]
+    sams = [x for x in df.columns if any(x == item for item in samples)]
+
+    """Isolate surrogates"""
+    # Get surrogate group value counts
+    sg_vc = df["Surrogate_Group"].value_counts()
+    # Get surrogate groups
+    sgs = sg_vc[sg_vc > 1].index
+    # Get assosciated surrogate observations
+    surrs = df.loc[df["Surrogate_Group"].isin(sgs), :]
+
+    """Do occurrence masking"""
+    # Do occurrence removal
+    for mean, rp, cv, sub in zip(means, rps, cvs, subs):
+        surrs.loc[surrs[rp] < controls[0], sub] = np.nan
+        surrs.loc[surrs[cv] > controls[1], sub] = np.nan
+        surrs.loc[surrs[mean] < surrs["Selected MRL"], sub] = np.nan
+
+    """Split columns and aggregate"""
+    # Get sum columns
+    sums_prefixes = ["Mean", "Conc ", "Detection Count ", col]
+    sums = [x for x in df.columns if any(item in x for item in sums_prefixes)] + sams
+    # Loop through cols and perform groupbys
+    for i in sums:
+        surrs[i] = surrs.groupby(
+            [
+                "Surrogate_Group",
+            ]
+        )[
+            i
+        ].transform(lambda x: np.sum(x))
+    # Get average columns
+    avgs_prefixes = ["Detection Percentage "]
+    avgs = [x for x in df.columns if any(item in x for item in avgs_prefixes)]
+    # Loop through cols and perform groupbys
+    for i in avgs:
+        surrs[i] = surrs.groupby(
+            [
+                "Surrogate_Group",
+            ]
+        )[
+            i
+        ].transform(lambda x: np.mean(x))
+    # Get string sum columns
+    not_str_sums = sums + avgs
+    str_sums = [x for x in df.columns if not any(item in x for item in not_str_sums)]
+    # Loop through cols and perform groupbys
+    for i in str_sums:
+        if i == "Feature ID":
+            surrs[i] = surrs[i].astype(int)
+        surrs[i] = surrs[i].astype(str)
+        surrs[i] = surrs.groupby(
+            [
+                "Surrogate_Group",
+            ]
+        )[
+            i
+        ].transform(lambda x: ",".join(x))
+
+    """Recalculate RF"""
+    # Interate through cols to recalculate RFs
+    for conc, csbsm, rf in zip(concs, csbsms, rfs):
+        surrs[rf] = surrs[csbsm] / surrs[conc]
+
+    """Drop duplicates and recombine"""
+    # Remove duplicates across all columns
+    surrs = surrs.drop_duplicates()
+    # Get observations for original frame not in surrs
+    df = df.loc[~df["Surrogate_Group"].isin(sgs), :]
+    # Combine df and surrs
+    output = pd.concat([df, surrs])
+    # Return output
+    return output
 
 
 def validation_col_rename(

@@ -998,6 +998,13 @@ class NtaRun:
         Returns:
             None
         """
+        # Define controls
+        controls = [
+            float(self.parameters["min_replicate_hits"][1]),
+            float(self.parameters["max_replicate_cv"][1]),
+            float(self.parameters["min_replicate_hits_blanks"][1]),
+            float(self.parameters["mrl_std_multiplier"][1]),
+        ]
         # Call task_fun.qnta_preprocessing(), get sds
         do_qNTA = self.parameters["do_qnta"][1] == "yes"
         # Get run parameters
@@ -1014,6 +1021,7 @@ class NtaRun:
                     mass_accuracy_tr,
                     rt_accuracy_tr,
                     ppm,
+                    controls,
                     self.blank_headers,
                     self.sample_headers,
                 )
