@@ -82,15 +82,15 @@ class qNTAClass:
 
     def execute(self):
         """Perform data manipulation functions"""
-        logger.info("val data type = {}".format(type(self.validation_data)))
+        # logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_parameters()
-        logger.info("val data type = {}".format(type(self.validation_data)))
+        # logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_occurrences()
-        logger.info("val data type = {}".format(type(self.validation_data)))
+        # logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_RF_input()
-        logger.info("val data type = {}".format(type(self.validation_data)))
+        # logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_validation_data()
-        logger.info("val data type = {}".format(type(self.validation_data)))
+        # logger.info("val data type = {}".format(type(self.validation_data)))
         """Perform Calibration Curve Methods"""
         self.cal_curve_all_metrics()
         """Perform Bootstrap Methods"""
@@ -425,6 +425,7 @@ class qNTAClass:
         """
         # Use number of unique chemicals as sample size
         sample_size = len(np.unique(RF_array[0]))
+        logger.info("Length of RF_array chems at top of RFbnf = {}".format(len(np.unique(RF_array[0]))))
         # Set seed for bootstrap random resampling
         np.random.seed(seed)
         chem_num_sampled = np.empty(sample_size * reps, dtype=np.uint64)
@@ -450,6 +451,9 @@ class qNTAClass:
             (quant_lower_per_sample, quant_median_per_sample, quant_upper_per_sample)
         ).reshape((3, reps))
         # Get the medians for each quantile across resamples
+        logger.info("Length of quantile_per_sample[0] in RFbnf = {}".format(len(np.unique(quantile_per_sample[0]))))
+        logger.info("Length of quantile_per_sample[1] in RFbnf = {}".format(len(np.unique(quantile_per_sample[1]))))
+        logger.info("Length of quantile_per_sample[2] in RFbnf = {}".format(len(np.unique(quantile_per_sample[2]))))
         RF_quantiles = np.array(
             [np.median(quantile_per_sample[0]), np.median(quantile_per_sample[1]), np.median(quantile_per_sample[2])]
         )
@@ -502,6 +506,8 @@ class qNTAClass:
         # Get required attributes
         RF_estimate_out = occ.copy()
         RF_data = long_nz.copy()
+        logger.info("RF_estimate_out (occ) size = {}".format(len(RF_estimate_out)))
+        logger.info("RF_data (long_nz) size = {}".format(len(RF_data)))
         # Get bootstrap percentile estimates
         RF_array = self.make_RF_array(RF_data)
         RF_percs = self.RF_bootstrap_numba_full(RF_array, seed, reps, alpha)
