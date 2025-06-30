@@ -451,9 +451,9 @@ class qNTAClass:
             (quant_lower_per_sample, quant_median_per_sample, quant_upper_per_sample)
         ).reshape((3, reps))
         # Get the medians for each quantile across resamples
-        logger.info("Length of quantile_per_sample[0] in RFbnf = {}".format(len(np.unique(quantile_per_sample[0]))))
-        logger.info("Length of quantile_per_sample[1] in RFbnf = {}".format(len(np.unique(quantile_per_sample[1]))))
-        logger.info("Length of quantile_per_sample[2] in RFbnf = {}".format(len(np.unique(quantile_per_sample[2]))))
+        logger.info(f"quantile_per_sample[0] size = {quantile_per_sample[0].size}")
+        logger.info(f"quantile_per_sample[1] size = {quantile_per_sample[1].size}")
+        logger.info(f"quantile_per_sample[2] size = {quantile_per_sample[2].size}")
         RF_quantiles = np.array(
             [np.median(quantile_per_sample[0]), np.median(quantile_per_sample[1]), np.median(quantile_per_sample[2])]
         )
@@ -636,6 +636,7 @@ class qNTAClass:
         # If chemicals overlap between qNTA surrogates and validation data and LOO is True
         if len(LOO_IDs) > 0 and LOO:
             # Get LOO RF bootstrap percentiles and concentration estimates
+            logger.info(f"LOO_IDs: {LOO_IDs}")
             LOO_out = pd.concat(
                 [
                     self.RF_boot_estimate(
