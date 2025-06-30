@@ -425,7 +425,7 @@ class qNTAClass:
         """
         # Use number of unique chemicals as sample size
         sample_size = len(np.unique(RF_array[0]))
-        logger.info("Length of RF_array chems at top of RFbnf = {}".format(sample_size))
+        logger.info(f"Length of RF_array chems at top of RFbnf = {sample_size}")
         # Set seed for bootstrap random resampling
         np.random.seed(seed)
         chem_num_sampled = np.empty(sample_size * reps, dtype=np.uint64)
