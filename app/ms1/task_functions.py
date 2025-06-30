@@ -2349,6 +2349,11 @@ def surrogate_occ_match(
         inplace=True,
     )
     df1["Rounded_Mass"] = df1["Observed Mass"].round(0)
+    # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI+", "Esi+")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi+", "Esi+")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("ESI-", "Esi-")
+    df2["Ionization_Mode"] = df2["Ionization_Mode"].replace("esi-", "Esi-")
     # Merge df and tracers
     dfq = pd.merge(df2, df1, how="left", on=["Rounded_Mass", "Ionization_Mode"])
     # Calculate Rention Time Difference
