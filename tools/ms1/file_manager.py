@@ -8,7 +8,7 @@ import io
 
 
 # convert the user-supplied input file into dataframe
-def input_handler(file, index, na_value):
+def input_handler(file, na_value):
     # ext = os.path.splitext(file)[1]
     # print(ext)
     # Hard-coded to only accept .csv files
@@ -25,13 +25,13 @@ def input_handler(file, index, na_value):
         )
 
     # Call fix names
-    df = fix_names(df, index)
+    df = fix_names(df)
     # Return formatted df
     return df
 
 
 # convert the test file inputs into dataframe
-def test_file_input_handler(file, index, na_value):
+def test_file_input_handler(file, na_value):
     # ext = os.path.splitext(file)[1]
     # print(ext)
     # Hard-coded to only accept .csv files
@@ -45,13 +45,21 @@ def test_file_input_handler(file, index, na_value):
             file, comment="#", na_values=na_value, keep_default_na=True, na_filter=True, encoding="ISO-8859-1"
         )
     # Call fix names
-    df = fix_names(df, index)
+    df = fix_names(df)
     # Return formatted df
     return df
 
 
 def tracer_handler(file):
     return pd.read_csv(file, comment="#", na_values=0)
+
+
+def qNTA_handler(file):
+    # Read csv
+    df = pd.read_csv(file, comment="#", na_values=0)
+    # Call fix names
+    df = fix_names(df)
+    return df
 
 
 def sequence_handler(file):
@@ -66,7 +74,9 @@ def sequence_handler(file):
 
 
 # format the input dataframe columns
-def fix_names(df, index):  # parse the Dataframe into a numpy array
+def fix_names(
+    df,
+):  # parse the Dataframe into a numpy array
     # df.columns = df.columns.str.replace(': Log2','') #log specific code
     df.drop(df.columns[df.columns.str.startswith("Unnamed: ")], axis=1, inplace=True)
     df.columns = df.columns.str.replace(" ", "_")
@@ -76,6 +86,11 @@ def fix_names(df, index):  # parse the Dataframe into a numpy array
     # df['Compound'] = df['Compound'].str.replace("\ Esi.*$","")
     if "Ionization_mode" in df.columns:
         df.rename(columns={"Ionization_mode": "Ionization_Mode"}, inplace=True)
+        # Replace all caps or all lowercase ionization mode with "Esi" in order to match correctly to sample data dataframe
+        df["Ionization_Mode"] = df["Ionization_Mode"].replace("ESI+", "Esi+")
+        df["Ionization_Mode"] = df["Ionization_Mode"].replace("esi+", "Esi+")
+        df["Ionization_Mode"] = df["Ionization_Mode"].replace("ESI-", "Esi-")
+        df["Ionization_Mode"] = df["Ionization_Mode"].replace("esi-", "Esi-")
     # df.drop(['CompositeSpectrum','Compound_Name'],axis=1)
 
     # AC 12/12/2023 - I believe the below code is deprecated and is unintentionally renaming samples when there is a large shared string between multiple sample groups

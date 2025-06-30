@@ -303,11 +303,16 @@ def ms1_run_api(request):
                 try:
                     qnta_file = request.FILES["qnta_input"]
                     qnta_df = file_manager.tracer_handler(qnta_file)
-                    val_df = None
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["qnta_input"][1] = qnta_file.name
                 except Exception:
                     qnta_df = None
+                try:
+                    val_file = request.FILES["val_input"]
+                    val_df = file_manager.qNTA_handler(val_file)
+                    # save the name of the file to the inputParameters dictionary
+                    inputParameters["val_input"][1] = val_file.name
+                except Exception:
                     val_df = None
 
             # create a list of the input files
@@ -324,16 +329,16 @@ def ms1_run_api(request):
             # Iterate through inputs, format, and append to input_dfs
             # Use test_file_input_handler for test files
             if parameters["test_files"] == "yes":
-                for index, df in enumerate(inputs):
+                for df in inputs:
                     if df is not None:
-                        input_dfs.append(file_manager.test_file_input_handler(df, index, na_value))
+                        input_dfs.append(file_manager.test_file_input_handler(df, na_value))
                     else:
                         input_dfs.append(None)
             # Use input_handler for user-submitted files
             else:
-                for index, df in enumerate(inputs):
+                for df in inputs:
                     if df is not None:
-                        input_dfs.append(file_manager.input_handler(df, index, na_value))
+                        input_dfs.append(file_manager.input_handler(df, na_value))
                     else:
                         input_dfs.append(None)
 
