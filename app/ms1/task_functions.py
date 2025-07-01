@@ -2460,6 +2460,9 @@ def column_sort_SDS(df_in, passthru):
         },
         inplace=True,
     )
+    # Update Ionization Mode contents
+    df_reorg["Ionization Mode"] = df_reorg["Ionization Mode"].replace("Esi+", "ESI+")
+    df_reorg["Ionization Mode"] = df_reorg["Ionization Mode"].replace("Esi-", "ESI-")
     # Return re-organized dataframe
     return df_reorg
 
