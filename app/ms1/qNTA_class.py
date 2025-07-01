@@ -279,7 +279,7 @@ class qNTAClass:
                 pass
             else:
                 # if val doesn't contain 'Feature ID', merge column from
-                val = pd.merge(val, surr[["Feature ID", "Chemical Name"]], how="left", on="Chemical Name")
+                val = pd.merge(val, surr[["Feature ID", "DTXSID"]], how="left", on="DTXSID")
                 self.validation_data = val.copy()
         # If val has not been submitted
         else:
