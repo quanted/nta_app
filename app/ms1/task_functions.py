@@ -9,6 +9,7 @@ import logging
 from openpyxl.utils import get_column_letter
 import psutil
 import io
+import functools as ft
 
 
 logger = logging.getLogger("nta_app.ms1")
@@ -2571,7 +2572,7 @@ def surrogate_grouping(
     csbsms = [x for x in df.columns if x.startswith(col)]
     concs = [x for x in df.columns if x.startswith("Conc ") and not any(item in x for item in bacs)]
     rfs = [x for x in df.columns if x.startswith("RF ") and not any(item in x for item in bacs)]
-    subs = [x for x in df.columns if x.startswith(col)]
+    subs = [x for x in df.columns if x.startswith(col) and any(item in x for item in means)]
     samples = [x for item in sample_headers for x in item]
     sams = [x for x in df.columns if any(x == item for item in samples)]
 
@@ -2595,54 +2596,33 @@ def surrogate_grouping(
     sums_prefixes = ["Mean", "Conc ", "Detection Count ", col]
     sums = [x for x in df.columns if any(item in x for item in sums_prefixes)] + sams
     # Loop through cols and perform groupbys
-    for i in sums:
-        surrs[i] = surrs.groupby(
-            [
-                "Surrogate_Group",
-            ]
-        )[
-            i
-        ].transform(lambda x: np.sum(x))
+    surrs_1 = surrs.groupby("Surrogate_Group").agg({i: "sum" for i in sums}).reset_index()
     # Get average columns
     avgs_prefixes = ["Detection Percentage "]
     avgs = [x for x in df.columns if any(item in x for item in avgs_prefixes)]
     # Loop through cols and perform groupbys
-    for i in avgs:
-        surrs[i] = surrs.groupby(
-            [
-                "Surrogate_Group",
-            ]
-        )[
-            i
-        ].transform(lambda x: np.mean(x))
-    # Get string sum columns
-    not_str_sums = sums + avgs
-    str_sums = [x for x in df.columns if not any(item in x for item in not_str_sums)]
+    surrs_2 = surrs.groupby("Surrogate_Group").agg({i: "mean" for i in avgs}).reset_index()
+    # Get list columns
+    not_lis = sums + avgs + ["Surrogate_Group"]
+    lis = [x for x in df.columns if not any(item in x for item in not_lis)]
     # Loop through cols and perform groupbys
-    for i in str_sums:
-        if i == "Feature ID":
-            surrs[i] = surrs[i].astype(int)
-        surrs[i] = surrs[i].astype(str)
-        surrs[i] = surrs.groupby(
-            [
-                "Surrogate_Group",
-            ]
-        )[
-            i
-        ].transform(lambda x: ",".join(x))
+    surrs["Feature ID"] = surrs["Feature ID"].astype(int)
+    surrs_3 = surrs.groupby("Surrogate_Group").agg({i: list for i in lis}).reset_index()
+    # Concat back into single dataframe
+    output = ft.reduce(
+        lambda left, right: pd.merge(left, right, how="left", on="Surrogate_Group"), [surrs_1, surrs_2, surrs_3]
+    )
 
     """Recalculate RF"""
     # Interate through cols to recalculate RFs
     for conc, csbsm, rf in zip(concs, csbsms, rfs):
-        surrs[rf] = surrs[csbsm] / surrs[conc]
+        output[rf] = output[csbsm] / output[conc]
 
-    """Drop duplicates and recombine"""
-    # Remove duplicates across all columns
-    surrs = surrs.drop_duplicates()
+    """Recombine with original frame"""
     # Get observations for original frame not in surrs
     df = df.loc[~df["Surrogate_Group"].isin(sgs), :]
     # Combine df and surrs
-    output = pd.concat([df, surrs])
+    output = pd.concat([df, output])
     # Return output
     return output
 
