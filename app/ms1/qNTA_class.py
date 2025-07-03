@@ -178,15 +178,22 @@ class qNTAClass:
         # Copy input
         occ = self.occurrence_data
         val = self.validation_data
+        surr = self.surrogate_cal_data.copy()
         if occ is not None:
             # Get cols (only take columns also in val; e.g., no Pool)
             front = [col for col in occ.columns if any(x in col for x in ["Feature", "Chemical", "Retention"])]
             if val is not None:
                 back = [
-                    col for col in occ.columns if col.startswith("BlankSub Mean") and any(x in col for x in val.columns)
+                    col
+                    for col in occ.columns
+                    if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x in col for x in val.columns))
                 ]
             else:
-                back = [col for col in occ.columns if col.startswith("BlankSub Mean")]
+                back = [
+                    col
+                    for col in occ.columns
+                    if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x == col for x in surr.columns))
+                ]
             # Pare occ down to front + back
             self.occurrence_data = occ[front + back]
         else:
@@ -502,8 +509,8 @@ class qNTAClass:
         # Get required attributes
         RF_estimate_out = occ.copy()
         RF_data = long_nz.copy()
-        logger.info("RF_estimate_out (occ) size = {}".format(len(RF_estimate_out)))
-        logger.info("RF_data (long_nz) size = {}".format(len(RF_data)))
+        # logger.info("RF_estimate_out (occ) size = {}".format(len(RF_estimate_out)))
+        # logger.info("RF_data (long_nz) size = {}".format(len(RF_data)))
         # Get bootstrap percentile estimates
         RF_array = self.make_RF_array(RF_data)
         RF_percs = self.RF_bootstrap_numba_full(RF_array, seed, reps, alpha)
@@ -694,8 +701,8 @@ class qNTAClass:
                     }
                 )
                 # Rename columns prior to merge so that columns match
-                if internal:
-                    conc_cols = [c[5:] for c in conc_cols]
+                # if internal:
+                #     conc_cols = [c[5:] for c in conc_cols]
                 # Add val data back on to LOO_out
                 cols = ["Feature ID"] + conc_cols
                 LOO_out = pd.merge(LOO_out, val[cols], on="Feature ID", how="left")
