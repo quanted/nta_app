@@ -2216,7 +2216,7 @@ def qnta_preprocessing(
     sample_groups = blank_headers + sample_headers
     sample_groups = [item[0][:-1] for item in sample_groups]
 
-    """GET STD, CV, Det counts, etc into final surrogate outputs"""
+    """Get STD, CV, Det counts, etc into final surrogate outputs"""
 
     # Get columns associated with the calibrations
     li = list(df2.columns[6:])
@@ -2239,6 +2239,9 @@ def qnta_preprocessing(
         df2.rename(columns={col: new_col}, inplace=True)
     # Perform surrogate-occurrence matching
     dfq = surrogate_occ_match(df1, df2, Mass_Difference, Retention_Difference, ppm)
+
+    """Blank Subtraction and optional Control Subtraction"""
+
     # Perform Blank Subtraction on Means
     dfq = Blank_Subtract_Mean(dfq)
     # Check for matrix/control column, if present, subtract from cals
@@ -2253,6 +2256,9 @@ def qnta_preprocessing(
             # Rename column (preserves order)
             new_col = "ControlSub " + conc
             dfq = dfq.rename(columns={conc: new_col})
+
+    """Calculate RFs"""
+
     # Iterate through columns in cals and dfq to locate BS/CSBS Means, Concs, and RFs
     bsmeans = [
         col
@@ -2264,6 +2270,9 @@ def qnta_preprocessing(
     # Loop through ID'ed columns to calculate response factors
     for bsmean, conc, rf in zip(bsmeans, concs, rfs):
         dfq[rf] = dfq[bsmean] / dfq[conc]
+
+    """Column organization, append surrogate info to dfc"""
+
     # Find calibrant columns needed in the surrogate output
     cal_cols = [col for col in dfq.columns if any(col.startswith(x) for x in cals)]
     # Ues sample_groups and cal_cols to identify columns to drop
@@ -2272,7 +2281,7 @@ def qnta_preprocessing(
     occ_drop = [col for col in cals if not any(x in col for x in blanks)]
     occ_cols = [
         "Feature ID",
-        "Chemical_Name",
+        "Chemical Name",
         "Retention_Time",
     ] + [col for col in dfq.columns if (col.startswith("Mean ") and not any(col == x for x in occ_drop))]
     # Drop unnecessary columns
@@ -2293,18 +2302,10 @@ def qnta_preprocessing(
         },
         inplace=True,
     )
-    # Drop columns
-    dfq.drop(["Rounded_Mass", "Matches"], axis=1, inplace=True)
-    # Sort dfq columns for Surrugate Detection Statistics file
-    dfq = column_sort_SDS(dfq, passthru)
-    # Check dfq for matching errors
-    SDS_duplicate_error_check(dfq)
-    # Check for surrogate groups
-    if any(x > 1 for x in dfq["Surrogate_Group"].value_counts()):
-        # If present, perform aggregations
-        dfq = surrogate_grouping(dfq, prefix, controls, sample_headers)
     # np.where to replace nans with 0s
     dfc["Surrogate Chemical Match?"] = dfc["Surrogate Chemical Match?"].fillna(0)
+    # Drop columns
+    dfq.drop(["Rounded_Mass", "Matches"], axis=1, inplace=True)
     # Preserve Chemical Name if present, but don't kill run if not
     occ_cols = [col for col in occ_cols if col in dfc.columns]
     # Create qNTA occurrence input file
@@ -2312,6 +2313,44 @@ def qnta_preprocessing(
     # Perform Blank Subtraction on Means
     occ_df = Blank_Subtract_Mean(occ_df)
     occ_df.drop([col for col in occ_df.columns if col.startswith("Mean ")], axis=1, inplace=True)
+    # Add bsmeans onto occ_df
+    int_val_columns = ["Feature ID"] + bsmeans
+    occ_df = pd.merge(occ_df, dfq[int_val_columns], how="left", on="Feature ID")
+
+    """Column sort, check for duplicate errors, do optional surrogate grouping"""
+
+    # Sort dfq columns for Surrugate Detection Statistics file
+    dfq = column_sort_SDS(dfq, passthru)
+    # Check dfq for matching errors
+    SDS_duplicate_error_check(dfq)
+    # Check for surrogate groups
+    if any(x > 1 for x in dfq["Surrogate_Group"].value_counts()):
+        # If present, perform aggregations
+        dfq, surr_group_IDs = surrogate_grouping(dfq, prefix, controls, sample_headers)
+        # Get columns, sorted by aggregation type
+        occ_df["Feature ID"] = occ_df["Feature ID"].astype(int)
+        sums = [x for x in occ_df.columns if "Mean" in x]
+        not_lis = sums + ["Surrogate_Group"]
+        lis = [x for x in occ_df.columns if not any(item in x for item in not_lis)]
+        # Get Feat IDs in occ for grouping
+        occ_to_group = pd.merge(
+            occ_df.loc[occ_df["Feature ID"].isin(surr_group_IDs["Feature ID"]), :],
+            surr_group_IDs,
+            how="left",
+            on="Feature ID",
+        )
+        occ_singles = occ_df.loc[~occ_df["Feature ID"].isin(surr_group_IDs["Feature ID"]), :]
+        # Aggregate and join
+        occ_sums = occ_to_group.groupby("Surrogate_Group").agg({i: "sum" for i in sums}).reset_index()
+        occ_lis = occ_to_group.groupby("Surrogate_Group").agg({i: list for i in lis}).reset_index()
+        occ_grouped = ft.reduce(
+            lambda left, right: pd.merge(left, right, how="left", on="Surrogate_Group"), [occ_sums, occ_lis]
+        )
+        # Drop columns
+        occ_grouped.drop(["Surrogate_Group"], axis=1, inplace=True)
+        # Recombine
+        occ_df = pd.concat([occ_singles, occ_grouped])
+
     # Returns 1) surrogate data (dfq), 2) combined dataframe with 'Surrogate Chemical Match?' appended (dfc),
     # and 3) occurrence dataframe of BlankSub Means (occ_df)
     return dfq, dfc, occ_df
@@ -2583,6 +2622,8 @@ def surrogate_grouping(
     sgs = sg_vc[sg_vc > 1].index
     # Get assosciated surrogate observations
     surrs = df.loc[df["Surrogate_Group"].isin(sgs), :]
+    # Pack Feature_IDs and Surrogate_Group info for return
+    surr_group_IDs = surrs[["Feature ID", "Surrogate_Group"]].copy()
 
     """Do occurrence masking"""
     # Do occurrence removal
@@ -2624,7 +2665,7 @@ def surrogate_grouping(
     # Combine df and surrs
     output = pd.concat([df, output])
     # Return output
-    return output
+    return output, surr_group_IDs
 
 
 def validation_col_rename(
