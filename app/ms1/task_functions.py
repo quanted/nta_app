@@ -2192,7 +2192,7 @@ def qnta_preprocessing(
                                current input to qNTA Class object)
         dfc: Pandas dataframe (MS1 workflow dataframe, with 'Surrogate Chemical Match?' column appended)
         occ_df: Pandas dataframe (occurrence data of surrogates from qnta_df identified
-                                  in df_in; BlankSub or ControlSub BlankSub Means)
+                                  in df_in; BlankSub or ContSub BlankSub Means)
     """
     # Copy input dataframe
     df1 = df_in.copy()
@@ -2230,7 +2230,7 @@ def qnta_preprocessing(
         "Conc ",
         "BlankSub Mean ",
         "RF ",
-        "ControlSub BlankSub Mean ",
+        "ContSub BlankSub Mean ",
     ]
     cals = li + [(prefix + item) for item in li for prefix in prefixes]
     # Renaming columns in df2
@@ -2246,7 +2246,7 @@ def qnta_preprocessing(
     dfq = Blank_Subtract_Mean(dfq)
     # Check for matrix/control column, if present, subtract from cals
     if any(col for col in li if any(x in col for x in conts)):
-        prefix = "ControlSub BlankSub Mean "
+        prefix = "ContSub BlankSub Mean "
         cont_col = ["BlankSub Mean " + col for col in li if any(x in col for x in conts)]
         cal_concs = ["BlankSub Mean " + col for col in li if not any(col in x for x in conts)]
         dfq[cont_col[0]] = dfq[cont_col[0]].fillna(0)
@@ -2254,16 +2254,17 @@ def qnta_preprocessing(
             # Do subtraction, clip values at 0, replace 0s with NaN
             dfq[conc] = dfq[conc].sub(dfq[cont_col[0]], axis=0).clip(lower=0)
             # Rename column (preserves order)
-            new_col = "ControlSub " + conc
+            new_col = "ContSub " + conc
             dfq = dfq.rename(columns={conc: new_col})
+        # Drop conts columns from dfq
+        to_drop = [col for col in dfq.columns if any(x in col for x in conts)]
+        dfq.drop(to_drop, axis=1, inplace=True)
 
     """Calculate RFs"""
 
     # Iterate through columns in cals and dfq to locate BS/CSBS Means, Concs, and RFs
     bsmeans = [
-        col
-        for col in cals
-        if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(col == x for x in dfq.columns))
+        col for col in cals if (col.startswith(("BlankSub Mean ", "ContSub ")) and any(col == x for x in dfq.columns))
     ]
     concs = [col for col in cals if (col.startswith("Conc ") and not any(x in col for x in blanks))]
     rfs = [col for col in cals if (col.startswith("RF ") and not any(x in col for x in blanks))]
@@ -2558,16 +2559,6 @@ def SDS_duplicate_error_check(df_in):
         error_message = feat_error + chem_error + error_suffix
         raise ValueError(error_message)
 
-    try:
-        error_count == 0
-    except Exception as e:
-        # Define error suffix
-        error_suffix = "This ambiguity results in downstream errors in the qNTA workflow and must be resolved to generate results. Please check your mass/retention time accuracy parameters and/or review your peak integration and try again."
-        # Add error strings together
-        error_message = feat_error + chem_error + error_suffix
-        print(error_message)
-        print(e)
-
 
 def surrogate_grouping(
     df_in,
@@ -2577,14 +2568,14 @@ def surrogate_grouping(
 ):
     """
     Aggregate Feature IDs, Retention Times, Chemical Names (string additions),
-    Concs (averages), and ControlSub/BlankSub Means (sums). Recalculate RFs.
+    Concs (averages), and ContSub/BlankSub Means (sums). Recalculate RFs.
 
     Input: df_in : pandas Dataframe
         Contains columns - Feature ID, Cal Level, Chemical Name, Ionization Mode,
         Isomer Groups, Retention Time, Conc, RF, Control Sub/Blank Sub Mean. Data
         is grouped by Isomer Groups and Cal Level.
         col : string
-            "ControlSub BlankSub Mean" or "BlankSub Mean"
+            "ContSub BlankSub Mean" or "BlankSub Mean"
         controls : list of ints
     Returns
         df : pandas Dataframe

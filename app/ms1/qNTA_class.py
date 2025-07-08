@@ -186,13 +186,13 @@ class qNTAClass:
                 back = [
                     col
                     for col in occ.columns
-                    if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x in col for x in val.columns))
+                    if (col.startswith(("BlankSub Mean ", "ContSub ")) and any(x in col for x in val.columns))
                 ]
             else:
                 back = [
                     col
                     for col in occ.columns
-                    if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x == col for x in surr.columns))
+                    if (col.startswith(("BlankSub Mean ", "ContSub ")) and any(x == col for x in surr.columns))
                 ]
             # Pare occ down to front + back
             self.occurrence_data = occ[front + back]
@@ -224,9 +224,9 @@ class qNTAClass:
         surr = self.surrogate_cal_data.copy()
         # Define controls
         controls = ["control", "Control", "CONTROL"]
-        # Check for Control - if present we want ControlSub, else we want BlankSub
+        # Check for Control - if present we want ContSub, else we want BlankSub
         if any(item for item in surr.columns if any(x in item for x in controls)):
-            col = "ControlSub BlankSub Mean"
+            col = "ContSub BlankSub Mean"
         else:
             col = "BlankSub Mean"
         # Get cols
