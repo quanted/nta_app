@@ -655,7 +655,7 @@ class qNTAClass:
         LOO_IDs = pd.Series(val["Feature ID"].values, index=val["Chemical Name"]).to_dict()
         logger.info("length LOO_IDs = {}".format(len(LOO_IDs)))
         # LOO_chems = {value: key for key, value in LOO_IDs.items()}
-        LOO_IDs = [int(ID) for chem, ID in LOO_IDs.items() if not pd.isna(ID) and any(x in chem for x in chems)]
+        LOO_IDs = [str(ID) for chem, ID in LOO_IDs.items() if not pd.isna(ID) and any(x in chem for x in chems)]
         # If chemicals overlap between qNTA surrogates and validation data and LOO is True
         if len(LOO_IDs) > 0 and LOO:
             # Get LOO RF bootstrap percentiles and concentration estimates
