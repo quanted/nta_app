@@ -195,7 +195,11 @@ class qNTAClass:
                     if (col.startswith(("BlankSub Mean ", "ContSub ")) and any(x == col for x in surr.columns))
                 ]
             # Pare occ down to front + back
-            self.occurrence_data = occ[front + back]
+            occ = occ[front + back]
+            # Coerce "Feature ID" to str
+            occ["Feature ID"] = occ["Feature ID"].astype(str)
+            # Pare occ down to front + back
+            self.occurrence_data = occ
         else:
             # Copy input
             surr = self.surrogate_cal_data.copy()
@@ -222,22 +226,27 @@ class qNTAClass:
         """
         # Copy input
         surr = self.surrogate_cal_data.copy()
+        # Coerce "Feature ID" to str
+        surr["Feature ID"] = surr["Feature ID"].astype(str)
         # Define controls
-        controls = ["control", "Control", "CONTROL"]
+        controls = ["Cont"]
         # Check for Control - if present we want ContSub, else we want BlankSub
         if any(item for item in surr.columns if any(x in item for x in controls)):
             col = "ContSub BlankSub Mean"
         else:
             col = "BlankSub Mean"
         # Get cols
-        prefixes = ["Mean", "STD", "CV", "Detection Count", "Detection Percentage", "Conc", "RF"] + [col]
-        cols = ["Feature ID", "Chemical Name", "Retention Time", "Ionization Mode"] + [
+        prefixes = ["Conc", "RF"] + [col]
+        cols = ["Feature ID", "Chemical Name", "Surrogate_Group", "Retention Time", "Ionization Mode"] + [
             col for col in surr.columns if any(col.startswith(x) for x in prefixes)
         ]
         # Pivot surrogate_cal_data wide to long
-        long = pd.wide_to_long(surr[cols], stubnames=prefixes, i="Feature ID", j="Cal Level", sep=" ", suffix="\\w+")
+        long = pd.wide_to_long(
+            surr[cols], stubnames=prefixes, i="Feature ID", j="Cal Level", sep=" ", suffix="(\d+|\w+)"
+        ).reset_index()
         # Change Conc column to numeric
         long["Conc"] = pd.to_numeric(long["Conc"])
+        long["RF"] = pd.to_numeric(long["RF"])
         # Keep only BlankSub Mean abundances > 0 to avoid problems with log-10 transform
         # we also don't want to have RFs of 0 in the surrogate set
         long_nz = long.loc[long[col] > 0, :]
@@ -331,7 +340,7 @@ class qNTAClass:
         # Copy df
         surr = self.surrogate_cal_data_long_nonzero.copy()
         # Subset by chem
-        cal_data = surr.loc[surr["Chemical Name"] == chem]
+        cal_data = surr.loc[surr["Surrogate_Group"] == chem]
         # Get Ionization Mode value
         im = cal_data["Ionization Mode"].values[0]
         # Check if there are more than 3 points
@@ -374,7 +383,7 @@ class qNTAClass:
         cc_tuples = [i for i in cc_tuples if "Fewer than 3 calibration points" not in i]
         # Generate and save dataframe
         self.cc_metrics = pd.DataFrame(
-            cc_tuples, columns=["Chemical Name", "Ionization Mode", "Slope", "Intercept", "R-squared"]
+            cc_tuples, columns=["Surrogate_Group", "Ionization Mode", "Slope", "Intercept", "R-squared"]
         )
 
     """RESPONSE FACTOR BOOTSTRAP METHODS"""
@@ -509,8 +518,10 @@ class qNTAClass:
         # Get required attributes
         RF_estimate_out = occ.copy()
         RF_data = long_nz.copy()
-        # logger.info("RF_estimate_out (occ) size = {}".format(len(RF_estimate_out)))
-        # logger.info("RF_data (long_nz) size = {}".format(len(RF_data)))
+        if any(col.startswith("ContSub") for col in occ.columns):
+            prefix = "ContSub BlankSub Mean"
+        else:
+            prefix = "BlankSub Mean"
         # Get bootstrap percentile estimates
         RF_array = self.make_RF_array(RF_data)
         RF_percs = self.RF_bootstrap_numba_full(RF_array, seed, reps, alpha)
@@ -519,12 +530,15 @@ class qNTAClass:
             RF_estimate_out = pd.melt(
                 RF_estimate_out,
                 id_vars=["Feature ID"],
-                value_vars=RF_estimate_out.columns[RF_estimate_out.columns.str.startswith("BlankSub Mean ")].tolist(),
+                value_vars=RF_estimate_out.columns[RF_estimate_out.columns.str.startswith(prefix)].tolist(),
                 var_name="Sample",
-                value_name="BlankSub Mean",
+                value_name=prefix,
             )
             # Remove "BlankSub Mean " from sample names
-            RF_estimate_out["Sample"] = [i[14:] for i in RF_estimate_out["Sample"]]
+            if prefix == "BlankSub Mean":
+                RF_estimate_out["Sample"] = [i[14:] for i in RF_estimate_out["Sample"]]
+            else:
+                RF_estimate_out["Sample"] = [i[22:] for i in RF_estimate_out["Sample"]]
             # Divide BlankSub Mean abundance by RF percentiles to get concentration estimates
             # Account for data shape of RF_estimate_out (if minimum and maximum of percentiles estimates across repetitions are present)
             if rep_range:
@@ -614,6 +628,7 @@ class qNTAClass:
             DataFrame containing qNTA concentration estimates with calculated performance metrics (AQ, AAQ, CLFR) based on the validation data (internal or external)
         """
         # Get required attributes
+        surr = self.surrogate_cal_data.copy()
         val = self.validation_data
         long_nz = self.surrogate_cal_data_long_nonzero.reset_index()
         chems = self.surrogate_cal_data_long_nonzero_chems
@@ -627,6 +642,9 @@ class qNTAClass:
             "m/z",
         ]
         # Get concentration columns
+        if self.parameters["internal"]:
+            # Set conc_cols
+            conc_cols = surr.columns[surr.columns.str.startswith("Conc ")].tolist()
         conc_cols = [col for col in val.select_dtypes(include=np.number).columns if not any(x in col for x in prefixes)]
         # Calculate global bootstrap RF percentiles and use to make concentration estimates
         # NOTE: For internal, occurrence_data must contain columns with names that correspond to conc_cols
