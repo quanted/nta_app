@@ -253,7 +253,7 @@ class qNTAClass:
         # Add log-10 transformed columns for BlankSub Mean Abundance and Concentration
         long_nz = long_nz.assign(LogAbun=np.log10(long_nz[col]), LogConc=np.log10(long_nz["Conc"]))
         # Store unique chemical names in class variable
-        self.surrogate_cal_data_long_nonzero_chems = np.unique(long_nz["Chemical Name"])
+        self.surrogate_cal_data_long_nonzero_chems = np.unique(long_nz["Surrogate_Group"])
         # Store df in class variable
         self.surrogate_cal_data_long_nonzero = long_nz
 
@@ -307,7 +307,7 @@ class qNTAClass:
             # Get Conc col root names, avoiding any blanks or controls
             cols = [col for col in surr.columns if "Conc " in col if not any(x in col for x in li)]
             # Set Chemical Name as ID column for future joins
-            val = surr.loc[:, ["Chemical Name", "Feature ID"] + cols]
+            val = surr.loc[:, ["Surrogate_Group", "Feature ID"] + cols]
             # Rename to remove "Conc "
             val = val.rename(columns={col: col[5:] for col in val.columns if "Conc " in col})
             # Use copy to avoid overwriting original data
@@ -652,7 +652,7 @@ class qNTAClass:
         # NOTE: For internal, occurrence_data must contain columns with names that correspond to conc_cols
         global_out = self.RF_estimate_out
         # List of chemicals that overlap between qNTA surrogate set and validation data
-        LOO_IDs = pd.Series(val["Feature ID"].values, index=val["Chemical Name"]).to_dict()
+        LOO_IDs = pd.Series(val["Feature ID"].values, index=val["Surrogate_Group"]).to_dict()
         logger.info("length LOO_IDs = {}".format(len(LOO_IDs)))
         # LOO_chems = {value: key for key, value in LOO_IDs.items()}
         LOO_IDs = [str(ID) for chem, ID in LOO_IDs.items() if not pd.isna(ID) and any(x in chem for x in chems)]
@@ -686,7 +686,7 @@ class qNTAClass:
                     columns={
                         c: c + "_LOO"
                         for c in LOO_out.columns
-                        if not any(x in c for x in ["Feature", "Chemical", "Sample"])
+                        if not any(x in c for x in ["Feature", "Chemical", "Sample", "Surrogate"])
                     }
                 )
                 # Ensure that correct ConcTargeted and ConcLCL, Est, UCL are compared
@@ -717,7 +717,7 @@ class qNTAClass:
                     columns={
                         c: c + "_LOO"
                         for c in LOO_out.columns
-                        if not any(x in c for x in ["Feature", "Chemical", "Sample"])
+                        if not any(x in c for x in ["Feature", "Chemical", "Sample", "Surrogate"])
                     }
                 )
                 # Rename columns prior to merge so that columns match
