@@ -227,7 +227,10 @@ class qNTAClass:
         # Copy input
         surr = self.surrogate_cal_data.copy()
         # Coerce "Feature ID" to str
+        surr["Feature ID"] = surr["Feature ID"].astype(int)
         surr["Feature ID"] = surr["Feature ID"].astype(str)
+        # Store surr
+        self.surrogate_cal_data = surr.copy()
         # Define controls
         controls = ["Cont"]
         # Check for Control - if present we want ContSub, else we want BlankSub
@@ -289,16 +292,22 @@ class qNTAClass:
                 # If not equal, create dict to swap val_cols with occ_cols
                 col_swap = {key: val for key in val_cols for val in occ_cols if key in val}
                 val = val.rename(columns=col_swap)
-            # Check for 'Feature ID' in val
-            if "Feature ID" in val.columns:
-                # If val contains 'Feature ID' do nothing
-                pass
-            else:
+            # Check for 'Feature ID' and 'Surrogate_Group' in val
+            if "Feature ID" not in val.columns:
+                cols = [
+                    "Feature ID",
+                    "DTXSID",
+                ]
+                if "Surrogate_Group" not in val.columns:
+                    cols = cols + ["Surrogate_Group"]
                 # if val doesn't contain 'Feature ID', merge column from
-                val = pd.merge(val, surr[["Feature ID", "DTXSID"]], how="left", on="DTXSID")
+                val = pd.merge(val, surr[cols], how="left", on="DTXSID")
                 # Coerce "Feature ID" to str
                 val["Feature ID"] = val["Feature ID"].astype(str)
                 self.validation_data = val.copy()
+            else:
+                # If val contains 'Feature ID' do nothing
+                pass
         # If val has not been submitted
         else:
             blanks = ["Blank", "blank", "BLANK", "MB", "Mb", "mb", "mB"]
@@ -409,8 +418,8 @@ class qNTAClass:
             RF_data.copy(),
             pd.DataFrame(
                 {
-                    "Chemical Name": pd.unique(RF_data["Chemical Name"]),
-                    "row_number": np.arange(0, len(pd.unique(RF_data["Chemical Name"]))),
+                    "Chemical Name": pd.unique(RF_data["Surrogate_Group"]),
+                    "row_number": np.arange(0, len(pd.unique(RF_data["Surrogate_Group"]))),
                 }
             ),
         )
@@ -655,7 +664,7 @@ class qNTAClass:
         LOO_IDs = pd.Series(val["Feature ID"].values, index=val["Surrogate_Group"]).to_dict()
         logger.info("length LOO_IDs = {}".format(len(LOO_IDs)))
         # LOO_chems = {value: key for key, value in LOO_IDs.items()}
-        LOO_IDs = [str(ID) for chem, ID in LOO_IDs.items() if not pd.isna(ID) and any(x in chem for x in chems)]
+        LOO_IDs = [str(ID) for chem, ID in LOO_IDs.items() if ID != "nan" and any(x in chem for x in chems)]
         # If chemicals overlap between qNTA surrogates and validation data and LOO is True
         if len(LOO_IDs) > 0 and LOO:
             # Get LOO RF bootstrap percentiles and concentration estimates
