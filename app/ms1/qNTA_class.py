@@ -656,7 +656,7 @@ class qNTAClass:
         # Get concentration columns
         if self.parameters["internal"]:
             # Set conc_cols
-            conc_cols = surr.columns[surr.columns.str.startswith("Conc ")].tolist()
+            conc_cols = [col[5:] for col in surr.columns if col.startswith("Conc ")]
         conc_cols = [col for col in val.select_dtypes(include=np.number).columns if not any(x in col for x in prefixes)]
         # Calculate global bootstrap RF percentiles and use to make concentration estimates
         # NOTE: For internal, occurrence_data must contain columns with names that correspond to conc_cols
