@@ -554,13 +554,13 @@ class qNTAClass:
             # Divide BlankSub Mean abundance by RF percentiles to get concentration estimates
             # Account for data shape of RF_estimate_out (if minimum and maximum of percentiles estimates across repetitions are present)
             if rep_range:
-                RF_estimate_out["ConcLCL"] = RF_estimate_out["BlankSub Mean"] / RF_percs[1][2]
-                RF_estimate_out["ConcEst"] = RF_estimate_out["BlankSub Mean"] / RF_percs[1][1]
-                RF_estimate_out["ConcUCL"] = RF_estimate_out["BlankSub Mean"] / RF_percs[1][0]
+                RF_estimate_out["ConcLCL"] = RF_estimate_out[prefix] / RF_percs[1][2]
+                RF_estimate_out["ConcEst"] = RF_estimate_out[prefix] / RF_percs[1][1]
+                RF_estimate_out["ConcUCL"] = RF_estimate_out[prefix] / RF_percs[1][0]
             else:
-                RF_estimate_out["ConcLCL"] = RF_estimate_out["BlankSub Mean"] / RF_percs[2]
-                RF_estimate_out["ConcEst"] = RF_estimate_out["BlankSub Mean"] / RF_percs[1]
-                RF_estimate_out["ConcUCL"] = RF_estimate_out["BlankSub Mean"] / RF_percs[0]
+                RF_estimate_out["ConcLCL"] = RF_estimate_out[prefix] / RF_percs[2]
+                RF_estimate_out["ConcEst"] = RF_estimate_out[prefix] / RF_percs[1]
+                RF_estimate_out["ConcUCL"] = RF_estimate_out[prefix] / RF_percs[0]
         else:
             abun_cols = RF_estimate_out.columns[RF_estimate_out.columns.str.startswith("BlankSub Mean ")].tolist()
             # Remove "BlankSub Mean" from sample names used for making concentration column names
