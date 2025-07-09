@@ -415,15 +415,15 @@ class qNTAClass:
         numpy array where [0] is a numeric chemical identifier and [1] is an RF value from a surrogate chemical
 
         """
-        RF_data_row_num = pd.merge(
-            RF_data.copy(),
-            pd.DataFrame(
-                {
-                    "Chemical Name": pd.unique(RF_data["Surrogate_Group"]),
-                    "row_number": np.arange(0, len(pd.unique(RF_data["Surrogate_Group"]))),
-                }
-            ),
-        )
+        # Define surrogate array
+        surr_array = pd.unique(RF_data["Surrogate_Group"])
+        # Assign row numbers
+        row_num = np.arange(0, len(pd.unique(RF_data["Surrogate_Group"])))
+        # Combine unique surrogates and row numbers into DataFrame
+        array_df = pd.DataFrame({"Surrogate_Group": surr_array, "row_number": row_num})
+        # Merge with RF_data
+        RF_data_row_num = pd.merge(RF_data.copy(), array_df)
+        # Create array
         RF_array = np.array([RF_data_row_num["row_number"], RF_data_row_num["RF"]])
         return RF_array
 
