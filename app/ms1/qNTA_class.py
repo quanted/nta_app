@@ -684,12 +684,14 @@ class qNTAClass:
                     for i in LOO_IDs
                 ]
             )
+            logger.info("length LOO_out = {}".format(len(LOO_out)))
             if long_form:
                 # Change validation_data to long form
                 # This is in order of sample and not chemical
                 val = pd.melt(
                     val, id_vars="Feature ID", value_vars=conc_cols, var_name="Sample", value_name="ConcTargeted"
                 )
+                logger.info("length val (melt) = {}".format(len(val)))
                 # Add _LOO suffix to column names (to distinguish LOO columns when
                 # adding to global estimates DataFrame)
                 LOO_out = LOO_out.rename(
@@ -701,6 +703,7 @@ class qNTAClass:
                 )
                 # Ensure that correct ConcTargeted and ConcLCL, Est, UCL are compared
                 LOO_out = pd.merge(LOO_out, val, on=["Feature ID", "Sample"], how="left")
+                logger.info("length LOO_out and val merge = {}".format(len(LOO_out)))
                 # Calculate qNTA performance metrics for accuracy and uncertainty
                 LOO_out["AQ_LOO"] = LOO_out["ConcEst_LOO"] / LOO_out["ConcTargeted"]
                 LOO_out["AAQ_LOO"] = 10 ** np.abs(np.log10(LOO_out["AQ_LOO"]))
@@ -708,15 +711,18 @@ class qNTAClass:
                 LOO_out = LOO_out.drop(columns=["ConcTargeted"])  # ConcTargeted will be merged again later
                 # Left outer join keeps a row for all chemicals in validation data, with np.NaN (pd.NA?) for qNTA columns if not in global_out
                 validation_out = pd.merge(global_out, val, on=["Feature ID", "Sample"], how="left")
+                logger.info("length validation_out (global_out and val merge) = {}".format(len(validation_out)))
                 validation_out["AQ"] = validation_out["ConcEst"] / validation_out["ConcTargeted"]
                 validation_out["AAQ"] = 10 ** np.abs(np.log10(validation_out["AQ"]))
                 validation_out["CLFR"] = validation_out["ConcUCL"] / validation_out["ConcLCL"]
                 # Merge on LOO_out
                 validation_out = pd.merge(validation_out, LOO_out, on=["Feature ID", "Sample"], how="left")
+                logger.info("length validation_out (validation_out and LOO_out merge) = {}".format(len(validation_out)))
                 # Remove NaN rows from the ConcTargeted (the validation file) and ConcEst (occurrence file)
                 validation_out = validation_out.loc[
                     ((validation_out["ConcTargeted"] > 0) & (validation_out["ConcEst"] > 0)), :
                 ]
+                logger.info("length validation_out (post .loc) = {}".format(len(validation_out)))
                 # Return validation_out
                 return validation_out
             else:
