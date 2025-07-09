@@ -2351,7 +2351,10 @@ def qnta_preprocessing(
         occ_grouped.drop(["Surrogate_Group"], axis=1, inplace=True)
         # Recombine
         occ_df = pd.concat([occ_singles, occ_grouped])
-
+    else:
+        # If no Surrogate Grouping, coerce Feature ID to type int anyway
+        dfq["Feature ID"] = dfq["Feature ID"].astype(int)
+        occ_df["Feature ID"] = occ_df["Feature ID"].astype(int)
     # Returns 1) surrogate data (dfq), 2) combined dataframe with 'Surrogate Chemical Match?' appended (dfc),
     # and 3) occurrence dataframe of BlankSub Means (occ_df)
     return dfq, dfc, occ_df

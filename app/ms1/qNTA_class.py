@@ -227,7 +227,6 @@ class qNTAClass:
         # Copy input
         surr = self.surrogate_cal_data.copy()
         # Coerce "Feature ID" to str
-        surr["Feature ID"] = surr["Feature ID"].astype(int)
         surr["Feature ID"] = surr["Feature ID"].astype(str)
         # Store surr
         self.surrogate_cal_data = surr.copy()
