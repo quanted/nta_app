@@ -251,7 +251,7 @@ class qNTAClass:
         long["RF"] = pd.to_numeric(long["RF"])
         # Keep only BlankSub Mean abundances > 0 to avoid problems with log-10 transform
         # we also don't want to have RFs of 0 in the surrogate set
-        long_nz = long.loc[long[col] > 0, :]
+        long_nz = long.loc[((long[col] > 0) & (long["RF"] > 0)), :]
         # Add log-10 transformed columns for BlankSub Mean Abundance and Concentration
         long_nz = long_nz.assign(LogAbun=np.log10(long_nz[col]), LogConc=np.log10(long_nz["Conc"]))
         # Store unique chemical names in class variable
@@ -350,7 +350,9 @@ class qNTAClass:
         # Copy df
         surr = self.surrogate_cal_data_long_nonzero.copy()
         # Subset by chem
+        logger.info("cal curve metrics chem = {}".format(chem))
         cal_data = surr.loc[surr["Surrogate_Group"] == chem]
+        logger.info("cal curve metrics cal data length = {}".format(len(cal_data)))
         # Get Ionization Mode value
         im = cal_data["Ionization Mode"].values[0]
         # Check if there are more than 3 points
