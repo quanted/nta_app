@@ -2325,13 +2325,13 @@ def qnta_preprocessing(
     # Check dfq for matching errors
     SDS_duplicate_error_check(dfq)
     # Check for surrogate groups
-    if any(x > 1 for x in dfq["Surrogate_Group"].value_counts()):
+    if any(x > 1 for x in dfq["Surrogate Group"].value_counts()):
         # If present, perform aggregations
         dfq, surr_group_IDs = surrogate_grouping(dfq, prefix, controls, sample_headers)
         # Get columns, sorted by aggregation type
         occ_df["Feature ID"] = occ_df["Feature ID"].astype(int)
         sums = [x for x in occ_df.columns if "Mean" in x]
-        not_lis = sums + ["Surrogate_Group"]
+        not_lis = sums + ["Surrogate Group"]
         lis = [x for x in occ_df.columns if not any(item in x for item in not_lis)]
         # Get Feat IDs in occ for grouping
         occ_to_group = pd.merge(
@@ -2342,19 +2342,28 @@ def qnta_preprocessing(
         )
         occ_singles = occ_df.loc[~occ_df["Feature ID"].isin(surr_group_IDs["Feature ID"]), :]
         # Aggregate and join
-        occ_sums = occ_to_group.groupby("Surrogate_Group").agg({i: "sum" for i in sums}).reset_index()
-        occ_lis = occ_to_group.groupby("Surrogate_Group").agg({i: list for i in lis}).reset_index()
+        occ_sums = occ_to_group.groupby("Surrogate Group").agg({i: "sum" for i in sums}).reset_index()
+        occ_lis = occ_to_group.groupby("Surrogate Group").agg({i: list for i in lis}).reset_index()
         occ_grouped = ft.reduce(
-            lambda left, right: pd.merge(left, right, how="left", on="Surrogate_Group"), [occ_sums, occ_lis]
+            lambda left, right: pd.merge(left, right, how="left", on="Surrogate Group"), [occ_sums, occ_lis]
         )
         # Drop columns
-        occ_grouped.drop(["Surrogate_Group"], axis=1, inplace=True)
+        occ_grouped.drop(["Surrogate Group"], axis=1, inplace=True)
         # Recombine
         occ_df = pd.concat([occ_singles, occ_grouped])
     else:
         # If no Surrogate Grouping, coerce Feature ID to type int anyway
         dfq["Feature ID"] = dfq["Feature ID"].astype(int)
         occ_df["Feature ID"] = occ_df["Feature ID"].astype(int)
+    # If prefix is "ContSub", swap columns to "ControlSub"
+    if prefix == "ContSub BlankSub Mean ":
+        dfq = dfq.rename(
+            columns={
+                col: "ControlSub BlankSub Mean " + col[22:]
+                for col in dfq.columns
+                if col.startswith("ContSub BlankSub Mean ")
+            }
+        )
     # Returns 1) surrogate data (dfq), 2) combined dataframe with 'Surrogate Chemical Match?' appended (dfc),
     # and 3) occurrence dataframe of BlankSub Means (occ_df)
     return dfq, dfc, occ_df
@@ -2452,6 +2461,7 @@ def column_sort_SDS(df_in, passthru):
         "Mass",
         "Retention",
         "Ionization",
+        "Surrogate",
         "MRL",
         "Adduct",
         "Duplicate",
@@ -2468,6 +2478,7 @@ def column_sort_SDS(df_in, passthru):
         "Chemical_Name",
         "DTXSID",
         "Ionization_Mode",
+        "Surrogate_Group",
         "Monoisotopic_Mass",
         "Observed Mass",
         "Mass Error (PPM)",
@@ -2501,6 +2512,7 @@ def column_sort_SDS(df_in, passthru):
             "Chemical_Name": "Chemical Name",
             "Ionization_Mode": "Ionization Mode",
             "Retention_Time": "Retention Time",
+            "Surrogate_Group": "Surrogate Group",
         },
         inplace=True,
     )
@@ -2611,13 +2623,13 @@ def surrogate_grouping(
 
     """Isolate surrogates"""
     # Get surrogate group value counts
-    sg_vc = df["Surrogate_Group"].value_counts()
+    sg_vc = df["Surrogate Group"].value_counts()
     # Get surrogate groups
     sgs = sg_vc[sg_vc > 1].index
     # Get assosciated surrogate observations
-    surrs = df.loc[df["Surrogate_Group"].isin(sgs), :]
+    surrs = df.loc[df["Surrogate Group"].isin(sgs), :]
     # Pack Feature_IDs and Surrogate_Group info for return
-    surr_group_IDs = surrs[["Feature ID", "Surrogate_Group"]].copy()
+    surr_group_IDs = surrs[["Feature ID", "Surrogate Group"]].copy()
 
     """Do occurrence masking"""
     # Do occurrence removal
@@ -2631,21 +2643,21 @@ def surrogate_grouping(
     sums_prefixes = ["Mean", "Conc ", "Detection Count ", col]
     sums = [x for x in df.columns if any(item in x for item in sums_prefixes)] + sams
     # Loop through cols and perform groupbys
-    surrs_1 = surrs.groupby("Surrogate_Group").agg({i: "sum" for i in sums}).reset_index()
+    surrs_1 = surrs.groupby("Surrogate Group").agg({i: "sum" for i in sums}).reset_index()
     # Get average columns
     avgs_prefixes = ["Detection Percentage "]
     avgs = [x for x in df.columns if any(item in x for item in avgs_prefixes)]
     # Loop through cols and perform groupbys
-    surrs_2 = surrs.groupby("Surrogate_Group").agg({i: "mean" for i in avgs}).reset_index()
+    surrs_2 = surrs.groupby("Surrogate Group").agg({i: "mean" for i in avgs}).reset_index()
     # Get list columns
-    not_lis = sums + avgs + ["Surrogate_Group"]
+    not_lis = sums + avgs + ["Surrogate Group"]
     lis = [x for x in df.columns if not any(item in x for item in not_lis)]
     # Loop through cols and perform groupbys
     surrs["Feature ID"] = surrs["Feature ID"].astype(int)
-    surrs_3 = surrs.groupby("Surrogate_Group").agg({i: list for i in lis}).reset_index()
+    surrs_3 = surrs.groupby("Surrogate Group").agg({i: list for i in lis}).reset_index()
     # Concat back into single dataframe
     output = ft.reduce(
-        lambda left, right: pd.merge(left, right, how="left", on="Surrogate_Group"), [surrs_1, surrs_2, surrs_3]
+        lambda left, right: pd.merge(left, right, how="left", on="Surrogate Group"), [surrs_1, surrs_2, surrs_3]
     )
 
     """Recalculate RF"""
@@ -2655,7 +2667,7 @@ def surrogate_grouping(
 
     """Recombine with original frame"""
     # Get observations for original frame not in surrs
-    df = df.loc[~df["Surrogate_Group"].isin(sgs), :]
+    df = df.loc[~df["Surrogate Group"].isin(sgs), :]
     # Combine df and surrs
     output = pd.concat([df, output])
     # Return output

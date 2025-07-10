@@ -186,13 +186,13 @@ class qNTAClass:
                 back = [
                     col
                     for col in occ.columns
-                    if (col.startswith(("BlankSub Mean ", "ContSub ")) and any(x in col for x in val.columns))
+                    if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x in col for x in val.columns))
                 ]
             else:
                 back = [
                     col
                     for col in occ.columns
-                    if (col.startswith(("BlankSub Mean ", "ContSub ")) and any(x == col for x in surr.columns))
+                    if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x == col for x in surr.columns))
                 ]
             # Pare occ down to front + back
             occ = occ[front + back]
@@ -231,15 +231,19 @@ class qNTAClass:
         # Store surr
         self.surrogate_cal_data = surr.copy()
         # Define controls
-        controls = ["Cont"]
-        # Check for Control - if present we want ContSub, else we want BlankSub
+        controls = [
+            "Contol",
+            "control",
+            "CONTROL",
+        ]
+        # Check for Control - if present we want ControlSub, else we want BlankSub
         if any(item for item in surr.columns if any(x in item for x in controls)):
-            col = "ContSub BlankSub Mean"
+            col = "ControlSub BlankSub Mean"
         else:
             col = "BlankSub Mean"
         # Get cols
         prefixes = ["Conc", "RF"] + [col]
-        cols = ["Feature ID", "Chemical Name", "Surrogate_Group", "Retention Time", "Ionization Mode"] + [
+        cols = ["Feature ID", "Chemical Name", "Surrogate Group", "Retention Time", "Ionization Mode"] + [
             col for col in surr.columns if any(col.startswith(x) for x in prefixes)
         ]
         # Pivot surrogate_cal_data wide to long
@@ -255,7 +259,7 @@ class qNTAClass:
         # Add log-10 transformed columns for BlankSub Mean Abundance and Concentration
         long_nz = long_nz.assign(LogAbun=np.log10(long_nz[col]), LogConc=np.log10(long_nz["Conc"]))
         # Store unique chemical names in class variable
-        self.surrogate_cal_data_long_nonzero_chems = np.unique(long_nz["Surrogate_Group"])
+        self.surrogate_cal_data_long_nonzero_chems = np.unique(long_nz["Surrogate Group"])
         # Store df in class variable
         self.surrogate_cal_data_long_nonzero = long_nz
 
@@ -291,14 +295,14 @@ class qNTAClass:
                 # If not equal, create dict to swap val_cols with occ_cols
                 col_swap = {key: val for key in val_cols for val in occ_cols if key in val}
                 val = val.rename(columns=col_swap)
-            # Check for 'Feature ID' and 'Surrogate_Group' in val
+            # Check for 'Feature ID' and 'Surrogate Group' in val
             if "Feature ID" not in val.columns:
                 cols = [
                     "Feature ID",
                     "DTXSID",
                 ]
-                if "Surrogate_Group" not in val.columns:
-                    cols = cols + ["Surrogate_Group"]
+                if "Surrogate Group" not in val.columns:
+                    cols = cols + ["Surrogate Group"]
                 # if val doesn't contain 'Feature ID', merge column from
                 val = pd.merge(val, surr[cols], how="left", on="DTXSID")
                 # Coerce "Feature ID" to str
@@ -315,7 +319,7 @@ class qNTAClass:
             # Get Conc col root names, avoiding any blanks or controls
             cols = [col for col in surr.columns if "Conc " in col if not any(x in col for x in li)]
             # Set Chemical Name as ID column for future joins
-            val = surr.loc[:, ["Surrogate_Group", "Feature ID"] + cols]
+            val = surr.loc[:, ["Surrogate Group", "Feature ID"] + cols]
             # Rename to remove "Conc "
             val = val.rename(columns={col: col[5:] for col in val.columns if "Conc " in col})
             # Use copy to avoid overwriting original data
@@ -351,7 +355,7 @@ class qNTAClass:
         surr = self.surrogate_cal_data_long_nonzero.copy()
         # Subset by chem
         logger.info("cal curve metrics chem = {}".format(chem))
-        cal_data = surr.loc[surr["Surrogate_Group"] == chem]
+        cal_data = surr.loc[surr["Surrogate Group"] == chem]
         logger.info("cal curve metrics cal data length = {}".format(len(cal_data)))
         # Get Ionization Mode value
         im = cal_data["Ionization Mode"].values[0]
@@ -395,7 +399,7 @@ class qNTAClass:
         cc_tuples = [i for i in cc_tuples if "Fewer than 3 calibration points" not in i]
         # Generate and save dataframe
         self.cc_metrics = pd.DataFrame(
-            cc_tuples, columns=["Surrogate_Group", "Ionization Mode", "Slope", "Intercept", "R-squared"]
+            cc_tuples, columns=["Surrogate Group", "Ionization Mode", "Slope", "Intercept", "R-squared"]
         )
 
     """RESPONSE FACTOR BOOTSTRAP METHODS"""
@@ -416,11 +420,11 @@ class qNTAClass:
 
         """
         # Define surrogate array
-        surr_array = pd.unique(RF_data["Surrogate_Group"])
+        surr_array = pd.unique(RF_data["Surrogate Group"])
         # Assign row numbers
-        row_num = np.arange(0, len(pd.unique(RF_data["Surrogate_Group"])))
+        row_num = np.arange(0, len(pd.unique(RF_data["Surrogate Group"])))
         # Combine unique surrogates and row numbers into DataFrame
-        array_df = pd.DataFrame({"Surrogate_Group": surr_array, "row_number": row_num})
+        array_df = pd.DataFrame({"Surrogate Group": surr_array, "row_number": row_num})
         # Merge with RF_data
         RF_data_row_num = pd.merge(RF_data.copy(), array_df)
         # Create array
@@ -530,8 +534,8 @@ class qNTAClass:
         # Get required attributes
         RF_estimate_out = occ.copy()
         RF_data = long_nz.copy()
-        if any(col.startswith("ContSub") for col in occ.columns):
-            prefix = "ContSub BlankSub Mean"
+        if any(col.startswith("ControlSub") for col in occ.columns):
+            prefix = "ControlSub BlankSub Mean"
         else:
             prefix = "BlankSub Mean"
         # Get bootstrap percentile estimates
@@ -662,7 +666,7 @@ class qNTAClass:
         # NOTE: For internal, occurrence_data must contain columns with names that correspond to conc_cols
         global_out = self.RF_estimate_out
         # List of chemicals that overlap between qNTA surrogate set and validation data
-        LOO_IDs = pd.Series(val["Feature ID"].values, index=val["Surrogate_Group"]).to_dict()
+        LOO_IDs = pd.Series(val["Feature ID"].values, index=val["Surrogate Group"]).to_dict()
         logger.info("length LOO_IDs = {}".format(len(LOO_IDs)))
         # LOO_chems = {value: key for key, value in LOO_IDs.items()}
         LOO_IDs = [str(ID) for chem, ID in LOO_IDs.items() if ID != "nan" and any(x in chem for x in chems)]
