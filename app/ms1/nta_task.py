@@ -191,6 +191,8 @@ class NtaRun:
         self.tracer_map = {}
         self.occurrence_heatmap_map = {}
         self.cv_scatterplot_map = {}
+        self.aq_plots_map = {}
+        slf.ecdf_plots_map = {}
         # self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         # self.new_download_dir = os.path.join(self.data_dir, "new")
         self.step = "Started"  # tracks the current step (for fail messages)
@@ -200,6 +202,8 @@ class NtaRun:
         self.cc_plots_out = None
         self.occurrence_heatmaps_out = []
         self.cv_scatterplots_out = []
+        self.aq_plots_out = []
+        self.ecdf_plots_out = []
 
     def log_memory_usage(self, step_name):
         """Logs the current memory usage."""
@@ -404,7 +408,9 @@ class NtaRun:
     def check_existence_of_mass_column(self, input_dfs):
         """
         Check the existence of a 'Mass' or 'm/z' column in input dataframes and handle it accordingly.
-        This function checks each dataframe in the input list for the presence of a 'Mass' or 'm/z' column. If either of these columns is found, it takes appropriate action based on the ionization mode. If neither column exists, it raises a ValueError.
+        This function checks each dataframe in the input list for the presence of a 'Mass' or 'm/z' column.
+        If either of these columns is found, it takes appropriate action based on the ionization mode.
+        If neither column exists, it raises a ValueError.
 
         Args:
             input_dfs (list of pandas DataFrames): A list of dataframes to check.
@@ -507,13 +513,15 @@ class NtaRun:
 
     def create_run_sequence_sheets(self):
         """
-        If there are run sequence files submitted, create a sheet for each mode of run sequence file. This is for the AMOS visualizations to be able to grab the sequence information for
+        If there are run sequence files submitted, create a sheet for each mode of run sequence file.
+        This is for the AMOS visualizations to be able to grab the sequence information for
         run seequence plots
 
         Args:
             None
         Notes:
-            In a future version, we would like to directly pass this information to AMOS separately rather than storing it in the results file where it increases the complexity of the results
+            In a future version, we would like to directly pass this information to AMOS separately rather
+            than storing it in the results file where it increases the complexity of the results
         Returns:
             None
         """
@@ -1085,6 +1093,8 @@ class NtaRun:
             if qnta_pos.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
+                # Generate AQ plots
+                self.store_aq_plots(qnta_object=qnta_pos, im="ESI+")
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1093,6 +1103,8 @@ class NtaRun:
             if qnta_neg.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
+                # Generate AQ plots
+                self.store_aq_plots(qnta_object=qnta_neg, im="ESI-")
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1124,6 +1136,8 @@ class NtaRun:
             if qnta_pos.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
+                # Generate AQ plots
+                self.store_aq_plots(qnta_object=qnta_pos, im="ESI+")
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1151,10 +1165,42 @@ class NtaRun:
             if qnta_neg.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
+                # Generate AQ plots
+                self.store_aq_plots(qnta_object=qnta_neg, im="ESI-")
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
+
+    def store_aq_plots(
+        self,
+        qnta_object,
+        im,
+    ):
+        # Store in class variable
+        self.aq_plots_out.append(
+            qnta_object.AQ_plots(
+                validation_out=qnta_object.validation_out,
+                long_form=qnta_object.parameters["long_form"],
+                LOO=qnta_object.parameters["LOO"],
+            )
+        )
+        # Map to outputs
+        self.aq_plots_map["AQ_plots"] = self.aq_plots_out[0]
+        project_name = self.parameters["project_name"][1]
+        self.gridfs.put(
+            "&&".join(self.aq_plots_map.keys()),
+            _id=self.jobid + im + "_aq_plots",
+            encoding="utf-8",
+            project_name=project_name,
+        )
+        # Define plot string
+        name = "AQ_plots_" + im
+        # Save to MongoDB
+        self.mongo_save(self.aq_plots_map[name], step=name)
+        # Reset self.aq_plots_out and self.aq_plots_map
+        self.aq_plots_out = []
+        self.aq_plots_map = {}
 
     def clean_features(self):
         """
