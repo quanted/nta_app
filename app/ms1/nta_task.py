@@ -192,7 +192,7 @@ class NtaRun:
         self.occurrence_heatmap_map = {}
         self.cv_scatterplot_map = {}
         self.aq_plots_map = {}
-        slf.ecdf_plots_map = {}
+        self.ecdf_plots_map = {}
         # self.data_dir = os.path.join(self.base_dir, 'data', self.jobid)
         # self.new_download_dir = os.path.join(self.data_dir, "new")
         self.step = "Started"  # tracks the current step (for fail messages)
