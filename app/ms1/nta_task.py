@@ -1185,8 +1185,10 @@ class NtaRun:
                 LOO=qnta_object.parameters["LOO"],
             )
         )
+        # Define plot string
+        name = "AQ_plots_" + im
         # Map to outputs
-        self.aq_plots_map["AQ_plots"] = self.aq_plots_out[0]
+        self.aq_plots_map[name] = self.aq_plots_out[0]
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
             "&&".join(self.aq_plots_map.keys()),
@@ -1194,8 +1196,6 @@ class NtaRun:
             encoding="utf-8",
             project_name=project_name,
         )
-        # Define plot string
-        name = "AQ_plots_" + im
         # Save to MongoDB
         self.mongo_save(self.aq_plots_map[name], step=name)
         # Reset self.aq_plots_out and self.aq_plots_map
