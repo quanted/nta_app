@@ -1090,17 +1090,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
                 # Generate AQ plots
-                # Store in class variable
-                self.aq_plots_out.append(
-                    (
-                        qnta_pos.AQ_plots(
-                            validation_out=qnta_pos.validation_out,
-                            long_form=qnta_pos.parameters["long_form"],
-                            LOO=qnta_pos.parameters["LOO"],
-                        ),
-                        "ESI+",
-                    )
-                )
+                self.store_aq_plots(qnta_object=qnta_pos, im="ESI+")
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1110,17 +1100,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
                 # Generate AQ plots
-                # Store in class variable
-                self.aq_plots_out.append(
-                    (
-                        qnta_neg.AQ_plots(
-                            validation_out=qnta_neg.validation_out,
-                            long_form=qnta_neg.parameters["long_form"],
-                            LOO=qnta_neg.parameters["LOO"],
-                        ),
-                        "ESI-",
-                    )
-                )
+                self.store_aq_plots(qnta_object=qnta_neg, im="ESI-")
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1154,17 +1134,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
                 # Generate AQ plots
-                # Store in class variable
-                self.aq_plots_out.append(
-                    (
-                        qnta_pos.AQ_plots(
-                            validation_out=qnta_pos.validation_out,
-                            long_form=qnta_pos.parameters["long_form"],
-                            LOO=qnta_pos.parameters["LOO"],
-                        ),
-                        "ESI+",
-                    )
-                )
+                self.store_aq_plots(qnta_object=qnta_pos, im="ESI+")
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1198,50 +1168,41 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
                 # Generate AQ plots
-                # Store in class variable
-                self.aq_plots_out.append(
-                    (
-                        qnta_neg.AQ_plots(
-                            validation_out=qnta_neg.validation_out,
-                            long_form=qnta_neg.parameters["long_form"],
-                            LOO=qnta_neg.parameters["LOO"],
-                        ),
-                        "ESI-",
-                    )
-                )
+                self.store_aq_plots(qnta_object=qnta_neg, im="ESI-")
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
-        # Check length of aq_plots_out
-        if len(self.aq_plots_out) > 0:
-            # If > 0, execute store_aq_plots()
-            self.store_aq_plots(self.aq_plots_out)
 
     def store_aq_plots(
         self,
-        li,
+        qnta_object,
+        im,
     ):
-        for item in li:
-            for fig, im in item:
-                self.aq_plots_map[im + "_aq_plots"] = fig
-        # Convert the figure objects in tracer_map into PNGs that can be stored in gridfs
-        for key in self.aq_plots_map.keys():
-            buf = io.BytesIO()
-            # Save the figure in buffer as png
-            self.aq_plots_map[key].savefig(buf, bbox_inches="tight", format="png")
-            buf.seek(0)
-            self.aq_plots_map[key] = buf.read()
-        # Set project name
+        # Store in class variable
+        self.aq_plots_out.append(
+            qnta_object.AQ_plots(
+                validation_out=qnta_object.validation_out,
+                long_form=qnta_object.parameters["long_form"],
+                LOO=qnta_object.parameters["LOO"],
+            )
+        )
+        # Define plot string
+        name = "AQ_plots_" + im
+        # Map to outputs
+        self.aq_plots_map[name] = self.aq_plots_out[0]
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
             "&&".join(self.aq_plots_map.keys()),
-            _id=self.jobid + "_aq_plots",
+            _id=self.jobid + im + "_aq_plots",
             encoding="utf-8",
             project_name=project_name,
         )
-        for key in self.aq_plots_map.keys():
-            self.mongo_save(self.aq_plots_map[key], step=key)
+        # Save to MongoDB
+        self.mongo_save(self.aq_plots_map[name], step=name)
+        # Reset self.aq_plots_out and self.aq_plots_map
+        self.aq_plots_out = []
+        self.aq_plots_map = {}
 
     def clean_features(self):
         """
