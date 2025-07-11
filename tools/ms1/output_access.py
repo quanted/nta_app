@@ -183,6 +183,36 @@ class OutputServer:
         except (OperationFailure, TypeError, NoFile) as e:
             pass
 
+    def add_aq_plots_to_zip(self, zipf, jobid):
+        # Define lists
+        ims = ["ESI+", "ESI-"]
+        # Try positive mode
+        try:
+            aq_id = jobid + ims[0] + "_aq_plots"
+            db_record = self.gridfs.get(aq_id)
+            buffer = db_record.read()
+            project_name = db_record.project_name
+            if project_name:
+                filename = project_name.replace(" ", "_") + ims[0] + "_aq_plots.png"
+            else:
+                filename = aq_id + ".png"
+            zipf.writestr(filename, buffer)
+        except (OperationFailure, TypeError, NoFile) as e:
+            pass
+        # Try negative mode
+        try:
+            aq_id = jobid + ims[1] + "_aq_plots"
+            db_record = self.gridfs.get(aq_id)
+            buffer = db_record.read()
+            project_name = db_record.project_name
+            if project_name:
+                filename = project_name.replace(" ", "_") + ims[1] + "_aq_plots.png"
+            else:
+                filename = aq_id + ".png"
+            zipf.writestr(filename, buffer)
+        except (OperationFailure, TypeError, NoFile) as e:
+            pass
+
     def final_result(self):
         in_memory_zip = BytesIO()
 
@@ -247,6 +277,11 @@ class OutputServer:
 
             try:
                 self.add_cv_scatterplot_to_zip(zipf, self.jobid)
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass  # do we want to do anything if no cv_scatterplot present?
+
+            try:
+                self.add_aq_plots_to_zip(zipf, self.jobid)
             except (OperationFailure, TypeError, NoFile) as e:
                 pass  # do we want to do anything if no cv_scatterplot present?
 
