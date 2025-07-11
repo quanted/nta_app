@@ -183,30 +183,34 @@ class OutputServer:
         except (OperationFailure, TypeError, NoFile) as e:
             pass
 
-    def add_aq_plots_to_zip(self, zipf, jobid):
+    def add_pos_aq_plots_to_zip(self, zipf, jobid):
         # Define lists
-        ims = ["ESI+", "ESI-"]
-        # Try positive mode
+        im = "ESI+"
+        # Try to retrive plot
         try:
-            aq_id = jobid + ims[0] + "_aq_plots"
+            aq_id = jobid + im + "_aq_plots"
             db_record = self.gridfs.get(aq_id)
             buffer = db_record.read()
             project_name = db_record.project_name
             if project_name:
-                filename = project_name.replace(" ", "_") + ims[0] + "_aq_plots.png"
+                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.png"
             else:
                 filename = aq_id + ".png"
             zipf.writestr(filename, buffer)
         except (OperationFailure, TypeError, NoFile) as e:
             pass
-        # Try negative mode
+
+    def add_neg_aq_plots_to_zip(self, zipf, jobid):
+        # Define lists
+        im = "ESI-"
+        # Try to retrive plot
         try:
-            aq_id = jobid + ims[1] + "_aq_plots"
+            aq_id = jobid + im + "_aq_plots"
             db_record = self.gridfs.get(aq_id)
             buffer = db_record.read()
             project_name = db_record.project_name
             if project_name:
-                filename = project_name.replace(" ", "_") + ims[1] + "_aq_plots.png"
+                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.png"
             else:
                 filename = aq_id + ".png"
             zipf.writestr(filename, buffer)
@@ -281,9 +285,13 @@ class OutputServer:
                 pass  # do we want to do anything if no cv_scatterplot present?
 
             try:
-                self.add_aq_plots_to_zip(zipf, self.jobid)
+                self.add_pos_aq_plots_to_zip(zipf, self.jobid)
             except (OperationFailure, TypeError, NoFile) as e:
-                pass  # do we want to do anything if no cv_scatterplot present?
+                pass
+            try:
+                self.add_neg_aq_plots_to_zip(zipf, self.jobid)
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass
 
         zip_filename = "nta_results_" + self.jobid + ".zip"
         response = HttpResponse(in_memory_zip.getvalue(), content_type="application/zip")
