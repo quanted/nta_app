@@ -57,7 +57,7 @@ class qNTAClass:
     # input file and qNTA surrogate input file
     # Pass in Ionization Mode as a str argument or determine it from the Ionization Mode column?
     # (Currently separating the input data beforehand)
-    def __init__(self, surrogate_cal_data, validation_input=None, occurrence_input=None, parameters=None):
+    def __init__(self, surrogate_cal_data, im, validation_input=None, occurrence_input=None, parameters=None):
         """
         Pivots surrogate_cal_data DataFrame from wide to long format, keeping only
             blank-subtracted means > 0
@@ -68,6 +68,7 @@ class qNTAClass:
         # Required uploaded files
         # Replace NA values with 0 to avoid issues with mathematical operations on DataFrame
         self.parameters = parameters
+        self.im = im
         self.surrogate_cal_data = surrogate_cal_data.fillna(0)
         self.validation_data = validation_input
         self.occurrence_data = occurrence_input
