@@ -1014,7 +1014,7 @@ class qNTAClass:
             a.set(yscale="log")
             a.set_xlabel("Metric", fontsize=16)
             a.set_ylabel("Value ($log_{10}$ scale)", fontsize=16)
-            a.set_title("$Log_{10}$ AQ Distributions", fontsize=18)
+            a.set_title("AQ Distributions", fontsize=18)
             a.tick_params(axis="y", labelsize=14)
             a.tick_params(axis="x", labelsize=14)
 
@@ -1045,7 +1045,7 @@ class qNTAClass:
             c.set(xscale="log", yscale="log")
             c.set_xlabel("Targeted Concentration ($log_{10}$ scale)", fontsize=16)
             c.set_ylabel("AQ Value ($log_{10}$ scale)", fontsize=16)
-            c.set_title("$Log_{10}$ Concentrations vs $Log_{10}$ AQ Values", fontsize=18)
+            c.set_title("Concentrations vs AQ Values", fontsize=18)
             c.tick_params(axis="y", labelsize=14)
             c.tick_params(axis="x", labelsize=14)
             # Legend

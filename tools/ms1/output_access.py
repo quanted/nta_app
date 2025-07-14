@@ -161,7 +161,7 @@ class OutputServer:
             buffer = db_record.read()
             project_name = db_record.project_name
             if project_name:
-                filename = project_name.replace(" ", "_") + "_cv_scatterplot.svg"
+                filename = project_name.replace(" ", "_") + "_cv_scatterplot.png"
             else:
                 filename = id + ".png"
             zipf.writestr(filename, buffer)
@@ -194,7 +194,7 @@ class OutputServer:
             buffer = db_record.read()
             project_name = db_record.project_name
             if project_name:
-                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.svg"
+                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.png"
             else:
                 filename = aq_id + ".png"
             zipf.writestr(filename, buffer)
@@ -212,7 +212,7 @@ class OutputServer:
             buffer = db_record.read()
             project_name = db_record.project_name
             if project_name:
-                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.svg"
+                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.png"
             else:
                 filename = aq_id + ".png"
             zipf.writestr(filename, buffer)
