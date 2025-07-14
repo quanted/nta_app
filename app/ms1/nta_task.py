@@ -1193,15 +1193,15 @@ class NtaRun:
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
             "&&".join(self.aq_plots_map.keys()),
-            _id=self.jobid + "_aq_plots",
+            _id=self.jobid + im + "_aq_plot",
             encoding="utf-8",
             project_name=project_name,
         )
         # Save to MongoDB
         self.mongo_save(self.aq_plots_map[name], step=name)
         # Reset self.aq_plots_out and self.aq_plots_map
-        self.aq_plots_out = []
-        self.aq_plots_map = {}
+        # self.aq_plots_out = []
+        # self.aq_plots_map = {}
 
     def clean_features(self):
         """
