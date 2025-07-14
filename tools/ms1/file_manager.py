@@ -66,6 +66,7 @@ def sequence_handler(file):
     df = pd.read_csv(file, comment="#", na_values=1 | 0)
     df[df.columns[0]] = df[df.columns[0]].str.replace(" ", "_")
     df[df.columns[0]] = df[df.columns[0]].str.replace("#", "_")
+    df[df.columns[0]] = df[df.columns[0]].str.replace(".", "_")
     df[df.columns[0]] = df[df.columns[0]].str.replace("\([^)]*\)", "")
     return df
 
@@ -81,6 +82,7 @@ def fix_names(
     df.drop(df.columns[df.columns.str.startswith("Unnamed: ")], axis=1, inplace=True)
     df.columns = df.columns.str.replace(" ", "_")
     df.columns = df.columns.str.replace("#", "_")
+    df.columns = df.columns.str.replace(".", "_")
     df.columns = df.columns.str.replace("\([^)]*\)", "")
     # NTAW-94 comment out the following line. Compound is no longer being used
     # df['Compound'] = df['Compound'].str.replace("\ Esi.*$","")
