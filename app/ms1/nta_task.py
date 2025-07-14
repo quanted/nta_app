@@ -1057,6 +1057,10 @@ class NtaRun:
                 # Separate into mode data
                 val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
                 val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
+                if len(val_pos) < 1:
+                    val_pos = None
+                if len(val_neg) < 1:
+                    val_neg = None
             else:
                 # Assign Nones
                 val_pos = None
@@ -1111,6 +1115,8 @@ class NtaRun:
             if self.val_df is not None:
                 # Separate into mode data
                 val_pos = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI+", :]
+                if len(val_pos) < 1:
+                    val_pos = None
             else:
                 # Assign None
                 val_pos = None
@@ -1144,6 +1150,8 @@ class NtaRun:
             if self.val_df is not None:
                 # Separate into mode data
                 val_neg = self.val_df.loc[self.val_df["Ionization_Mode"] == "ESI-", :]
+                if len(val_neg) < 1:
+                    val_neg = None
             else:
                 # Assign None
                 val_neg = None
