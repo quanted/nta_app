@@ -161,7 +161,7 @@ class OutputServer:
             buffer = db_record.read()
             project_name = db_record.project_name
             if project_name:
-                filename = project_name.replace(" ", "_") + "_cv_scatterplot.png"
+                filename = project_name.replace(" ", "_") + "_cv_scatterplot.svg"
             else:
                 filename = id + ".png"
             zipf.writestr(filename, buffer)
@@ -186,14 +186,15 @@ class OutputServer:
     def add_pos_aq_plots_to_zip(self, zipf, jobid):
         # Define lists
         im = "ESI+"
+        name = "AQ_plots_" + im
         # Try to retrive plot
         try:
-            aq_id = jobid + im + "_aq_plots"
+            aq_id = jobid + name
             db_record = self.gridfs.get(aq_id)
             buffer = db_record.read()
             project_name = db_record.project_name
             if project_name:
-                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.png"
+                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.svg"
             else:
                 filename = aq_id + ".png"
             zipf.writestr(filename, buffer)
@@ -203,14 +204,15 @@ class OutputServer:
     def add_neg_aq_plots_to_zip(self, zipf, jobid):
         # Define lists
         im = "ESI-"
+        name = "AQ_plots_" + im
         # Try to retrive plot
         try:
-            aq_id = jobid + im + "_aq_plots"
+            aq_id = jobid + name
             db_record = self.gridfs.get(aq_id)
             buffer = db_record.read()
             project_name = db_record.project_name
             if project_name:
-                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.png"
+                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plots.svg"
             else:
                 filename = aq_id + ".png"
             zipf.writestr(filename, buffer)

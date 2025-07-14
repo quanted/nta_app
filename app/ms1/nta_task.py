@@ -1063,7 +1063,6 @@ class NtaRun:
             # Create qNTAClass object for pos mode data
             qnta_pos = qNTAClass(
                 self.qnta_dfs_out[0],
-                im="ESI+",
                 validation_input=val_pos,
                 occurrence_input=self.qnta_occ_input[0],
                 parameters=None,
@@ -1073,7 +1072,6 @@ class NtaRun:
             # Create qNTAClass object for neg mode data
             qnta_neg = qNTAClass(
                 self.qnta_dfs_out[1],
-                im="ESI-",
                 validation_input=val_neg,
                 occurrence_input=self.qnta_occ_input[1],
                 parameters=None,
@@ -1118,7 +1116,6 @@ class NtaRun:
             # Create qNTAClass object for pos mode data
             qnta_pos = qNTAClass(
                 self.qnta_dfs_out[0],
-                im="ESI+",
                 validation_input=val_pos,
                 occurrence_input=self.qnta_occ_input[0],
                 parameters=None,
@@ -1152,7 +1149,6 @@ class NtaRun:
             # Create qNTAClass object for neg mode data
             qnta_neg = qNTAClass(
                 self.qnta_dfs_out[1],
-                im="ESI-",
                 validation_input=val_neg,
                 occurrence_input=self.qnta_occ_input[1],
                 parameters=None,
@@ -1194,7 +1190,7 @@ class NtaRun:
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
             "&&".join(self.aq_plots_map.keys()),
-            _id=self.jobid + im + "_aq_plots",
+            _id=self.jobid + name,
             encoding="utf-8",
             project_name=project_name,
         )
