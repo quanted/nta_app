@@ -1206,10 +1206,8 @@ class NtaRun:
             project_name=project_name,
         )
         # Save to MongoDB
-        self.mongo_save(self.aq_plots_map[name], step=name)
-        # Reset self.aq_plots_out and self.aq_plots_map
-        # self.aq_plots_out = []
-        # self.aq_plots_map = {}
+        for key in self.aq_plots_map.keys():
+            self.mongo_save(self.aq_plots_map[key], step=key)
 
     def clean_features(self):
         """

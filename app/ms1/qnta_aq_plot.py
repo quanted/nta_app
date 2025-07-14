@@ -170,20 +170,20 @@ def AQ_plots(validation_out, long_form=False, LOO=True):
         frame.set_edgecolor("black")  # edge color of legend
         frame.set_alpha(1)
 
-    else:
-        """Need to convert this plot to Seaborn for non-LOO scenario"""
-        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(8, 4))
-        # Boxplot
-        ax1.boxplot(AQ_plot_data["AQ"])
-        # Add points with x scatter
-        ax1.scatter(np.random.normal(1, 0.01, len(AQ_plot_data)), AQ_plot_data["AQ"], alpha=0.6)
-        ax1.set_title("Boxplot of $log_{10}$ (AQ)")
-        ax1.set_yscale("log")
-        # Scatter plot
-        ax2.scatter(AQ_plot_data["ConcTargeted"], AQ_plot_data["AQ"])
-        ax2.set_title("Scatterplot of log10(AQ) vs. log10(ConcTargeted)")
-        ax2.set_xscale("log")
-        ax2.set_yscale("log")
+    # else:
+    #     """Need to convert this plot to Seaborn for non-LOO scenario"""
+    #     fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(8, 4))
+    #     # Boxplot
+    #     ax1.boxplot(AQ_plot_data["AQ"])
+    #     # Add points with x scatter
+    #     ax1.scatter(np.random.normal(1, 0.01, len(AQ_plot_data)), AQ_plot_data["AQ"], alpha=0.6)
+    #     ax1.set_title("Boxplot of $log_{10}$ (AQ)")
+    #     ax1.set_yscale("log")
+    #     # Scatter plot
+    #     ax2.scatter(AQ_plot_data["ConcTargeted"], AQ_plot_data["AQ"])
+    #     ax2.set_title("Scatterplot of log10(AQ) vs. log10(ConcTargeted)")
+    #     ax2.set_xscale("log")
+    #     ax2.set_yscale("log")
 
     # Convert the plot to a bytes-like object
     buffer = io.BytesIO()
