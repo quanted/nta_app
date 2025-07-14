@@ -24,7 +24,6 @@ except ModuleNotFoundError:
     logger.error("Seaborn is not installed. Please run 'pip install seaborn' to install it.")
 
 
-
 def AQ_plots(validation_out, long_form=False, LOO=True):
     """
     Creates plots of the Accuracy Quotient (AQ) qNTA performance metric,
@@ -85,9 +84,7 @@ def AQ_plots(validation_out, long_form=False, LOO=True):
             .copy()
             .rename(columns={"AQ_LOO": "AQ (LOO)"})
         )
-        plot = pd.melt(
-            plot2, id_vars=["Feature ID", "Sample"], value_vars=cols, var_name="Metric", value_name="Value"
-        )
+        plot = pd.melt(plot2, id_vars=["Feature ID", "Sample"], value_vars=cols, var_name="Metric", value_name="Value")
 
         """SEABORN ATTEMPT"""
         # Instantiate subplots
@@ -130,7 +127,7 @@ def AQ_plots(validation_out, long_form=False, LOO=True):
         a.set(yscale="log")
         a.set_xlabel("Metric", fontsize=16)
         a.set_ylabel("Value ($log_{10}$ scale)", fontsize=16)
-        a.set_title("AQ Distributions", fontsize=18)
+        a.set_title("AQ Distributions", fontsize=18, weight="bold")
         a.tick_params(axis="y", labelsize=14)
         a.tick_params(axis="x", labelsize=14)
 
@@ -161,7 +158,7 @@ def AQ_plots(validation_out, long_form=False, LOO=True):
         c.set(xscale="log", yscale="log")
         c.set_xlabel("Targeted Concentration ($log_{10}$ scale)", fontsize=16)
         c.set_ylabel("AQ Value ($log_{10}$ scale)", fontsize=16)
-        c.set_title("Concentrations vs AQ Values", fontsize=18)
+        c.set_title("Concentrations vs AQ Values", fontsize=18, weight="bold")
         c.tick_params(axis="y", labelsize=14)
         c.tick_params(axis="x", labelsize=14)
         # Legend
@@ -188,8 +185,6 @@ def AQ_plots(validation_out, long_form=False, LOO=True):
         ax2.set_xscale("log")
         ax2.set_yscale("log")
 
-    # Set plot layout
-    plt.tight_layout()
     # Convert the plot to a bytes-like object
     buffer = io.BytesIO()
     plt.savefig(buffer)

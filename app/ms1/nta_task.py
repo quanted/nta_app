@@ -1187,13 +1187,13 @@ class NtaRun:
             )
         )
         # Define plot string
-        name = "AQ_plots_" + im
+        name = im + "_aq_plot"
         # Map to outputs
         self.aq_plots_map[name] = self.aq_plots_out[0]
         project_name = self.parameters["project_name"][1]
         self.gridfs.put(
             "&&".join(self.aq_plots_map.keys()),
-            _id=self.jobid + name,
+            _id=self.jobid + "_aq_plots",
             encoding="utf-8",
             project_name=project_name,
         )
