@@ -19,6 +19,7 @@ from .utilities import *
 
 from .heatmap import *
 from .cv_scatterplot import *
+from .qnta_aq_plot import *
 
 from . import task_functions as task_fun
 from .WebApp_plotter import WebApp_plotter
@@ -1088,7 +1089,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
                 # Generate AQ plots
-                self.store_aq_plots(qnta_object=qnta_pos, im="ESI+")
+                self.store_aq_plots(validation_out=qnta_pos.validation_out, im="ESI+")
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1098,7 +1099,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
                 # Generate AQ plots
-                self.store_aq_plots(qnta_object=qnta_neg, im="ESI-")
+                self.store_aq_plots(validation_out=qnta_neg.validation_out, im="ESI-")
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1131,7 +1132,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
                 # Generate AQ plots
-                self.store_aq_plots(qnta_object=qnta_pos, im="ESI+")
+                self.store_aq_plots(validation_out=qnta_pos.validation_out, im="ESI+")
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1164,7 +1165,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
                 # Generate AQ plots
-                self.store_aq_plots(qnta_object=qnta_neg, im="ESI-")
+                self.store_aq_plots(validation_out=qnta_neg.validation_out, im="ESI-")
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1172,15 +1173,17 @@ class NtaRun:
 
     def store_aq_plots(
         self,
-        qnta_object,
+        validation_out,
         im,
+        long_form=True,
+        LOO=True,
     ):
         # Store in class variable
         self.aq_plots_out.append(
-            qnta_object.AQ_plots(
-                validation_out=qnta_object.validation_out,
-                long_form=qnta_object.parameters["long_form"],
-                LOO=qnta_object.parameters["LOO"],
+            AQ_plots(
+                validation_out=validation_out,
+                long_form=long_form,
+                LOO=LOO,
             )
         )
         # Define plot string
