@@ -1186,6 +1186,8 @@ class NtaRun:
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
+        # Store plots
+        self.store_aq_plots()
 
     def store_aq_plots(
         self,
