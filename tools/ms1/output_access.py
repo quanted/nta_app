@@ -183,41 +183,22 @@ class OutputServer:
         except (OperationFailure, TypeError, NoFile) as e:
             pass
 
-    def add_pos_aq_plots_to_zip(self, zipf, jobid):
-        # Define lists
-        im = "ESI+"
-        name = im + "_aq_plot"
-        # Try to retrive plot
-        try:
-            aq_id = jobid + name
-            db_record = self.gridfs.get(aq_id)
-            buffer = db_record.read()
-            project_name = db_record.project_name
-            if project_name:
-                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plot.png"
-            else:
-                filename = aq_id + ".png"
-            zipf.writestr(filename, buffer)
-        except (OperationFailure, TypeError, NoFile) as e:
-            pass
+    def add_aq_plots_to_zip(self, zipf, jobid):
+        aq_plots = self.gridfs.get(f"{self.jobid}_aq_plots").read().decode("utf-8").split("&&")
 
-    def add_neg_aq_plots_to_zip(self, zipf, jobid):
-        # Define lists
-        im = "ESI-"
-        name = im + "_aq_plot"
-        # Try to retrive plot
-        try:
-            aq_id = jobid + name
-            db_record = self.gridfs.get(aq_id)
-            buffer = db_record.read()
-            project_name = db_record.project_name
-            if project_name:
-                filename = project_name.replace(" ", "_") + "_" + im + "_aq_plot.png"
-            else:
-                filename = aq_id + ".png"
-            zipf.writestr(filename, buffer)
-        except (OperationFailure, TypeError, NoFile) as e:
-            pass
+        for name in aq_plots:
+            try:
+                aq_id = jobid + "_" + name
+                db_record = self.gridfs.get(aq_id)
+                buffer = db_record.read()
+                project_name = db_record.project_name
+                if project_name:
+                    filename = project_name.replace(" ", "_") + "_" + name + ".png"
+                else:
+                    filename = aq_id + ".png"
+                zipf.writestr(filename, buffer)
+            except (OperationFailure, TypeError, NoFile) as e:
+                break
 
     def final_result(self):
         in_memory_zip = BytesIO()
@@ -287,11 +268,7 @@ class OutputServer:
                 pass  # do we want to do anything if no cv_scatterplot present?
 
             try:
-                self.add_pos_aq_plots_to_zip(zipf, self.jobid)
-            except (OperationFailure, TypeError, NoFile) as e:
-                pass
-            try:
-                self.add_neg_aq_plots_to_zip(zipf, self.jobid)
+                self.add_aq_plots_to_zip(zipf, self.jobid)
             except (OperationFailure, TypeError, NoFile) as e:
                 pass
 
