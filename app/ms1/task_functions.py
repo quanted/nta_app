@@ -2715,3 +2715,36 @@ def validation_col_rename(
     )
     # Return df_out
     return df_out
+
+
+def estimation_col_rename(
+    df_in,
+):
+    """
+    Function that renames a bunch of columns in preparation for printing the qNTA
+    estimation sheet(s).
+
+    Inputs:
+        df_in (dataframe)
+    Outputs:
+        df_out (dataframe)
+    """
+    # Copy input dataframe
+    df = df_in.copy()
+    # Remove Nans
+    df = df.loc[df["ConcEst"] > 0, :]
+    # Rename columns
+    df_out = df.rename(
+        columns={
+            "RF0.025": "Median RF (2.5th)",
+            "RF0.5": "Median RF (50th)",
+            "RF0.975": "Median RF (97.5th)",
+            "ConcLCL": "qNTA lower bound",
+            "ConcEst": "qNTA estimate",
+            "ConcUCL": "qNTA upper bound",
+        }
+    )
+    # Sort by Feature ID
+    df_out = df_out.sort_values("Feature ID")
+    # Return df_out
+    return df_out

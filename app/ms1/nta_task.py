@@ -1087,7 +1087,10 @@ class NtaRun:
             self.qnta_map["Calibration Curve Metrics"] = pd.concat([qnta_pos.cc_metrics, qnta_neg.cc_metrics])
             # Get RF percentiles, store in qnta datamap
             self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
+            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.RF_estimate_out)
             self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
+            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.RF_estimate_out)
+
             # Check status of validation_out
             if qnta_pos.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
@@ -1103,6 +1106,7 @@ class NtaRun:
             else:
                 # Generate AQ plots
                 self.aq_plots.append(None)
+                self.ecdf_plots.append(None)
             # Check status of validation_out
             if qnta_neg.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
@@ -1118,6 +1122,7 @@ class NtaRun:
             else:
                 # Generate AQ plots
                 self.aq_plots.append(None)
+                self.ecdf_plots.append(None)
 
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
@@ -1143,6 +1148,7 @@ class NtaRun:
             self.qnta_map["Calibration Curve Metrics"] = qnta_pos.cc_metrics
             # Get RF percentiles, store in qnta datamap
             self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
+            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.RF_estimate_out)
             # Check status of validation_out
             if qnta_pos.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
@@ -1182,6 +1188,7 @@ class NtaRun:
             self.qnta_map["Calibration Curve Metrics"] = qnta_neg.cc_metrics
             # Get RF percentiles, store in qnta datamap
             self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
+            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.RF_estimate_out)
             # Check status of validation_out
             if qnta_neg.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
