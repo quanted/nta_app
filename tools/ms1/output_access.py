@@ -200,6 +200,23 @@ class OutputServer:
             except (OperationFailure, TypeError, NoFile) as e:
                 break
 
+    def add_ecdf_plots_to_zip(self, zipf, jobid):
+        ecdf_plots = self.gridfs.get(f"{self.jobid}_ecdf_plots").read().decode("utf-8").split("&&")
+
+        for name in ecdf_plots:
+            try:
+                ecdf_id = jobid + "_" + name
+                db_record = self.gridfs.get(ecdf_id)
+                buffer = db_record.read()
+                project_name = db_record.project_name
+                if project_name:
+                    filename = project_name.replace(" ", "_") + "_" + name + ".png"
+                else:
+                    filename = ecdf_id + ".png"
+                zipf.writestr(filename, buffer)
+            except (OperationFailure, TypeError, NoFile) as e:
+                break
+
     def final_result(self):
         in_memory_zip = BytesIO()
 
@@ -269,6 +286,11 @@ class OutputServer:
 
             try:
                 self.add_aq_plots_to_zip(zipf, self.jobid)
+            except (OperationFailure, TypeError, NoFile) as e:
+                pass
+
+            try:
+                self.add_ecdf_plots_to_zip(zipf, self.jobid)
             except (OperationFailure, TypeError, NoFile) as e:
                 pass
 

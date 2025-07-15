@@ -1094,6 +1094,8 @@ class NtaRun:
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
                 # Generate AQ plots
                 self.aq_plots.append(qnta_pos.aq_plots_out)
+                # Generate ecdf plots
+                self.ecdf_plots.append(qnta_pos.ecdf_plots_out)
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1107,6 +1109,8 @@ class NtaRun:
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
                 # Generate AQ plots
                 self.aq_plots.append(qnta_neg.aq_plots_out)
+                # Generate ecdf plots
+                self.ecdf_plots.append(qnta_neg.ecdf_plots_out)
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1146,6 +1150,9 @@ class NtaRun:
                 # Generate AQ plots
                 self.aq_plots.append(qnta_pos.aq_plots_out)
                 self.aq_plots.append(None)
+                # Generate ecdf plots
+                self.ecdf_plots.append(qnta_pos.ecdf_plots_out)
+                self.ecdf_plots.append(None)
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1182,21 +1189,25 @@ class NtaRun:
                 # Generate AQ plots
                 self.aq_plots.append(None)
                 self.aq_plots.append(qnta_neg.aq_plots_out)
+                # Generate ecdf plots
+                self.ecdf_plots.append(None)
+                self.ecdf_plots.append(qnta_neg.ecdf_plots_out)
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
         # Store plots
         self.store_aq_plots()
+        self.store_ecdf_plots()
 
     def store_aq_plots(
         self,
     ):
         # Get pos and neg aq plots if not None
         if self.aq_plots[0] is not None:
-            self.aq_plots_map["aq_plot_pos"] = self.aq_plots[0][0]
+            self.aq_plots_map["AQ_plot_pos"] = self.aq_plots[0][0]
         if self.aq_plots[1] is not None:
-            self.aq_plots_map["aq_plot_neg"] = self.aq_plots[1][0]
+            self.aq_plots_map["AQ_plot_neg"] = self.aq_plots[1][0]
 
         # Convert the figure objects in tracer_map into PNGs that can be stored in gridfs
         for key in self.aq_plots_map.keys():
@@ -1216,6 +1227,34 @@ class NtaRun:
         )
         for key in self.aq_plots_map.keys():
             self.mongo_save(self.aq_plots_map[key], step=key)
+
+    def store_ecdf_plots(
+        self,
+    ):
+        # Get pos and neg aq plots if not None
+        if self.ecdf_plots[0] is not None:
+            self.ecdf_plots_map["cumulative_distribution_plot_pos"] = self.ecdf_plots[0][0]
+        if self.ecdf_plots[1] is not None:
+            self.ecdf_plots_map["cumulative_distribution_plot_neg"] = self.ecdf_plots[1][0]
+
+        # Convert the figure objects in tracer_map into PNGs that can be stored in gridfs
+        for key in self.ecdf_plots_map.keys():
+            buf = io.BytesIO()
+            # Save the figure in buffer as png
+            self.ecdf_plots_map[key].savefig(buf, bbox_inches="tight", format="png")
+            buf.seek(0)
+            self.ecdf_plots_map[key] = buf.read()
+
+        # Set project name
+        project_name = self.parameters["project_name"][1]
+        self.gridfs.put(
+            "&&".join(self.ecdf_plots_map.keys()),
+            _id=self.jobid + "_ecdf_plots",
+            encoding="utf-8",
+            project_name=project_name,
+        )
+        for key in self.ecdf_plots_map.keys():
+            self.mongo_save(self.ecdf_plots_map[key], step=key)
 
     def clean_features(self):
         """
