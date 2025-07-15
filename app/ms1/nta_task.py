@@ -1093,27 +1093,27 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
                 # Generate AQ plots
-                self.aq_plots += qnta_pos.aq_plots_out
+                self.aq_plots.append(qnta_pos.aq_plots_out)
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Pos Validation Summary"] = qnta_pos.summary_out
             else:
                 # Generate AQ plots
-                self.aq_plots += [None]
+                self.aq_plots.append(None)
             # Check status of validation_out
             if qnta_neg.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
                 # Generate AQ plots
-                self.aq_plots += qnta_neg.aq_plots_out
+                self.aq_plots.append(qnta_neg.aq_plots_out)
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
             else:
                 # Generate AQ plots
-                self.aq_plots += [None]
+                self.aq_plots.append(None)
 
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
@@ -1144,8 +1144,8 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
                 # Generate AQ plots
-                self.aq_plots += qnta_pos.aq_plots_out
-                self.aq_plots += [None]
+                self.aq_plots.append(qnta_pos.aq_plots_out)
+                self.aq_plots.append(None)
                 # Check status of summary_out
                 if qnta_pos.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1180,8 +1180,8 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
                 # Generate AQ plots
-                self.aq_plots += [None]
-                self.aq_plots += qnta_neg.aq_plots_out
+                self.aq_plots.append(None)
+                self.aq_plots.append(qnta_neg.aq_plots_out)
                 # Check status of summary_out
                 if qnta_neg.summary_out is not None:
                     # Get validation outputs, store in qnta datamap
@@ -1192,9 +1192,9 @@ class NtaRun:
     ):
         # Get pos and neg aq plots if not None
         if self.aq_plots[0] is not None:
-            self.aq_plots_map["aq_plot_pos"] = self.aq_plots[0]
+            self.aq_plots_map["aq_plot_pos"] = self.aq_plots[0][0]
         if self.aq_plots[1] is not None:
-            self.aq_plots_map["aq_plot_neg"] = self.aq_plots[1]
+            self.aq_plots_map["aq_plot_neg"] = self.aq_plots[1][0]
 
         # Convert the figure objects in tracer_map into PNGs that can be stored in gridfs
         for key in self.aq_plots_map.keys():
