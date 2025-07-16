@@ -1000,8 +1000,10 @@ class qNTAClass:
             a.set_xlabel("Metric", fontsize=16)
             a.set_ylabel("Value ($log_{10}$ scale)", fontsize=16)
             a.set_title("AQ Distribution(s)", fontsize=18, weight="bold")
-            a.tick_params(axis="y", labelsize=14)
-            a.tick_params(axis="x", labelsize=14)
+            a.tick_params(axis="y", which="major", labelsize=14, length=8, width=1)
+            a.tick_params(axis="y", which="minor", length=5, width=1)
+            a.tick_params(axis="x", which="major", labelsize=14, length=8, width=1)
+            # a.tick_params(axis='x', which = 'minor', length = 5, width =1)
 
             # Scatterplot
             c = sns.scatterplot(
@@ -1032,8 +1034,10 @@ class qNTAClass:
             c.set_xlabel("Targeted Concentration ($log_{10}$ scale)", fontsize=16)
             c.set_ylabel("AQ Value ($log_{10}$ scale)", fontsize=16)
             c.set_title("Concentration vs AQ Value", fontsize=18, weight="bold")
-            c.tick_params(axis="y", labelsize=14)
-            c.tick_params(axis="x", labelsize=14)
+            c.tick_params(axis="y", which="major", labelsize=14, length=8, width=1)
+            c.tick_params(axis="y", which="minor", length=5, width=1)
+            c.tick_params(axis="x", which="major", labelsize=14, length=8, width=1)
+            c.tick_params(axis="x", which="minor", length=5, width=1)
             # Legend
             red_patch = mpatches.Patch(facecolor="firebrick", label="AQ", edgecolor="black")
             yellow_patch = mpatches.Patch(facecolor="darkorchid", label="AQ (LOO)", edgecolor="black")
@@ -1094,8 +1098,8 @@ class qNTAClass:
         if LOO:
             b = sns.ecdfplot(data=ecdf_data, x="AAQ_LOO", color="darkorchid", linewidth=2, ax=ax[0])
             # Legend
-            red_patch = mpatches.Patch(facecolor="firebrick", label="AQ", edgecolor="black")
-            yellow_patch = mpatches.Patch(facecolor="darkorchid", label="AQ (LOO)", edgecolor="black")
+            red_patch = mpatches.Patch(facecolor="firebrick", label="AAQ", edgecolor="black")
+            yellow_patch = mpatches.Patch(facecolor="darkorchid", label="AAQ (LOO)", edgecolor="black")
             legend = a.legend(handles=[red_patch, yellow_patch], loc="upper left", fontsize=14)
             frame = legend.get_frame()  # sets up for color, edge, and transparency
             frame.set_facecolor("lightgray")  # color of legend
@@ -1106,11 +1110,13 @@ class qNTAClass:
         a.set(
             xscale="log",
         )
-        a.set_xlabel("Metric", fontsize=16)
+        a.set_xlabel("Value", fontsize=16)
         a.set_ylabel("Proportion", fontsize=16)
         a.set_title("AAQ Cumulative Distribution(s)", fontsize=18, weight="bold")
-        a.tick_params(axis="y", labelsize=14)
-        a.tick_params(axis="x", labelsize=14)
+        a.tick_params(axis="y", which="major", labelsize=14, length=8, width=1)
+        a.tick_params(axis="y", which="minor", length=5, width=1)
+        a.tick_params(axis="x", which="major", labelsize=14, length=8, width=1)
+        a.tick_params(axis="x", which="minor", length=5, width=1)
 
         # Scatterplot
         # First axis plot
@@ -1131,11 +1137,13 @@ class qNTAClass:
         c.set(
             xscale="log",
         )
-        c.set_xlabel("Metric", fontsize=16)
+        c.set_xlabel("Value", fontsize=16)
         c.set_ylabel("Proportion", fontsize=16)
         c.set_title("CLFR Cumulative Distribution(s)", fontsize=18, weight="bold")
-        c.tick_params(axis="y", labelsize=14)
-        c.tick_params(axis="x", labelsize=14)
+        c.tick_params(axis="y", which="major", labelsize=14, length=8, width=1)
+        c.tick_params(axis="y", which="minor", length=5, width=1)
+        c.tick_params(axis="x", which="major", labelsize=14, length=8, width=1)
+        c.tick_params(axis="x", which="minor", length=5, width=1)
 
         """Save .png to Class variable"""
         # Store item in class variable
