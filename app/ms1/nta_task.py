@@ -1597,8 +1597,9 @@ class NtaRun:
         # Obtain a list of all keys in the data map (These will become the excel workbook sheet names)
         keys_list = list(self.data_map.keys())
 
-        # save the csv for QAQC visuals to mongo
+        # save the csv files for QAQC visuals to mongo
         self.save_QAQC_csv_to_mongo()
+        self.save_parameters_csv_to_mongo()
 
         # Check for 'Chemical Results' in keys list
         if "Chemical Results" in keys_list:
@@ -1721,6 +1722,26 @@ class NtaRun:
 
         # Save csv file to MongoDB using id
         id = self.jobid + "_csv_for_QAQC_visuals"
+        self.gridfs.put(csv_data.encode(), _id=id)
+
+        # Clear the buffer to free memory
+        in_memory_buffer.close()
+        # Delete the temporary dataframe/csv to free memory
+        del newdf
+        del csv_data
+        # Prompt garbage collection
+        gc.collect()
+
+    def save_parameters_csv_to_mongo(self):
+        in_memory_buffer = io.StringIO()
+
+        newdf = self.data_map["Analysis Parameters"]
+        newdf.to_csv(in_memory_buffer, index=False)
+
+        csv_data = in_memory_buffer.getvalue()
+
+        # Save csv file to MongoDB using id
+        id = self.jobid + "_csv_for_QAQC_visuals(analysis_parameters)"
         self.gridfs.put(csv_data.encode(), _id=id)
 
         # Clear the buffer to free memory
