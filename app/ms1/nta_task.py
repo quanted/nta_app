@@ -19,7 +19,6 @@ from .utilities import *
 
 from .heatmap import *
 from .cv_scatterplot import *
-from .qnta_aq_plot import *
 
 from . import task_functions as task_fun
 from .WebApp_plotter import WebApp_plotter
