@@ -237,7 +237,7 @@ class OutputServer:
             )
             project_name = str(self.gridfs.get(f"{self.jobid}_project_name_QAQC").read(), "utf-8")
             filename = project_name.replace(" ", "_") + "_for_QAQC_visuals(analysis parameters).csv"
-            zipf.writestr(filename, QAQC_csv_file)
+            zipf.writestr(filename, parameters_csv_file)
 
             try:
                 chem_data = self.gridfs.get(f"{self.jobid}_excel_chem").read()
