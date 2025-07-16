@@ -831,6 +831,8 @@ class qNTAClass:
                     ].shape[0]
                     / validation_out.shape[0]
                 )
+                summary_out["Metric Aggregate"] = ["Minimum", "Median", "Maximum"]
+                summary_out = summary_out.set_index("Metric Aggregate").reset_index()
                 return summary_out
             else:
                 summary_out = validation_out.loc[:, ["AQ", "AAQ", "CLFR"]].agg(["min", "median", "max"])
@@ -841,6 +843,8 @@ class qNTAClass:
                     ].shape[0]
                     / validation_out.shape[0]
                 )
+                summary_out["Metric Aggregate"] = ["Minimum", "Median", "Maximum"]
+                summary_out = summary_out.set_index("Metric Aggregate").reset_index()
                 return summary_out
         else:
             # Change from wide to long form (for performance metric columns)
@@ -968,7 +972,7 @@ class qNTAClass:
             sns.set_style("ticks")
             plt.xticks(fontsize=16)
             plt.yticks(fontsize=16)
-            palette = ["firebrick", "darkorchid"]
+            palette = ["dodgerblue", "darkorange"]
             sns.set_palette(palette, 2)
             # Boxplot
             # First axis plot
@@ -1010,7 +1014,7 @@ class qNTAClass:
                 data=plot2,
                 x="ConcTargeted",
                 y="AQ",
-                color="firebrick",
+                color="dodgerblue",
                 s=50,
                 edgecolor="black",
                 linewidth=1,
@@ -1021,7 +1025,7 @@ class qNTAClass:
                 data=plot2,
                 x="ConcTargeted",
                 y="AQ (LOO)",
-                color="darkorchid",
+                color="darkorange",
                 s=50,
                 marker="s",
                 edgecolor="black",
@@ -1039,9 +1043,9 @@ class qNTAClass:
             c.tick_params(axis="x", which="major", labelsize=14, length=8, width=1)
             c.tick_params(axis="x", which="minor", length=5, width=1)
             # Legend
-            red_patch = mpatches.Patch(facecolor="firebrick", label="AQ", edgecolor="black")
-            yellow_patch = mpatches.Patch(facecolor="darkorchid", label="AQ (LOO)", edgecolor="black")
-            legend = c.legend(handles=[red_patch, yellow_patch], loc="upper right", fontsize=14)
+            AQ_patch = mpatches.Patch(facecolor="dodgerblue", label="AQ", edgecolor="black")
+            AQ_LOO_patch = mpatches.Patch(facecolor="darkorange", label="AQ (LOO)", edgecolor="black")
+            legend = c.legend(handles=[AQ_patch, AQ_LOO_patch], loc="upper right", fontsize=14)
             frame = legend.get_frame()  # sets up for color, edge, and transparency
             frame.set_facecolor("lightgray")  # color of legend
             frame.set_edgecolor("black")  # edge color of legend
@@ -1089,18 +1093,18 @@ class qNTAClass:
         sns.set_style("ticks")
         plt.xticks(fontsize=16)
         plt.yticks(fontsize=16)
-        palette = ["firebrick", "darkgoldenrod"]
+        palette = ["dodgerblue", "darkorange"]
         sns.set_palette(palette, 2)
         # Boxplot
         # First axis plot
-        a = sns.ecdfplot(data=ecdf_data, x="AAQ", color="firebrick", linewidth=2, ax=ax[0])
+        a = sns.ecdfplot(data=ecdf_data, x="AAQ", color="dodgerblue", linewidth=2, ax=ax[0])
         # Add LOO if present
         if LOO:
-            b = sns.ecdfplot(data=ecdf_data, x="AAQ_LOO", color="darkorchid", linewidth=2, ax=ax[0])
+            b = sns.ecdfplot(data=ecdf_data, x="AAQ_LOO", color="darkorange", linewidth=2, ax=ax[0])
             # Legend
-            red_patch = mpatches.Patch(facecolor="firebrick", label="AAQ", edgecolor="black")
-            yellow_patch = mpatches.Patch(facecolor="darkorchid", label="AAQ (LOO)", edgecolor="black")
-            legend = a.legend(handles=[red_patch, yellow_patch], loc="upper left", fontsize=14)
+            AAQ_patch = mpatches.Patch(facecolor="dodgerblue", label="AAQ", edgecolor="black")
+            AAQ_LOO_patch = mpatches.Patch(facecolor="darkorange", label="AAQ (LOO)", edgecolor="black")
+            legend = a.legend(handles=[AAQ_patch, AAQ_LOO_patch], loc="upper left", fontsize=14)
             frame = legend.get_frame()  # sets up for color, edge, and transparency
             frame.set_facecolor("lightgray")  # color of legend
             frame.set_edgecolor("black")  # edge color of legend
@@ -1120,14 +1124,14 @@ class qNTAClass:
 
         # Scatterplot
         # First axis plot
-        c = sns.ecdfplot(data=ecdf_data, x="CLFR", color="firebrick", linewidth=2, ax=ax[1])
+        c = sns.ecdfplot(data=ecdf_data, x="CLFR", color="dodgerblue", linewidth=2, ax=ax[1])
         # Add LOO if present
         if LOO:
-            d = sns.ecdfplot(data=ecdf_data, x="CLFR_LOO", color="darkorchid", linewidth=2, ax=ax[1])
+            d = sns.ecdfplot(data=ecdf_data, x="CLFR_LOO", color="darkorange", linewidth=2, ax=ax[1])
             # Legend
-            red_patch = mpatches.Patch(facecolor="firebrick", label="CLFR", edgecolor="black")
-            yellow_patch = mpatches.Patch(facecolor="darkorchid", label="CLFR (LOO)", edgecolor="black")
-            legend = c.legend(handles=[red_patch, yellow_patch], loc="upper left", fontsize=14)
+            CLFR_patch = mpatches.Patch(facecolor="dodgerblue", label="CLFR", edgecolor="black")
+            CLFR_LOO_patch = mpatches.Patch(facecolor="darkorange", label="CLFR (LOO)", edgecolor="black")
+            legend = c.legend(handles=[CLFR_patch, CLFR_LOO_patch], loc="upper left", fontsize=14)
             frame = legend.get_frame()  # sets up for color, edge, and transparency
             frame.set_facecolor("lightgray")  # color of legend
             frame.set_edgecolor("black")  # edge color of legend
