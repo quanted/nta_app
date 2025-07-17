@@ -2365,6 +2365,13 @@ def qnta_preprocessing(
                 if col.startswith("ContSub BlankSub Mean ")
             }
         )
+        occ_df = occ_df.rename(
+            columns={
+                col: "ControlSub BlankSub Mean " + col[22:]
+                for col in occ_df.columns
+                if col.startswith("ContSub BlankSub Mean ")
+            }
+        )
     # Returns 1) surrogate data (dfq), 2) combined dataframe with 'Surrogate Chemical Match?' appended (dfc),
     # and 3) occurrence dataframe of BlankSub Means (occ_df)
     return dfq, dfc, occ_df
