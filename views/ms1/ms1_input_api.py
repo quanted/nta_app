@@ -302,7 +302,7 @@ def ms1_run_api(request):
                     run_sequence_neg_df = None
                 try:
                     qnta_file = request.FILES["qnta_input"]
-                    qnta_df = file_manager.tracer_handler(qnta_file)
+                    qnta_df = file_manager.qNTA_handler(qnta_file)
                     # save the name of the file to the inputParameters dictionary
                     inputParameters["qnta_input"][1] = qnta_file.name
                 except Exception:
