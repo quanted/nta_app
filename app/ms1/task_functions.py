@@ -2690,6 +2690,7 @@ def surrogate_grouping(
     """Recombine with original frame"""
     # Get observations for original frame not in surrs
     df = df.loc[~df["Surrogate Group"].isin(sgs), :]
+    df["Feature ID"] = df["Feature ID"].astype(int)
     # Combine df and surrs
     output = pd.concat([df, output])
     # Return output

@@ -100,8 +100,8 @@ class qNTAClass:
         logger.info("chems length: {}".format(len(self.surrogate_cal_data_long_nonzero_chems)))
         # logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_validation_data()
-        logger.info("surr Feat_ID: {}".format(self.surrogate_cal_data["Feature_ID"].head()))
-        logger.info("occ Feat_ID: {}".format(self.occurrence_data["Feature_ID"].head()))
+        logger.info("surr Feat_ID: {}".format(self.surrogate_cal_data["Feature ID"].head()))
+        logger.info("occ Feat_ID: {}".format(self.occurrence_data["Feature ID"].head()))
         logger.info("val Feat_ID: {}".format(self.validation_data.head()))
         # logger.info("val data type = {}".format(type(self.validation_data)))
         """Perform Calibration Curve Methods"""
