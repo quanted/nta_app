@@ -2261,6 +2261,8 @@ def qnta_preprocessing(
         to_drop = [col for col in dfq.columns if any(x in col for x in conts)]
         dfq.drop(to_drop, axis=1, inplace=True)
 
+    logger.info("qnta_preprocessing prefix: {}".format(prefix))
+
     """Calculate RFs"""
 
     # Iterate through columns in cals and dfq to locate BS/CSBS Means, Concs, and RFs
