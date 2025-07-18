@@ -590,7 +590,7 @@ class qNTAClass:
             if prefix == "BlankSub Mean":
                 RF_estimate_out["Sample"] = [i[14:] for i in RF_estimate_out["Sample"]]
             else:
-                RF_estimate_out["Sample"] = [i[22:] for i in RF_estimate_out["Sample"]]
+                RF_estimate_out["Sample"] = [i[25:] for i in RF_estimate_out["Sample"]]
             # Divide BlankSub Mean abundance by RF percentiles to get concentration estimates
             # Account for data shape of RF_estimate_out (if minimum and maximum of percentiles estimates across repetitions are present)
             if rep_range:
