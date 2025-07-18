@@ -92,6 +92,7 @@ class qNTAClass:
         self.check_parameters()
         # logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_occurrences()
+        logger.info("occ length: {}".format(len(self.occurrence_data)))
         # logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_RF_input()
         logger.info("surr length: {}".format(len(self.surrogate_cal_data)))
@@ -262,21 +263,24 @@ class qNTAClass:
             col = "ControlSub BlankSub Mean"
         else:
             col = "BlankSub Mean"
+        logger.info("chosen col: {}".format(col))
         # Get cols
         prefixes = ["Conc", "RF"] + [col]
         cols = ["Feature ID", "Chemical Name", "Surrogate Group", "Retention Time", "Ionization Mode"] + [
             col for col in surr.columns if any(col.startswith(x) for x in prefixes)
         ]
+        logger.info("cols found in surr: {}".format(cols))
         # Pivot surrogate_cal_data wide to long
-        long = pd.wide_to_long(
+        long_raw = pd.wide_to_long(
             surr[cols], stubnames=prefixes, i="Feature ID", j="Cal Level", sep=" ", suffix="(\d+|\w+)"
         ).reset_index()
+        logger.info("long_raw length: {}".format(len(long_raw)))
         # Change Conc column to numeric
-        long["Conc"] = pd.to_numeric(long["Conc"])
-        long["RF"] = pd.to_numeric(long["RF"])
+        long_raw["Conc"] = pd.to_numeric(long_raw["Conc"])
+        long_raw["RF"] = pd.to_numeric(long_raw["RF"])
         # Keep only BlankSub Mean abundances > 0 to avoid problems with log-10 transform
         # we also don't want to have RFs of 0 in the surrogate set
-        long_nz = long.loc[((long[col] > 0) & (long["RF"] > 0)), :]
+        long_nz = long_raw.loc[((long_raw[col] > 0) & (long_raw["RF"] > 0)), :]
         # Add log-10 transformed columns for BlankSub Mean Abundance and Concentration
         long_nz = long_nz.assign(LogAbun=np.log10(long_nz[col]), LogConc=np.log10(long_nz["Conc"]))
         # Store unique chemical names in class variable

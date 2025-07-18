@@ -1066,6 +1066,7 @@ class NtaRun:
                 val_neg = None
             # Create qNTAClass object for pos mode data
             logger.info("POS surr length: {}".format(len(self.qnta_dfs_out[0])))
+            logger.info("POS occ length: {}".format(len(self.qnta_occ_input[0])))
             qnta_pos = qNTAClass(
                 self.qnta_dfs_out[0],
                 validation_input=val_pos,
@@ -1076,6 +1077,7 @@ class NtaRun:
             qnta_pos.execute()
             # Create qNTAClass object for neg mode data
             logger.info("NEG surr length: {}".format(len(self.qnta_dfs_out[1])))
+            logger.info("NEG occ length: {}".format(len(self.qnta_occ_input[1])))
             qnta_neg = qNTAClass(
                 self.qnta_dfs_out[1],
                 validation_input=val_neg,
@@ -1138,6 +1140,7 @@ class NtaRun:
                 val_pos = None
             # Create qNTAClass object for pos mode data
             logger.info("POS surr length: {}".format(len(self.qnta_dfs_out[0])))
+            logger.info("POS occ length: {}".format(len(self.qnta_occ_input[0])))
             qnta_pos = qNTAClass(
                 self.qnta_dfs_out[0],
                 validation_input=val_pos,
@@ -1180,6 +1183,7 @@ class NtaRun:
                 val_neg = None
             # Create qNTAClass object for neg mode data
             logger.info("NEG surr length: {}".format(len(self.qnta_dfs_out[1])))
+            logger.info("NEG occ length: {}".format(len(self.qnta_occ_input[1])))
             qnta_neg = qNTAClass(
                 self.qnta_dfs_out[1],
                 validation_input=val_neg,
