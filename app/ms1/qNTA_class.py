@@ -102,7 +102,7 @@ class qNTAClass:
         self.check_validation_data()
         logger.info("surr Feat_ID: {}".format(self.surrogate_cal_data["Feature ID"].head()))
         logger.info("occ Feat_ID: {}".format(self.occurrence_data["Feature ID"].head()))
-        logger.info("val Feat_ID: {}".format(self.validation_data.head()))
+        logger.info("val Feat_ID: {}".format(self.validation_data["Feature ID"].head()))
         # logger.info("val data type = {}".format(type(self.validation_data)))
         """Perform Calibration Curve Methods"""
         self.cal_curve_all_metrics()
@@ -697,6 +697,7 @@ class qNTAClass:
         if self.parameters["internal"]:
             # Set conc_cols
             conc_cols = [col[5:] for col in surr.columns if col.startswith("Conc ")]
+            logger.info("conc cols: {}".format(conc_cols))
         conc_cols = [col for col in val.select_dtypes(include=np.number).columns if not any(x in col for x in prefixes)]
         # Calculate global bootstrap RF percentiles and use to make concentration estimates
         # NOTE: For internal, occurrence_data must contain columns with names that correspond to conc_cols
@@ -732,6 +733,8 @@ class qNTAClass:
                     val, id_vars="Feature ID", value_vars=conc_cols, var_name="Sample", value_name="ConcTargeted"
                 )
                 logger.info("length val (melt) = {}".format(len(val)))
+                logger.info("val melt cols: {}".format(val.columns.tolist()))
+                logger.info("val melt Sample head: {}".format(val["Sample"].head()))
                 # Add _LOO suffix to column names (to distinguish LOO columns when
                 # adding to global estimates DataFrame)
                 LOO_out = LOO_out.rename(
@@ -744,12 +747,15 @@ class qNTAClass:
                 # Ensure that correct ConcTargeted and ConcLCL, Est, UCL are compared
                 LOO_out = pd.merge(LOO_out, val, on=["Feature ID", "Sample"], how="left")
                 logger.info("length LOO_out and val merge = {}".format(len(LOO_out)))
+                logger.info("LOO_out val melt cols: {}".format(LOO_out.columns.tolist()))
                 # Calculate qNTA performance metrics for accuracy and uncertainty
                 LOO_out["AQ_LOO"] = LOO_out["ConcEst_LOO"] / LOO_out["ConcTargeted"]
                 LOO_out["AAQ_LOO"] = 10 ** np.abs(np.log10(LOO_out["AQ_LOO"]))
                 LOO_out["CLFR_LOO"] = LOO_out["ConcUCL_LOO"] / LOO_out["ConcLCL_LOO"]
                 LOO_out = LOO_out.drop(columns=["ConcTargeted"])  # ConcTargeted will be merged again later
                 # Left outer join keeps a row for all chemicals in validation data, with np.NaN (pd.NA?) for qNTA columns if not in global_out
+                logger.info("global out count ConcEst: {}".format(len(global_out.loc[global_out["ConcEst"] > 0, :])))
+                logger.info("global out Sample head: {}".format(global_out["Sample"].head()))
                 validation_out = pd.merge(global_out, val, on=["Feature ID", "Sample"], how="left")
                 logger.info("length validation_out (global_out and val merge) = {}".format(len(validation_out)))
                 validation_out["AQ"] = validation_out["ConcEst"] / validation_out["ConcTargeted"]
