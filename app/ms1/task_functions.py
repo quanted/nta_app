@@ -2197,6 +2197,8 @@ def qnta_preprocessing(
     # Copy input dataframe
     df1 = df_in.copy()
     df2 = qnta_df.copy()
+    logger.info("df2 start length: {}".format(len(df2)))
+    logger.info("df2 start cols: {}".format(df2.columns.tolist()))
     # Match qnta input to df to find surrogates
     # Get sample group information
     blanks = [
@@ -2221,6 +2223,7 @@ def qnta_preprocessing(
 
     # Get columns associated with the calibrations
     li = list(df2.columns[6:])
+    logger.info("qnta_preprocessing li: {}".format(li))
     prefixes = [
         "Mean ",
         "Median ",
@@ -2262,6 +2265,8 @@ def qnta_preprocessing(
         dfq.drop(to_drop, axis=1, inplace=True)
 
     logger.info("qnta_preprocessing prefix: {}".format(prefix))
+    logger.info("dfq post csbs length: {}".format(len(dfq)))
+    logger.info("dfq post csbs cols: {}".format(dfq.columns.tolist()))
 
     """Calculate RFs"""
 
@@ -2320,6 +2325,8 @@ def qnta_preprocessing(
     # Add bsmeans onto occ_df
     int_val_columns = ["Feature ID"] + bsmeans
     occ_df = pd.merge(occ_df, dfq[int_val_columns], how="left", on="Feature ID")
+    logger.info("occ_df pre column_sort_DFS length: {}".format(len(occ_df)))
+    logger.info("occ_df pre column_sort_DFS cols: {}".format(occ_df.columns.tolist()))
 
     """Column sort, check for duplicate errors, do optional surrogate grouping"""
 
@@ -2374,6 +2381,10 @@ def qnta_preprocessing(
                 if col.startswith("ContSub BlankSub Mean ")
             }
         )
+    logger.info("occ_df final length: {}".format(len(occ_df)))
+    logger.info("occ_df final cols: {}".format(occ_df.columns.tolist()))
+    logger.info("dfq final length: {}".format(len(dfq)))
+    logger.info("dfq final cols: {}".format(dfq.columns.tolist()))
     # Returns 1) surrogate data (dfq), 2) combined dataframe with 'Surrogate Chemical Match?' appended (dfc),
     # and 3) occurrence dataframe of BlankSub Means (occ_df)
     return dfq, dfc, occ_df
