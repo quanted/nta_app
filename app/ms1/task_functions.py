@@ -2382,9 +2382,10 @@ def qnta_preprocessing(
             }
         )
     logger.info("occ_df final length: {}".format(len(occ_df)))
-    logger.info("occ_df final cols: {}".format(occ_df.columns.tolist()))
+    logger.info("occ_df Feat_ID: {}".format(occ_df["Feature ID"].head()))
     logger.info("dfq final length: {}".format(len(dfq)))
-    logger.info("dfq final cols: {}".format(dfq.columns.tolist()))
+    logger.info("dfq Feat_ID: {}".format(dfq["Feature ID"].head()))
+
     # Returns 1) surrogate data (dfq), 2) combined dataframe with 'Surrogate Chemical Match?' appended (dfc),
     # and 3) occurrence dataframe of BlankSub Means (occ_df)
     return dfq, dfc, occ_df

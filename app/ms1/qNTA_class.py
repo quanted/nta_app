@@ -100,6 +100,9 @@ class qNTAClass:
         logger.info("chems length: {}".format(len(self.surrogate_cal_data_long_nonzero_chems)))
         # logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_validation_data()
+        logger.info("surr Feat_ID: {}".format(self.surrogate_cal_data["Feature_ID"].head()))
+        logger.info("occ Feat_ID: {}".format(self.occurrence_data["Feature_ID"].head()))
+        logger.info("val Feat_ID: {}".format(self.validation_data.head()))
         # logger.info("val data type = {}".format(type(self.validation_data)))
         """Perform Calibration Curve Methods"""
         self.cal_curve_all_metrics()
@@ -248,8 +251,8 @@ class qNTAClass:
         """
         # Copy input
         surr = self.surrogate_cal_data.copy()
-        logger.info("POS surr 1 length: {}".format(len(surr)))
-        logger.info("POS surr 1 cols: {}".format(surr.columns.tolist()))
+        # logger.info("POS surr 1 length: {}".format(len(surr)))
+        # logger.info("POS surr 1 cols: {}".format(surr.columns.tolist()))
         # Coerce "Feature ID" to str
         surr["Feature ID"] = surr["Feature ID"].astype(str)
         # Store surr
@@ -260,8 +263,8 @@ class qNTAClass:
             "control",
             "CONTROL",
         ]
-        logger.info("POS surr 1 length: {}".format(len(surr)))
-        logger.info("POS surr 1 cols: {}".format(surr.columns.tolist()))
+        # logger.info("POS surr 1 length: {}".format(len(surr)))
+        # logger.info("POS surr 1 cols: {}".format(surr.columns.tolist()))
 
         li = [item for item in surr.columns if item.startswith("ControlSub")]
         logger.info("li for if statement: {}".format(li))
