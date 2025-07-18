@@ -263,11 +263,11 @@ class qNTAClass:
         logger.info("POS surr 1 length: {}".format(len(surr)))
         logger.info("POS surr 1 cols: {}".format(surr.columns.tolist()))
 
-        li = [item for item in surr.columns if any(x in item for x in controls)]
+        li = [item for item in surr.columns if item.startswith("ControlSub")]
         logger.info("li for if statement: {}".format(li))
 
         # Check for Control - if present we want ControlSub, else we want BlankSub
-        if any(item for item in surr.columns if any(x in item for x in controls)):
+        if len(li) > 0:
             col = "ControlSub BlankSub Mean"
         else:
             col = "BlankSub Mean"
