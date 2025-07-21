@@ -165,6 +165,7 @@ class NtaRun:
         self.run_sequence_neg_df = run_sequence_neg_df
         self.dfs = input_dfs
         self.qnta_df = qnta_df
+        self.qnta_samples = None
         self.val_df = val_df
         self.qnta_dfs_out = None
         self.qnta_occ_input = None
@@ -291,6 +292,10 @@ class NtaRun:
         # Optional: Perform qNTA
         if self.parameters["do_qnta"][1] == "yes":
             self.step = "Performing qNTA"
+            self.qnta_samples = [
+                item[0][:-1] for item in self.sample_headers if not any(x in item[0][:-1] for x in self.qnta_df.columns)
+            ]
+            logger.info(f"qNTA samples: {self.qnta_samples}")
             self.perform_qNTA()
 
         # 5a: clean features
