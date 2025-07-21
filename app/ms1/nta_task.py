@@ -1076,6 +1076,7 @@ class NtaRun:
                 self.qnta_dfs_out[0],
                 validation_input=val_pos,
                 occurrence_input=self.qnta_occ_input[0],
+                qnta_samples=self.qnta_samples,
                 parameters=None,
             )
             # Execute class functions
@@ -1087,6 +1088,7 @@ class NtaRun:
                 self.qnta_dfs_out[1],
                 validation_input=val_neg,
                 occurrence_input=self.qnta_occ_input[1],
+                qnta_samples=self.qnta_samples,
                 parameters=None,
             )
             # Execute class functions
@@ -1151,6 +1153,7 @@ class NtaRun:
                 self.qnta_dfs_out[0],
                 validation_input=val_pos,
                 occurrence_input=self.qnta_occ_input[0],
+                qnta_samples=self.qnta_samples,
                 parameters=None,
             )
             # Execute class functions
@@ -1195,6 +1198,7 @@ class NtaRun:
                 self.qnta_dfs_out[1],
                 validation_input=val_neg,
                 occurrence_input=self.qnta_occ_input[1],
+                qnta_samples=self.qnta_samples,
                 parameters=None,
             )
             # Execute class functions
