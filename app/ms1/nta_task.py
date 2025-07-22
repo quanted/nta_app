@@ -1103,7 +1103,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
                 # Generate AQ plots
-                self.aq_plots.append(qnta_pos.aq_plots_out)
+                self.aq_plots.append(qnta_pos.AQ_plots_out)
                 # Generate ecdf plots
                 self.ecdf_plots.append(qnta_pos.ecdf_plots_out)
                 # Check status of summary_out
@@ -1119,7 +1119,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
                 # Generate AQ plots
-                self.aq_plots.append(qnta_neg.aq_plots_out)
+                self.aq_plots.append(qnta_neg.AQ_plots_out)
                 # Generate ecdf plots
                 self.ecdf_plots.append(qnta_neg.ecdf_plots_out)
                 # Check status of summary_out
@@ -1131,8 +1131,8 @@ class NtaRun:
                 self.aq_plots.append(None)
                 self.ecdf_plots.append(None)
             # Add Estimates to output
-            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.RF_estimate_out)
-            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.RF_estimate_out)
+            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.estimate_out)
+            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.estimate_out)
 
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
@@ -1167,7 +1167,7 @@ class NtaRun:
                 # Get validation outputs, store in qnta datamap
                 self.qnta_map["Pos Validation Output"] = task_fun.validation_col_rename(qnta_pos.validation_out)
                 # Generate AQ plots
-                self.aq_plots.append(qnta_pos.aq_plots_out)
+                self.aq_plots.append(qnta_pos.AQ_plots_out)
                 self.aq_plots.append(None)
                 # Generate ecdf plots
                 self.ecdf_plots.append(qnta_pos.ecdf_plots_out)
@@ -1177,7 +1177,7 @@ class NtaRun:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Pos Validation Summary"] = qnta_pos.summary_out
             # Add estimates to output
-            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.RF_estimate_out)
+            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.estimate_out)
 
         # If only negative mode, instantiate negative mode and execute object
         else:
@@ -1213,7 +1213,7 @@ class NtaRun:
                 self.qnta_map["Neg Validation Output"] = task_fun.validation_col_rename(qnta_neg.validation_out)
                 # Generate AQ plots
                 self.aq_plots.append(None)
-                self.aq_plots.append(qnta_neg.aq_plots_out)
+                self.aq_plots.append(qnta_neg.AQ_plots_out)
                 # Generate ecdf plots
                 self.ecdf_plots.append(None)
                 self.ecdf_plots.append(qnta_neg.ecdf_plots_out)
@@ -1222,7 +1222,7 @@ class NtaRun:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
             # Add estimates to output
-            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.RF_estimate_out)
+            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.estimate_out)
         # Store plots
         self.store_aq_plots()
         self.store_ecdf_plots()

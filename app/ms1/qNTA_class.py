@@ -73,12 +73,13 @@ class qNTAClass:
         self.surrogate_cal_data = surrogate_cal_data.fillna(0)
         self.validation_data = validation_input
         self.occurrence_data = occurrence_input
+        self.occurrence_data_int = None
         self.qnta_samples = qnta_samples
         # Dataframes to be calculated
         self.surrogate_cal_data_long_nonzero = None
         self.surrogate_cal_data_long_nonzero_chems = None
-        self.occurrences_data_nonzero = None
         self.RF_estimate_out = None
+        self.estimate_out = None
         self.percentiles = None
         self.RF_percs = None
         self.RF_array = None
@@ -86,7 +87,7 @@ class qNTAClass:
         self.summary_out = None
         # Plot holders
         self.cc_metrics = None
-        self.aq_plots_out = []
+        self.AQ_plots_out = []
         self.ecdf_plots_out = []
 
     def execute(self):
@@ -136,6 +137,19 @@ class qNTAClass:
         )
         logger.info("RF_est_out head: {}".format(self.RF_estimate_out.head()))
         logger.info("val_out data type = {}".format(type(self.validation_out)))
+        # Check internal validation - if True, perform RF estimate on sample data for estimate out
+        if self.parameters["internal"]:
+            self.estimate_out = self.RF_boot_estimate(
+                self.surrogate_cal_data_long_nonzero,
+                self.occurrence_data_int,
+                seed=self.parameters["seed"],
+                reps=self.parameters["reps"],
+                alpha=self.parameters["alpha"],
+                rep_range=self.parameters["rep_range"],
+                long_form=self.parameters["long_form"],
+            )
+        else:
+            self.estimate_out = self.RF_estimate_out.copy()
         # Perform bootstrap validation
         self.validation_out = self.RF_boot_validation(
             seed=self.parameters["seed"],
@@ -174,16 +188,32 @@ class qNTAClass:
         if self.parameters is not None:
             self.percentiles = np.multiply([self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100)
         else:
-            self.parameters = {
-                "seed": 1,
-                "reps": 10000,
-                "alpha": 0.05,
-                "rep_range": True,
-                "long_form": True,
-                "LOO": True,
-                "internal": False,
-            }
-            self.percentiles = np.multiply([self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100)
+            if self.validation_data is not None:
+                self.parameters = {
+                    "seed": 1,
+                    "reps": 10000,
+                    "alpha": 0.05,
+                    "rep_range": True,
+                    "long_form": True,
+                    "LOO": True,
+                    "internal": False,
+                }
+                self.percentiles = np.multiply(
+                    [self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100
+                )
+            else:
+                self.parameters = {
+                    "seed": 1,
+                    "reps": 10000,
+                    "alpha": 0.05,
+                    "rep_range": True,
+                    "long_form": True,
+                    "LOO": True,
+                    "internal": True,
+                }
+                self.percentiles = np.multiply(
+                    [self.parameters["alpha"] / 2, 0.5, 1 - (self.parameters["alpha"] / 2)], 100
+                )
 
     def check_occurrences(self):
         """
@@ -209,13 +239,14 @@ class qNTAClass:
         val = self.validation_data
         surr = self.surrogate_cal_data.copy()
         qnta_samples = self.qnta_samples
-        if occ is not None:
-            # Get cols (only take columns also in val; e.g., no Pool)
-            front = [col for col in occ.columns if any(x in col for x in ["Feature", "Chemical", "Retention"])]
+        # Get cols (only take columns also in val; e.g., no Pool)
+        front = [col for col in occ.columns if any(x in col for x in ["Feature", "Chemical", "Retention"])]
+
+        if val is not None:
             back = [
                 col
                 for col in occ.columns
-                if (col.startswith(("BlankSub ", "ControlSub ")) and any(x in col for x in qnta_samples))
+                if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x in col for x in val.columns))
             ]
             # Pare occ down to front + back
             occ = occ[front + back]
@@ -223,16 +254,27 @@ class qNTAClass:
             occ["Feature ID"] = occ["Feature ID"].astype(str)
             # Pare occ down to front + back
             self.occurrence_data = occ
+            self.occurrence_data_int = None
         else:
-            # Copy input
-            surr = self.surrogate_cal_data.copy()
-            # Get cols
-            front = ["Feature ID", "Chemical Name", "Retention Time"]
-            back = [col for col in surr.columns if col.startswith("BlankSub Mean")]
-            cols = front + back
-            # Subset columns from self.surrogate_cal_data, store
-            occ = surr[cols]
-            self.occurrence_data = occ
+            back = [
+                col
+                for col in occ.columns
+                if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x == col for x in surr.columns))
+            ]
+            back_int = [
+                col
+                for col in occ.columns
+                if (col.startswith(("BlankSub ", "ControlSub ")) and any(x in col for x in qnta_samples))
+            ]
+            # Pare occ down to front + back
+            occ_out = occ[front + back]
+            occ_int = occ[front + back_int]
+            # Coerce "Feature ID" to str
+            occ_out["Feature ID"] = occ_out["Feature ID"].astype(str)
+            occ_int["Feature ID"] = occ_int["Feature ID"].astype(str)
+            # Pare occ down to front + back
+            self.occurrence_data = occ_out
+            self.occurrence_data_int = occ_int
 
     def check_RF_input(self):
         """
