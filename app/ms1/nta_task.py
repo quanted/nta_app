@@ -1096,8 +1096,8 @@ class NtaRun:
             # Combine cc_metrics outputs, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = pd.concat([qnta_pos.cc_metrics, qnta_neg.cc_metrics])
             # Get RF percentiles, store in qnta datamap
-            self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
-            self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
+            self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs.round(4)
+            self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs.round(4)
             # Check status of validation_out
             if qnta_pos.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
@@ -1131,8 +1131,8 @@ class NtaRun:
                 self.aq_plots.append(None)
                 self.ecdf_plots.append(None)
             # Add Estimates to output
-            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.estimate_out)
-            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.estimate_out)
+            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.estimate_out).round(4)
+            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.estimate_out).round(4)
 
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
@@ -1161,7 +1161,7 @@ class NtaRun:
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_pos.cc_metrics
             # Get RF percentiles, store in qnta datamap
-            self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs
+            self.qnta_map["Pos Mode RF Percentile Ests"] = qnta_pos.RF_percs.round(4)
             # Check status of validation_out
             if qnta_pos.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
@@ -1177,7 +1177,7 @@ class NtaRun:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Pos Validation Summary"] = qnta_pos.summary_out
             # Add estimates to output
-            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.estimate_out)
+            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.estimate_out).round(4)
 
         # If only negative mode, instantiate negative mode and execute object
         else:
@@ -1206,7 +1206,7 @@ class NtaRun:
             # Get cc_metrics output, store in qnta datamap
             self.qnta_map["Calibration Curve Metrics"] = qnta_neg.cc_metrics
             # Get RF percentiles, store in qnta datamap
-            self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs
+            self.qnta_map["Neg Mode RF Percentile Ests"] = qnta_neg.RF_percs.round(4)
             # Check status of validation_out
             if qnta_neg.validation_out is not None:
                 # Get validation outputs, store in qnta datamap
@@ -1222,7 +1222,7 @@ class NtaRun:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
             # Add estimates to output
-            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.estimate_out)
+            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.estimate_out).round(4)
         # Store plots
         self.store_aq_plots()
         self.store_ecdf_plots()
