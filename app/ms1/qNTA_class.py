@@ -207,21 +207,15 @@ class qNTAClass:
         occ = self.occurrence_data
         val = self.validation_data
         surr = self.surrogate_cal_data.copy()
+        qnta_samples = self.qnta_samples
         if occ is not None:
             # Get cols (only take columns also in val; e.g., no Pool)
             front = [col for col in occ.columns if any(x in col for x in ["Feature", "Chemical", "Retention"])]
-            if val is not None:
-                back = [
-                    col
-                    for col in occ.columns
-                    if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x in col for x in val.columns))
-                ]
-            else:
-                back = [
-                    col
-                    for col in occ.columns
-                    if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x == col for x in surr.columns))
-                ]
+            back = [
+                col
+                for col in occ.columns
+                if (col.startswith(("BlankSub ", "ControlSub ")) and any(x in col for x in qnta_samples))
+            ]
             # Pare occ down to front + back
             occ = occ[front + back]
             # Coerce "Feature ID" to str
