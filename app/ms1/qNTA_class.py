@@ -1117,7 +1117,7 @@ class qNTAClass:
 
         """Save .png to Class variable"""
         # Store item in class variable
-        self.aq_plots_out.append(fig)
+        self.AQ_plots_out.append(fig)
 
     def ecdf(
         self,
