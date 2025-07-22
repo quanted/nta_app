@@ -91,22 +91,22 @@ class qNTAClass:
 
     def execute(self):
         """Perform data manipulation functions"""
-        # logger.info("val data type = {}".format(type(self.validation_data)))
+        logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_parameters()
-        # logger.info("val data type = {}".format(type(self.validation_data)))
+        logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_occurrences()
-        # logger.info("occ length: {}".format(len(self.occurrence_data)))
-        # logger.info("val data type = {}".format(type(self.validation_data)))
+        logger.info("occ length: {}".format(len(self.occurrence_data)))
+        logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_RF_input()
-        # logger.info("surr length: {}".format(len(self.surrogate_cal_data)))
-        # logger.info("long_nz length: {}".format(len(self.surrogate_cal_data_long_nonzero)))
-        # logger.info("chems length: {}".format(len(self.surrogate_cal_data_long_nonzero_chems)))
-        # logger.info("val data type = {}".format(type(self.validation_data)))
+        logger.info("surr length: {}".format(len(self.surrogate_cal_data)))
+        logger.info("long_nz length: {}".format(len(self.surrogate_cal_data_long_nonzero)))
+        logger.info("chems length: {}".format(len(self.surrogate_cal_data_long_nonzero_chems)))
+        logger.info("val data type = {}".format(type(self.validation_data)))
         self.check_validation_data()
-        # logger.info("surr Feat_ID: {}".format(self.surrogate_cal_data["Feature ID"].head()))
-        # logger.info("occ Feat_ID: {}".format(self.occurrence_data["Feature ID"].head()))
-        # logger.info("val Feat_ID: {}".format(self.validation_data["Feature ID"].head()))
-        # logger.info("val data type = {}".format(type(self.validation_data)))
+        logger.info("surr Feat_ID: {}".format(self.surrogate_cal_data["Feature ID"].head()))
+        logger.info("occ Feat_ID: {}".format(self.occurrence_data["Feature ID"].head()))
+        logger.info("val Feat_ID: {}".format(self.validation_data["Feature ID"].head()))
+        logger.info("val data type = {}".format(type(self.validation_data)))
         """Perform Calibration Curve Methods"""
         self.cal_curve_all_metrics()
         """Perform Bootstrap Methods"""
@@ -134,7 +134,8 @@ class qNTAClass:
             rep_range=self.parameters["rep_range"],
             long_form=self.parameters["long_form"],
         )
-        # logger.info("val_out data type = {}".format(type(self.validation_out)))
+        logger.info("RF_est_out head: {}".format(self.RF_estimate_out.head()))
+        logger.info("val_out data type = {}".format(type(self.validation_out)))
         # Perform bootstrap validation
         self.validation_out = self.RF_boot_validation(
             seed=self.parameters["seed"],
@@ -145,7 +146,7 @@ class qNTAClass:
             LOO=self.parameters["LOO"],
             internal=self.parameters["internal"],
         )
-        # logger.info("val_out data type = {}".format(type(self.validation_out)))
+        logger.info("val_out data type = {}".format(type(self.validation_out)))
         # Check status of self.validation_out
         if self.validation_out is not None and len(self.validation_out) > 0:
             # Create validation summary
@@ -248,8 +249,8 @@ class qNTAClass:
         """
         # Copy input
         surr = self.surrogate_cal_data.copy()
-        # logger.info("POS surr 1 length: {}".format(len(surr)))
-        # logger.info("POS surr 1 cols: {}".format(surr.columns.tolist()))
+        logger.info("POS surr 1 length: {}".format(len(surr)))
+        logger.info("POS surr 1 cols: {}".format(surr.columns.tolist()))
         # Coerce "Feature ID" to str
         surr["Feature ID"] = surr["Feature ID"].astype(str)
         # Store surr
@@ -260,8 +261,8 @@ class qNTAClass:
             "control",
             "CONTROL",
         ]
-        # logger.info("POS surr 1 length: {}".format(len(surr)))
-        # logger.info("POS surr 1 cols: {}".format(surr.columns.tolist()))
+        logger.info("POS surr 1 length: {}".format(len(surr)))
+        logger.info("POS surr 1 cols: {}".format(surr.columns.tolist()))
 
         li = [item for item in surr.columns if item.startswith("ControlSub")]
         # logger.info("li for if statement: {}".format(li))
@@ -271,18 +272,18 @@ class qNTAClass:
             col = "ControlSub BlankSub Mean"
         else:
             col = "BlankSub Mean"
-        # logger.info("chosen col: {}".format(col))
+        logger.info("chosen col: {}".format(col))
         # Get cols
         prefixes = ["Conc", "RF"] + [col]
         cols = ["Feature ID", "Chemical Name", "Surrogate Group", "Retention Time", "Ionization Mode"] + [
             col for col in surr.columns if any(col.startswith(x) for x in prefixes)
         ]
-        # logger.info("cols found in surr: {}".format(cols))
+        logger.info("cols found in surr: {}".format(cols))
         # Pivot surrogate_cal_data wide to long
         long_raw = pd.wide_to_long(
             surr[cols], stubnames=prefixes, i="Feature ID", j="Cal Level", sep=" ", suffix="(\d+|\w+)"
         ).reset_index()
-        # logger.info("long_raw length: {}".format(len(long_raw)))
+        logger.info("long_raw length: {}".format(len(long_raw)))
         # Change Conc column to numeric
         long_raw["Conc"] = pd.to_numeric(long_raw["Conc"])
         long_raw["RF"] = pd.to_numeric(long_raw["RF"])
@@ -722,16 +723,16 @@ class qNTAClass:
                     for i in LOO_IDs
                 ]
             )
-            # logger.info("length LOO_out = {}".format(len(LOO_out)))
+            logger.info("length LOO_out = {}".format(len(LOO_out)))
             if long_form:
                 # Change validation_data to long form
                 # This is in order of sample and not chemical
                 val = pd.melt(
                     val, id_vars="Feature ID", value_vars=conc_cols, var_name="Sample", value_name="ConcTargeted"
                 )
-                # logger.info("length val (melt) = {}".format(len(val)))
-                # logger.info("val melt cols: {}".format(val.columns.tolist()))
-                # logger.info("val melt Sample head: {}".format(val["Sample"].head()))
+                logger.info("length val (melt) = {}".format(len(val)))
+                logger.info("val melt cols: {}".format(val.columns.tolist()))
+                logger.info("val melt Sample head: {}".format(val["Sample"].head()))
                 # Add _LOO suffix to column names (to distinguish LOO columns when
                 # adding to global estimates DataFrame)
                 LOO_out = LOO_out.rename(
@@ -743,16 +744,16 @@ class qNTAClass:
                 )
                 # Ensure that correct ConcTargeted and ConcLCL, Est, UCL are compared
                 LOO_out = pd.merge(LOO_out, val, on=["Feature ID", "Sample"], how="left")
-                # logger.info("length LOO_out and val merge = {}".format(len(LOO_out)))
-                # logger.info("LOO_out val melt cols: {}".format(LOO_out.columns.tolist()))
+                logger.info("length LOO_out and val merge = {}".format(len(LOO_out)))
+                logger.info("LOO_out val melt cols: {}".format(LOO_out.columns.tolist()))
                 # Calculate qNTA performance metrics for accuracy and uncertainty
                 LOO_out["AQ_LOO"] = LOO_out["ConcEst_LOO"] / LOO_out["ConcTargeted"]
                 LOO_out["AAQ_LOO"] = 10 ** np.abs(np.log10(LOO_out["AQ_LOO"]))
                 LOO_out["CLFR_LOO"] = LOO_out["ConcUCL_LOO"] / LOO_out["ConcLCL_LOO"]
                 LOO_out = LOO_out.drop(columns=["ConcTargeted"])  # ConcTargeted will be merged again later
                 # Left outer join keeps a row for all chemicals in validation data, with np.NaN (pd.NA?) for qNTA columns if not in global_out
-                # logger.info("global out count ConcEst: {}".format(len(global_out.loc[global_out["ConcEst"] > 0, :])))
-                # logger.info("global out Sample head: {}".format(global_out["Sample"].head()))
+                logger.info("global out count ConcEst: {}".format(len(global_out.loc[global_out["ConcEst"] > 0, :])))
+                logger.info("global out Sample head: {}".format(global_out["Sample"].head()))
                 validation_out = pd.merge(global_out, val, on=["Feature ID", "Sample"], how="left")
                 # logger.info("length validation_out (global_out and val merge) = {}".format(len(validation_out)))
                 validation_out["AQ"] = validation_out["ConcEst"] / validation_out["ConcTargeted"]
@@ -760,12 +761,12 @@ class qNTAClass:
                 validation_out["CLFR"] = validation_out["ConcUCL"] / validation_out["ConcLCL"]
                 # Merge on LOO_out
                 validation_out = pd.merge(validation_out, LOO_out, on=["Feature ID", "Sample"], how="left")
-                # logger.info("length validation_out (validation_out and LOO_out merge) = {}".format(len(validation_out)))
+                logger.info("length validation_out (validation_out and LOO_out merge) = {}".format(len(validation_out)))
                 # Remove NaN rows from the ConcTargeted (the validation file) and ConcEst (occurrence file)
                 validation_out = validation_out.loc[
                     ((validation_out["ConcTargeted"] > 0) & (validation_out["ConcEst"] > 0)), :
                 ]
-                # logger.info("length validation_out (post .loc) = {}".format(len(validation_out)))
+                logger.info("length validation_out (post .loc) = {}".format(len(validation_out)))
                 # Return validation_out
                 return validation_out
             else:
