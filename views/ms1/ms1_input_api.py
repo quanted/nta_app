@@ -147,6 +147,7 @@ def ms1_run_api(request):
                 "val_input": ["qNTA Validation input file", None],
                 "do_atom_filtering": ["Do atom filtering?", None],
                 "atom_ranges": ["Atom filtering ranges", None],
+                "do_ms2": ["Perform MS2?", None],
             }
 
             # save the Request parameters in the inputParameters dictionary [0] is the label, [1] is the value
@@ -181,6 +182,7 @@ def ms1_run_api(request):
             inputParameters["search_mode"][1] = parameters["search_mode"]
             inputParameters["do_qnta"][1] = parameters["do_qnta"]
             inputParameters["do_atom_filtering"][1] = parameters["do_atom_filtering"]
+            inputParameters["do_ms2"][1] = "no"
             # Check if 'do_atom_filtering'
             if inputParameters["do_atom_filtering"][1] == "yes":
                 # Get user-submitted atom dict li

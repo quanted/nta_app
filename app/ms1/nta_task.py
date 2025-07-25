@@ -343,6 +343,10 @@ class NtaRun:
             if self.parameters["search_hcd"][1] == "yes":
                 self.step = "Searching Cheminformatics Hazard Module database"
                 self.perform_hcd_search()
+            # Optional: Perform MS2
+            if self.parameters["do_ms2"][1] == "yes":
+                self.step = "Performing MS2"
+                self.perform_MS2()
 
         # 8: Store excel data to MongoDB
         self.step = "Storing data"
@@ -1587,6 +1591,20 @@ class NtaRun:
         df = df.drop(["pre_Hazard Score", "pre_completeness"], axis=1)
 
         return df
+
+    def perform_MS2(
+        self,
+    ):
+        """
+        Call task_functions MS2_preprocessing() to do file parsing on the MS2 inputs,
+        the instantiate the MS2Run Class.
+
+        Args:
+            self
+        Returns:
+            None
+        """
+        pass
 
     def mongo_save(self, file, step=""):
         """
