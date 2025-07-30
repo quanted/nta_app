@@ -2764,14 +2764,13 @@ def estimation_format(
     """
     # Copy input dataframe
     ests = df1.copy()
-    logger.info("ests original length: {}".format(len(ests)))
     qaqc = df2.copy()
-    logger.info("qaqc original length: {}".format(len(qaqc)))
     counter = 0
     # Remove Nans
     ests = ests.loc[ests["ConcEst"] > 0, :]
-    # Convert ests Feature ID to string
+    # Convert ests and qaqc Feature ID to string
     ests["Feature ID"] = ests["Feature ID"].astype(str)
+    qaqc["Feature ID"] = qaqc["Feature ID"].astype(str)
     # If any present, reserve surrogate groups
     if any(feat for feat in ests["Feature ID"].tolist() if feat.startswith("[")):
         counter += 1
@@ -2811,6 +2810,5 @@ def estimation_format(
     )
     # Sort by Feature ID
     df_out = df_out.sort_values("Feature ID")
-    logger.info("df_out length: {}".format(len(df_out)))
     # Return df_out
     return df_out

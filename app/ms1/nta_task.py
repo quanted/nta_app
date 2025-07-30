@@ -1423,28 +1423,15 @@ class NtaRun:
         # Check if qNTA happened
         if self.parameters["do_qnta"][1] == "yes":
             # If both modes, update both estimates
-            if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
+            if self.ests_out[0] is not None:
                 # Call task_fun.estimation_format()
                 self.qnta_map["Pos Estimates Output"] = task_fun.estimation_format(
                     self.ests_out[0],
                     self.data_map["Final Occurrence Matrix"],
                     mode="ESI+",
-                )
-                self.qnta_map["Neg Estimates Output"] = task_fun.estimation_format(
-                    self.ests_out[1],
-                    self.data_map["Final Occurrence Matrix"],
-                    mode="ESI-",
                 )
             # If only positive mode, instatiate positive mode and execute object
-            elif self.qnta_dfs_out[0] is not None:
-                # Call task_fun.estimation_format()
-                self.qnta_map["Pos Estimates Output"] = task_fun.estimation_format(
-                    self.ests_out[0],
-                    self.data_map["Final Occurrence Matrix"],
-                    mode="ESI+",
-                )
-            # If only negative mode, instantiate negative mode and execute object
-            else:
+            if self.ests_out[1] is not None:
                 # Call task_fun.estimation_format()
                 self.qnta_map["Neg Estimates Output"] = task_fun.estimation_format(
                     self.ests_out[1],
