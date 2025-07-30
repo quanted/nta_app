@@ -246,7 +246,7 @@ class qNTAClass:
             back = [
                 col
                 for col in occ.columns
-                if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x in col for x in val.columns))
+                if (col.startswith(("BlankSub Mean ", "ControlSub ")) and any(x in col for x in qnta_samples))
             ]
             # Pare occ down to front + back
             occ = occ[front + back]
