@@ -168,6 +168,7 @@ class NtaRun:
         self.qnta_samples = None
         self.val_df = val_df
         self.qnta_dfs_out = None
+        self.ests_out = [None, None]
         self.qnta_occ_input = None
         self.dfs_flagged = None  # DFs that will retain occurrences failing CV values
         self.docs = None
@@ -1135,8 +1136,7 @@ class NtaRun:
                 self.aq_plots.append(None)
                 self.ecdf_plots.append(None)
             # Add Estimates to output
-            self.qnta_map["Pos Estimates Output"] = qnta_pos.estimate_out.round(4)
-            self.qnta_map["Neg Estimates Output"] = qnta_neg.estimate_out.round(4)
+            self.ests_out = [qnta_pos.estimate_out.round(4), qnta_neg.estimate_out.round(4)]
 
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
@@ -1181,7 +1181,7 @@ class NtaRun:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Pos Validation Summary"] = qnta_pos.summary_out
             # Add estimates to output
-            self.qnta_map["Pos Estimates Output"] = qnta_pos.estimate_out.round(4)
+            self.ests_out = [qnta_pos.estimate_out.round(4), None]
 
         # If only negative mode, instantiate negative mode and execute object
         else:
@@ -1226,7 +1226,7 @@ class NtaRun:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
             # Add estimates to output
-            self.qnta_map["Neg Estimates Output"] = qnta_neg.estimate_out.round(4)
+            self.ests_out = [None, qnta_neg.estimate_out.round(4)]
         # Store plots
         self.store_aq_plots()
         self.store_ecdf_plots()
@@ -1426,12 +1426,12 @@ class NtaRun:
             if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
                 # Call task_fun.estimation_format()
                 self.qnta_map["Pos Estimates Output"] = task_fun.estimation_format(
-                    self.qnta_map["Pos Estimates Output"],
+                    self.ests_out[0],
                     self.data_map["Final Occurrence Matrix"],
                     mode="ESI+",
                 )
                 self.qnta_map["Neg Estimates Output"] = task_fun.estimation_format(
-                    self.qnta_map["Neg Estimates Output"],
+                    self.ests_out[1],
                     self.data_map["Final Occurrence Matrix"],
                     mode="ESI-",
                 )
@@ -1439,7 +1439,7 @@ class NtaRun:
             elif self.qnta_dfs_out[0] is not None:
                 # Call task_fun.estimation_format()
                 self.qnta_map["Pos Estimates Output"] = task_fun.estimation_format(
-                    self.qnta_map["Pos Estimates Output"],
+                    self.ests_out[0],
                     self.data_map["Final Occurrence Matrix"],
                     mode="ESI+",
                 )
@@ -1447,7 +1447,7 @@ class NtaRun:
             else:
                 # Call task_fun.estimation_format()
                 self.qnta_map["Neg Estimates Output"] = task_fun.estimation_format(
-                    self.qnta_map["Neg Estimates Output"],
+                    self.ests_out[1],
                     self.data_map["Final Occurrence Matrix"],
                     mode="ESI-",
                 )
