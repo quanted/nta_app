@@ -1426,22 +1426,30 @@ class NtaRun:
             if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
                 # Call task_fun.estimation_format()
                 self.qnta_map["Pos Estimates Output"] = task_fun.estimation_format(
-                    self.qnta_map["Pos Estimates Output"], self.data_map["Final Occurrence Matrix"]
+                    self.qnta_map["Pos Estimates Output"],
+                    self.data_map["Final Occurrence Matrix"],
+                    mode="ESI+",
                 )
                 self.qnta_map["Neg Estimates Output"] = task_fun.estimation_format(
-                    self.qnta_map["Neg Estimates Output"], self.data_map["Final Occurrence Matrix"]
+                    self.qnta_map["Neg Estimates Output"],
+                    self.data_map["Final Occurrence Matrix"],
+                    mode="ESI-",
                 )
             # If only positive mode, instatiate positive mode and execute object
             elif self.qnta_dfs_out[0] is not None:
                 # Call task_fun.estimation_format()
                 self.qnta_map["Pos Estimates Output"] = task_fun.estimation_format(
-                    self.qnta_map["Pos Estimates Output"], self.data_map["Final Occurrence Matrix"]
+                    self.qnta_map["Pos Estimates Output"],
+                    self.data_map["Final Occurrence Matrix"],
+                    mode="ESI+",
                 )
             # If only negative mode, instantiate negative mode and execute object
             else:
                 # Call task_fun.estimation_format()
                 self.qnta_map["Neg Estimates Output"] = task_fun.estimation_format(
-                    self.qnta_map["Neg Estimates Output"], self.data_map["Final Occurrence Matrix"]
+                    self.qnta_map["Neg Estimates Output"],
+                    self.data_map["Final Occurrence Matrix"],
+                    mode="ESI-",
                 )
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save=True):

@@ -2750,6 +2750,7 @@ def validation_col_rename(
 def estimation_format(
     df1,
     df2,
+    mode,
 ):
     """
     Function that renames a bunch of columns in preparation for printing the qNTA
@@ -2764,12 +2765,39 @@ def estimation_format(
     # Copy input dataframe
     ests = df1.copy()
     qaqc = df2.copy()
+    counter = 0
     # Remove Nans
     ests = ests.loc[ests["ConcEst"] > 0, :]
-    # Get
-
+    # Convert ests Feature ID to string
+    ests["Feature ID"] = ests["Feature ID"].astype(str)
+    # If any present, reserve surrogate groups
+    if any(feat for feat in ests["Feature ID"].tolist() if feat.startswith("[")):
+        counter += 1
+        surrs = ests.loc[ests["Feature ID"].startswith("["), :]
+    # Get columns
+    cols = [
+        "Feature ID",
+        "Ionization Mode",
+    ] + [col for col in qaqc.columns if col.startswith("BlankSub ")]
+    # Pivot surrogate_cal_data wide to long
+    long_qaqc = pd.wide_to_long(
+        qaqc[cols], stubnames="BlankSub Mean", i="Feature ID", j="Sample", sep=" ", suffix="(\d+|\w+)"
+    ).reset_index()
+    # Only keep observations that passed QAQC filters
+    long_qaqc = long_qaqc.loc[long_qaqc["BlankSub Mean"] > 0]
+    # Only keep observations of correct mode
+    long_qaqc = long_qaqc.loc[long_qaqc["Ionization Mode"] == mode]
+    # Make list of tuples
+    li = long_qaqc[["Feature ID", "Sample"]].apply(tuple, axis=1).tolist()
+    # Make mask using li
+    mask = ests.set_index(["Feature ID", "Sample"]).index.isin(li)
+    # Filter ests
+    df_out = ests[mask]
+    # If any surrogate groups, add back on
+    if counter > 0:
+        df_out = pd.concat([df_out, surrs])
     # Rename columns
-    df_out = ests.rename(
+    df_out = df_out.rename(
         columns={
             "RF0.025": "Median RF (2.5th)",
             "RF0.5": "Median RF (50th)",
