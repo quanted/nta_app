@@ -1602,7 +1602,7 @@ def clean_features(
 
 def Blank_Subtract_Mean(df_in):
     """
-    Calculate the mean blank intensity for each feature and subtract that value from
+    Grab Selected MRL for each feature and subtract that value from
     each sample's mean value for that feature.
 
     Inputs:
@@ -1613,16 +1613,23 @@ def Blank_Subtract_Mean(df_in):
     # Copy original dataframe
     df = df_in.copy()
     # Define lists; blanks, means, sample means, and blank means
-    blanks = ["MB", "mb", "mB", "Mb", "blank", "Blank", "BLANK"]
-    Mean = df.columns[df.columns.str.contains(pat="Mean ")].tolist()
-    Mean_Samples = [md for md in Mean if not any(x in md for x in blanks)]
-    Mean_MB = [md for md in Mean if any(x in md for x in blanks)]
-    # Fill na in Mean_MB
-    df[Mean_MB] = df[Mean_MB].fillna(0)
+    blanks = [
+        "MB",
+        "mb",
+        "mB",
+        "Mb",
+        "blank",
+        "Blank",
+        "BLANK",
+    ]
+    Means = [col for col in df.columns if "Mean " in col]
+    Mean_Samples = [col for col in Means if not any(x in col for x in blanks)]
+    # Fill na in Selected MRL
+    df["Selected MRL"] = df["Selected MRL"].fillna(0)
     # Iterate through sample means, subtracting blank mean into new column
     for mean in Mean_Samples:
         # Create new column, do subtraction
-        df["BlankSub " + str(mean)] = df[mean].sub(df[Mean_MB[0]], axis=0)
+        df["BlankSub " + str(mean)] = df[mean].sub(df["Selected MRL"], axis=0)
         # Clip values at 0, replace 0s with NaN
         df["BlankSub " + str(mean)] = df["BlankSub " + str(mean)].clip(lower=0).replace({0: np.nan})
     # Return df with new BlankSub_Mean columns
@@ -2292,6 +2299,7 @@ def qnta_preprocessing(
         "Feature ID",
         "Chemical Name",
         "Retention_Time",
+        "Selected MRL",
     ] + [col for col in dfq.columns if (col.startswith("Mean ") and not any(col == x for x in occ_drop))]
     # Drop unnecessary columns
     dfq.drop(to_drop, axis=1, inplace=True)
@@ -2739,24 +2747,29 @@ def validation_col_rename(
     return df_out
 
 
-def estimation_col_rename(
-    df_in,
+def estimation_format(
+    df1,
+    df2,
 ):
     """
     Function that renames a bunch of columns in preparation for printing the qNTA
     estimation sheet(s).
 
     Inputs:
-        df_in (dataframe)
+        df1 (dataframe; qNTA estimates sheet)
+        qaqc (dataframe; QAQC Final Occurrence Matrix sheet)
     Outputs:
         df_out (dataframe)
     """
     # Copy input dataframe
-    df = df_in.copy()
+    ests = df1.copy()
+    qaqc = df2.copy()
     # Remove Nans
-    df = df.loc[df["ConcEst"] > 0, :]
+    ests = ests.loc[ests["ConcEst"] > 0, :]
+    # Get
+
     # Rename columns
-    df_out = df.rename(
+    df_out = ests.rename(
         columns={
             "RF0.025": "Median RF (2.5th)",
             "RF0.5": "Median RF (50th)",

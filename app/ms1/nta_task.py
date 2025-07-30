@@ -343,10 +343,10 @@ class NtaRun:
             if self.parameters["search_hcd"][1] == "yes":
                 self.step = "Searching Cheminformatics Hazard Module database"
                 self.perform_hcd_search()
-            # Optional: Perform MS2
-            if self.parameters["do_ms2"][1] == "yes":
-                self.step = "Performing MS2"
-                self.perform_MS2()
+        # Optional: Perform MS2
+        if self.parameters["do_ms2"][1] == "yes":
+            self.step = "Performing MS2"
+            self.perform_MS2()
 
         # 8: Store excel data to MongoDB
         self.step = "Storing data"
@@ -1135,8 +1135,8 @@ class NtaRun:
                 self.aq_plots.append(None)
                 self.ecdf_plots.append(None)
             # Add Estimates to output
-            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.estimate_out).round(4)
-            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.estimate_out).round(4)
+            self.qnta_map["Pos Estimates Output"] = qnta_pos.estimate_out.round(4)
+            self.qnta_map["Neg Estimates Output"] = qnta_neg.estimate_out.round(4)
 
         # If only positive mode, instatiate positive mode and execute object
         elif self.qnta_dfs_out[0] is not None:
@@ -1181,7 +1181,7 @@ class NtaRun:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Pos Validation Summary"] = qnta_pos.summary_out
             # Add estimates to output
-            self.qnta_map["Pos Estimates Output"] = task_fun.estimation_col_rename(qnta_pos.estimate_out).round(4)
+            self.qnta_map["Pos Estimates Output"] = qnta_pos.estimate_out.round(4)
 
         # If only negative mode, instantiate negative mode and execute object
         else:
@@ -1226,7 +1226,7 @@ class NtaRun:
                     # Get validation outputs, store in qnta datamap
                     self.qnta_map["Neg Validation Summary"] = qnta_neg.summary_out
             # Add estimates to output
-            self.qnta_map["Neg Estimates Output"] = task_fun.estimation_col_rename(qnta_neg.estimate_out).round(4)
+            self.qnta_map["Neg Estimates Output"] = qnta_neg.estimate_out.round(4)
         # Store plots
         self.store_aq_plots()
         self.store_ecdf_plots()
@@ -1420,6 +1420,29 @@ class NtaRun:
             self.data_map["Final Occurrence Matrix"] = reduced_file(
                 self.mpp_ready_flagged, self.blank_headers, self.sample_headers
             )
+        # Check if qNTA happened
+        if self.parameters["do_qnta"][1] == "yes":
+            # If both modes, update both estimates
+            if self.qnta_dfs_out[0] is not None and self.qnta_dfs_out[1] is not None:
+                # Call task_fun.estimation_format()
+                self.qnta_map["Pos Estimates Output"] = task_fun.estimation_format(
+                    self.qnta_map["Pos Estimates Output"], self.data_map["Final Occurrence Matrix"]
+                )
+                self.qnta_map["Neg Estimates Output"] = task_fun.estimation_format(
+                    self.qnta_map["Neg Estimates Output"], self.data_map["Final Occurrence Matrix"]
+                )
+            # If only positive mode, instatiate positive mode and execute object
+            elif self.qnta_dfs_out[0] is not None:
+                # Call task_fun.estimation_format()
+                self.qnta_map["Pos Estimates Output"] = task_fun.estimation_format(
+                    self.qnta_map["Pos Estimates Output"], self.data_map["Final Occurrence Matrix"]
+                )
+            # If only negative mode, instantiate negative mode and execute object
+            else:
+                # Call task_fun.estimation_format()
+                self.qnta_map["Neg Estimates Output"] = task_fun.estimation_format(
+                    self.qnta_map["Neg Estimates Output"], self.data_map["Final Occurrence Matrix"]
+                )
 
     def perform_dashboard_search(self, lower_index=0, upper_index=None, save=True):
         """
