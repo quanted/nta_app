@@ -67,6 +67,7 @@ def sequence_handler(file):
     df[df.columns[0]] = df[df.columns[0]].str.replace(" ", "_")
     df[df.columns[0]] = df[df.columns[0]].str.replace("#", "_")
     df[df.columns[0]] = df[df.columns[0]].str.replace(".", "_")
+    df[df.columns[0]] = df[df.columns[0]].str.replace("-", "_")
     df[df.columns[0]] = df[df.columns[0]].str.replace("\([^)]*\)", "")
     return df
 
