@@ -63,7 +63,7 @@ def upload_page(request, form_data=None, form_files=None):
             parameters = request.POST
             # print('1. parameters: {}'.format(parameters))
             parameters = parameters.dict()
-            # print('2. parameters: {}'.format(parameters))
+            print("2. parameters: {}".format(parameters))
             # print("3. request.FILES.keys: {}".format(request.FILES.keys()))
             # print("4. request.FILES: {}".format(request.FILES))
             # Assuming request.FILES['fileUpload'] is a list of InMemoryUploadedFile objects
