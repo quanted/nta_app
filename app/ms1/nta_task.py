@@ -1887,7 +1887,7 @@ class NtaRun:
         final_occurrence_matrix_df = self.data_map["Final Occurrence Matrix"]
 
         # Grab all the blank subtracted mean abundance columns
-        blanksub_columns = [col for col in df.columns if col.startswith("BlankSub Mean ")]
+        blanksub_columns = [col for col in final_occurrence_matrix_df.columns if col.startswith("BlankSub Mean ")]
         # Calculate feature median abundance for the blank subtracted mean abundance columns
         final_occurrence_matrix_df["Median blanksub mean feature abundance"] = final_occurrence_matrix_df[
             blanksub_columns
