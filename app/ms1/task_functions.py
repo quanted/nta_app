@@ -2204,6 +2204,8 @@ def qnta_preprocessing(
     # Copy input dataframe
     df1 = df_in.copy()
     df2 = qnta_df.copy()
+    # Sort df2
+    df2 = pd.concat([df2[df2.columns[:6]], df2[6:].reindex(sorted(df2.columns[6:]), axis=1)], axis=1)
     # logger.info("df2 start length: {}".format(len(df2)))
     # logger.info("df2 start cols: {}".format(df2.columns.tolist()))
     # Match qnta input to df to find surrogates
