@@ -1883,6 +1883,26 @@ class NtaRun:
             subset=["Feature ID", "DTXCID_INDIVIDUAL_COMPONENT"]
         )
 
+        # Grab Final Occurrence Matrix sheet in order to append final occurrence percentage/feature median abundance onto chemical results sheet
+        final_occurrence_matrix_df = self.data_map["Final Occurrence Matrix"]
+
+        # Grab all the blank subtracted mean abundance columns
+        blanksub_columns = [col for col in df.columns if col.startswith("BlankSub Mean ")]
+        # Calculate feature median abundance for the blank subtracted mean abundance columns
+        final_occurrence_matrix_df["Median blanksub mean feature abundance"] = final_occurrence_matrix_df[
+            blanksub_columns
+        ].median(axis=1)
+
+        # Merge the final occurrence percentage and median feature abundance columns onto the chemical results df
+        newdf = pd.merge(
+            newdf,
+            final_occurrence_matrix_df[
+                ["Feature ID", "Final Occurrence Percentage", "Median blanksub mean feature abundance"]
+            ],
+            how="left",
+            on="Feature ID",
+        )
+
         # Create a total norm column
         sumcols = [col for col in newdf.columns if "NORM" in col]
         newdf["STRUCTURE_TOTAL_NORM"] = newdf[sumcols].sum(axis=1)
@@ -1899,6 +1919,7 @@ class NtaRun:
         in_memory_buffer.close()
         # Delete the temporary dataframe/csv to free memory
         del newdf
+        del final_occurrence_matrix_df
         del csv_data
         # Prompt garbage collection
         gc.collect()
