@@ -2676,6 +2676,8 @@ def surrogate_grouping(
     sums = [x for x in df.columns if any(item in x for item in sums_prefixes)] + sams
     # Loop through cols and perform groupbys
     surrs_1 = surrs.groupby("Surrogate Group").agg({i: "sum" for i in sums}).reset_index()
+    # Replace introduced 0s with NaNs
+    surrs_1[csbsms] = surrs_1[csbsms].replace(0, np.nan)
     # Get average columns
     avgs_prefixes = ["Detection Percentage "]
     avgs = [x for x in df.columns if any(item in x for item in avgs_prefixes)]
