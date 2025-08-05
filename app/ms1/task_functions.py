@@ -1602,6 +1602,7 @@ def clean_features(
 
 def Blank_Subtract_Mean(df_in):
     """
+    Calculate the mean blank intensity for each feature and subtract that value from
     Grab Selected MRL for each feature and subtract that value from
     each sample's mean value for that feature.
 
@@ -1622,14 +1623,18 @@ def Blank_Subtract_Mean(df_in):
         "Blank",
         "BLANK",
     ]
-    Means = [col for col in df.columns if "Mean " in col]
+    Means = [col for col in df.columns if col.startswith("Mean ")]
     Mean_Samples = [col for col in Means if not any(x in col for x in blanks)]
+    Mean_MB = [col for col in Means if any(x in col for x in blanks)]
+    # Fill na in Mean_MB
+    df[Mean_MB] = df[Mean_MB].fillna(0)
     # Fill na in Selected MRL
-    df["Selected MRL"] = df["Selected MRL"].fillna(0)
+    # df["Selected MRL"] = df["Selected MRL"].fillna(0)
     # Iterate through sample means, subtracting blank mean into new column
     for mean in Mean_Samples:
         # Create new column, do subtraction
-        df["BlankSub " + str(mean)] = df[mean].sub(df["Selected MRL"], axis=0)
+        df["BlankSub " + str(mean)] = df[mean].sub(df[Mean_MB[0]], axis=0)
+        # df["BlankSub " + str(mean)] = df[mean].sub(df["Selected MRL"], axis=0)
         # Clip values at 0, replace 0s with NaN
         df["BlankSub " + str(mean)] = df["BlankSub " + str(mean)].clip(lower=0).replace({0: np.nan})
     # Return df with new BlankSub_Mean columns
