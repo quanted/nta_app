@@ -26,6 +26,8 @@ example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
 example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
 example_surrogate_filename = "qNTA_Surrogate_Input_File_WW2DW.csv"
 example_validation_filename = "WW2DW_qNTA_validation.csv"
+example_ms2_pos_filename = ""
+example_ms2_neg_filename = ""
 
 
 @api_key_required
@@ -252,14 +254,19 @@ def ms1_run_api(request):
                     inputParameters["val_input"][1] = None
                     val_df = None
 
-                # if parameters["do_ms2"] == "yes":
-                #     ms2_pos_file = os.path.join(example_data_dir, example_surrogate_filename)
-                #     inputParameters["ms2_pos"][1] = ms2_pos_file
-                #     ms2_neg_file = os.path.join(example_data_dir, example_validation_filename)
-                #     inputParameters["ms2_neg"][1] = ms2_neg_file
-                # else:
-                #     inputParameters["ms2_pos"][1] = None
-                #     inputParameters["ms2_neg"][1] = None
+                if parameters["do_ms2"] == "yes":
+                    ms2_pos_file = os.path.join(example_data_dir, example_ms2_pos_filename)
+                    inputParameters["ms2_pos"][1] = ms2_pos_file
+                    ms2_neg_file = os.path.join(example_data_dir, example_ms2_neg_filename)
+                    inputParameters["ms2_neg"][1] = ms2_neg_file
+                    # Parse files
+                    ms2_pos_parsed = file_manager.parse_ms2_files(ms2_pos_file, ms2_pos_file.name)
+                    ms2_neg_parsed = file_manager.parse_ms2_files(ms2_neg_file, ms2_neg_file.name)
+                else:
+                    inputParameters["ms2_pos"][1] = None
+                    inputParameters["ms2_neg"][1] = None
+                    ms2_pos_parsed = None
+                    ms2_neg_parsed = None
 
                 # save the name of the files to the inputParameters dictionary
                 inputParameters["pos_input"][1] = pos_input
