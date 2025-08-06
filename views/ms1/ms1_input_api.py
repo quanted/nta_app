@@ -335,30 +335,34 @@ def ms1_run_api(request):
                 except Exception:
                     val_df = None
 
-                # # function to validate file extensions using Django's FileExtensionValidator
-                # file_validator = FileExtensionValidator(allowed_extensions=["mgf","msp"])
+                # function to validate file extensions using Django's FileExtensionValidator
+                file_validator = FileExtensionValidator(allowed_extensions=["mgf", "msp"])
 
-                # if "ms2_pos" in request.FILES.keys():
-                #     ms2_pos = request.FILES["ms2_pos"]
-                #     file_validator(ms2_pos)
-                #     # save the name of the file to the inputParameters dictionary
-                #     inputParameters["ms2_pos"][1] = pos_input.name
-                # else:
-                #     ms2_pos = None
+                if "ms2_pos" in request.FILES.keys():
+                    ms2_pos = request.FILES["ms2_pos"]
+                    file_validator(ms2_pos)
+                    # save the name of the file to the inputParameters dictionary
+                    inputParameters["ms2_pos"][1] = ms2_pos.name
+                    # Parse file
+                    ms2_pos_parsed = file_manager.parse_ms2_files(ms2_pos, ms2_pos.name)
+                else:
+                    ms2_pos_parsed = None
 
-                # if "ms2_neg" in request.FILES.keys():
-                #     ms2_neg = request.FILES["ms2_neg"]
-                #     file_validator(ms2_neg)
-                #     # save the name of the file to the inputParameters dictionary
-                #     inputParameters["ms2_neg"][1] = ms2_neg.name
-                # else:
-                #     ms2_neg = None
+                if "ms2_neg" in request.FILES.keys():
+                    ms2_neg = request.FILES["ms2_neg"]
+                    file_validator(ms2_neg)
+                    # save the name of the file to the inputParameters dictionary
+                    inputParameters["ms2_neg"][1] = ms2_neg.name
+                    # Parse file
+                    ms2_neg_parsed = file_manager.parse_ms2_files(ms2_neg, ms2_neg.name)
+                else:
+                    ms2_neg_parsed = None
 
             # create a list of the input files
             inputs = [pos_input, neg_input]
             logger.info("Input Files: {} ".format(inputs))
-            # ms2_inputs = [ms2_pos, ms2_neg]
-            # logger.info("MS2 Input Files: {} ".format(ms2_inputs))
+            ms2_inputs = [ms2_pos_parsed, ms2_neg_parsed]
+            logger.info("MS2 Input Files: {} ".format(ms2_inputs))
 
             input_dfs = []
             # Get user-input non-detect value, pass to file_manager.input_handler
