@@ -2229,7 +2229,7 @@ def qnta_preprocessing(
         "control",
         "CONTROL",
     ]
-    prefix = ""
+    prefix = "BlankSub Mean "
     sample_groups = blank_headers + sample_headers
     sample_groups = [item[0][:-1] for item in sample_groups]
 
