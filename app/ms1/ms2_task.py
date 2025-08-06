@@ -171,10 +171,10 @@ class MS2Run:
 
         self.set_status("Retrieving Substances from DSSTox Database")
 
-        self.set_status("Saving Data")
-        self.save_data()
-        self.log_memory_usage("Saving Data")
-        self.log_dask_memory("Saving Data")
+        # self.set_status("Saving Data")
+        # self.save_data()
+        # self.log_memory_usage("Saving Data")
+        # self.log_dask_memory("Saving Data")
 
         self.set_status("Completed")
         # self.send_email()
@@ -357,49 +357,49 @@ class MS2Run:
         #     feature.reference_scores = result
         #     self.update_progress()
 
-    def save_data(self):
-        # log self
-        inputParameters = self.inputParameters
-        logger.info("save_data - inputParameters:")
-        logger.info(inputParameters)
+    # def save_data(self):
+    #     # log self
+    #     inputParameters = self.inputParameters
+    #     logger.info("save_data - inputParameters:")
+    #     logger.info(inputParameters)
 
-        # Delete csrfmiddlewaretoken from inputParameters
-        del inputParameters["csrfmiddlewaretoken"]
+    #     # Delete csrfmiddlewaretoken from inputParameters
+    #     del inputParameters["csrfmiddlewaretoken"]
 
-        # convert inputParameters to a dataframe and re-index the dataframe so it is no longer indexed by the dictionary keys
-        inputParameters_df = pd.DataFrame.from_dict(inputParameters, orient="index").reset_index().drop(columns="index")
+    #     # convert inputParameters to a dataframe and re-index the dataframe so it is no longer indexed by the dictionary keys
+    #     inputParameters_df = pd.DataFrame.from_dict(inputParameters, orient="index").reset_index().drop(columns="index")
 
-        # Add column headers to inputParameters_df
-        inputParameters_df.columns = ["Parameter", "Value"]
+    #     # Add column headers to inputParameters_df
+    #     inputParameters_df.columns = ["Parameter", "Value"]
 
-        # log inputParameters_df
-        logger.info("save_data - inputParameters_df:")
-        logger.info(inputParameters_df)
+    #     # log inputParameters_df
+    #     logger.info("save_data - inputParameters_df:")
+    #     logger.info(inputParameters_df)
 
-        # Merge spectrum data onto CFMID results data frames
-        neg_df = (
-            self.features["neg"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True)
-        )
-        neg_df = pd.merge(neg_df, self.spectra_df, on="DTXCID", how="left")
+    #     # Merge spectrum data onto CFMID results data frames
+    #     neg_df = (
+    #         self.features["neg"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True)
+    #     )
+    #     neg_df = pd.merge(neg_df, self.spectra_df, on="DTXCID", how="left")
 
-        pos_df = (
-            self.features["pos"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True)
-        )
-        pos_df = pd.merge(pos_df, self.spectra_df, on="DTXCID", how="left")
+    #     pos_df = (
+    #         self.features["pos"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True)
+    #     )
+    #     pos_df = pd.merge(pos_df, self.spectra_df, on="DTXCID", how="left")
 
-        # # self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
-        # # self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
-        # # 2/23/2023 Reverse the filenames index, currently pointing to the wrong file
-        # self.mongo_save(
-        #     neg_df,
-        #     step=FILENAMES["final_output"][1],
-        # )
-        # # self.mongo_save(self.features["pos"].to_df(), step=FILENAMES["final_output"][0])
-        # self.mongo_save(
-        #     pos_df,
-        #     step=FILENAMES["final_output"][0],
-        # )
-        # self.mongo_save(inputParameters_df, step=FILENAMES["final_output"][2])
+    # # self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
+    # # self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
+    # # 2/23/2023 Reverse the filenames index, currently pointing to the wrong file
+    # self.mongo_save(
+    #     neg_df,
+    #     step=FILENAMES["final_output"][1],
+    # )
+    # # self.mongo_save(self.features["pos"].to_df(), step=FILENAMES["final_output"][0])
+    # self.mongo_save(
+    #     pos_df,
+    #     step=FILENAMES["final_output"][0],
+    # )
+    # self.mongo_save(inputParameters_df, step=FILENAMES["final_output"][2])
 
     # def send_email(self):
     #     try:
