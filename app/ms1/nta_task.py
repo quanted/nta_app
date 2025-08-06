@@ -45,6 +45,7 @@ def run_nta_dask(
     run_sequence_neg_df=None,
     qnta_df=None,
     val_df=None,
+    ms2_inputs=[None, None],
     jobid="00000000",
     verbose=True,
 ):
@@ -61,6 +62,7 @@ def run_nta_dask(
             run_sequence_neg_df,
             qnta_df,
             val_df,
+            ms2_inputs,
             mongo_address,
             jobid,
             verbose,
@@ -93,6 +95,7 @@ def run_nta_dask(
         run_sequence_neg_df,
         qnta_df,
         val_df,
+        ms2_inputs,
         mongo_address,
         jobid,
         verbose,
@@ -109,6 +112,7 @@ def run_nta(
     run_sequence_neg_df=None,
     qnta_df=None,
     val_df=None,
+    ms2_inputs=[None, None],
     mongo_address=None,
     jobid="00000000",
     verbose=True,
@@ -122,6 +126,7 @@ def run_nta(
         run_sequence_neg_df,
         qnta_df,
         val_df,
+        ms2_inputs,
         mongo_address,
         jobid,
         verbose,
@@ -150,6 +155,7 @@ class NtaRun:
         run_sequence_neg_df=None,
         qnta_df=None,
         val_df=None,
+        ms2_inputs=[None, None],
         mongo_address=None,
         jobid="00000000",
         verbose=True,
@@ -167,6 +173,7 @@ class NtaRun:
         self.qnta_df = qnta_df
         self.qnta_samples = None
         self.val_df = val_df
+        self.ms2_inputs = ms2_inputs
         self.qnta_dfs_out = None
         self.ests_out = [None, None]
         self.qnta_occ_input = None

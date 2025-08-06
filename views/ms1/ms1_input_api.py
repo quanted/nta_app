@@ -410,6 +410,7 @@ def ms1_run_api(request):
                 run_sequence_neg_df,
                 qnta_df,
                 val_df,
+                ms2_inputs,
                 job_id,
             )
             # return redirect("/nta/ms1/processing/" + job_id, permanent=True)
