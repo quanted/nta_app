@@ -153,6 +153,8 @@ def ms1_run_api(request):
                 "do_atom_filtering": ["Do atom filtering?", None],
                 "atom_ranges": ["Atom filtering ranges", None],
                 "do_ms2": ["Perform MS2?", None],
+                "ms2_pos": ["MS2 positive mode file", None],
+                "ms2_neg": ["MS2 negative mode file", None],
                 "ms2_precursor_ma": ["Precursor mass accuracy", None],
                 "ms2_fragment_ma": ["Fragment mass accuracy", None],
             }
