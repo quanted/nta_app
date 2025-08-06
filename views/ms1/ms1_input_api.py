@@ -26,8 +26,8 @@ example_run_sequence_pos_filename = "WW2DW_sequence_cal.csv"
 example_run_sequence_neg_filename = "WW2DW_sequence_cal.csv"
 example_surrogate_filename = "qNTA_Surrogate_Input_File_WW2DW.csv"
 example_validation_filename = "WW2DW_qNTA_validation.csv"
-example_ms2_pos_filename = ""
-example_ms2_neg_filename = ""
+example_ms2_pos_filename = "WW2DW-POCIS_ESI+_MSe_AllCompounds.msp"
+example_ms2_neg_filename = "WW2DW-POCIS_ESI-_MSe_AllCompounds.msp"
 
 
 @api_key_required
