@@ -78,6 +78,9 @@ def ms1_run_api(request):
                 "do_atom_filtering": data.get("do_atom_filtering", "no"),
                 "atom_ranges": None,
                 "na_val": data.get("na_val", ""),
+                "do_ms2": data.get("do_ms2", "no"),
+                "ms2_precursor_ma": data.get("ms2_precursor_ma", None),
+                "ms2_fragment_ma": data.get("ms2_fragment_ma", None),
             }
             # Validate numerical fields here
             MinValueValidator(0)(float(parameters["mass_accuracy"]))
@@ -148,6 +151,8 @@ def ms1_run_api(request):
                 "do_atom_filtering": ["Do atom filtering?", None],
                 "atom_ranges": ["Atom filtering ranges", None],
                 "do_ms2": ["Perform MS2?", None],
+                "ms2_precursor_ma": ["Precursor mass accuracy", None],
+                "ms2_fragment_ma": ["Fragment mass accuracy", None],
             }
 
             # save the Request parameters in the inputParameters dictionary [0] is the label, [1] is the value
@@ -183,6 +188,9 @@ def ms1_run_api(request):
             inputParameters["do_qnta"][1] = parameters["do_qnta"]
             inputParameters["do_atom_filtering"][1] = parameters["do_atom_filtering"]
             inputParameters["do_ms2"][1] = "no"
+            inputParameters["ms2_precursor_ma"][1] = parameters["ms2_precursor_ma"]
+            inputParameters["ms2_fragment_ma"][1] = parameters["ms2_fragment_ma"]
+
             # Check if 'do_atom_filtering'
             if inputParameters["do_atom_filtering"][1] == "yes":
                 # Get user-submitted atom dict li
@@ -243,6 +251,16 @@ def ms1_run_api(request):
                     qnta_df = None
                     inputParameters["val_input"][1] = None
                     val_df = None
+
+                # if parameters["do_ms2"] == "yes":
+                #     ms2_pos_file = os.path.join(example_data_dir, example_surrogate_filename)
+                #     inputParameters["ms2_pos"][1] = ms2_pos_file
+                #     ms2_neg_file = os.path.join(example_data_dir, example_validation_filename)
+                #     inputParameters["ms2_neg"][1] = ms2_neg_file
+                # else:
+                #     inputParameters["ms2_pos"][1] = None
+                #     inputParameters["ms2_neg"][1] = None
+
                 # save the name of the files to the inputParameters dictionary
                 inputParameters["pos_input"][1] = pos_input
                 inputParameters["neg_input"][1] = neg_input
@@ -317,9 +335,30 @@ def ms1_run_api(request):
                 except Exception:
                     val_df = None
 
+                # # function to validate file extensions using Django's FileExtensionValidator
+                # file_validator = FileExtensionValidator(allowed_extensions=["mgf","msp"])
+
+                # if "ms2_pos" in request.FILES.keys():
+                #     ms2_pos = request.FILES["ms2_pos"]
+                #     file_validator(ms2_pos)
+                #     # save the name of the file to the inputParameters dictionary
+                #     inputParameters["ms2_pos"][1] = pos_input.name
+                # else:
+                #     ms2_pos = None
+
+                # if "ms2_neg" in request.FILES.keys():
+                #     ms2_neg = request.FILES["ms2_neg"]
+                #     file_validator(ms2_neg)
+                #     # save the name of the file to the inputParameters dictionary
+                #     inputParameters["ms2_neg"][1] = ms2_neg.name
+                # else:
+                #     ms2_neg = None
+
             # create a list of the input files
             inputs = [pos_input, neg_input]
             logger.info("Input Files: {} ".format(inputs))
+            # ms2_inputs = [ms2_pos, ms2_neg]
+            # logger.info("MS2 Input Files: {} ".format(ms2_inputs))
 
             input_dfs = []
             # Get user-input non-detect value, pass to file_manager.input_handler
