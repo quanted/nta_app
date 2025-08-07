@@ -2703,6 +2703,8 @@ def surrogate_grouping(
     # Interate through cols to recalculate RFs
     for conc, csbsm, rf in zip(concs, csbsms, rfs):
         output[rf] = output[csbsm] / output[conc]
+    # Replace infs in rfs with np.nan
+    output = output.replace([np.inf, -np.inf], np.nan)
 
     """Recombine with original frame"""
     # Get observations for original frame not in surrs
