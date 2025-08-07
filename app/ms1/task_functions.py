@@ -2783,7 +2783,7 @@ def estimation_format(
     # If any present, reserve surrogate groups
     if any(feat for feat in ests["Feature ID"].tolist() if feat.startswith("[")):
         counter += 1
-        surrs = ests.loc[ests["Feature ID"].startswith("["), :]
+        surrs = ests.loc[ests["Feature ID"].str.startswith("["), :]
     # Get columns
     cols = [
         "Feature ID",
