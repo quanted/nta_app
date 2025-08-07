@@ -329,6 +329,8 @@ class qNTAClass:
         # Change Conc column to numeric
         long_raw["Conc"] = pd.to_numeric(long_raw["Conc"])
         long_raw["RF"] = pd.to_numeric(long_raw["RF"])
+        # Replace RF inf values with np.nans to remove Conc=0 / RF=inf issue
+        long_raw = long_raw.replace([np.inf, -np.inf], np.nan)
         # Keep only BlankSub Mean abundances > 0 to avoid problems with log-10 transform
         # we also don't want to have RFs of 0 in the surrogate set
         long_nz = long_raw.loc[((long_raw[col] > 0) & (long_raw["RF"] > 0)), :]
