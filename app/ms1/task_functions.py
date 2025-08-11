@@ -1926,12 +1926,12 @@ def determine_string_width(input_string):
     for j in range(len(input_string)):
         if input_string[j] in big_letters:
             temp_increment = temp_increment + big_increment
-            print("big")
+            # print("big")
         elif input_string[j] in medium_letters:
             temp_increment = temp_increment + medium_increment
-            print("medium")
+            # print("medium")
         else:
-            print("skinny")
+            # print("skinny")
             temp_increment = temp_increment + skinny_increment
     # Return float value of string size
     return temp_increment

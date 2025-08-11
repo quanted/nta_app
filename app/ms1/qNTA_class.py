@@ -1079,18 +1079,18 @@ class qNTAClass:
             # a.tick_params(axis='x', which = 'minor', length = 5, width =1)
 
             # Scatterplot
+            # c = sns.scatterplot(
+            #     data=plot2,
+            #     x="ConcTargeted",
+            #     y="AQ",
+            #     color="dodgerblue",
+            #     s=50,
+            #     edgecolor="black",
+            #     linewidth=1,
+            #     alpha=0.75,
+            #     ax=ax[1],
+            # )
             c = sns.scatterplot(
-                data=plot2,
-                x="ConcTargeted",
-                y="AQ",
-                color="dodgerblue",
-                s=50,
-                edgecolor="black",
-                linewidth=1,
-                alpha=0.75,
-                ax=ax[1],
-            )
-            d = sns.scatterplot(
                 data=plot2,
                 x="ConcTargeted",
                 y="AQ (LOO)",
@@ -1106,19 +1106,19 @@ class qNTAClass:
             c.set(xscale="log", yscale="log")
             c.set_xlabel("Targeted Concentration ($log_{10}$ scale)", fontsize=16)
             c.set_ylabel("AQ Value ($log_{10}$ scale)", fontsize=16)
-            c.set_title("Concentration vs AQ Value", fontsize=18, weight="bold")
+            c.set_title("AQ (LOO) Value vs Concentration", fontsize=18, weight="bold")
             c.tick_params(axis="y", which="major", labelsize=14, length=8, width=1)
             c.tick_params(axis="y", which="minor", length=5, width=1)
             c.tick_params(axis="x", which="major", labelsize=14, length=8, width=1)
             c.tick_params(axis="x", which="minor", length=5, width=1)
-            # Legend
-            AQ_patch = mpatches.Patch(facecolor="dodgerblue", label="AQ", edgecolor="black")
-            AQ_LOO_patch = mpatches.Patch(facecolor="darkorange", label="AQ (LOO)", edgecolor="black")
-            legend = c.legend(handles=[AQ_patch, AQ_LOO_patch], loc="upper right", fontsize=14)
-            frame = legend.get_frame()  # sets up for color, edge, and transparency
-            frame.set_facecolor("lightgray")  # color of legend
-            frame.set_edgecolor("black")  # edge color of legend
-            frame.set_alpha(1)
+            # # Legend
+            # AQ_patch = mpatches.Patch(facecolor="dodgerblue", label="AQ", edgecolor="black")
+            # AQ_LOO_patch = mpatches.Patch(facecolor="darkorange", label="AQ (LOO)", edgecolor="black")
+            # legend = c.legend(handles=[AQ_patch, AQ_LOO_patch], loc="upper right", fontsize=14)
+            # frame = legend.get_frame()  # sets up for color, edge, and transparency
+            # frame.set_facecolor("lightgray")  # color of legend
+            # frame.set_edgecolor("black")  # edge color of legend
+            # frame.set_alpha(1)
 
         """Save .png to Class variable"""
         # Store item in class variable
