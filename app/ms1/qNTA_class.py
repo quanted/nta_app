@@ -432,9 +432,9 @@ class qNTAClass:
         # Copy df
         surr = self.surrogate_cal_data_long_nonzero.copy()
         # Subset by chem
-        logger.info("cal curve metrics chem = {}".format(chem))
+        # logger.info("cal curve metrics chem = {}".format(chem))
         cal_data = surr.loc[surr["Surrogate Group"] == chem]
-        logger.info("cal curve metrics cal data length = {}".format(len(cal_data)))
+        # logger.info("cal curve metrics cal data length = {}".format(len(cal_data)))
         # Get Ionization Mode value
         im = cal_data["Ionization Mode"].values[0]
         # Check if there are more than 3 points
@@ -1151,10 +1151,29 @@ class qNTAClass:
         """
         # Copy data
         ecdf_data = validation_out.copy()
+        # Format dataframe for plotting
+        cols = ["AQ", "AQ (LOO)"]
+        preplot = (
+            ecdf_data[["Feature ID", "Sample", "ConcTargeted", "AQ", "AQ_LOO"]]
+            .copy()
+            .rename(columns={"AQ_LOO": "AQ (LOO)"})
+        )
+        aqplot = pd.melt(
+            preplot, id_vars=["Feature ID", "Sample"], value_vars=cols, var_name="Metric", value_name="Value"
+        )
+        cols = ["CLFR", "CLFR (LOO)"]
+        preplot = (
+            ecdf_data[["Feature ID", "Sample", "ConcTargeted", "CLFR", "CLFR_LOO"]]
+            .copy()
+            .rename(columns={"CLFR_LOO": "CLFR (LOO)"})
+        )
+        clfrplot = pd.melt(
+            preplot, id_vars=["Feature ID", "Sample"], value_vars=cols, var_name="Metric", value_name="Value"
+        )
 
         """SEABORN ATTEMPT"""
         # Instantiate subplots
-        fig, ax = plt.subplots(1, 2)
+        fig, (ax1, ax2) = plt.subplots(1, 2)
         # Set figure params
         fig.set_figheight(5)
         fig.set_figwidth(15)
@@ -1162,61 +1181,75 @@ class qNTAClass:
         sns.set_style("ticks")
         plt.xticks(fontsize=16)
         plt.yticks(fontsize=16)
-        palette = ["dodgerblue", "darkorange"]
+        palette = ["firebrick", "darkgoldenrod"]
         sns.set_palette(palette, 2)
         # Boxplot
         # First axis plot
-        a = sns.ecdfplot(data=ecdf_data, x="AAQ", color="dodgerblue", linewidth=2, ax=ax[0])
-        # Add LOO if present
-        if LOO:
-            b = sns.ecdfplot(data=ecdf_data, x="AAQ_LOO", color="darkorange", linewidth=2, ax=ax[0])
-            # Legend
-            AAQ_patch = mpatches.Patch(facecolor="dodgerblue", label="AAQ", edgecolor="black")
-            AAQ_LOO_patch = mpatches.Patch(facecolor="darkorange", label="AAQ (LOO)", edgecolor="black")
-            legend = a.legend(handles=[AAQ_patch, AAQ_LOO_patch], loc="upper left", fontsize=14)
-            frame = legend.get_frame()  # sets up for color, edge, and transparency
-            frame.set_facecolor("lightgray")  # color of legend
-            frame.set_edgecolor("black")  # edge color of legend
-            frame.set_alpha(1)
-
+        a = sns.ecdfplot(data=aqplot, x="Value", hue="Metric", linewidth=1, ax=ax1)
+        # Add markers
+        for lines, marker, legend_handle in zip(
+            ax1.lines[::-1],
+            [
+                "*",
+                "o",
+            ],
+            ax1.legend_.legend_handles,
+        ):
+            lines.set_marker(marker)
+            legend_handle.set_marker(marker)
         # Modify plot
         a.set(
             xscale="log",
         )
-        a.set_xlabel("Value", fontsize=16)
+        a.set_xlabel("Metric", fontsize=16)
         a.set_ylabel("Proportion", fontsize=16)
         a.set_title("AAQ Cumulative Distribution(s)", fontsize=18, weight="bold")
         a.tick_params(axis="y", which="major", labelsize=14, length=8, width=1)
         a.tick_params(axis="y", which="minor", length=5, width=1)
         a.tick_params(axis="x", which="major", labelsize=14, length=8, width=1)
         a.tick_params(axis="x", which="minor", length=5, width=1)
+        # Modify legend
+        frame = a.legend_.get_frame()  # sets up for color, edge, and transparency
+        frame.set_facecolor("lightgray")  # color of legend
+        frame.set_edgecolor("black")  # edge color of legend
+        frame.set_alpha(1)
+        plt.setp(ax1.get_legend().get_texts(), fontsize="12")  # for legend text
+        plt.setp(ax1.get_legend().get_title(), fontsize="14")  # for legend title
 
         # Scatterplot
         # First axis plot
-        c = sns.ecdfplot(data=ecdf_data, x="CLFR", color="dodgerblue", linewidth=2, ax=ax[1])
-        # Add LOO if present
-        if LOO:
-            d = sns.ecdfplot(data=ecdf_data, x="CLFR_LOO", color="darkorange", linewidth=2, ax=ax[1])
-            # Legend
-            CLFR_patch = mpatches.Patch(facecolor="dodgerblue", label="CLFR", edgecolor="black")
-            CLFR_LOO_patch = mpatches.Patch(facecolor="darkorange", label="CLFR (LOO)", edgecolor="black")
-            legend = c.legend(handles=[CLFR_patch, CLFR_LOO_patch], loc="upper left", fontsize=14)
-            frame = legend.get_frame()  # sets up for color, edge, and transparency
-            frame.set_facecolor("lightgray")  # color of legend
-            frame.set_edgecolor("black")  # edge color of legend
-            frame.set_alpha(1)
-
+        c = sns.ecdfplot(data=clfrplot, x="Value", hue="Metric", linewidth=1, ax=ax2)
+        # Add markers
+        for lines, marker, legend_handle in zip(
+            ax2.lines[::-1],
+            [
+                "*",
+                "o",
+            ],
+            ax2.legend_.legend_handles,
+        ):
+            lines.set_marker(marker)
+            legend_handle.set_marker(marker)
         # Modify plot
         c.set(
             xscale="log",
         )
-        c.set_xlabel("Value", fontsize=16)
+        c.set_xlabel("Metric", fontsize=16)
         c.set_ylabel("Proportion", fontsize=16)
         c.set_title("CLFR Cumulative Distribution(s)", fontsize=18, weight="bold")
         c.tick_params(axis="y", which="major", labelsize=14, length=8, width=1)
         c.tick_params(axis="y", which="minor", length=5, width=1)
         c.tick_params(axis="x", which="major", labelsize=14, length=8, width=1)
         c.tick_params(axis="x", which="minor", length=5, width=1)
+        # Modify legend
+        frame = c.legend_.get_frame()  # sets up for color, edge, and transparency
+        frame.set_facecolor("lightgray")  # color of legend
+        frame.set_edgecolor("black")  # edge color of legend
+        frame.set_alpha(1)
+        plt.setp(ax2.get_legend().get_texts(), fontsize="12")  # for legend text
+        plt.setp(ax2.get_legend().get_title(), fontsize="14")  # for legend title
+        # Set plot layout
+        plt.tight_layout()
 
         """Save .png to Class variable"""
         # Store item in class variable
