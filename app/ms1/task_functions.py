@@ -2576,7 +2576,7 @@ def SDS_duplicate_error_check(df_in):
         error_count += 1
         # Get offending Feature IDs
         ids = feat_counts[feat_counts > 1].index
-        logger.info("feat_counts ids: {}".format(ids.head()))
+        # logger.info("feat_counts ids: {}".format(ids.head()))
         # Get assosciated masses and retention times
         mrt = [df.loc[df["Feature ID"] == x, ["Observed Mass", "Observed Retention Time"]] for x in ids]
         logger.info("mrt from ids: {}".format(mrt))
@@ -2601,7 +2601,7 @@ def SDS_duplicate_error_check(df_in):
         error_count += 1
         # Get offending surrogate chemical names
         chems = chem_counts[chem_counts > 1].index
-        logger.info("feat_counts ids: {}".format(chems.head()))
+        # logger.info("feat_counts ids: {}".format(chems.head()))
         # Get associated masses and retention times
         mrt = [df.loc[df["Chemical Name"] == x, ["Observed Mass", "Observed Retention Time"]] for x in chems]
         logger.info("mrt from chems: {}".format(mrt))
