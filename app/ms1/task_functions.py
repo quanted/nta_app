@@ -2563,42 +2563,54 @@ def column_sort_SDS(df_in, passthru):
 def SDS_duplicate_error_check(df_in):
     # Copy input
     df = df_in.copy()
+    logger.info("duplicate error check start df size: {}".format(len(df)))
     # Define variables to start
     error_count = 0
     feat_error = ""
     chem_error = ""
     # Check for duplicates in the Feature ID column
     feat_counts = df["Feature ID"].value_counts()
+    logger.info("feat_counts header: {}".format(feat_counts.head()))
     if any(x > 1 for x in feat_counts):
         # Up error count
         error_count += 1
         # Get offending Feature IDs
         ids = feat_counts[feat_counts > 1].index
+        logger.info("feat_counts ids: {}".format(ids.head()))
         # Get assosciated masses and retention times
         mrt = [df.loc[df["Feature ID"] == x, ["Observed Mass", "Observed Retention Time"]] for x in ids]
+        logger.info("mrt from ids: {}".format(mrt))
         # Extract values from data frames
         mrt = [(x.iloc[0, 0], x.iloc[0, 1]) for x in mrt]
+        logger.info("mrt extracted values: {}".format(mrt))
         # Get associated surrogate chemicals
         chems = [tuple(df.loc[df["Feature ID"] == x, "Chemical Name"]) for x in ids]
+        logger.info("chems tuples: {}".format(chems))
         # Combine, masses, RTs, and surrogate chemicals
         pairs = [(x, y) for x, y in zip(mrt, chems)]
+        logger.info("id pairs: {}".format(pairs))
         # Join pairs into strings
         feat_strings = "\n".join(str(x) for x in pairs)
         # Assemble error message
         feat_error = f"Warning: The following chemical feature(s) in the input data (mass, RT) matched multiple listed qNTA surrogates:\n{feat_strings}\n"
     # Check for duplicates in the Chemical Name column
     chem_counts = df["Chemical Name"].value_counts()
+    logger.info("chem_counts header: {}".format(feat_counts.head()))
     if any(x > 1 for x in chem_counts):
         # Up error count
         error_count += 1
         # Get offending surrogate chemical names
         chems = chem_counts[chem_counts > 1].index
+        logger.info("feat_counts ids: {}".format(chems.head()))
         # Get associated masses and retention times
         mrt = [df.loc[df["Chemical Name"] == x, ["Observed Mass", "Observed Retention Time"]] for x in chems]
+        logger.info("mrt from chems: {}".format(mrt))
         # Extract values into tuple of tuples
         mrt = [tuple(tuple(x.iloc[i]) for i in range(len(x))) for x in mrt]
+        logger.info("mrt extracted values: {}".format(mrt))
         # Combine chemical names, masses, and RTs
         pairs = [(x, y) for x, y in zip(chems, mrt)]
+        logger.info("chem pairs: {}".format(pairs))
         # Join pairs into strings
         error = "\n".join(str(x) for x in pairs)
         # Assemble error message
