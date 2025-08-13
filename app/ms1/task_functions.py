@@ -2208,7 +2208,11 @@ def qnta_preprocessing(
     """
     # Copy input dataframe
     df1 = df_in.copy()
+    feat_counts = df1["Feature ID"].value_counts()
+    logger.info("df1 feat_counts header: {}".format(feat_counts.head()))
     df2 = qnta_df.copy()
+    # feat_counts = df2["Feature ID"].value_counts()
+    # logger.info("df2 feat_counts header: {}".format(feat_counts.head()))
     # Sort df2
     df2 = pd.concat([df2[df2.columns[:6]], df2.reindex(sorted(df2.columns[6:]), axis=1)], axis=1)
     # logger.info("df2 start length: {}".format(len(df2)))
@@ -2257,6 +2261,8 @@ def qnta_preprocessing(
         df2.rename(columns={col: new_col}, inplace=True)
     # Perform surrogate-occurrence matching
     dfq = surrogate_occ_match(df1, df2, Mass_Difference, Retention_Difference, ppm)
+    feat_counts = dfq["Feature ID"].value_counts()
+    logger.info("dfq feat_counts post surrogate_occ_match header: {}".format(feat_counts.head()))
 
     """Blank Subtraction and optional Control Subtraction"""
 
@@ -2576,7 +2582,7 @@ def SDS_duplicate_error_check(df_in):
         error_count += 1
         # Get offending Feature IDs
         ids = feat_counts[feat_counts > 1].index
-        # logger.info("feat_counts ids: {}".format(ids.head()))
+        logger.info("feat_counts ids: {}".format(ids))
         # Get assosciated masses and retention times
         mrt = [df.loc[df["Feature ID"] == x, ["Observed Mass", "Observed Retention Time"]] for x in ids]
         logger.info("mrt from ids: {}".format(mrt))
@@ -2601,7 +2607,7 @@ def SDS_duplicate_error_check(df_in):
         error_count += 1
         # Get offending surrogate chemical names
         chems = chem_counts[chem_counts > 1].index
-        # logger.info("feat_counts ids: {}".format(chems.head()))
+        logger.info("feat_counts ids: {}".format(chems))
         # Get associated masses and retention times
         mrt = [df.loc[df["Chemical Name"] == x, ["Observed Mass", "Observed Retention Time"]] for x in chems]
         logger.info("mrt from chems: {}".format(mrt))
