@@ -656,8 +656,8 @@ class NtaRun:
         elif self.dfs[0] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
         else:
-            # self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
-            # feat_counts = self.dfs[1]["Feature ID"].value_counts()
+            self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
+            feat_counts = self.dfs[1]["Feature ID"].value_counts()
             logger.info("assign ids feat_counts header: {}".format(feat_counts.head()))
         return
 
