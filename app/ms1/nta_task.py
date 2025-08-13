@@ -274,6 +274,8 @@ class NtaRun:
             if self.dfs[0] is not None:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
             if self.dfs[1] is not None:
+                feat_counts = self.dfs[1]["Feature ID"].value_counts()
+                logger.info("post stats feat_counts header: {}".format(feat_counts.head()))
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
 
         # 3b: Occurrence heatmap
@@ -292,6 +294,9 @@ class NtaRun:
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
                 # logger.info("NEG df columns: {}".format(self.dfs[1].columns.tolist()))
         self.check_tracers()
+        if self.dfs[1] is not None:
+            feat_counts = self.dfs[1]["Feature ID"].value_counts()
+            logger.info("post tracers feat_counts header: {}".format(feat_counts.head()))
         if self.verbose:
             logger.info("Checked tracers.")
 
@@ -299,6 +304,9 @@ class NtaRun:
         self.step = "Create scatterplot"
         self.store_scatterplots()
 
+        if self.dfs[1] is not None:
+            feat_counts = self.dfs[1]["Feature ID"].value_counts()
+            logger.info("pre qnta feat_counts header: {}".format(feat_counts.head()))
         # Optional: Perform qNTA
         if self.parameters["do_qnta"][1] == "yes":
             self.step = "Performing qNTA"
@@ -648,8 +656,8 @@ class NtaRun:
         elif self.dfs[0] is not None:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
         else:
-            self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
-            feat_counts = self.dfs[1]["Feature ID"].value_counts()
+            # self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
+            # feat_counts = self.dfs[1]["Feature ID"].value_counts()
             logger.info("assign ids feat_counts header: {}".format(feat_counts.head()))
         return
 
@@ -802,8 +810,8 @@ class NtaRun:
                 self.dfs[0], self.pass_through[0], self.all_headers
             )
         else:
-            feat_counts = self.dfs[1]["Feature ID"].value_counts()
-            logger.info("post stats feat_counts header: {}".format(feat_counts.head()))
+            # feat_counts = self.dfs[1]["Feature ID"].value_counts()
+            # logger.info("post stats feat_counts header: {}".format(feat_counts.head()))
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
                 self.dfs[1], self.pass_through[1], self.all_headers
             )
