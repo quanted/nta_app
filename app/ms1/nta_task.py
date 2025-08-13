@@ -262,6 +262,8 @@ class NtaRun:
                 logger.info("POS df length: {}".format(len(self.dfs[0])))
                 # logger.info("POS df columns: {}".format(self.dfs[0].columns))
             if self.dfs[1] is not None:
+                feat_counts = self.dfs[1]["Feature ID"].value_counts()
+                logger.info("post duplicate filter feat_counts header: {}".format(feat_counts.head()))
                 logger.info("NEG df length: {}".format(len(self.dfs[1])))
                 # logger.info("NEG df columns: {}".format(self.dfs[1].columns))
         # 3a: statistics
@@ -647,6 +649,8 @@ class NtaRun:
             self.dfs[0] = task_fun.assign_feature_id(self.dfs[0])
         else:
             self.dfs[1] = task_fun.assign_feature_id(self.dfs[1])
+            feat_counts = self.dfs[1]["Feature ID"].value_counts()
+            logger.info("assign ids feat_counts header: {}".format(feat_counts.head()))
         return
 
     def pass_through_cols(self):
@@ -798,6 +802,8 @@ class NtaRun:
                 self.dfs[0], self.pass_through[0], self.all_headers
             )
         else:
+            feat_counts = self.dfs[1]["Feature ID"].value_counts()
+            logger.info("post stats feat_counts header: {}".format(feat_counts.head()))
             self.data_map["All Detection Statistics (Neg)"] = task_fun.column_sort_DFS(
                 self.dfs[1], self.pass_through[1], self.all_headers
             )
