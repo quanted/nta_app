@@ -1050,6 +1050,8 @@ def check_feature_tracers(df, tracers_file, Mass_Difference, Retention_Differenc
     dft.drop(["Rounded_Mass", "Matches"], axis=1, inplace=True)
     # np.where to replace nans with 0s
     dfc["Tracer Chemical Match?"].fillna(0, inplace=True)
+    # Drop duplicates in Feature ID - i.e., safeguard for features that matched multiple tracers
+    dfc = dfc.drop_duplicates(subset=["Feature ID"], keep="first")
     # Returns tracers data (dft) and dataframe with 'Tracer Chemical Match?' appended (dfc)
     return dft, dfc
 

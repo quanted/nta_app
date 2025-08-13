@@ -899,6 +899,9 @@ class NtaRun:
                 for df in self.dfs
             ]
         )
+        if self.dfs[1] is not None:
+            feat_counts = self.dfs[1]["Feature ID"].value_counts()
+            logger.info("post check_feature_tracers feat_counts header: {}".format(feat_counts.head()))
         # Call format_tracer_file imported from utilities.py
         self.tracer_dfs_out = [
             task_fun.format_tracer_file(df) if df is not None else None for df in self.tracer_dfs_out
