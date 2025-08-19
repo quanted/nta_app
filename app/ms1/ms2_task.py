@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import dask
 import os
 import csv
@@ -9,6 +10,7 @@ import shutil
 import json
 import asyncio
 import io
+import re
 import psutil
 from dask.diagnostics import ResourceProfiler
 
@@ -23,106 +25,81 @@ from ...tools.ms2.file_manager import MS2_Parser
 from ...tools.ms2.send_email import send_ms2_finished
 
 
-NO_DASK = False  # set this to True to run locally without dask (for debug purposes)
-
 # Set up logging
 logger = logging.getLogger("nta_app.ms1")
-
-
-# def run_ms2_dask(parameters, jobid="00000000", verbose=True):
-#     # log parameters
-#     logger.info("Parameters:")
-#     logger.info(parameters)
-#     logger.info("Job ID: {}".format(jobid))
-
-#     in_docker = os.environ.get("IN_DOCKER") != "False"
-#     mongo_address = os.environ.get("MONGO_SERVER")
-#     link_address = reverse("ms2_results", kwargs={"jobid": jobid})
-#     if NO_DASK:
-#         run_ms2(parameters, mongo_address, jobid, results_link=link_address, verbose=verbose, in_docker=in_docker)
-#         return
-#     if not in_docker:
-#         logger.info("Running in local development mode.")
-#         logger.info("Detected OS is {}".format(os.environ.get("SYSTEM_NAME")))
-#         local_cluster = LocalCluster(processes=False)
-#         dask_client = Client(local_cluster)
-#     else:
-#         dask_scheduler = os.environ.get("DASK_SCHEDULER")
-#         logger.info("Running in docker environment. Dask Scheduler: {}".format(dask_scheduler))
-#         dask_client = Client(dask_scheduler)
-#         logger.info("Dask URL: {dask_client.dashboard_link}")
-#     # dask_input_dfs = dask_client.scatter(input_dfs)
-#     logger.info("Submitting Nta ms2 Dask task")
-#     task = dask_client.submit(
-#         run_ms2,
-#         parameters,
-#         mongo_address,
-#         jobid,
-#         results_link=link_address,
-#         verbose=verbose,
-#         in_docker=in_docker,
-#     )  # dask_input_dfs, mongo_address, jobid, results_link=link_address,verbose=verbose, in_docker=in_docker)
-#     fire_and_forget(task)
-
-#     try:
-#         import time
-
-#         time.sleep(5)
-#         memory_profile = dask_client.profile()
-#         logger.info("[Dask Memory Profile] %s", memory_profile)
-#     except Exception as e:
-#         logger.error("Failed to capture Dask memory profile: %s", repr(e))
-
-
-# def run_ms2(parameters, mongo_address=None, jobid="00000000", results_link="", verbose=True, in_docker=True):
-#     ms2_run = MS2Run(parameters, mongo_address, jobid, results_link, verbose, in_docker=in_docker)
-#     try:
-#         ms2_run.execute()
-#     except Exception as e:
-#         trace = traceback.format_exc()
-#         logger.info(trace)
-#         fail_step = ms2_run.get_step()
-#         ms2_run.set_status("Failed on step: " + fail_step)
-#         error = repr(e)
-#         ms2_run.set_except_message(error)
-#         raise e
-#     return True
-
-
-FILENAMES = {"final_output": ["CFMID_results_pos", "CFMID_results_neg", "input_parameters"]}
 
 
 class MS2Run:
     def __init__(
         self,
+        input_df,
+        ms1_chems_df,
+        mode="pos",
         parameters=None,
-        mongo_address=None,
-        jobid="00000000",
-        # results_link=None,
-        # verbose=True,
-        # in_docker=True,
+        # mongo_address=None,
+        # jobid="00000000",
     ):
-        # logger.info("[Job ID: {}] MS2Run initialize - started".format(jobid))
-        self.inputParameters = parameters["inputParameters"]
-        self.project_name = parameters["project_name"]
-        self.n_masses = 1
-        self.progress = 0
-        self.input_dfs = {"pos": [None], "neg": [None]}
-        self.features = {"pos": [], "neg": []}
-        self.cfmid_responses = []
-        # self.email = parameters['results_email']
-        # self.results_link = results_link
+        # Define from inputs
+        self.mode = mode
+        self.input_li = input_df
+        self.ms1_chems = ms1_chems_df
+        self.parameters = parameters
+        self.ppm = parameters["ppm"]
+        self.ms1_mass_cutoff = parameters["ms1_mass_cutoff"]
+        self.ms1_RT_cutoff = parameters["ms1_RT_cutoff"]
         self.precursor_mass_accuracy = float(parameters["precursor_mass_accuracy"])
         self.fragment_mass_accuracy = float(parameters["fragment_mass_accuracy"])
-        self.jobid = jobid
-        # self.verbose = verbose
-        # self.in_docker = in_docker
-        self.mongo_address = mongo_address
-        self.mongo = connect_to_mongoDB(self.mongo_address)
-        self.gridfs = connect_to_mongo_gridfs(self.mongo_address)
-        self.step = "Started"  # tracks the current step (for fail messages)
+        self.jobid = parameters["job_id"]
+        # Define step/time/client
+        self.step = "Started"
         self.time_log = {"step": [], "start": []}
         self.client = None
+        # Define intermediary variables
+        self.n_masses = 1
+        self.progress = 0
+        self.features = None
+        self.cfmid_responses = []
+        self.spectra_df = None
+        # Define output variables
+        self.ms2_out = None
+        self.combined_out = None
+
+    def execute(self):
+        # Get memory usage at onset
+        self.log_memory_usage("Start")
+        # Check for ms1_chems
+        if self.ms1_chems is not None:
+            # self.set_status("Filtering MS2 features")
+            self.filter_features()
+            self.log_memory_usage("Filtering MS2 features")
+            self.log_dask_memory("Filtering MS2 features")
+        # Build feature list from input_dict
+        # self.set_status("Extracting Spectra Data")
+        self.construct_featurelist()
+        self.log_memory_usage("Extracting Spectra Data")
+        self.log_dask_memory("Extracting Spectra Data")
+        # Retrieve CFMID spectra from API
+        # self.set_status("Retrieving Reference Spectra")
+        self.get_CFMID_spectra()
+        self.log_memory_usage("Retrieving Reference Spectra")
+        self.log_dask_memory("Retrieving Reference Spectra")
+        # Save spectra information (?)
+        # self.set_status("Saving Spectral Info")
+        self.save_spectral_info()
+        self.log_memory_usage("Saving Spectral Info")
+        self.log_dask_memory("Saving Spectral Info")
+        # Calculate spectral similarity scores
+        # self.set_status("Calculating Similarity Scores")
+        self.calc_CFMID_similarity()
+        self.log_memory_usage("Calculating Similarity Scores")
+        self.log_dask_memory("Calculating Similarity Scores")
+        # self.set_status("Saving Data")
+        self.save_data()
+        self.log_memory_usage("Saving Data")
+        self.log_dask_memory("Saving Data")
+        logger.critical("Run Finished")
+        logger.info(self.report_time_logs())
+        logger.warn("MS2 job {}: Processing complete.".format(self.jobid))
 
     def log_memory_usage(self, step_name):
         """Logs the current memory usage."""
@@ -140,103 +117,122 @@ class MS2Run:
         except Exception as e:
             logger.error("Failed to log Dask worker memory: %s", repr(e))
 
-    def execute(self):
-        self.log_memory_usage("Start")
-
-        self.set_status("Parsing MS2 Data", create=True)
-        self.parse_uploaded_files()
-        self.log_memory_usage("Parsing MS2 Data")
-        self.log_dask_memory("Parsing MS2 Data")
-
-        self.set_status("Extracting Spectra Data")
-        self.construct_featurelist()
-        self.log_memory_usage("Extracting Spectra Data")
-        self.log_dask_memory("Extracting Spectra Data")
-
-        self.set_status("Retrieving Reference Spectra")
-        self.get_CFMID_spectra()
-        self.log_memory_usage("Retrieving Reference Spectra")
-        self.log_dask_memory("Retrieving Reference Spectra")
-
-        # NTAW-795
-        self.set_status("Saving Spectral Info")
-        self.save_spectral_info()
-        self.log_memory_usage("Saving Spectral Info")
-        self.log_dask_memory("Saving Spectral Info")
-
-        self.set_status("Calculating Similarity Scores")
-        self.calc_CFMID_similarity()
-        self.log_memory_usage("Calculating Similarity Scores")
-        self.log_dask_memory("Calculating Similarity Scores")
-
-        self.set_status("Retrieving Substances from DSSTox Database")
-
-        # self.set_status("Saving Data")
-        # self.save_data()
-        # self.log_memory_usage("Saving Data")
-        # self.log_dask_memory("Saving Data")
-
-        self.set_status("Completed")
-        # self.send_email()
-        logger.critical("Run Finished")
-        logger.info(self.report_time_logs())
-        logger.warn("MS2 job {}: Processing complete.".format(self.jobid))
-
-    def parse_uploaded_files(self):
+    def calc_mono_mass(self):
         """
-        Parse MGF file stored on mongo DB. Uses jobID to fetch related MS2 files before parse
+        Take input list, and iterate through items, adding "MONOMASS" to dict
+        by correcting the "MASS" key:value based on the "CHARGE" key:value.
+
+        Returns dataframe of input_li
         """
-        grid_out = fetch_ms2_files(self.jobid)
-        for file in grid_out:
-            file_index = grid_out.index(file)
-            filename = self.inputParameters["fileUpload"][1][file_index]
-            if file.mode == "neg":
-                self.input_dfs["neg"].append(MS2_Parser.parse_file(file, filename))
+        # Get inputs
+        input_li = self.input_li.copy()
+        mode = self.mode
+        # Define proton
+        proton = 1.0073
+        # Iterate
+        for item in input_li:
+            # Check "CHARGE"
+            if item["CHARGE"] is not None:
+                # Regex item["CHARGE"] to determine charge number (i.e., level)
+                re_pattern = "\d+"
+                level = int(re.search(re_pattern, item["CHARGE"]).group())
+                # Calculate correction
+                correction = level * proton
+                # Check mode
+                if mode == "pos":
+                    # Calculate "MONOMASS"
+                    item["MONOMASS"] = round(item["MASS"] - correction, 6)
+                else:
+                    item["MONOMASS"] = round(item["MASS"] + correction, 6)
             else:
-                self.input_dfs["pos"].append(MS2_Parser.parse_file(file, filename))
+                item["MONOMASS"] = round(item["MASS"], 6)
+        # Convert to df
+        output = pd.DataFrame(input_li)
+        # Return output
+        return output
+
+    def filter_features(self):
+        """
+        If MS1 data is present, filter MS2 features for scoring based on whether or not
+        the feature is present in the MS1 dataframe.
+        """
+        # Get inputs
+        ms1_chems = self.ms1_chems.copy()
+        # Group ms1_chems by Feature ID, Mass, RT
+        ms1_mrts = ms1_chems.groupby(["Mass", "Retention Time", "Feature ID"])["DTXSID"].apply(list).reset_index()
+        # Get rounded columns
+        ms1_mrts["Rounded Mass"] = ms1_mrts["Mass"].round(2)
+        ms1_mrts["Rounded Retention Time"] = ms1_mrts["Retention Time"].round(1)
+        # Get input_li as df
+        input_df = self.calc_mono_mass()
+        cols = input_df.columns.tolist()
+        # Get rounded columns
+        input_df["Rounded Mass"] = input_df["MONOMASS"].round(2)
+        input_df["Rounded Retention Time"] = input_df["RT"].round(1)
+        # do merge on Rounded Mass and Rounded Retention_Time
+        inner = pd.merge(ms1_mrts, input_df, how="inner", on=["Rounded Mass", "Rounded Retention Time"])
+        # Set ppm
+        ppm = True
+        # Assess MS1 and MS2 Mass and RT thresholds
+        mass_cutoff = self.ms1_mass_cutoff
+        RT_cutoff = self.ms1_RT_cutoff
+        # Mass and RT diffs
+        inner["Mass diff"] = abs(inner["Mass"] - inner["MONOMASS"])
+        inner["RT diff"] = abs(inner["Retention Time"] - inner["RT"])
+        # ppm adjustment
+        if ppm:
+            inner["Mass diff"] = (inner["Mass diff"] / inner["Mass"]) * 10**6
+        # Match thresholds
+        inner["Mass Match?"] = np.where(inner["Mass diff"] < mass_cutoff, 1, 0)
+        inner["RT Match?"] = np.where(inner["RT diff"] < RT_cutoff, 1, 0)
+        # Subset by matching columns
+        filtered_features = inner.loc[((inner["Mass Match?"] == 1) & (inner["RT Match?"] == 1)), :]
+        # Convert filtered df back to list of dicts
+        filtered_features = filtered_features[cols].to_dict("records")
+        # Store in class attribute
+        self.input_li = filtered_features
 
     def construct_featurelist(self):
         """
-        Prepares pos- and neg-mode FeatureList object from the input dfs
+        Prepares FeatureList object from the input dict
         """
-        self.n_masses = len(self.input_dfs["neg"]) + len(self.input_dfs["pos"])
-
+        # Get inputs
+        input_li = self.input_li.copy()
+        mode = self.mode
+        # Get # of mass features
+        self.n_masses = len(self.input_li)
+        # Print to logger
         logger.info("Total number of features: {}".format(self.n_masses))
-
-        for mode, df_list in self.input_dfs.items():
-            tmp_feature_list = FeatureList()
-            for data_block in df_list:
-                tmp_feature_list.update_feature_list(data_block, POSMODE=mode == "pos")
-                self.update_progress()
-            self.features[mode] = tmp_feature_list
-
-        # for feat in self.features["pos"].feature_list:
-        #     logger.info(f" id: {feat.feature_data['ID']}, spectrum: {feat.ms2_spectrum}")
+        # Create feature list
+        tmp_feature_list = FeatureList()
+        # pass list of dicts to 'update_feature_list'
+        tmp_feature_list.update_feature_list(input_li, POSMODE=mode == "pos")
+        # Save feature_list to self.features
+        self.features = tmp_feature_list
 
     def get_CFMID_spectra(self):
         """
         Instantiate pos_list and neg_list with tuples of unique masses in the FeatureList and corrsponding mode. Iterate through list
         to get CFMID data. Returned spectra are appended to corresponding Features in the feature list using mass to join spectra.
         """
-        self.reset_progress()
-        pos_list = (
-            [(mass, "ESI-MSMS-pos") for mass in self.features["pos"].get_masses(neutral=True)]
-            if len(self.features["pos"]) > 0
+        # Get features list, add mode
+        all_masses = (
+            [(mass, "ESI-MSMS-" + str(self.mode)) for mass in self.features.get_masses(neutral=True)]
+            if len(self.features) > 0
             else []
         )
-        neg_list = (
-            [(mass, "ESI-MSMS-neg") for mass in self.features["neg"].get_masses(neutral=True)]
-            if len(self.features["neg"]) > 0
-            else []
-        )
-        all_masses = pos_list + neg_list
+        # Print len masses to logger
         self.n_masses = len(all_masses)
         logger.info(f"Number of features in list: {self.n_masses}")
+        # Define chunk size
         chunk_size = 100
-        start = time.perf_counter()  # Initialize start before the loop
-
+        # Initialize timer start
+        start = time.perf_counter()
+        # Check length of masses
         if self.n_masses > 0:
+            # Set cfmid_responses to blank list
             self.cfmid_responses = []
+            # Proceed through loop
             for idx in range(0, self.n_masses, chunk_size):
                 chunk = all_masses[idx : min(idx + chunk_size, self.n_masses)]
                 batch_results = []
@@ -285,7 +281,6 @@ class MS2Run:
         :type cfmid_response: dict
 
         """
-        self.reset_progress()
         dask_scheduler = os.environ.get("DASK_SCHEDULER")
         dask_client = Client(dask_scheduler)
 
@@ -296,160 +291,46 @@ class MS2Run:
         for idx, cfmid_response in enumerate(self.cfmid_responses):
             if cfmid_response["data"] is None:
                 logger.info(f'Found 0 structures for mass {cfmid_response["mass"]}')
-                self.update_progress()
                 continue
-
+            # Logger statements
             logger.info(f'Found {len(cfmid_response["data"])} structures for mass {cfmid_response["mass"]}')
             logger.info(f"\t\t\t Total Progress: {idx + 1} / {len(self.cfmid_responses)} structures")
-
-            feature_mode = "pos" if cfmid_response["mode"] == "ESI-MSMS-pos" else "neg"
-            matched_features = self.features[feature_mode].get_features(cfmid_response["mass"], by="neutral_mass")
-
+            # Get features from cfmid_response
+            matched_features = self.features.get_features(cfmid_response["mass"], by="neutral_mass")
+            # Pass to dask_client
             scattered_data = dask_client.scatter(cfmid_response["data"])
-
+            # Instantiate task_list and feature_list
             task_list = []
             feature_list = []
-
+            # Iterate through features, calculate similarity
             for feature in matched_features:
                 task_list.append(dask_client.submit(feature.dask_calc_similarity, scattered_data))
                 feature_list.append(feature)
-
+            # Gather results, save results to feature attribute
             results = dask_client.gather(task_list)
             for feature, result in zip(feature_list, results):
                 feature.reference_scores = result
-            self.update_progress()
 
-        ### This version crashes in the final for loop -> concurrent.futures._base.CancelledError
-        ### Tasks are being canceled at some point during the run, but unclear what the root cause is
-        ###
-
-        # feature_list = []
-        # task_list = []
-
-        # for idx, cfmid_response in enumerate(self.cfmid_responses):
-        #     if cfmid_response['data'] is None:
-        #         logger.info(f'Found 0 structures for mass {cfmid_response["mass"]}')
-        #         logger.info(f'\t\t\t Total Progress: {idx + 1} / {len(self.cfmid_responses)} structures')
-        #         self.update_progress()
-        #         continue
-
-        #     logger.info(f'Found {len(cfmid_response["data"])} structures for mass {cfmid_response["mass"]}')
-        #     logger.info(f'\t\t\t Total Progress: {idx + 1} / {len(self.cfmid_responses)} structures')
-
-        #     feature_mode = 'pos' if cfmid_response['mode'] == 'ESI-MSMS-pos' else 'neg'
-        #     matched_features = self.features[feature_mode].get_features(cfmid_response['mass'], by='neutral_mass')
-
-        #     scattered_data = dask_client.scatter(cfmid_response['data'])
-
-        #     for feature in matched_features:
-        #         task_list.append(dask_client.submit(feature.dask_calc_similarity, scattered_data))
-        #         feature_list.append(feature)
-
-        # #results = dask_client.gather(task_list)
-        # for feature, task in zip(feature_list, task_list):
-        #     try:
-        #         result = task.result()
-        #     except Exception as e:
-        #         logger.info(f"Failed on feature: {feature}, {task}")
-        #         logger.info(f"Exception: {e}")
-        #         task_retry = dask_client.retry(task)        #This throws an error, taks are being cancelled at some point. Needs additional troubleshooting
-        #         result = task_retry.result()
-        #     feature.reference_scores = result
-        #     self.update_progress()
-
-    # def save_data(self):
-    #     # log self
-    #     inputParameters = self.inputParameters
-    #     logger.info("save_data - inputParameters:")
-    #     logger.info(inputParameters)
-
-    #     # Delete csrfmiddlewaretoken from inputParameters
-    #     del inputParameters["csrfmiddlewaretoken"]
-
-    #     # convert inputParameters to a dataframe and re-index the dataframe so it is no longer indexed by the dictionary keys
-    #     inputParameters_df = pd.DataFrame.from_dict(inputParameters, orient="index").reset_index().drop(columns="index")
-
-    #     # Add column headers to inputParameters_df
-    #     inputParameters_df.columns = ["Parameter", "Value"]
-
-    #     # log inputParameters_df
-    #     logger.info("save_data - inputParameters_df:")
-    #     logger.info(inputParameters_df)
-
-    #     # Merge spectrum data onto CFMID results data frames
-    #     neg_df = (
-    #         self.features["neg"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True)
-    #     )
-    #     neg_df = pd.merge(neg_df, self.spectra_df, on="DTXCID", how="left")
-
-    #     pos_df = (
-    #         self.features["pos"].to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True)
-    #     )
-    #     pos_df = pd.merge(pos_df, self.spectra_df, on="DTXCID", how="left")
-
-    # # self.mongo_save(self.features['neg'].to_df().sort_values(by = ['ID', 'Q-SCORE'], ascending = [True, False], ignore_index = True), step=FILENAMES['final_output'][0])
-    # # self.mongo_save(self.features['pos'].to_df(), step=FILENAMES['final_output'][1])
-    # # 2/23/2023 Reverse the filenames index, currently pointing to the wrong file
-    # self.mongo_save(
-    #     neg_df,
-    #     step=FILENAMES["final_output"][1],
-    # )
-    # # self.mongo_save(self.features["pos"].to_df(), step=FILENAMES["final_output"][0])
-    # self.mongo_save(
-    #     pos_df,
-    #     step=FILENAMES["final_output"][0],
-    # )
-    # self.mongo_save(inputParameters_df, step=FILENAMES["final_output"][2])
-
-    # def send_email(self):
-    #     try:
-    #         # link_address = reverse('ms2_results', kwargs={'jobid': self.jobid})
-    #         send_ms2_finished(self.email, self.results_link)
-    #     except Exception as e:
-    #         logger.critical("email error")
-    #         # logger.critical("Error sending email: {}".format(e.message))
-    #     logger.critical("email end function")
-
-    #     self.query_progress = 0
-    #     self.prepare_progress = 0
-
-    def set_status(self, status, create=False):
-        logger.info(
-            f"\n============= Job ID: {self.jobid} \n============= Starting Process: \n============= {status}  \n============="
-        )
-        self.step = status
-        self.log_time()
-        posts = self.mongo.posts
-        time_stamp = datetime.utcnow()
-        post_id = self.jobid + "_" + "status"
-        if create:
-            posts.update_one(
-                {"_id": post_id},
-                {
-                    "$set": {
-                        "_id": post_id,
-                        "date": time_stamp,
-                        "n_masses": str(self.n_masses),
-                        "progress": str(self.progress),
-                        "status": status,
-                        "error_info": "",
-                    }
-                },
-                upsert=True,
-            )
-        else:
-            posts.update_one(
-                {"_id": post_id},
-                {
-                    "$set": {
-                        "_id": post_id,
-                        "n_masses": str(self.n_masses),
-                        "progress": str(self.progress),
-                        "status": status,
-                    }
-                },
-                upsert=True,
-            )
+    def save_data(self):
+        # log self
+        inputParameters = self.parameters
+        logger.info("save_data - inputParameters:")
+        logger.info(inputParameters)
+        # Delete csrfmiddlewaretoken from inputParameters
+        del inputParameters["csrfmiddlewaretoken"]
+        # convert inputParameters to a dataframe and re-index the dataframe so it is no longer indexed by the dictionary keys
+        inputParameters_df = pd.DataFrame.from_dict(inputParameters, orient="index").reset_index().drop(columns="index")
+        # Add column headers to inputParameters_df
+        inputParameters_df.columns = ["Parameter", "Value"]
+        # log inputParameters_df
+        logger.info("save_data - inputParameters_df:")
+        logger.info(inputParameters_df)
+        # Convert features to df
+        df = self.features.to_df().sort_values(by=["ID", "Q-SCORE"], ascending=[True, False], ignore_index=True)
+        # Merge spectrum data onto CFMID results data frames
+        df_combined = pd.merge(df, self.spectra_df, on="DTXCID", how="left")
+        # Save df_combined to combined_out
+        self.combined_out = df_combined
 
     def log_time(self):
         self.time_log["start"].append(time.perf_counter())
@@ -462,36 +343,5 @@ class MS2Run:
             step_time[step] = self.time_log["start"][idx + 1] - self.time_log["start"][idx]
         return f"Total run time: {total_time} \n {json.dumps(step_time, indent = 6)}"
 
-    def reset_progress(self, progress_value=0):
-        self.progress = progress_value
-        posts = self.mongo.posts
-        post_id = self.jobid + "_" + "status"
-        posts.update_one(
-            {"_id": post_id},
-            {"$set": {"_id": post_id, "n_masses": str(self.n_masses), "progress": str(self.progress)}},
-            upsert=True,
-        )
-
-    def update_progress(self, step_size=1):
-        self.progress += step_size
-        posts = self.mongo.posts
-        post_id = self.jobid + "_" + "status"
-        posts.update_one(
-            {"_id": post_id},
-            {"$set": {"_id": post_id, "n_masses": str(self.n_masses), "progress": str(self.progress)}},
-            upsert=True,
-        )
-
-    # def set_except_message(self, e):
-    #     posts = self.mongo.posts
-    #     time_stamp = datetime.utcnow()
-    #     post_id = self.jobid + "_" + "status"
-    #     posts.update_one({"_id": post_id}, {"$set": {"_id": post_id, "date": time_stamp, "error_info": e}}, upsert=True)
-
     def get_step(self):
         return self.step
-
-    # def mongo_save(self, file, step=""):
-    #     to_save = file.to_json(orient="split")
-    #     id = self.jobid + "_" + step
-    #     self.gridfs.put(to_save, _id=id, encoding="utf-8", project_name=self.project_name)

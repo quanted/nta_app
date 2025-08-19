@@ -23,6 +23,7 @@ from .cv_scatterplot import *
 from . import task_functions as task_fun
 from .WebApp_plotter import WebApp_plotter
 from .qNTA_class import qNTAClass
+from .ms2_task import MS2Run
 import io
 
 logger = logging.getLogger("nta_app.ms1")
@@ -1636,6 +1637,9 @@ class NtaRun:
 
     def perform_MS2(
         self,
+        input_dfs,
+        parameters,
+        ms1_chems=None,
     ):
         """
         Call task_functions MS2_preprocessing() to do file parsing on the MS2 inputs,
@@ -1646,7 +1650,77 @@ class NtaRun:
         Returns:
             None
         """
-        pass
+        # Check for pos mode MS2 data
+        if input_dfs[0] is not None:
+            # If present, create MS2Run object
+            ms2_pos = MS2Run(
+                input_dfs[0],
+                ms1_chems,
+                mode="pos",
+                parameters=parameters,
+            )
+            # Run execute function
+            ms2_pos.execute()
+            # Check for ms1 data
+            if ms1_chems is not None:
+                # If present, retrieve updated ms1_chems_df
+                ms1_chems_pos_out = ms2_pos.combined_out
+            else:
+                # Else, store ms2 results
+                ms2_pos_results = ms2_pos.ms2_out
+
+        # Check for neg mode MS2 data
+        if input_dfs[1] is not None:
+            # If present, create MS2Run object
+            ms2_neg = MS2Run(
+                input_dfs[1],
+                ms1_chems,
+                mode="neg",
+                parameters=parameters,
+            )
+            # Run execute function
+            ms2_neg.execute()
+            # Check for ms1 data
+            if ms1_chems is not None:
+                # If present, retrieve updated ms1_chems_df
+                ms1_chems_neg_out = ms2_neg.combined_out
+            else:
+                # Else, store ms2 results
+                ms2_neg_results = ms2_neg.ms2_out
+
+        # Combine modes, if both present
+        if input_dfs[0] is not None and input_dfs[1] is not None:
+            # Check for ms1 data
+            if ms1_chems is not None:
+                # Combine ms1_chems_out dataframes
+                ms1_chems_out = pd.concat([ms1_chems_pos_out, ms1_chems_neg_out])
+                # Store in data map
+            else:
+                # Combine ms2_out results
+                ms2_out = pd.concat([ms2_pos_results, ms2_neg_results])
+                # Store in data map
+        # If just positive mode present, set as output
+        elif input_dfs[0] is not None:
+            # Check for ms1 data
+            if ms1_chems is not None:
+                # Combine ms1_chems_out dataframes
+                ms1_chems_out = ms1_chems_pos_out
+                # Store in data map
+            else:
+                # Combine ms2_out results
+                ms2_out = ms2_pos_results
+                # Store in data map
+        # If just negative mode present, set as output
+        else:
+            # Check for ms1 data
+            if ms1_chems is not None:
+                # Combine ms1_chems_out dataframes
+                ms1_chems_out = ms1_chems_neg_out
+                # Store in data map
+            else:
+                # Combine ms2_out results
+                ms2_out = ms2_neg_results
+                # Store in data map
 
     def mongo_save(self, file, step=""):
         """

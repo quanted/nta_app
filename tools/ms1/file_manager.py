@@ -158,6 +158,7 @@ class MS2_Parser:
         parser = MS2_Parser._get_parser(file.filetype, filename)
         return parser(file, filename, **kwargs)
 
+    @staticmethod
     def _get_parser(file_type, filename):
         if str(file_type).lower() == "mgf":
             return MS2_Parser._mgf_parser
@@ -168,6 +169,7 @@ class MS2_Parser:
         else:
             raise ValueError(file_type)
 
+    @staticmethod
     def _mgf_parser(file_in, filename):
         """
         Output: list of dictionaries sturcutres as follows:
@@ -214,6 +216,7 @@ class MS2_Parser:
         logger.info(f"filename: {result['FILE_NAME']}")
         return OUTPUT
 
+    @staticmethod
     def _msp_parser(file_in, filename):
         """
         Output: list of dictionaries sturcutres as follows:
@@ -288,6 +291,7 @@ class MS2_Parser:
                 # Add check for last line in file
         return OUTPUT
 
+    @staticmethod
     def _mzml_parser(file_in):
         # with Open_Input(file_in) as datafile:
         #     file = datafile.read()
@@ -301,6 +305,7 @@ class MS2_Parser:
         # return OUTPUT
         pass
 
+    @staticmethod
     def _seperate_line(line):
         if " " in line:
             return line.split(" ")
