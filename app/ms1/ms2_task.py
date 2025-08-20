@@ -33,7 +33,7 @@ class MS2Run:
     def __init__(
         self,
         input_df,
-        ms1_chems_df,
+        ms1_chems_df=None,
         mode="pos",
         parameters=None,
         # mongo_address=None,
@@ -42,7 +42,7 @@ class MS2Run:
         # Define from inputs
         self.mode = mode
         self.input_li = input_df
-        self.ms1_chems = ms1_chems_df
+        self.search_results = ms1_chems_df
         self.parameters = parameters
         self.ppm = parameters["ppm"]
         self.ms1_mass_cutoff = parameters["ms1_mass_cutoff"]
@@ -61,14 +61,14 @@ class MS2Run:
         self.cfmid_responses = []
         self.spectra_df = None
         # Define output variables
-        self.ms2_out = None
+        self.spectra_out = None
         self.combined_out = None
 
     def execute(self):
         # Get memory usage at onset
         self.log_memory_usage("Start")
         # Check for ms1_chems
-        if self.ms1_chems is not None:
+        if self.search_results is not None:
             # self.set_status("Filtering MS2 features")
             self.filter_features()
             self.log_memory_usage("Filtering MS2 features")
@@ -157,7 +157,7 @@ class MS2Run:
         the feature is present in the MS1 dataframe.
         """
         # Get inputs
-        ms1_chems = self.ms1_chems.copy()
+        ms1_chems = self.search_results.copy()
         # Group ms1_chems by Feature ID, Mass, RT
         ms1_mrts = ms1_chems.groupby(["Mass", "Retention Time", "Feature ID"])["DTXSID"].apply(list).reset_index()
         # Get rounded columns
