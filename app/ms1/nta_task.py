@@ -1645,8 +1645,10 @@ class NtaRun:
         Returns:
             None
         """
+        logger.info("ms1 chems search results length: {}".format(len(self.search_results)))
         # Check for pos mode MS2 data
         if self.spectra_inputs[0] is not None:
+            logger.info("ms2 pos input li of dicts size: {}".format(len(self.spectra_inputs[0])))
             # If present, create MS2Run object
             ms2_pos = MS2Run(
                 self.spectra_inputs[0],
@@ -1657,15 +1659,17 @@ class NtaRun:
             # Run execute function
             ms2_pos.execute()
             # Check for ms1 data
-            if ms1_chems is not None:
+            if self.search_results is not None:
                 # If present, retrieve updated ms1_chems_df
                 ms1_chems_pos_out = ms2_pos.combined_out
+                logger.info("ms2 pos outputs size: {}".format(len(ms1_chems_pos_out)))
             else:
                 # Else, store ms2 results
                 ms2_pos_results = ms2_pos.spectra_out
 
         # Check for neg mode MS2 data
         if self.spectra_inputs[1] is not None:
+            logger.info("ms2 neg input li of dicts size: {}".format(len(self.spectra_inputs[1])))
             # If present, create MS2Run object
             ms2_neg = MS2Run(
                 self.spectra_inputs[1],
@@ -1679,6 +1683,7 @@ class NtaRun:
             if self.search_results is not None:
                 # If present, retrieve updated ms1_chems_df
                 ms1_chems_neg_out = ms2_neg.combined_out
+                logger.info("ms2 neg outputs size: {}".format(len(ms1_chems_neg_out)))
             else:
                 # Else, store ms2 results
                 ms2_neg_results = ms2_neg.spectra_out
