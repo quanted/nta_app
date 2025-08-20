@@ -1152,11 +1152,11 @@ class qNTAClass:
         # Copy data
         ecdf_data = validation_out.copy()
         # Format dataframe for plotting
-        cols = ["AQ", "AQ (LOO)"]
+        cols = ["AAQ", "AAQ (LOO)"]
         preplot = (
-            ecdf_data[["Feature ID", "Sample", "ConcTargeted", "AQ", "AQ_LOO"]]
+            ecdf_data[["Feature ID", "Sample", "ConcTargeted", "AAQ", "AAQ_LOO"]]
             .copy()
-            .rename(columns={"AQ_LOO": "AQ (LOO)"})
+            .rename(columns={"AAQ_LOO": "AAQ (LOO)"})
         )
         aqplot = pd.melt(
             preplot, id_vars=["Feature ID", "Sample"], value_vars=cols, var_name="Metric", value_name="Value"
