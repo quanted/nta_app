@@ -1690,10 +1690,12 @@ class NtaRun:
                 # Combine ms1_chems_out dataframes
                 ms1_chems_out = pd.concat([ms1_chems_pos_out, ms1_chems_neg_out])
                 # Store in data map
+                self.chem_res_map["MS2Run Output"] = ms1_chems_out
             else:
                 # Combine ms2_out results
                 ms2_out = pd.concat([ms2_pos_results, ms2_neg_results])
                 # Store in data map
+                self.chem_res_map["MS2Run Output"] = ms2_out
         # If just positive mode present, set as output
         elif self.spectra_inputs[0] is not None:
             # Check for ms1 data
@@ -1701,10 +1703,12 @@ class NtaRun:
                 # Combine ms1_chems_out dataframes
                 ms1_chems_out = ms1_chems_pos_out
                 # Store in data map
+                self.chem_res_map["MS2Run Output"] = ms1_chems_out
             else:
                 # Combine ms2_out results
                 ms2_out = ms2_pos_results
                 # Store in data map
+                self.chem_res_map["MS2Run Output"] = ms2_out
         # If just negative mode present, set as output
         else:
             # Check for ms1 data
@@ -1712,10 +1716,12 @@ class NtaRun:
                 # Combine ms1_chems_out dataframes
                 ms1_chems_out = ms1_chems_neg_out
                 # Store in data map
+                self.chem_res_map["MS2Run Output"] = ms1_chems_out
             else:
                 # Combine ms2_out results
                 ms2_out = ms2_neg_results
                 # Store in data map
+                self.chem_res_map["MS2Run Output"] = ms2_out
 
     def mongo_save(self, file, step=""):
         """
