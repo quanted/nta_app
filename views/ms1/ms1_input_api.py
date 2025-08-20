@@ -262,8 +262,8 @@ def ms1_run_api(request):
                     ms2_neg_file = os.path.join(example_data_dir, example_ms2_neg_filename)
                     inputParameters["ms2_neg"][1] = ms2_neg_file
                     # Parse files
-                    ms2_pos_parsed = file_manager.parse_ms2_files(ms2_pos_file, ms2_pos_file.name)
-                    ms2_neg_parsed = file_manager.parse_ms2_files(ms2_neg_file, ms2_neg_file.name)
+                    ms2_pos_parsed = file_manager.parse_ms2_files(ms2_pos_file, ms2_pos_file)
+                    ms2_neg_parsed = file_manager.parse_ms2_files(ms2_neg_file, ms2_neg_file)
                 else:
                     inputParameters["ms2_pos"][1] = None
                     inputParameters["ms2_neg"][1] = None

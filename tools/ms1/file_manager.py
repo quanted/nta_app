@@ -155,11 +155,15 @@ class MS2_Parser:
 
     @staticmethod
     def parse_file(file, filename, **kwargs):
-        parser = MS2_Parser._get_parser(file.filetype, filename)
+        parser = MS2_Parser._get_parser(
+            filename[-3:],
+        )
         return parser(file, filename, **kwargs)
 
     @staticmethod
-    def _get_parser(file_type, filename):
+    def _get_parser(
+        file_type,
+    ):
         if str(file_type).lower() == "mgf":
             return MS2_Parser._mgf_parser
         elif str(file_type).lower() == "msp":
