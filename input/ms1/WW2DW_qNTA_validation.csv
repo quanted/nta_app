@@ -1,4 +1,4 @@
-"Ionization_Mode","Chemical Name","DTXSID","D1S1","D1S2","D1S3","D1S4","D2S1","D2S2","D2S3","D2S4","D3S2","D3S1","D3S4","D3S3"
+"Ionization_Mode","Chemical Name","DTXSID","D1S1_","D1S2_","D1S3_","D1S4_","D2S1_","D2S2_","D2S3_","D2S4_","D3S2_","D3S1_","D3S4_","D3S3_"
 "Esi+","10-hydroxy-amitriptyline","DTXSID90873785",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 "Esi+","norethindrone","DTXSID9023380",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 "Esi+","abacavir","DTXSID4046444",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
@@ -108,3 +108,4 @@
 "Esi+","venlafaxine","DTXSID6023737",15.72284,32.6182,24.25432,NA,10.19752,17.61912,8.96104,NA,16.93112,20.36108,NA,16.92278
 "Esi+","verapamil","DTXSID9041152",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 "Esi+","warfarin","DTXSID5023742",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+
