@@ -46,6 +46,14 @@ class OutputServer:
             except_text = db_record["error_info"]
             n_masses = db_record["n_masses"]
             progress = db_record["progress"]
+            
+            # Enhanced progress fields (with fallbacks for backward compatibility)
+            current_step_index = db_record.get("current_step_index", 0)
+            current_step_progress = db_record.get("current_step_progress", 0)
+            overall_percentage = db_record.get("overall_percentage", "0.0")
+            total_steps = db_record.get("total_steps", 1)
+            workflow_steps = db_record.get("workflow_steps", [status])
+            
             # status = json.dumps(db_record['status'])
             # time = json.dumps(db_record['date'], default = datetime_handler)
         except TypeError:
@@ -54,12 +62,24 @@ class OutputServer:
             except_text = "Not found"
             n_masses = "Not found"
             progress = "Not found"
+            current_step_index = 0
+            current_step_progress = 0
+            overall_percentage = "0.0"
+            total_steps = 1
+            workflow_steps = ["Not found"]
+            
         response_data = {
+            "jobid": self.jobid,
             "start_time": time,
             "status": status,
             "error_info": except_text,
             "n_masses": n_masses,
             "progress": progress,
+            "current_step_index": current_step_index,
+            "current_step_progress": current_step_progress,
+            "overall_percentage": overall_percentage,
+            "total_steps": total_steps,
+            "workflow_steps": workflow_steps,
         }
         return JsonResponse(response_data)
 
