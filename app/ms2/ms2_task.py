@@ -108,6 +108,20 @@ class MS2Run:
         self.n_masses = 1
         self.progress = 0
         self.input_dfs = {"pos": [None], "neg": [None]}
+        
+        # Define workflow steps with estimated weights
+        self.workflow_steps = [
+            {"name": "Parsing MS2 Data", "weight": 10},
+            {"name": "Extracting Spectra Data", "weight": 15}, 
+            {"name": "Retrieving Reference Spectra", "weight": 40},
+            {"name": "Saving Spectral Info", "weight": 5},
+            {"name": "Calculating Similarity Scores", "weight": 25},
+            {"name": "Retrieving Substances from DSSTox Database", "weight": 2},
+            {"name": "Saving Data", "weight": 3}
+        ]
+        self.current_step_index = 0
+        self.current_step_progress = 0  # 0-100 within current step
+        self.total_workflow_weight = sum(step["weight"] for step in self.workflow_steps)
         self.features = {"pos": [], "neg": []}
         self.cfmid_responses = []
         # self.email = parameters['results_email']
@@ -203,10 +217,16 @@ class MS2Run:
 
         logger.info("Total number of features: {}".format(self.n_masses))
 
+        total_blocks = sum(len(df_list) for df_list in self.input_dfs.values())
+        processed_blocks = 0
+        
         for mode, df_list in self.input_dfs.items():
             tmp_feature_list = FeatureList()
             for data_block in df_list:
                 tmp_feature_list.update_feature_list(data_block, POSMODE=mode == "pos")
+                processed_blocks += 1
+                progress_pct = (processed_blocks / total_blocks * 100) if total_blocks > 0 else 100
+                self.update_step_progress(progress_pct)
                 self.update_progress()
             self.features[mode] = tmp_feature_list
 
@@ -242,8 +262,16 @@ class MS2Run:
                 batch_results = []
                 logger.info(f"API search: {chunk_size} of {len(all_masses)} structures")
                 logger.info(f"\t\t\t Total count: {idx}")
+                
+                # Update progress within this step
+                progress_pct = (idx / self.n_masses * 100) if self.n_masses > 0 else 100
+                self.update_step_progress(progress_pct)
+                
                 asyncio.run(ms2_api_search(batch_results, chunk, self.precursor_mass_accuracy, self.jobid))
                 self.cfmid_responses.extend(batch_results)
+            
+            # Mark this step as complete
+            self.update_step_progress(100)
             logger.info(f"API search time: {time.perf_counter() - start} for {len(all_masses)} structures")
         else:
             logger.warning("No masses to process.")
@@ -293,9 +321,13 @@ class MS2Run:
         ###
         ###
 
+        total_responses = len(self.cfmid_responses)
+        
         for idx, cfmid_response in enumerate(self.cfmid_responses):
             if cfmid_response["data"] is None:
                 logger.info(f'Found 0 structures for mass {cfmid_response["mass"]}')
+                progress_pct = ((idx + 1) / total_responses * 100) if total_responses > 0 else 100
+                self.update_step_progress(progress_pct)
                 self.update_progress()
                 continue
 
@@ -317,6 +349,10 @@ class MS2Run:
             results = dask_client.gather(task_list)
             for feature, result in zip(feature_list, results):
                 feature.reference_scores = result
+            
+            # Update progress within this step
+            progress_pct = ((idx + 1) / total_responses * 100) if total_responses > 0 else 100
+            self.update_step_progress(progress_pct)
             self.update_progress()
 
         ### This version crashes in the final for loop -> concurrent.futures._base.CancelledError
@@ -479,6 +515,28 @@ class MS2Run:
         posts.update_one(
             {"_id": post_id},
             {"$set": {"_id": post_id, "n_masses": str(self.n_masses), "progress": str(self.progress)}},
+            upsert=True,
+        )
+    
+    def update_step_progress(self, progress_percentage):
+        """Update progress within the current step (0-100)"""
+        self.current_step_progress = progress_percentage
+        
+        # Calculate overall percentage
+        completed_weight = sum(step["weight"] for step in self.workflow_steps[:self.current_step_index])
+        current_step_weight = (self.workflow_steps[self.current_step_index]["weight"] 
+                              if self.current_step_index < len(self.workflow_steps) else 0)
+        overall_percentage = ((completed_weight + (current_step_weight * progress_percentage / 100)) 
+                             / self.total_workflow_weight * 100)
+        
+        posts = self.mongo.posts
+        post_id = self.jobid + "_" + "status"
+        posts.update_one(
+            {"_id": post_id},
+            {"$set": {
+                "current_step_progress": progress_percentage,
+                "overall_percentage": f"{overall_percentage:.1f}",
+            }},
             upsert=True,
         )
 
