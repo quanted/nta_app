@@ -1,4 +1,4 @@
-aiohttp==3.9.2
+aiohttp==3.9.4
 bokeh
 blosc==1.10.2
 dask==2023.4.0
